@@ -74,6 +74,32 @@ class DeterministicBuildTests(unittest.TestCase):
             ok, error = compile_only(source)
             self.assertTrue(ok, f'{name}: {error}')
 
+    def test_native_result_preserves_self_other_and_unknown_catcher(self):
+        source = (ROOT / 'chalk-intercept-controller.lua').read_text()
+        start = source.index('    function controller.onFx(data)')
+        stop = source.index('    local touchedConnection=', start)
+        lua = LuaRuntime(unpack_returned_tuples=True)
+        lua.execute(r'''
+            controller={};events={};throwRole="WR"
+            me={Character={Name="self",instance=true}}
+            opponent={Name="other",instance=true}
+            counters={intercepted=0,lostToInterception=0,incomplete=0,breakups=0,catches=0,opponentCatches=0}
+            typeof=function(v)return type(v)=="table" and v.instance and "Instance" or type(v)end
+            xyz=function()return nil end
+            log=function(kind,data)data.kind=kind;events[#events+1]=data end
+            saveFailure=function()end
+            cancel=function()end
+        ''')
+        lua.execute(source[start:stop])
+        lua.execute(r'''
+            throwKey=1;controller.onFx({Type="BallResult",Result="Catch",Catcher=me.Character})
+            assert(events[#events].caughtByMe==true)
+            throwKey=2;controller.onFx({Type="BallResult",Result="Catch",Catcher=opponent})
+            assert(events[#events].caughtByMe==false)
+            throwKey=3;controller.onFx({Type="BallResult",Result="Catch"})
+            assert(events[#events].caughtByMe==nil)
+        ''')
+
     def test_autoplay_constructor_stays_off_with_saved_on_until_user_enables(self):
         lua = LuaRuntime(unpack_returned_tuples=True)
         lua.execute(r'''
@@ -129,6 +155,7 @@ class DeterministicBuildTests(unittest.TestCase):
         lua = LuaRuntime(unpack_returned_tuples=True)
         lua.execute(r'''
             alive,enabled=true,true
+            RELEASE_VERSION="authored-release"
             previousState={enabled=true,auto={enabled=true},autoplay={enabled=true},
                 wrRepeat={enabled=true},fullplay={enabled=true},matchSkip={enabled=true}}
             api={context=function()return {}end,setAutoplay=function()error("No startup queue request")end}
@@ -142,6 +169,7 @@ class DeterministicBuildTests(unittest.TestCase):
             end
             createAssist=function(ctx)
                 assert(ctx.learningCandidates==nil and ctx.learningActionExecuted==nil)
+                assert(ctx.version=="authored-release" and ctx.buildId=="CHALK_BUNDLED_BUILD_ID")
                 return feature("assist",true)
             end
             createAutoplay=function(ctx)
@@ -154,6 +182,7 @@ class DeterministicBuildTests(unittest.TestCase):
             end
             createFullplay=function(ctx,policy,services)
                 assert(ctx.previousState==nil and services==nil)
+                assert(ctx.version=="authored-release" and ctx.buildId=="CHALK_BUNDLED_BUILD_ID")
                 return feature("fullplay",true)
             end
             createMatchSkip=function(ctx)

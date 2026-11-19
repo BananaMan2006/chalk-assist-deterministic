@@ -28,7 +28,7 @@ MODULES = (
 # Prior UI geometry, selected queue mode and username preferences can survive;
 # an old enabled flag cannot silently opt a new installation into gameplay.
 INITIALIZE = r'''
-assist = createAssist({snapshot=api.context,fullplay=function(s,root,h,now,dt)
+assist = createAssist({snapshot=api.context,version=RELEASE_VERSION,buildId="CHALK_BUNDLED_BUILD_ID",fullplay=function(s,root,h,now,dt)
     if fullplay then return fullplay.navigate(s,root,h,now,dt) end
 end},Planner,createTackle,WRApproach,Motion,createCarrierMoves,PlayerAvoidance)
 assist.setEnabled(false)
@@ -37,7 +37,7 @@ repeatWR = createWRRepeat({snapshot=api.context,
     autoplay=function() return autoplay.status() end,
     disableAutoplay=function() return api.setAutoplay(false) end})
 repeatWR.setEnabled(false)
-fullplay = createFullplay({snapshot=api.context,
+fullplay = createFullplay({snapshot=api.context,version=RELEASE_VERSION,buildId="CHALK_BUNDLED_BUILD_ID",
     assistEnabled=function() return assist.status().enabled end,
     release=function() if assist.releaseFullplay then assist.releaseFullplay() end end},FullplayPolicy)
 fullplay.setEnabled(false)

@@ -330,6 +330,37 @@ function Planner.validateAirborneDive(s,p)
     return finish=="jumpDive",reason or "Observed airborne contact remains reachable"
 end
 
+-- Validate the existing contact after shifting takeoff to this actual input
+-- instant. Three contact samples are enough to reject a late jump without a
+-- new strategy search. WR additionally retains its sampled first-contact rule.
+function Planner.validateJump(s,p)
+    if not validSnapshot(s) or not p or not p.jumpAt or not s.grounded
+        or s.canJump~=true or not finite(p.contactAt) or p.contactAt<=s.now then
+        return false,"No current jump contact window"
+    end
+    local actual={}
+    for key,value in pairs(p) do actual[key]=value end
+    actual.jumpAt,actual._jumpDelay=s.now,0
+    actual._reaction=0
+    actual._speed,actual._runSpeed=math.max(0,s.walkSpeed),math.max(0,s.runSpeed or s.walkSpeed)
+    actual._sprintSeconds=math.max(0,s.sprintSeconds or INF)
+    local target=p.approachTarget or p.rootTarget
+    if not vec(target) or not vec(p.direction) then return false,"Jump movement target unavailable" end
+    actual._aimDistance=math.max(0,((target-s.position)*FLAT):Dot(p.direction))
+    if p.diveAt then
+        actual._diveDelay=p.diveAt-s.now
+        actual._diveDistance=nil
+        if actual._diveDelay<0.06 then return false,"Insufficient takeoff time before dive" end
+    end
+    local witness=contact(s,actual,p.contactAt-s.now,p.requiredMargin,p.timingMargin)
+    if not witness then return false,"Jump no longer reaches the planned ball contact" end
+    if s.role=="WR" and s.requireAirborne then
+        local finish,reason=Planner.airborneFinish(s,witness)
+        if not finish then return false,reason or "Jump no longer has airborne first contact" end
+    end
+    return true,"Observed jump contact remains reachable"
+end
+
 local function oneDefenderDeadline(s,horizon,source)
     if type(source)~="table" or not vec(source.position) then return nil,false end
     local o={}

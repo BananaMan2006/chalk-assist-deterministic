@@ -156,6 +156,7 @@ return function(Planner,source)
             local function nativeDive()result.dives=result.dives+1;h.PlatformStand=true end
             local function cancel()result.cancels=result.cancels+1;plan=nil;jumpRequest=nil end
             local Planner={validateAirborneDive=function()return true end,
+                validateJump=function()return true end,
                 pose=function()return {Position=root.Position}end}
     ]]..staleGuard..[[
             local function tick()
@@ -199,6 +200,134 @@ return function(Planner,source)
         local dive=dispatchFixture({kind="dive",diveAt=100.02,contactAt=100.5,
             direction=Vector3.new(1,0,0)},{100.03},"DB")
         assert(dive.finished and dive.cancels==0 and dive.dives==1)
+    end)
+    local confirmation=assert(source:match('        h.Jump=jumpRequest~=nil\n(        if jumpRequest then.-)        if h.PlatformStand and not dived then'))
+    local pendingFixture=assert(loadstring([[
+        return function(options)
+            local result={retries=0,cancels=0,confirmed=0,finished=false}
+            local now=options.now
+            local plan={kind="jump",jumpAt=100.025,contactAt=options.contactAt or 100.5}
+            local lastSnapshot={jumpSpeed=math.sqrt(2*196.2*6),gravity=196.2,now=100}
+            local jumpRequest={time=100,dispatchedAt=100.03,y=3}
+            local jumped,dived=true,false
+            local s={role=options.role}
+            local root={Position=Vector3.new(0,3+(options.rise or 0),0),
+                AssemblyLinearVelocity=Vector3.new(0,options.velocity or 0,0)}
+            local Enum={Material={Air="Air"},HumanoidStateType={Jumping="Jumping",Freefall="Freefall"}}
+            local h={FloorMaterial=options.airborne and "Air" or "Ground",Jump=true,
+                GetState=function()return "Running" end}
+            function h:ChangeState()result.retries=result.retries+1 end
+            local workspace={GetServerTimeNow=function()return options.clock or now end}
+            local function log()end
+            local function xyz()return {}end
+            local function cancel()result.cancels=result.cancels+1;plan=nil;jumpRequest=nil end
+            local lastJump,confirmedCatchJump,groundedReachSince,reachAirborne
+            local nextSolve,message=0,nil
+            local counters={jumps=0}
+    ]]..staleGuard..[[
+            local function tick()
+    ]]..confirmation..[[
+                result.finished=true
+            end
+            tick()
+            result.confirmed=counters.jumps;result.nextSolve=nextSolve
+            result.held=h.Jump;result.pending=jumpRequest~=nil;result.lastJump=lastJump
+            return result
+        end
+    ]]))()
+    test("unconfirmed jump cannot retry or remain held after contact for either role",function()
+        for _,role in ipairs({"WR","DB"})do
+            local r=pendingFixture({role=role,now=100.08,contactAt=100.06})
+            assert(r.cancels==1 and r.retries==0 and not r.held and not r.pending and not r.finished)
+            assert(math.abs(r.nextSolve-100.125)<.000001)
+        end
+    end)
+    test("unconfirmed jump beyond action grace cancels even with contact still future",function()
+        for _,role in ipairs({"WR","DB"})do
+            local r=pendingFixture({role=role,now=100.11})
+            assert(r.cancels==1 and r.retries==0 and not r.held and not r.pending)
+        end
+    end)
+    test("unconfirmed retry uses fresh clock instead of old frame time",function()
+        local r=pendingFixture({role="DB",now=100.08,clock=100.11})
+        assert(r.cancels==1 and r.retries==0 and not r.held)
+        assert(math.abs(r.nextSolve-100.155)<.000001)
+    end)
+    test("timely pending native request may retry once while contact remains future",function()
+        for _,role in ipairs({"WR","DB"})do
+            local r=pendingFixture({role=role,now=100.08})
+            assert(r.finished and r.cancels==0 and r.retries==1 and r.held and r.pending)
+        end
+    end)
+    test("observed timely takeoff confirms even when confirmation frame comes later",function()
+        local elapsed=.08
+        local rise=math.sqrt(2*196.2*6)*elapsed-.5*196.2*elapsed*elapsed
+        for _,role in ipairs({"WR","DB"})do
+            local r=pendingFixture({role=role,now=100.11,rise=rise,velocity=30,airborne=true})
+            assert(r.finished and r.cancels==0 and r.retries==0 and r.confirmed==1)
+            assert(not r.held and not r.pending and math.abs(r.lastJump-100.03)<.000001)
+        end
+    end)
+    local function jumpWitness(role)
+        local s=fixture();s.role=role;s.canDive=false;s.walkSpeed=0;s.runSpeed=0
+        s.arc={P0=Vector3.new(0,13,0),P1=Vector3.new(0,13,0),Flight=1000,Apex=0}
+        s.launchAt=99.8;s.maxHorizon=.65
+        s.requireAirborne=role=="WR";s.preferAirborne=role=="WR"
+        local p=assert(Planner.solve(s))
+        local actual={}for key,value in pairs(s)do actual[key]=value end
+        actual.now=p.jumpAt
+        return s,p,actual
+    end
+    test("fresh jump check accepts timely native contact for both roles",function()
+        for _,role in ipairs({"DB","WR"})do
+            local s,p,actual=jumpWitness(role)
+            assert(Planner.validateJump(actual,p))
+            assert(p.jumpAt==actual.now and s.now==100,"Validation mutated the plan or snapshot")
+        end
+    end)
+    test("50 ms late jump within blanket deadline still fails its real contact geometry",function()
+        for _,role in ipairs({"DB","WR"})do
+            local _,p,actual=jumpWitness(role)
+            -- Use a real early robust witness, even when WR normally chooses a later one.
+            p.contactAt=p.jumpAt+.0888671875
+            actual.now=p.jumpAt+.05
+            assert(actual.now<p.contactAt)
+            local valid,why=Planner.validateJump(actual,p)
+            assert(not valid and why=="Jump no longer reaches the planned ball contact")
+        end
+    end)
+    test("late but geometrically valid jump is accepted instead of tightening every deadline",function()
+        local _,p,actual=jumpWitness("DB")
+        p.contactAt=p.jumpAt+.23;actual.now=p.jumpAt+.05
+        assert(Planner.validateJump(actual,p))
+    end)
+    test("fresh jump rejects displaced position or unavailable native jump",function()
+        local _,p,actual=jumpWitness("DB")
+        actual.position=actual.position+Vector3.new(8,0,0)
+        assert(not Planner.validateJump(actual,p))
+        actual.position=Vector3.new(0,3,0);actual.canJump=false
+        assert(not Planner.validateJump(actual,p))
+    end)
+    test("jump check preserves future dive time and refuses compressed takeoff interval",function()
+        local s=fixture();local p=assert(Planner.solve(s))
+        p.approachTarget=Planner.pose(s,p,p.diveAt-.000001).Position
+        local cf=Planner.pose(s,p,p.jumpAt-.000001)
+        local actual={}for key,value in pairs(s)do actual[key]=value end
+        actual.now=p.jumpAt;actual.position=cf.Position;actual.velocity=p.direction*27
+        assert(Planner.validateJump(actual,p))
+        actual.now=p.diveAt-.04
+        local valid,why=Planner.validateJump(actual,p)
+        assert(not valid and why=="Insufficient takeoff time before dive")
+    end)
+    test("jump validation projects only remaining travel after reaching the target",function()
+        local s=fixture();s.role="DB";s.requireAirborne=false;s.preferAirborne=false
+        s.now=100.1;s.launchAt=99.8;s.position=Vector3.new(10,3,0);s.velocity=Vector3.zero
+        s.arc={P0=Vector3.new(10,13,0),P1=Vector3.new(10,13,0),Flight=1000,Apex=0}
+        local p={kind="jump",direction=Vector3.new(1,0,0),jumpAt=100.1,contactAt=100.3,
+            rootTarget=Vector3.new(10,8,0),_aimDistance=10,_speed=27,_runSpeed=20,
+            _sprintSeconds=4,_reaction=.025,_jumpDelay=.1}
+        assert(Planner.validateJump(s,p))
+        assert(p._aimDistance==10,"Original anchor was mutated instead of making a validation copy")
     end)
     test("controller exits catch actions outside live ball phase",function()
         local gate=assert(source:match('(        if s.phase~="Live" or not s.arc or not s.launchAt then.-)        navigation=false\n        if tackleAssist'))

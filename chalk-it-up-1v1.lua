@@ -1,4 +1,4 @@
--- Chalk-Release: 5.1.0
+-- Chalk-Release: 5.1.1
 -- Chalk-Product: deterministic
 -- Chalk It Up DB/WR ball assist using normal sprint/jump/dive controls.
 -- Cyan: replicated route (when supplied). Yellow: movement estimate.
@@ -43,7 +43,7 @@ assert(matchEvent and fxEvent and matchEvent:IsA("RemoteEvent") and fxEvent:IsA(
     "Chalk It Up Match/Fx events were not found")
 
 local api = {}
-local RELEASE_VERSION="5.1.0"
+local RELEASE_VERSION="5.1.1"
 local loadedGameId,loadedPlaceId,loadedJobId=game.GameId,game.PlaceId,game.JobId
 env.ChalkDB = api
 local alive, enabled = true, true
@@ -937,7 +937,7 @@ end
 function api.status()
     local ch = characterOf(opponent)
     local holder,isEnemy,holderRole=carrierContext()
-    return {product="deterministic",version=RELEASE_VERSION,buildId="1101eebdab67a67cabd00c782e5134d7e402566f3ce46cb925193af96b28d5ab",policyMode="deterministic", enabled=enabled, role=role or "unknown",rawRole=rawRole or "unknown", phase=phase,
+    return {product="deterministic",version=RELEASE_VERSION,buildId="1d18c0f004e352b6d830e32663fd79838e30d19a4394368b4c76ebc6d134b503",policyMode="deterministic", enabled=enabled, role=role or "unknown",rawRole=rawRole or "unknown", phase=phase,
         ui={visible=windowVisible,minimized=minimized,x=panel.Position.X.Offset,y=panel.Position.Y.Offset},
         matchAlerts={enabled=alertSettings.enabled,saveError=alertSettings.saveError},
         idleGuard=idleGuard and idleGuard.status() or nil,
@@ -1545,6 +1545,37 @@ function Planner.validateAirborneDive(s,p)
     if not witness then return false,"Observed dive no longer reaches the ball" end
     local finish,reason=Planner.airborneFinish(s,witness)
     return finish=="jumpDive",reason or "Observed airborne contact remains reachable"
+end
+
+-- Validate the existing contact after shifting takeoff to this actual input
+-- instant. Three contact samples are enough to reject a late jump without a
+-- new strategy search. WR additionally retains its sampled first-contact rule.
+function Planner.validateJump(s,p)
+    if not validSnapshot(s) or not p or not p.jumpAt or not s.grounded
+        or s.canJump~=true or not finite(p.contactAt) or p.contactAt<=s.now then
+        return false,"No current jump contact window"
+    end
+    local actual={}
+    for key,value in pairs(p) do actual[key]=value end
+    actual.jumpAt,actual._jumpDelay=s.now,0
+    actual._reaction=0
+    actual._speed,actual._runSpeed=math.max(0,s.walkSpeed),math.max(0,s.runSpeed or s.walkSpeed)
+    actual._sprintSeconds=math.max(0,s.sprintSeconds or INF)
+    local target=p.approachTarget or p.rootTarget
+    if not vec(target) or not vec(p.direction) then return false,"Jump movement target unavailable" end
+    actual._aimDistance=math.max(0,((target-s.position)*FLAT):Dot(p.direction))
+    if p.diveAt then
+        actual._diveDelay=p.diveAt-s.now
+        actual._diveDistance=nil
+        if actual._diveDelay<0.06 then return false,"Insufficient takeoff time before dive" end
+    end
+    local witness=contact(s,actual,p.contactAt-s.now,p.requiredMargin,p.timingMargin)
+    if not witness then return false,"Jump no longer reaches the planned ball contact" end
+    if s.role=="WR" and s.requireAirborne then
+        local finish,reason=Planner.airborneFinish(s,witness)
+        if not finish then return false,reason or "Jump no longer has airborne first contact" end
+    end
+    return true,"Observed jump contact remains reachable"
 end
 
 local function oneDefenderDeadline(s,horizon,source)
@@ -3584,7 +3615,8 @@ return function(ctx, Planner, createTackle, WRApproach, Motion, createCarrierMov
         fields = fields or {}
         if fields.defenderAt==math.huge or fields.defenderAt==-math.huge then fields.defenderAt=nil end
         fields.kind, fields.time = kind, workspace:GetServerTimeNow()
-        fields.version="3.1"
+        fields.version=type(ctx.version)=="string" and ctx.version or "unversioned"
+        fields.buildId=ctx.buildId
         fields.launchAt=fields.launchAt or throwKey
         table.insert(history, fields)
         if #history > 80 then table.remove(history, 1) end
@@ -3645,7 +3677,7 @@ return function(ctx, Planner, createTackle, WRApproach, Motion, createCarrierMov
     -- Recheck the live clock before dispatch, not only the frame's old timestamp.
     local function cancelStaleAction(at)
         if not plan then return false end
-        local pendingJump=plan.jumpAt and not jumped
+        local pendingJump=plan.jumpAt and (not jumped or jumpRequest~=nil)
         local pendingDive=plan.diveAt and not dived
         if not pendingJump and not pendingDive then return false end
         local reason=plan.contactAt and at>=plan.contactAt and "Contact window elapsed after planning"
@@ -4110,10 +4142,16 @@ return function(ctx, Planner, createTackle, WRApproach, Motion, createCarrierMov
                     dispatchToConfirmation=now-(jumpRequest.dispatchedAt or jumpRequest.time)})
                 jumpRequest=nil;h.Jump=false
             elseif now-(jumpRequest.dispatchedAt or jumpRequest.time)<0.12 then
+                -- Sending Jump is not takeoff confirmation. The ball may have
+                -- passed while the native request was still waiting to start.
+                local requestNow=workspace:GetServerTimeNow()
+                if cancelStaleAction(requestNow) then h.Jump=false;return end
                 h.Jump=true
-                if now-(jumpRequest.dispatchedAt or jumpRequest.time)>0.045 and not jumpRequest.retried
+                if requestNow-(jumpRequest.dispatchedAt or jumpRequest.time)>0.045 and not jumpRequest.retried
                     and h:GetState()~=Enum.HumanoidStateType.Jumping
                     and h:GetState()~=Enum.HumanoidStateType.Freefall then
+                    local retryAt=workspace:GetServerTimeNow()
+                    if cancelStaleAction(retryAt) then h.Jump=false;return end
                     jumpRequest.retried=true
                     h:ChangeState(Enum.HumanoidStateType.Jumping)
                     log("jumpRetry",{dispatchAt=jumpRequest.dispatchedAt,
@@ -4388,12 +4426,22 @@ return function(ctx, Planner, createTackle, WRApproach, Motion, createCarrierMov
         -- Planning can consume part of a frame. Keep its timestamp as the
         -- motion-model anchor, but start action grace periods at dispatch.
         local actionNow=workspace:GetServerTimeNow()
-        if cancelStaleAction(actionNow) then return end
+        if cancelStaleAction(actionNow) then h.Jump=false;return end
         if plan.jumpAt and not jumped and actionNow>=plan.jumpAt then
             motion=motionState(s,root,h)
             if motion.grounded and reachAirborne~=false and Moves.Upright() then
+                local actual=snapshot(s,root,h,workspace:GetServerTimeNow())
+                actual.now=workspace:GetServerTimeNow()
+                actual.position,actual.velocity=root.Position,root.AssemblyLinearVelocity
+                local valid,why=Planner.validateJump(actual,plan)
+                if not valid then
+                    log("replan",{role=s.role,reason=why,action="jump"})
+                    cancel();h.Jump=false;nextSolve=workspace:GetServerTimeNow()+0.045
+                    message="Jump contact changed · recalculating"
+                    return
+                end
                 local dispatchAt=workspace:GetServerTimeNow()
-                if cancelStaleAction(dispatchAt) then return end
+                if cancelStaleAction(dispatchAt) then h.Jump=false;return end
                 h.Jump = true
                 h:ChangeState(Enum.HumanoidStateType.Jumping)
                 jumped=true
@@ -4405,7 +4453,7 @@ return function(ctx, Planner, createTackle, WRApproach, Motion, createCarrierMov
             end
         end
         actionNow=workspace:GetServerTimeNow()
-        if cancelStaleAction(actionNow) then return end
+        if cancelStaleAction(actionNow) then h.Jump=false;return end
         if plan.diveAt and not dived and actionNow>=plan.diveAt then
             motion=motionState(s,root,h)
             if not motion.diveModeMatchesMotion or reachAirborne==false then
@@ -4445,7 +4493,7 @@ return function(ctx, Planner, createTackle, WRApproach, Motion, createCarrierMov
                 end
             end
             local dispatchAt=workspace:GetServerTimeNow()
-            if cancelStaleAction(dispatchAt) then return end
+            if cancelStaleAction(dispatchAt) then h.Jump=false;return end
             if divePermitted() and Moves.Upright()
                 and dispatchAt-lastDive>=Config.Moves.Dive.Cooldown then
                 -- The native move reads MoveDirection before falling back to facing.
@@ -4630,8 +4678,10 @@ return function(ctx, Planner, createTackle, WRApproach, Motion, createCarrierMov
                 local desired=(throwRole=="DB" and (data.Result=="Intercepted" or data.Result=="Swatted"))
                     or (throwRole=="WR" and data.Result=="Catch")
                 if catcher and not mine then desired=false end
+                local caughtByMe
+                if catcher then caughtByMe=mine end
                 log("result",{result=data.Result,role=throwRole,position=xyz(data.Pos),catcher=catcher,
-                    caughtByMe=catcher and mine or nil})
+                    caughtByMe=caughtByMe})
                 if not desired then saveFailure("Catch/interception not secured",data.Result,catcher) end
                 throwKey=nil
             end
@@ -6704,7 +6754,9 @@ return function(ctx,Policy,services)
     local api={}
     local function log(kind,data)
         if type(append)~="function" then return end
-        data=data or {};data.kind=kind;data.time=world:GetServerTimeNow();data.version="5.1.0";data.policyMode="deterministic"
+        data=data or {};data.kind=kind;data.time=world:GetServerTimeNow()
+        data.version=type(ctx.version)=="string" and ctx.version or "unversioned"
+        data.buildId=ctx.buildId;data.policyMode="deterministic";data.fullAuto=enabled
         pcall(function() append("ciu_deterministic_events.jsonl",http:JSONEncode(data)..string.char(10)) end)
     end
     local function savePreferences()
@@ -7286,8 +7338,17 @@ return function(ctx,Policy,services)
         if enabled and data.Phase=="Result" then
             if data.Point=="You" or data.ScorerIsYou==true then counters.pointsWon=counters.pointsWon+1
             elseif data.Point=="Them" or data.Point=="Opp" or data.ScorerIsYou==false then counters.pointsLost=counters.pointsLost+1 end
+        end
+        if enabled and (data.Phase=="Result" or data.MatchOver==true) then
+            -- Keep supplied native scores; missing scores remain absent. A
+            -- point, animation or requested action never invents a match win.
             log("result",{result=data.Result,point=data.Point,matchOver=data.MatchOver,
-                scorerIsYou=data.ScorerIsYou})
+                scorerIsYou=data.ScorerIsYou,phase=data.Phase,role=s.role,mode=s.mode,
+                you=finite(data.You) and data.You or nil,
+                them=finite(data.Them) and data.Them or nil,
+                toWin=finite(data.ToWin) and data.ToWin or nil,
+                round=finite(data.Round) and data.Round or nil,
+                down=finite(data.Down) and data.Down or nil})
         end
     end
     function api.onFx(data)
@@ -7799,7 +7860,7 @@ end
 
 end)()
 
-assist = createAssist({snapshot=api.context,fullplay=function(s,root,h,now,dt)
+assist = createAssist({snapshot=api.context,version=RELEASE_VERSION,buildId="1d18c0f004e352b6d830e32663fd79838e30d19a4394368b4c76ebc6d134b503",fullplay=function(s,root,h,now,dt)
     if fullplay then return fullplay.navigate(s,root,h,now,dt) end
 end},Planner,createTackle,WRApproach,Motion,createCarrierMoves,PlayerAvoidance)
 assist.setEnabled(false)
@@ -7808,7 +7869,7 @@ repeatWR = createWRRepeat({snapshot=api.context,
     autoplay=function() return autoplay.status() end,
     disableAutoplay=function() return api.setAutoplay(false) end})
 repeatWR.setEnabled(false)
-fullplay = createFullplay({snapshot=api.context,
+fullplay = createFullplay({snapshot=api.context,version=RELEASE_VERSION,buildId="1d18c0f004e352b6d830e32663fd79838e30d19a4394368b4c76ebc6d134b503",
     assistEnabled=function() return assist.status().enabled end,
     release=function() if assist.releaseFullplay then assist.releaseFullplay() end end},FullplayPolicy)
 fullplay.setEnabled(false)
@@ -7829,7 +7890,7 @@ local GAME_ID,PLACE_ID=10770281752,116097127629859
 local MAIN_URL="https://raw.githubusercontent.com/BananaMan2006/chalk-assist-deterministic/main/chalk-it-up-1v1.lua"
 local CACHE_FILE="chalk-deterministic-cache.lua"
 local MAIN_FILE="chalk-it-up-1v1.lua"
-local MIN_RELEASE="5.1.0"
+local MIN_RELEASE="5.1.1"
 local MARKER="__ChalkDeterministicAutoBoot"
 local env=type(getgenv)=="function" and getgenv() or _G
 local boot

@@ -89,6 +89,7 @@ return function(Policy,create,routeSource)
             createLearning=forbidden,uniform=forbidden,createJam=forbidden,
             Generator={propose=forbidden},MovementExploration={candidates=forbidden}}
         f.api=create({snapshot=function() return f.snapshot end,previousState=options.previousState,
+            version=options.version,buildId=options.buildId,
             assistEnabled=function() return f.assist end,release=function() f.releases=f.releases+1 end},Policy,f.services)
         function f:tick(dt)
             self.time=self.time+(dt or .2)
@@ -107,6 +108,25 @@ return function(Policy,create,routeSource)
         assert(a.Pass==b.Pass and a.StartX==b.StartX and #a.Points==#b.Points)
         for i,point in ipairs(a.Points) do assert(point.X==b.Points[i].X and point.Y==b.Points[i].Y) end
     end
+    test("logs carry injected release identity and exact native final scores",function()
+        local f=harness({version="5.1.1",buildId=string.rep("a",64)})
+        f.api.setEnabled(true)
+        f.api.onMatch({Phase="Result",Result="Touchdown",Point="Them",MatchOver=true,
+            ScorerIsYou=false,You=0,Them=4,ToWin=4,Round=6,Down=1})
+        local event=f.events[#f.events]
+        assert(event.kind=="result" and event.version=="5.1.1" and event.buildId==string.rep("a",64))
+        assert(event.fullAuto==true and event.matchOver==true and event.scorerIsYou==false)
+        assert(event.you==0 and event.them==4 and event.toWin==4 and event.round==6 and event.down==1)
+        assert(event.won==nil and event.winner==nil)
+    end)
+    test("terminal lobby packet preserves unknown scores without inferring a winner",function()
+        local f=harness();f.api.setEnabled(true)
+        f.api.onMatch({Phase="Lobby",MatchOver=true,Point="You",You=0/0,Them=math.huge})
+        local event=f.events[#f.events]
+        assert(event.kind=="result" and event.phase=="Lobby" and event.matchOver==true)
+        assert(event.you==nil and event.them==nil and event.toWin==nil)
+        assert(event.won==nil and event.winner==nil and event.version=="unversioned")
+    end)
     test("old enabled settings and model histories cannot enable or seed this product",function()
         local previous={enabled=true,learning={enabled=true,sharedEnabled=true},routeMemory={
             jobId="authored-server",opponentKey="authored-opponent",opponentUserId=123,

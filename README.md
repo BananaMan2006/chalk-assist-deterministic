@@ -1,10 +1,12 @@
 # Chalk Assist · deterministic edition
 
-Chalk Assist 5.1.0 is a rule-based Roblox client for Chalk It Up. It combines route and ball visualization, catch planning, nearby tackle attempts, collision-aware movement, and optional 1v1 Full Auto.
+Chalk Assist 5.1.1 is a rule-based Roblox client for Chalk It Up. It combines route and ball visualization, catch planning, nearby tackle attempts, collision-aware movement, and optional 1v1 Full Auto.
 
 This edition contains **no neural policy, training loop, model downloads, shared-learning service, or learned-action selection**. It does not improve itself by playing more games. Short-lived match observations can adjust authored rules, but no knowledge is pooled across computers.
 
 All gameplay automation starts **OFF** on every load. Loading the script displays its controls; enable the features you want explicitly.
+
+Version 5.1.1 fixes a WR/DB jump-retry timing error: requesting a jump no longer counts as confirmed takeoff, and an unconfirmed request is cancelled when its planned contact window has expired. The controller must replan instead of retrying that expired jump. Both roles also recheck current-position reach with the actual dispatch time before jumping; being inside the timing allowance alone is insufficient. Live catch and win improvements remain unverified.
 
 ## Load
 
@@ -18,7 +20,7 @@ The repository is public; no GitHub token is required. Automatic loading on late
 
 ## Behavior
 
-- **Catch assist:** estimates reachable contacts along the observed ball flight, uses native movement and catch geometry. WR plans require a jump or jump-and-dive with airborne first contact. Floaters target the earliest robust airborne contact; bullets retain the downfield preference. If none is reachable, the controller can pursue without inventing a catch plan.
+- **Catch assist:** estimates reachable contacts along the observed ball flight, uses native movement and catch geometry. WR plans require a jump or jump-and-dive with sampled geometric evidence of airborne first contact. Floaters target the earliest robust airborne contact; bullets retain the downfield preference. If none is reachable, the controller can pursue without inventing a catch plan.
 - **Full Auto:** chooses authored routes and defensive positioning in supported **1v1** play. It considers available stamina, opponent position, reachable timing and obstacles. Route alternatives follow deterministic rules, not random sampling or learning.
 - **Tackles and carrying:** attempts available native actions near a genuine threat, with range, clearance, stamina and cooldown checks.
 - **Optional helpers:** autoplay with a mode selector, return to the nearest WR pad, saved auto-leave username lists, and match-alert settings.

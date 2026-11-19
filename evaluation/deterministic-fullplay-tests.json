@@ -56,13 +56,21 @@
           "passed": true
         }
       ],
-      "fixture": "Authored geometry and local native/approximate route timing. No server catch or win guarantee.",
       "failed": 0,
       "passed": 12,
-      "total": 12
+      "total": 12,
+      "fixture": "Authored geometry and local native/approximate route timing. No server catch or win guarantee."
     },
     "deterministic-isolation": {
       "results": [
+        {
+          "name": "logs carry injected release identity and exact native final scores",
+          "passed": true
+        },
+        {
+          "name": "terminal lobby packet preserves unknown scores without inferring a winner",
+          "passed": true
+        },
         {
           "name": "old enabled settings and model histories cannot enable or seed this product",
           "passed": true
@@ -140,10 +148,10 @@
           "passed": true
         }
       ],
-      "fixture": "Authored offline services and geometry; locally supplied RouteMath is not copied or published. No server outcome claim.",
       "failed": 0,
-      "passed": 19,
-      "total": 19
+      "passed": 21,
+      "total": 21,
+      "fixture": "Authored offline services and geometry; locally supplied RouteMath is not copied or published. No server outcome claim."
     }
   }
 }

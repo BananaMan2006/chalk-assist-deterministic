@@ -117,7 +117,8 @@ return function(ctx, Planner, createTackle, WRApproach, Motion, createCarrierMov
         fields = fields or {}
         if fields.defenderAt==math.huge or fields.defenderAt==-math.huge then fields.defenderAt=nil end
         fields.kind, fields.time = kind, workspace:GetServerTimeNow()
-        fields.version="3.1"
+        fields.version=type(ctx.version)=="string" and ctx.version or "unversioned"
+        fields.buildId=ctx.buildId
         fields.launchAt=fields.launchAt or throwKey
         table.insert(history, fields)
         if #history > 80 then table.remove(history, 1) end
@@ -178,7 +179,7 @@ return function(ctx, Planner, createTackle, WRApproach, Motion, createCarrierMov
     -- Recheck the live clock before dispatch, not only the frame's old timestamp.
     local function cancelStaleAction(at)
         if not plan then return false end
-        local pendingJump=plan.jumpAt and not jumped
+        local pendingJump=plan.jumpAt and (not jumped or jumpRequest~=nil)
         local pendingDive=plan.diveAt and not dived
         if not pendingJump and not pendingDive then return false end
         local reason=plan.contactAt and at>=plan.contactAt and "Contact window elapsed after planning"
@@ -643,10 +644,16 @@ return function(ctx, Planner, createTackle, WRApproach, Motion, createCarrierMov
                     dispatchToConfirmation=now-(jumpRequest.dispatchedAt or jumpRequest.time)})
                 jumpRequest=nil;h.Jump=false
             elseif now-(jumpRequest.dispatchedAt or jumpRequest.time)<0.12 then
+                -- Sending Jump is not takeoff confirmation. The ball may have
+                -- passed while the native request was still waiting to start.
+                local requestNow=workspace:GetServerTimeNow()
+                if cancelStaleAction(requestNow) then h.Jump=false;return end
                 h.Jump=true
-                if now-(jumpRequest.dispatchedAt or jumpRequest.time)>0.045 and not jumpRequest.retried
+                if requestNow-(jumpRequest.dispatchedAt or jumpRequest.time)>0.045 and not jumpRequest.retried
                     and h:GetState()~=Enum.HumanoidStateType.Jumping
                     and h:GetState()~=Enum.HumanoidStateType.Freefall then
+                    local retryAt=workspace:GetServerTimeNow()
+                    if cancelStaleAction(retryAt) then h.Jump=false;return end
                     jumpRequest.retried=true
                     h:ChangeState(Enum.HumanoidStateType.Jumping)
                     log("jumpRetry",{dispatchAt=jumpRequest.dispatchedAt,
@@ -921,12 +928,22 @@ return function(ctx, Planner, createTackle, WRApproach, Motion, createCarrierMov
         -- Planning can consume part of a frame. Keep its timestamp as the
         -- motion-model anchor, but start action grace periods at dispatch.
         local actionNow=workspace:GetServerTimeNow()
-        if cancelStaleAction(actionNow) then return end
+        if cancelStaleAction(actionNow) then h.Jump=false;return end
         if plan.jumpAt and not jumped and actionNow>=plan.jumpAt then
             motion=motionState(s,root,h)
             if motion.grounded and reachAirborne~=false and Moves.Upright() then
+                local actual=snapshot(s,root,h,workspace:GetServerTimeNow())
+                actual.now=workspace:GetServerTimeNow()
+                actual.position,actual.velocity=root.Position,root.AssemblyLinearVelocity
+                local valid,why=Planner.validateJump(actual,plan)
+                if not valid then
+                    log("replan",{role=s.role,reason=why,action="jump"})
+                    cancel();h.Jump=false;nextSolve=workspace:GetServerTimeNow()+0.045
+                    message="Jump contact changed · recalculating"
+                    return
+                end
                 local dispatchAt=workspace:GetServerTimeNow()
-                if cancelStaleAction(dispatchAt) then return end
+                if cancelStaleAction(dispatchAt) then h.Jump=false;return end
                 h.Jump = true
                 h:ChangeState(Enum.HumanoidStateType.Jumping)
                 jumped=true
@@ -938,7 +955,7 @@ return function(ctx, Planner, createTackle, WRApproach, Motion, createCarrierMov
             end
         end
         actionNow=workspace:GetServerTimeNow()
-        if cancelStaleAction(actionNow) then return end
+        if cancelStaleAction(actionNow) then h.Jump=false;return end
         if plan.diveAt and not dived and actionNow>=plan.diveAt then
             motion=motionState(s,root,h)
             if not motion.diveModeMatchesMotion or reachAirborne==false then
@@ -978,7 +995,7 @@ return function(ctx, Planner, createTackle, WRApproach, Motion, createCarrierMov
                 end
             end
             local dispatchAt=workspace:GetServerTimeNow()
-            if cancelStaleAction(dispatchAt) then return end
+            if cancelStaleAction(dispatchAt) then h.Jump=false;return end
             if divePermitted() and Moves.Upright()
                 and dispatchAt-lastDive>=Config.Moves.Dive.Cooldown then
                 -- The native move reads MoveDirection before falling back to facing.
@@ -1163,8 +1180,10 @@ return function(ctx, Planner, createTackle, WRApproach, Motion, createCarrierMov
                 local desired=(throwRole=="DB" and (data.Result=="Intercepted" or data.Result=="Swatted"))
                     or (throwRole=="WR" and data.Result=="Catch")
                 if catcher and not mine then desired=false end
+                local caughtByMe
+                if catcher then caughtByMe=mine end
                 log("result",{result=data.Result,role=throwRole,position=xyz(data.Pos),catcher=catcher,
-                    caughtByMe=catcher and mine or nil})
+                    caughtByMe=caughtByMe})
                 if not desired then saveFailure("Catch/interception not secured",data.Result,catcher) end
                 throwKey=nil
             end

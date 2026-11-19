@@ -52,7 +52,9 @@ return function(ctx,Policy,services)
     local api={}
     local function log(kind,data)
         if type(append)~="function" then return end
-        data=data or {};data.kind=kind;data.time=world:GetServerTimeNow();data.version="5.1.0";data.policyMode="deterministic"
+        data=data or {};data.kind=kind;data.time=world:GetServerTimeNow()
+        data.version=type(ctx.version)=="string" and ctx.version or "unversioned"
+        data.buildId=ctx.buildId;data.policyMode="deterministic";data.fullAuto=enabled
         pcall(function() append("ciu_deterministic_events.jsonl",http:JSONEncode(data)..string.char(10)) end)
     end
     local function savePreferences()
@@ -634,8 +636,17 @@ return function(ctx,Policy,services)
         if enabled and data.Phase=="Result" then
             if data.Point=="You" or data.ScorerIsYou==true then counters.pointsWon=counters.pointsWon+1
             elseif data.Point=="Them" or data.Point=="Opp" or data.ScorerIsYou==false then counters.pointsLost=counters.pointsLost+1 end
+        end
+        if enabled and (data.Phase=="Result" or data.MatchOver==true) then
+            -- Keep supplied native scores; missing scores remain absent. A
+            -- point, animation or requested action never invents a match win.
             log("result",{result=data.Result,point=data.Point,matchOver=data.MatchOver,
-                scorerIsYou=data.ScorerIsYou})
+                scorerIsYou=data.ScorerIsYou,phase=data.Phase,role=s.role,mode=s.mode,
+                you=finite(data.You) and data.You or nil,
+                them=finite(data.Them) and data.Them or nil,
+                toWin=finite(data.ToWin) and data.ToWin or nil,
+                round=finite(data.Round) and data.Round or nil,
+                down=finite(data.Down) and data.Down or nil})
         end
     end
     function api.onFx(data)

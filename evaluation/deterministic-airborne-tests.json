@@ -2,7 +2,8 @@
   "syntheticOnly": true,
   "results": {
     "failed": 0,
-    "passed": 19,
+    "passed": 30,
+    "total": 30,
     "results": [
       {
         "name": "WR times jump and dive for airborne first contact, not early prone arrival",
@@ -77,11 +78,54 @@
         "passed": true
       },
       {
+        "name": "unconfirmed jump cannot retry or remain held after contact for either role",
+        "passed": true
+      },
+      {
+        "name": "unconfirmed jump beyond action grace cancels even with contact still future",
+        "passed": true
+      },
+      {
+        "name": "unconfirmed retry uses fresh clock instead of old frame time",
+        "passed": true
+      },
+      {
+        "name": "timely pending native request may retry once while contact remains future",
+        "passed": true
+      },
+      {
+        "name": "observed timely takeoff confirms even when confirmation frame comes later",
+        "passed": true
+      },
+      {
+        "name": "fresh jump check accepts timely native contact for both roles",
+        "passed": true
+      },
+      {
+        "name": "50 ms late jump within blanket deadline still fails its real contact geometry",
+        "passed": true
+      },
+      {
+        "name": "late but geometrically valid jump is accepted instead of tightening every deadline",
+        "passed": true
+      },
+      {
+        "name": "fresh jump rejects displaced position or unavailable native jump",
+        "passed": true
+      },
+      {
+        "name": "jump check preserves future dive time and refuses compressed takeoff interval",
+        "passed": true
+      },
+      {
+        "name": "jump validation projects only remaining travel after reaching the target",
+        "passed": true
+      },
+      {
         "name": "controller exits catch actions outside live ball phase",
         "passed": true
       }
-    ],
-    "total": 19
+    ]
   },
   "limitations": [
     "Authored geometry and mocked controller guards; no native catch or win proof."
