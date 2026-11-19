@@ -51,6 +51,8 @@ return function(ctx,Policy,services)
     local recentSelections,selectionIndex={},0
     local lastLateBendTrialTrigger
     local observationStarted
+    local campingObservation
+    local ownPossessionObserved=false
     local counters={routeRequests=0,rounds=0,pointsWon=0,pointsLost=0}
     local contactFxTimes={}
     local api={}
@@ -108,7 +110,9 @@ return function(ctx,Policy,services)
         end
         for _,key in ipairs({"estimatedCatchAt","estimatedCatchZ","estimatedFirstTouchAt","estimatedStopAt","estimatedContactMargin","stemSprintSeconds","stemSprintStart",
             "earlyStemSprintSeconds","stemRunSpeed","estimatedStemRegeneration","ballTargetZ","shortField",
-            "stemTravelDistance","postThrowStem","stemDetour","forecastCount","cutAngle","estimatedCatchInsideGoal","rareBullet"}) do
+            "stemTravelDistance","postThrowStem","stemDetour","forecastCount","cutAngle","estimatedCatchInsideGoal","rareBullet",
+            "rareCampingBullet","continuousBulletCatch","carryMoveReserve","observedEndzoneCamping","campingObservationKnown",
+            "campingObservationSeconds","campingOwnProgressYards","campingDefenderDisplacementYards"}) do
             local v=value[key]
             if type(v)=="boolean" or type(v)=="number" and v==v and math.abs(v)<math.huge then out[key]=v end
         end
@@ -201,7 +205,24 @@ return function(ctx,Policy,services)
     local function updateSessionHistory()
         memorySavedAt=world:GetServerTimeNow()
     end
+    local campingFields={"observedEndzoneCamping","campingObservationKnown","campingObservationSeconds",
+        "campingOwnProgressYards","campingDefenderDisplacementYards"}
+    local function clearCampingEvidence()
+        -- Explicit OFF/unload revokes this observation, including evidence from
+        -- completed plays. Ordinary route failures remain session-local.
+        for _,list in ipairs({recentRoutes,recentSelections}) do
+            for _,item in ipairs(list) do
+                for _,key in ipairs(campingFields) do item[key]=nil end
+            end
+        end
+        if activeRoute then
+            for _,key in ipairs(campingFields) do activeRoute[key]=nil end
+        end
+        campingObservation=activeRoute and {key=activeRoute.roundKey,invalid=true,frozen=true} or nil
+    end
     local function clearSessionHistory()
+        campingObservation=nil
+        ownPossessionObserved=false
         recentRoutes,activeRoute={},nil
         recentDefense,activeDefense={},nil
         recentSelections,selectionIndex={},0
@@ -233,14 +254,84 @@ return function(ctx,Policy,services)
     local function roundIdentity(s)
         return tostring(s.roundKey or s.preSnapEnds or "current")
     end
+    local function freezeCampingObservation()
+        local o=campingObservation
+        if not o or o.frozen then return end
+        local now=world:GetServerTimeNow()
+        if not finite(now) or not o.lastAt or now<o.lastAt or now-o.lastAt>.35 then o.invalid=true end
+        o.frozen=true
+    end
+    local function observeCamping(s,paused)
+        if not activeRoute then return end
+        local o=campingObservation
+        if not o or o.key~=activeRoute.roundKey then
+            o={key=activeRoute.roundKey};campingObservation=o
+        end
+        if o.frozen then return end
+        if s.arc~=nil or s.passStarted==true or s.phase=="RAC" or s.phase=="Run" or s.phase=="Result" then
+            freezeCampingObservation();return
+        end
+        if paused or s.alive==false or s.role~="WR" or not memoryOpponent
+            or roundIdentity(s)~=o.key then o.invalid=true;return end
+        if s.phase~="Live" then
+            if o.lastAt then o.invalid=true end
+            return
+        end
+        local root,opponent=rootOf(player.Character),rootOf(s.opponent)
+        local position,other=root and root.Position,opponent and opponent.Position
+        local velocity=opponent and opponent.AssemblyLinearVelocity
+        local offset=s.offset or Vector3.zero
+        local now,yd=world:GetServerTimeNow(),Field.YD
+        local function validPoint(p)
+            return typeof(p)=="Vector3" and finite(p.X) and finite(p.Y) and finite(p.Z)
+        end
+        if not validPoint(position) or not validPoint(other) or not validPoint(velocity)
+            or not validPoint(offset) or not finite(now) or not finite(yd) or yd<=0
+            or not finite(Field.GoalZ) or not finite(Config.RunSpeed) or Config.RunSpeed<=0 then
+            o.invalid=true;return
+        end
+        if o.lastAt then
+            local dt=now-o.lastAt
+            if dt<0 or dt>.35 then o.invalid=true end
+            if dt<=0 then return end
+            o.seconds=o.seconds+dt
+            o.distance=o.distance+((other-o.lastOpponent)*Vector3.new(1,0,1)).Magnitude
+        else
+            o.seconds=0;o.distance=0;o.startZ=position.Z;o.yd=yd;o.allCamping=true
+        end
+        if o.yd~=yd then o.invalid=true end
+        local speed=(velocity*Vector3.new(1,0,1)).Magnitude
+        local separation=((other-position)*Vector3.new(1,0,1)).Magnitude
+        -- This labels an observed stationary deep defender, never intention or
+        -- future behavior. Accumulated path rejects out-and-back movement.
+        o.allCamping=o.allCamping and other.Z>=Field.GoalZ+offset.Z-yd
+            and speed<=Config.RunSpeed*.4 and separation>=4*yd
+        o.progress=(position.Z-o.startZ)/yd
+        o.lastAt,o.lastOpponent=now,other
+    end
+    local function attachCampingObservation(item)
+        freezeCampingObservation()
+        local o=campingObservation
+        local known=o and o.key==item.roundKey and not o.invalid
+            and (o.seconds or 0)>=1-1e-6 and (o.progress or 0)>=3-1e-6
+        item.campingObservationKnown=known==true
+        item.observedEndzoneCamping=known==true and o.allCamping==true and o.distance<=o.yd+1e-6
+        if o and o.key==item.roundKey and o.lastAt then
+            item.campingObservationSeconds=o.seconds
+            item.campingOwnProgressYards=o.progress
+            item.campingDefenderDisplacementYards=o.distance/o.yd
+        end
+    end
     local function recordOutcome(result,success)
         if not activeRoute then return end
         local item=descriptor(activeRoute)
+        if item then attachCampingObservation(item) end
         activeRoute=nil
+        campingObservation=nil
         finalSprintCommitted=false
         if not item then return end
         item.success=success;item.contested=result=="Swatted" or result=="Intercepted"
-        if result=="Catch" and success then item.catchSuccess=true end
+        if result=="Catch" and success then item.catchSuccess=true;ownPossessionObserved=true end
         item.result=result;item.time=world:GetServerTimeNow()
         recentRoutes[#recentRoutes+1]=item
         while #recentRoutes>6 do table.remove(recentRoutes,1) end
@@ -341,6 +432,7 @@ return function(ctx,Policy,services)
             stemSprintStart=choice and choice.stemSprintStart,estimatedCatchAt=choice and choice.estimatedCatchAt,
             earlyStemSprintSeconds=choice and choice.earlyStemSprintSeconds,
             stemRunSpeed=choice and choice.stemRunSpeed,
+            finalSprintReserve=choice and choice.finalSprintReserve,
             estimatedStemRegeneration=choice and choice.estimatedStemRegeneration,
             stemRecoveryUntil=stemRecoveryUntil,stemRecoverySpent=stemRecoverySpent,
             allowPostThrowStem=s.allowPostThrowStem==true,gravity=world.Gravity,
@@ -351,6 +443,8 @@ return function(ctx,Policy,services)
     end
     local function resetRound(key)
         local pending=activeRoute and activeRoute.roundKey==key and activeRoute or nil
+        if not pending then campingObservation=nil end
+        ownPossessionObserved=false
         roundKey=key;submitted=pending~=nil;nextSubmit=0;submitTries=0;observedSnapAt=nil
         observationStarted=world:GetServerTimeNow()
         hardCutIssued=false
@@ -366,6 +460,9 @@ return function(ctx,Policy,services)
     local function setup()
         local s=ctx.snapshot()
         syncOpponent(s)
+        if (s.phase=="RAC" or s.phase=="Run") and s.carrier==player.Character and s.carrier~=nil then
+            ownPossessionObserved=true
+        end
         if s.phase~=lastPhase then
             if s.phase=="PreSnap" then resetRound(roundIdentity(s)) end
             if s.phase=="Lobby" or s.phase=="Result" then
@@ -375,6 +472,7 @@ return function(ctx,Policy,services)
         end
         if finite(s.snapAt) then observedSnapAt=s.snapAt end
         local paused=pauseReason(s)
+        observeCamping(s,paused)
         if paused then message=paused;return end
         if s.phase=="Lobby" then message="Full auto · waiting for match";return end
         if s.phase=="Result" then message="Full auto · waiting for next round";return end
@@ -465,6 +563,8 @@ return function(ctx,Policy,services)
             stemTravelDistance=chosen.stemTravelDistance,postThrowStem=chosen.postThrowStem,
             stemDetour=chosen.stemDetour,forecastCount=chosen.forecastCount,
             cutAngle=chosen.cutAngle,estimatedCatchInsideGoal=chosen.estimatedCatchInsideGoal,rareBullet=chosen.rareBullet,
+            rareCampingBullet=chosen.rareCampingBullet,continuousBulletCatch=chosen.continuousBulletCatch,
+            carryMoveReserve=chosen.carryMoveReserve,
             pacedSlant=chosen.pacedSlant,slantWalkUntil=chosen.slantWalkUntil,slantSprintDuration=chosen.slantSprintDuration,
             sidelineFallback=chosen.sidelineFallback,sidelineFallbackReason=chosen.sidelineFallbackReason,
             diveWitnessElapsed=chosen.diveWitnessElapsed,diveWitnessX=chosen.diveWitnessX,
@@ -568,7 +668,8 @@ return function(ctx,Policy,services)
             stemRecoveryUntil=choice.stemRecoveryUntil
             stemRecoverySpent=math.min(.6,stemRecoverySpent+choice.stemRecoverySeconds)
         end
-        local hardCut=choice.finalSprintCommitted==true and input.routeStrategy=="deep_middle_floater"
+        local hardCut=choice.finalSprintCommitted==true
+            and (input.routeStrategy=="deep_middle_floater" or input.routeStrategy=="deep_middle_bullet")
             and not hardCutIssued
         if hardCut then hardCutIssued=true end
         laneSide,priorTarget=choice.laneSide,choice.target
@@ -615,8 +716,13 @@ return function(ctx,Policy,services)
                 stemRecoverySpent=stemRecoverySpent,
                 routeTimingDebt=choice.routeTimingDebt,routeTimingReason=choice.routeTimingReason})
         end
+        local avoidanceArrival
+        if input.role=="WR" and choice.kind=="route" and finite(choice.routeDeadline) and finite(input.elapsed) then
+            avoidanceArrival={targetPosition=choice.target,arriveBy=now+choice.routeDeadline-input.elapsed}
+        end
         return {direction=direction,sprint=moving and choice.sprint==true,message=message,
             hardCut=hardCut,
+            avoidanceArrival=avoidanceArrival,
             preserveDepth=choice.kind=="shadow"}
     end
     function api.navigate(s,root,h,now,dt)
@@ -637,7 +743,7 @@ return function(ctx,Policy,services)
         enabled=value==true
         errorMessage=nil
         laneSide,priorTarget,lastKind=nil,nil,nil
-        if not enabled then finalSprintCommitted=false end
+        if not enabled then finalSprintCommitted=false;clearCampingEvidence() end
         if not enabled and ctx.release then ctx.release() end
         message=enabled and "Full auto · ready" or "Full auto off"
         savePreferences()
@@ -647,6 +753,9 @@ return function(ctx,Policy,services)
     function api.onMatch(data)
         if not alive or type(data)~="table" then return end
         local s=ctx.snapshot();syncOpponent(s)
+        if (data.Phase=="RAC" or data.Phase=="Run")
+            and (data.Carrier==player or data.Carrier==player.Character and data.Carrier~=nil
+                or s.carrier==player.Character and s.carrier~=nil) then ownPossessionObserved=true end
         if finite(s.snapAt) then observedSnapAt=s.snapAt end
         if defenseContext(s) then
             if data.Phase=="Result" and data.Result=="Touchdown"
@@ -739,7 +848,10 @@ return function(ctx,Policy,services)
         end
         if eventType~="BallResult" and eventType~="Throw" then return end
         local s=ctx.snapshot();syncOpponent(s)
-        if data.Type=="Throw" then observeDefenseThrow(s,data);return end
+        if data.Type=="Throw" then
+            if activeRoute and s.role=="WR" then freezeCampingObservation() end
+            observeDefenseThrow(s,data);return
+        end
         if defenseContext(s) then
             if data.Result=="Catch" and enemyCaught(s,data.Catcher) then recordDefense("Catch",true)
             elseif data.Result=="Swatted" or data.Result=="Intercepted" or data.Result=="Incomplete" then
@@ -787,7 +899,7 @@ return function(ctx,Policy,services)
         if typeof(point)~="Vector2" or not finite(point.X) or not finite(point.Y) then point=nil end
         local stage
         local cut=routePlan and routePlan.Points and routePlan.Points[2]
-        if choice.routeStrategy=="deep_middle_floater" and choice.postThrowStem==true
+        if (choice.routeStrategy=="deep_middle_floater" or choice.routeStrategy=="deep_middle_bullet") and choice.postThrowStem==true
             and not finalSprintCommitted and finite(observedSnapAt) and finite(choice.cutAt)
             and finite(choice.stemSprintStart) and finite(choice.estimatedCatchAt)
             and typeof(cut)=="Vector2" and world:GetServerTimeNow()<observedSnapAt+choice.cutAt then
@@ -805,16 +917,28 @@ return function(ctx,Policy,services)
             routeStrategy=choice.routeStrategy,
             postThrowStem=stage,
             pass=selected and selected.payload.Pass or activeRoute.pass,
+            continuousBulletCatch=choice.rareCampingBullet==true and choice.continuousBulletCatch==true
+                and (selected and selected.payload.Pass or activeRoute.pass)=="Bullet",
             requireAirborne=true,requireDive=choice.requireDive==true,preferAirborne=true,
             preferJumpDive=choice.preferJumpDive==true,
             continuousSprint=finalSprintCommitted,finalSprint=finalSprintCommitted}
     end
     function api.movementBudget()
         if not alive or not enabled then return nil end
-        return {dbReserve=40,wrReserve=10}
+        -- Called while the core builds its snapshot: never recurse into it.
+        -- A rare short Bullet reserves one actual native carrier move until
+        -- confirmed possession; normal carrier decisions may then spend it.
+        local choice=selected or activeRoute
+        local reserve=10
+        if activeRoute and not ownPossessionObserved and choice and choice.rareCampingBullet==true
+            and (selected and selected.payload.Pass or activeRoute.pass)=="Bullet"
+            and finite(choice.carryReserve) and choice.carryReserve>=10
+            and choice.carryReserve<=(Config.Stamina or 100) then reserve=choice.carryReserve end
+        return {dbReserve=40,wrReserve=reserve}
     end
     function api.unload()
         if not alive then return end
+        clearCampingEvidence()
         alive=false;connection:Disconnect()
         if ctx.release then ctx.release() end
     end

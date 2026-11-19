@@ -415,6 +415,195 @@ return function(Policy,create,routeSource,Planner)
         assert(f.releases==1 and #f.submits==0 and f:navigate()==nil)
         f.api.unload();assert(f.releases==1)
     end)
+    local function observedRoute(body,flags)
+        local old=Policy.chooseScheduledRoute
+        Policy.chooseScheduledRoute=function()
+            local points={Vector2.new(0,15),Vector2.new(0,75),Vector2.new(-29,145)}
+            local choice={payload={Points=points,StartX=0,Pass="Floater"},plan=RouteMath.Plan(points,"Floater"),
+                shape="middle_left",depth=26,side=-1,routeStrategy="deep_middle_floater"}
+            for key,value in pairs(flags or {}) do choice[key]=value end
+            if choice.pass then choice.payload.Pass=choice.pass end
+            return choice
+        end
+        local ok,err=pcall(body)
+        Policy.chooseScheduledRoute=old
+        assert(ok,err)
+    end
+    local function startObservation(f,offset)
+        offset=offset or Vector3.zero
+        f.snapshot.offset=offset;f.snapshot.phase="Live";f.snapshot.snapAt=f.time
+        f.root.Position=Vector3.new(0,3,15)+offset
+        f.opponentRoot.Position=Vector3.new(0,3,Field.GoalZ)+offset
+        f.opponentRoot.AssemblyLinearVelocity=Vector3.zero
+        f:tick(.2)
+    end
+    local function observationStep(f,dz,dt)
+        f.root.Position=f.root.Position+Vector3.new(0,0,dz or 3)
+        f:tick(dt or .2)
+    end
+    local function finishObservation(f)
+        f.api.onFx({Type="Throw"})
+        f.api.onFx({Type="BallResult",Result="Incomplete"})
+        local history=f.api.status().sessionHistory.recentRoutes
+        return assert(history[#history])
+    end
+    test("two completed camping observations are ephemeral, bounded and frozen at the throw",function()
+        observedRoute(function()
+            local f=harness();f.api.setEnabled(true);f:settle()
+            for play=1,2 do
+                if play>1 then f.opponentRoot.AssemblyLinearVelocity=Vector3.zero;f:newRound(play) end
+                startObservation(f)
+                for _=1,6 do observationStep(f) end
+                assert(#f.api.status().sessionHistory.recentRoutes==play-1,"uncompleted play became evidence")
+                f.api.onFx({Type="Throw"})
+                f.snapshot.arc={};f.opponentRoot.Position=Vector3.new(0,3,30)
+                f.opponentRoot.AssemblyLinearVelocity=Vector3.new(0,0,27);f:tick(1)
+                f.api.onFx({Type="BallResult",Result="Incomplete"})
+                f.api.onFx({Type="BallResult",Result="Incomplete"})
+                local history=f.api.status().sessionHistory.recentRoutes
+                assert(#history==play and history[play].campingObservationKnown and history[play].observedEndzoneCamping)
+                assert(math.abs(history[play].campingObservationSeconds-1.2)<1e-6)
+                assert(math.abs(history[play].campingOwnProgressYards-3.6)<1e-6)
+                assert(history[play].campingDefenderDisplacementYards==0)
+                f.snapshot.arc=nil
+            end
+            for _,entry in ipairs(f.writes) do assert(entry.value.recentRoutes==nil and entry.value.observedEndzoneCamping==nil) end
+            local fresh=harness({previousState=f.api.status(),saved=f.writes[#f.writes].value})
+            assert(#fresh.api.status().sessionHistory.recentRoutes==0)
+        end)
+    end)
+    test("following, transient deep alignment and out-and-back travel do not qualify as camping",function()
+        observedRoute(function()
+            for _,scenario in ipairs({"following","transient","out-and-back"}) do
+                local f=harness();f.api.setEnabled(true);f:settle();startObservation(f)
+                for i=1,6 do
+                    if scenario=="following" then
+                        f.opponentRoot.Position=f.opponentRoot.Position+Vector3.new(0,0,3)
+                        f.opponentRoot.AssemblyLinearVelocity=Vector3.new(0,0,15)
+                    elseif scenario=="transient" and i==2 then
+                        f.opponentRoot.Position=Vector3.new(0,3,Field.GoalZ-2*Field.YD)
+                    elseif scenario=="transient" and i==3 then
+                        f.opponentRoot.Position=Vector3.new(0,3,Field.GoalZ)
+                    elseif scenario=="out-and-back" then
+                        f.opponentRoot.Position=Vector3.new(i%2==0 and 0 or 1,3,Field.GoalZ)
+                        f.opponentRoot.AssemblyLinearVelocity=Vector3.new(5,0,0)
+                    end
+                    observationStep(f)
+                end
+                local item=finishObservation(f)
+                assert(item.campingObservationKnown and not item.observedEndzoneCamping,scenario)
+                if scenario=="out-and-back" then assert(item.campingDefenderDisplacementYards>1) end
+            end
+        end)
+    end)
+    test("insufficient progress, short windows, missing observations and pauses stay unknown",function()
+        observedRoute(function()
+            for _,scenario in ipairs({"short","stationary","gap","missing","menu","unknown-velocity"}) do
+                local f=harness();f.api.setEnabled(true);f:settle();startObservation(f)
+                for i=1,scenario=="short" and 3 or 6 do
+                    if scenario=="missing" and i==3 then f.snapshot.opponent=nil end
+                    if scenario=="menu" and i==3 then f.gui.MenuIsOpen=true end
+                    if scenario=="unknown-velocity" and i==3 then f.opponentRoot.AssemblyLinearVelocity=nil end
+                    observationStep(f,scenario=="stationary" and 0 or 3,scenario=="gap" and i==3 and .6 or .2)
+                    f.snapshot.opponent=f.opponent;f.gui.MenuIsOpen=false;f.opponentRoot.AssemblyLinearVelocity=Vector3.zero
+                end
+                local item=finishObservation(f)
+                assert(item.campingObservationKnown==false and item.observedEndzoneCamping==false,scenario)
+            end
+        end)
+    end)
+    test("camping evidence uses the world goal offset and completed following resets the recent pair",function()
+        observedRoute(function()
+            local f=harness();f.api.setEnabled(true);f:settle()
+            startObservation(f,Vector3.new(400,20,700))
+            for _=1,6 do observationStep(f) end
+            assert(finishObservation(f).observedEndzoneCamping)
+            f:newRound(2);startObservation(f)
+            for _=1,6 do observationStep(f) end
+            assert(finishObservation(f).observedEndzoneCamping)
+            f:newRound(3);startObservation(f)
+            for _=1,6 do
+                f.opponentRoot.Position=f.opponentRoot.Position+Vector3.new(0,0,3)
+                f.opponentRoot.AssemblyLinearVelocity=Vector3.new(0,0,15);observationStep(f)
+            end
+            f.api.onMatch({Phase="Result",Result="Incomplete"})
+            local items=f.api.status().sessionHistory.recentRoutes
+            assert(#items==3 and items[2].observedEndzoneCamping and items[3].campingObservationKnown)
+            assert(items[3].observedEndzoneCamping==false)
+        end)
+    end)
+    test("explicit off, changed opponent and unload revoke camping evidence",function()
+        observedRoute(function()
+            for _,reset in ipairs({"off","opponent","unload"}) do
+                local f=harness();f.api.setEnabled(true);f:settle();startObservation(f)
+                for _=1,6 do observationStep(f) end
+                assert(finishObservation(f).observedEndzoneCamping)
+                f:newRound(2);startObservation(f);for _=1,6 do observationStep(f) end
+                if reset=="off" then
+                    f.api.setEnabled(false);f.api.setEnabled(true)
+                    assert(finishObservation(f).campingObservationKnown==false,"partial resumed play retained evidence")
+                elseif reset=="opponent" then f.accountId=456;f.api.status()
+                else f.api.unload() end
+                for _,item in ipairs(f.api.status().sessionHistory.recentRoutes) do
+                    assert(not item.observedEndzoneCamping and not item.campingObservationKnown,reset)
+                end
+            end
+        end)
+    end)
+    test("continuous Bullet catch intent is restricted to an explicitly selected rare camping Bullet",function()
+        for _,case in ipairs({{pass="Bullet",rareCampingBullet=true,continuousBulletCatch=true},
+            {pass="Bullet",continuousBulletCatch=true},{pass="Floater",rareCampingBullet=true,continuousBulletCatch=true},
+            {pass="Bullet",rareCampingBullet=true}}) do
+            observedRoute(function()
+                local f=harness();f.api.setEnabled(true);f:settle()
+                local intent=assert(f.api.catchIntent())
+                local expected=case.pass=="Bullet" and case.rareCampingBullet==true and case.continuousBulletCatch==true
+                assert(intent.continuousBulletCatch==expected)
+                assert(not intent.requireDive)
+            end,case)
+        end
+    end)
+    test("rare camping Bullet preserves its move reserve only until confirmed own possession",function()
+        observedRoute(function()
+            for _,notice in ipairs({"Catch","RAC"}) do
+                local f=harness();f.api.setEnabled(true);f:settle();f.snapshot.phase="Live"
+                assert(f.api.movementBudget().wrReserve==30 and f.api.movementBudget().dbReserve==40)
+                f.api.onFx({Type="BallResult",Result="Catch"})
+                assert(f.api.movementBudget().wrReserve==30,"unknown catcher released the carry reserve")
+                if notice=="Catch" then f.api.onFx({Type="BallResult",Result="Catch",Catcher=f.character})
+                else f.api.onMatch({Phase="RAC",Carrier=f.character}) end
+                assert(f.api.movementBudget().wrReserve==10,"confirmed carrier could not spend its reserved move")
+                f:newRound(2)
+                assert(f.api.movementBudget().wrReserve==30,"new route inherited old possession")
+                f.api.setEnabled(false);assert(f.api.movementBudget()==nil)
+            end
+        end,{pass="Bullet",rareCampingBullet=true,carryReserve=30})
+        for _,flags in ipairs({{pass="Floater",rareCampingBullet=true,carryReserve=30},
+            {pass="Bullet",carryReserve=30},{pass="Bullet",rareCampingBullet=true,carryReserve=math.huge},
+            {pass="Bullet",rareCampingBullet=true,carryReserve=101}}) do
+            observedRoute(function()
+                local f=harness();f.api.setEnabled(true);f:settle()
+                assert(f.api.movementBudget().wrReserve==10)
+            end,flags)
+        end
+    end)
+    test("only WR route navigation forwards an absolute observed avoidance arrival deadline",function()
+        local old=Policy.movement
+        local target=Vector3.new(20,3,60)
+        local kind,deadline="route",5
+        Policy.movement=function() return {kind=kind,target=target,routeDeadline=deadline,sprint=false} end
+        local ok,err=pcall(function()
+            local f=harness();f.api.setEnabled(true);f.time=100
+            f.snapshot.phase="Live";f.snapshot.snapAt=98
+            local request=assert(f:navigate())
+            assert(request.avoidanceArrival.targetPosition==target and request.avoidanceArrival.arriveBy==103)
+            f.snapshot.role="DB";assert(f:navigate().avoidanceArrival==nil)
+            f.snapshot.role="WR";kind="carry";assert(f:navigate().avoidanceArrival==nil)
+            kind="route";deadline=nil;assert(f:navigate().avoidanceArrival==nil)
+            deadline=5;f.snapshot.snapAt=nil;assert(f:navigate().avoidanceArrival==nil)
+        end)
+        Policy.movement=old;assert(ok,err)
+    end)
     Vector2,typeof=oldVector2,oldTypeof
     report.fixture="Authored offline services and geometry; locally supplied RouteMath is not copied or published. No server outcome claim."
     return report

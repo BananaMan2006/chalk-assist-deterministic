@@ -1,4 +1,4 @@
--- Chalk-Release: 5.1.9
+-- Chalk-Release: 5.1.11
 -- Chalk-Product: deterministic
 -- Chalk It Up DB/WR ball assist using normal sprint/jump/dive controls.
 -- Cyan: replicated route (when supplied). Yellow: movement estimate.
@@ -47,7 +47,7 @@ assert(matchEvent and fxEvent and matchEvent:IsA("RemoteEvent") and fxEvent:IsA(
     "Chalk It Up Match/Fx events were not found")
 
 local api = {}
-local RELEASE_VERSION="5.1.9"
+local RELEASE_VERSION="5.1.11"
 local loadedGameId,loadedPlaceId,loadedJobId=game.GameId,game.PlaceId,game.JobId
 env.ChalkDB = api
 local alive, enabled = true, true
@@ -944,7 +944,7 @@ end
 function api.status()
     local ch = characterOf(opponent)
     local holder,isEnemy,holderRole=carrierContext()
-    return {product="deterministic",version=RELEASE_VERSION,buildId="15c4c097417d461a0d53e3b990e4541088aa6b4f27791347b14fea1ec7ec93d5",policyMode="deterministic", enabled=enabled, role=role or "unknown",rawRole=rawRole or "unknown", phase=phase,
+    return {product="deterministic",version=RELEASE_VERSION,buildId="0a4a454b411f14599fb1e1fb803037e5a6d21f6be1b1c4f7f6d9312b7e91d94d",policyMode="deterministic", enabled=enabled, role=role or "unknown",rawRole=rawRole or "unknown", phase=phase,
         ui={visible=windowVisible,minimized=minimized,x=panel.Position.X.Offset,y=panel.Position.Y.Offset},
         matchAlerts={enabled=alertSettings.enabled,saveError=alertSettings.saveError},
         idleGuard=idleGuard and idleGuard.status() or nil,
@@ -1854,7 +1854,8 @@ function Planner.solve(s)
         end
     end
     local function consider(p,t)
-        if s.role=="WR" and s.passType=="Floater" and s.grounded and not p.diveAt
+        if s.role=="WR" and (s.passType=="Floater"
+            or s.passType=="Bullet" and s.continuousBulletCatch==true) and s.grounded and not p.diveAt
             and (p.kind=="jump" or p.kind=="move") and t>p._reaction+.06 then
             -- A moving receiver cannot stop instantly while airborne. Pace
             -- the approach before takeoff and keep ordinary input through the
@@ -3059,7 +3060,9 @@ function Motion.sprintState(previous,now,actualSpeed,sprinting,runSpeed,sprintSp
     local since=type(previous)=="table" and previous.since or nil
     if not finite(since) or since>now then since=now end
     local age=math.max(0,now-since)
-    return {since=since,age=age,pending=age>=.15}
+    -- The local acknowledgement can lead native speed by several frames.
+    -- Even the first forecast must use the speed actually observed.
+    return {since=since,age=age,pending=true}
 end
 -- A live movement penalty must affect the forecast. A delayed sprint request
 -- instead uses observed normal speed with scale1 until sprint is confirmed.
@@ -3071,7 +3074,6 @@ function Motion.locomotion(actualSpeed,sprinting,runSpeed,sprintSpeed,sprintSeco
     end
     local pending=scale==1 and sprinting and sprintSeconds>0
         and finite(actualSpeed) and actualSpeed>=runSpeed*.95 and actualSpeed<sprintSpeed*.95
-        and type(sprintState)=="table" and sprintState.pending==true
     local speed=pending and math.min(sprintSpeed,actualSpeed)
         or (sprintSeconds>0 and sprintSpeed or runSpeed)*scale
     return {walkSpeed=speed,runSpeed=pending and math.min(runSpeed,speed) or runSpeed*scale,
@@ -3224,6 +3226,15 @@ function Avoidance.update(previous,input)
     local horizon=clamp(finite(input.lookahead) and input.lookahead or .25,.1,.3)
     local height=clamp(finite(input.verticalClearance) and input.verticalClearance or 5,2,8)
     local turnRate=clamp(finite(input.turnRate) and input.turnRate or 8,2,12)
+    -- Catch approaches may have only a small travel margin. This optional
+    -- deadline never relaxes collision checks; it only avoids spending that
+    -- margin on a needlessly wide angle or a clear-path debounce hold.
+    local catchPath=vec(input.targetPosition) and finite(input.arriveBy)
+    local goalDelta=catchPath and (input.targetPosition-position)*FLAT or ZERO
+    local goalHeading=goalDelta.Magnitude>.001 and goalDelta.Unit or heading
+    local remaining=catchPath and math.max(0,input.arriveBy-now) or 0
+    local travelSlack=catchPath and math.max(0,remaining*speed*strength-goalDelta.Magnitude-.15) or nil
+    if not catchPath then state.returningForDeadline=nil end
 
     -- Position changes are authoritative for progress. Reported velocity can
     -- remain at 20/27 while another character physically stops our movement.
@@ -3325,9 +3336,17 @@ function Avoidance.update(previous,input)
             -- A single clear frame near the capsule boundary is not an exit.
             -- Retain the checked passing heading briefly so alternating clear/
             -- threatened frames cannot reverse the turn on every heartbeat.
-            if not state.returningToChangedGoal and now-state.clearSince<.12 then
+            local holdTime=math.max(0,.12-(now-state.clearSince))
+            local heldSprint=keepSprint(old.Unit)
+            local heldSpeed=heldSprint and speed*strength or speed*amount
+            local lostProgress=math.max(0,speed*strength*heading:Dot(goalHeading)
+                -heldSpeed*old.Unit:Dot(goalHeading))*holdTime
+            if catchPath and lostProgress>travelSlack+.000001 then
+                state.returningForDeadline=true
+            end
+            if not state.returningToChangedGoal and not state.returningForDeadline and now-state.clearSince<.12 then
                 local safe=evaluate(old.Unit,speed*amount)
-                local sprint=keepSprint(old.Unit)
+                local sprint=heldSprint
                 if safe or sprint then
                     state.heading,state.active=old.Unit,true
                     return state,decision(old.Unit*(sprint and strength or amount),sprint,true,false,"holding passing side",
@@ -3350,6 +3369,7 @@ function Avoidance.update(previous,input)
         end
         state.active,state.heading=false,current
         state.returningToChangedGoal=nil
+        state.returningForDeadline=nil
         state.clearSince=state.clearSince or now
         if now-state.clearSince>=.35 then state.side=nil end
         return state,decision(desired,requested,false,false,"clear",{progressSpeed=measured})
@@ -3363,11 +3383,16 @@ function Avoidance.update(previous,input)
     end
     local function candidate(side)
         local best
-        for _,degrees in ipairs({35,55,75,90}) do
+        local angles=catchPath and {5,10,15,20,25,30,35,40,45,50,55,60,65,70,75,80,85,90}
+            or {35,55,75,90}
+        for _,degrees in ipairs(angles) do
             local direction=rotate(heading,side*math.rad(degrees))
             local safe,gap,bounded=evaluate(direction,walkSpeed*strength)
             if safe then
-                local score=direction:Dot(heading)+math.min(gap,radius+3)*.015
+                -- Prefer the shortest safe turn on a timed catch path. Keep
+                -- the same passing side rather than alternating around the
+                -- defender as each new catch forecast changes slightly.
+                local score=direction:Dot(heading)+(catchPath and 0 or math.min(gap,radius+3)*.015)
                 if not best or score>best.score then best={direction=direction,score=score,side=side} end
             elseif bounded and nearest<radius then
                 -- Once overlapping, a sideways exit may initially touch the
@@ -4075,7 +4100,8 @@ return function(ctx, Planner, createTackle, WRApproach, Motion, createCarrierMov
                 finishGoal=goal+(s.offset and s.offset.Z or 0)
             end
         end
-        local directCut=s.catchIntent and s.catchIntent.routeStrategy=="deep_middle_floater"
+        local directCut=s.catchIntent and (s.catchIntent.routeStrategy=="deep_middle_floater"
+            or s.catchIntent.routeStrategy=="deep_middle_bullet")
         return {now=now, arc=s.arc, launchAt=s.launchAt,role=s.role,
             continuousApproach=not directCut and s.role=="WR" and s.catchIntent and s.catchIntent.deepFinish==true
                 and s.catchIntent.continuousSprint~=true,
@@ -4083,6 +4109,7 @@ return function(ctx, Planner, createTackle, WRApproach, Motion, createCarrierMov
             preferAirborne=s.role=="WR",
             requireAirborne=s.role=="WR",
             requireEndzoneCatch=s.role=="WR" and (s.passType or s.catchIntent and s.catchIntent.pass)=="Floater",
+            continuousBulletCatch=s.role=="WR" and s.catchIntent and s.catchIntent.continuousBulletCatch==true,
             -- Keep an upright aerial catch when the pass still needs a run
             -- after possession. Floater selection still races for its earliest
             -- robust airborne contact; a meaningful contested advantage may
@@ -4168,7 +4195,7 @@ return function(ctx, Planner, createTackle, WRApproach, Motion, createCarrierMov
         steering=Vector3.new(math.sin(a+turn),0,math.cos(a+turn))
         return steering
     end
-    local function avoidPlayers(s,root,h,now,dt,direction,requestedSprint,canDetour)
+    local function avoidPlayers(s,root,h,now,dt,direction,requestedSprint,canDetour,arrival)
         if not PlayerAvoidance or not s.playBudget then
             avoidanceState,avoidanceRoot,avoidancePhase,lastAvoidanceReason=nil,nil,nil,nil
             avoidanceStatus={active=false,blocked=false}
@@ -4198,10 +4225,11 @@ return function(ctx, Planner, createTackle, WRApproach, Motion, createCarrierMov
         avoidanceState,decision=PlayerAvoidance.update(avoidanceState,{now=now,dt=dt,
             position=root.Position,velocity=root.AssemblyLinearVelocity,desiredDirection=direction,
             opponents=opponents,bounds=bounds,requestedSprint=requestedSprint,walkSpeed=h.WalkSpeed,
+            targetPosition=arrival and arrival.targetPosition,arriveBy=arrival and arrival.arriveBy,
             runSpeed=Config.RunSpeed,currentDirection=steering,
             sprintSpeed=Config.SprintSpeed,
             allowSprintDetour=s.role=="WR" and s.phase=="Live" and s.catchIntent~=nil
-                and s.catchIntent.continuousSprint==true,
+                and (s.catchIntent.continuousSprint==true or s.arc~=nil and arrival~=nil),
             canDetour=canDetour and h.FloorMaterial~=Enum.Material.Air and not h.PlatformStand})
         -- The avoidance helper already limits its turns and checks that path.
         -- A second smoother could turn back inside the checked clearance.
@@ -4278,7 +4306,8 @@ return function(ctx, Planner, createTackle, WRApproach, Motion, createCarrierMov
             navigationIdleSince,navigationIdleRoot=nil,nil
         end
         local budget=sprintBudget(s)
-        local avoid=avoidPlayers(s,root,h,now,dt,flat,strength>0.001 and directive.sprint==true and budget.canSprint,true)
+        local avoid=avoidPlayers(s,root,h,now,dt,flat,strength>0.001 and directive.sprint==true and budget.canSprint,true,
+            s.role=="WR" and directive.avoidanceArrival or nil)
         flat=avoid.direction*Vector3.new(1,0,1)
         strength=math.min(flat.Magnitude,1)
         if strength>0.001 and avoid.sprint==true then
@@ -4792,8 +4821,10 @@ return function(ctx, Planner, createTackle, WRApproach, Motion, createCarrierMov
                     or (plan.diveAt or plan.timedArrival) and delta:Dot(plan.direction)<=0 and plan.direction
                     or (delta.Magnitude>0.1 and delta.Unit or plan.direction)
                 local actionAt=math.min(plan.jumpAt or math.huge,plan.diveAt or math.huge,plan.contactAt or math.huge)
+                local arrival=plan.kind~="pursue" and {targetPosition=plan.approachTarget,
+                    arriveBy=math.min(plan.stopAt or math.huge,plan.diveAt or math.huge,plan.contactAt or math.huge)} or nil
                 local avoid=avoidPlayers(s,root,h,now,dt,desired*(plan.movementScale or 1),sprintBudget(s).canSprint,
-                    not jumped and not jumpRequest and not dived and actionAt-now>.35)
+                    not jumped and not jumpRequest and not dived and actionAt-now>.35,arrival)
                 if avoid.sprint and me:GetAttribute("SprintOn")~=true then
                     ownsSprint=true;Moves.HoldSprint(true)
                     log("sprint",{position=xyz(root.Position),stamina=me:GetAttribute("Stamina")})
@@ -6173,6 +6204,146 @@ local function middleStemRoutes(input,Config,Field,RouteMath,los,stamina,opponen
     return candidates
 end
 
+local function repeatedEndzoneCamping(input,Config,Field)
+    local history=type(input.recentRoutes)=="table" and input.recentRoutes or {}
+    if input.role~="WR" or #history<2 or not vec(input.opponentPosition) or not vec(input.opponentVelocity) then return false end
+    local previousKey
+    for i=#history-1,#history do
+        local item=history[i]
+        if type(item)~="table" or item.campingObservationKnown~=true or item.observedEndzoneCamping~=true
+            or type(item.roundKey)~="string" or item.roundKey=="" or item.roundKey=="current"
+            or item.roundKey==previousKey then return false end
+        previousKey=item.roundKey
+    end
+    local offset=offsetOf(input)
+    return input.opponentPosition.Z>=Field.GoalZ+offset.Z-Field.YD
+        and input.opponentPosition.Z<=Field.EndZ+offset.Z
+        and (input.opponentVelocity*FLAT).Magnitude<=Config.RunSpeed*.4
+end
+
+-- A rare response to observed camping, not a default Bullet rotation. Keep
+-- the real Bullet arc and require a moving jump catch before the goal line.
+local function campingBullet(input,Config,Field,RouteMath,Planner,base)
+    local offset=offsetOf(input);local yd=Field.YD
+    local los=input.LOS or Field.LOSZ;local goal=Field.GoalZ+offset.Z
+    local mid=(Field.MinX+Field.MaxX)*.5
+    local run,sprint,drain=Config.RunSpeed,Config.SprintSpeed,Config.SprintDrain or 25
+    local moveCost=math.huge
+    for _,name in ipairs({"Juke","Spin"}) do
+        local move=Config.Moves and Config.Moves[name]
+        if move and finite(move.Cost) and move.Cost>0 then moveCost=math.min(moveCost,move.Cost) end
+    end
+    if not finite(moveCost) or not vec(input.position) or not finite(input.stamina) then return nil end
+    local reserve=10+moveCost
+    local rootY=input.position.Y;local turf=Field.TurfY or 0
+    local gravity=finite(input.gravity) and input.gravity>0 and input.gravity or 196.2
+    local jumpHeight=Config.JumpHeight or 6
+    local edge=math.max(1,Config.RouteEdgeMargin or 1)
+    local best,bestClearance;local forecasts=0
+    -- At most five yards before goal: the familiar deep stem remains intact.
+    for _,back in ipairs({3,4,5}) do
+        local stemYards=(Field.GoalZ-los)/yd-back
+        if stemYards>=10 then
+            for _,side in ipairs({base.side,-base.side}) do
+                for _,targetBack in ipairs({1,2}) do
+                    for _,width in ipairs({.8,1}) do
+                        local raw={Vector2.new(mid,los),Vector2.new(mid,Field.GoalZ-back*yd),
+                            Vector2.new(mid+side*((Field.MaxX-Field.MinX)*.5-edge)*width,Field.GoalZ-targetBack*yd)}
+                        local points=RouteMath.Sanitize(raw,mid,los)
+                        if #points==3 and (points[1]-raw[1]).Magnitude<.01 and (points[2]-raw[2]).Magnitude<.01 then
+                            local leg=points[3]-points[2]
+                            local angle=math.deg(math.acos(clamp(leg.Y/math.max(.001,leg.Magnitude),-1,1)))
+                            local plan=RouteMath.Plan(points,"Bullet")
+                            if angle>=60 and angle<=115 and side*leg.X>=2*yd and plan.Target.Y<Field.GoalZ-.25 then
+                                local cut=worldPoint(points[2],offset,rootY)
+                                for _,total in ipairs({1.2,1.6,2}) do
+                                    local early=math.min(.9,total)
+                                    local cutAt=(flatDistance(input.position,cut)-(sprint-run)*total)/run+.15
+                                    local late=cutAt-(total-early)
+                                    local regenRate=finite(Config.StaminaRegen) and math.max(0,Config.StaminaRegen) or 0
+                                    local regenDelay=finite(Config.RegenDelay) and Config.RegenDelay+.2 or INF
+                                    local regen=math.min(early*drain,math.max(0,late-early-regenDelay)*regenRate)
+                                    local stamina=input.stamina-total*drain+regen
+                                    -- A direct pre-cut forecast is sufficient only when the
+                                    -- whole stem precedes the actual Bullet launch.
+                                    if cutAt>=total+.15 and cutAt<=plan.Launch and stamina>reserve then
+                                        local snap={now=cutAt,launchAt=plan.Launch,role="WR",passType="Bullet",config=Config,
+                                            arc={P0=Vector3.new(mid+offset.X,turf+Config.ReleaseHeight,los-Config.QBBackYards*yd+offset.Z),
+                                                P1=worldPoint(plan.Target,offset,turf+Config.CatchHeight),Flight=plan.Flight,Apex=plan.Apex},
+                                            position=cut,velocity=Vector3.new(0,0,run),lookDirection=Vector3.new(0,0,1),
+                                            steeringDirection=Vector3.new(0,0,1),grounded=true,canJump=true,canDive=false,
+                                            gravity=gravity,jumpSpeed=math.sqrt(2*gravity*jumpHeight),groundRootY=rootY,
+                                            turfY=turf,diveTurfY=turf,diveDistance=0,walkSpeed=sprint,runSpeed=run,
+                                            sprintSeconds=math.max(0,(stamina-reserve)/drain-.12),chase=true,allowHold=false,
+                                            margin=.6,requireAirborne=true,preferAirborne=true,preferJumpDive=false,
+                                            continuousSprint=true,continuousBulletCatch=true,reactionDelay=.12,maxHorizon=3.5,
+                                            bounds={minX=Field.MinX+offset.X+.5,maxX=Field.MaxX+offset.X-.5,
+                                                minZ=Field.BackZ+offset.Z+.5,maxZ=Field.EndZ+offset.Z-.5}}
+                                        forecasts=forecasts+1
+                                        local witness=Planner.solve(snap)
+                                        if witness and witness.kind=="jump" and witness.airborneFinish=="jump"
+                                            and witness.continuousCatch==true and not witness.diveAt
+                                            and finite(witness.firstTouchAt) and finite(witness.stopAt)
+                                            and witness.stopAt>=witness.contactAt+(witness.timingMargin or .012) then
+                                            local firstPose=Planner.pose(snap,witness,witness.firstTouchAt)
+                                            local catch=firstPose and firstPose.Position
+                                            local beforeGoal=catch and catch.Z<goal-.25 and catch.Z>=goal-6*yd
+                                            for _,at in ipairs({witness.contactAt-.012,witness.contactAt,witness.contactAt+.012}) do
+                                                local cf,air=Planner.pose(snap,witness,at)
+                                                if not cf or not air or cf.Position.Z>=goal-.25 then beforeGoal=false end
+                                            end
+                                            local duration=witness.contactAt-cutAt+.12
+                                            local remaining=stamina-duration*drain
+                                            if beforeGoal and remaining>=reserve then
+                                                local exit=Vector3.new(catch.X,catch.Y,goal+.5)
+                                                local lane=(exit-catch)*FLAT
+                                                local relative=(input.opponentPosition-catch)*FLAT
+                                                local closest=catch+lane*clamp(relative:Dot(lane)/math.max(.001,lane:Dot(lane)),0,1)
+                                                local clearance=flatDistance(closest,input.opponentPosition)
+                                                local separation=flatDistance(catch,input.opponentPosition)
+                                                -- This is a known-position corridor check. It
+                                                -- does not assume the defender cannot react.
+                                                if clearance>=2.5*yd and separation>=5*yd
+                                                    and (not best or clearance>bestClearance+.05
+                                                        or math.abs(clearance-bestClearance)<=.05 and witness.firstTouchAt<best.estimatedFirstTouchAt) then
+                                                    local shape=side<0 and "middle_stem_left" or "middle_stem_right"
+                                                    local depth=(points[3].Y-los)/yd
+                                                    local family,signature=routeKeys("Bullet",shape,depth,side)
+                                                    best={payload={Points=points,StartX=mid,Pass="Bullet"},plan=plan,side=side,shape=shape,
+                                                        depth=depth,family=family,signature=signature,routeFamily="middle_stem",
+                                                        scheduledFamily="middle_stem",scheduledPass="Bullet",routeStrategy="deep_middle_bullet",
+                                                        rareBullet=true,rareCampingBullet=true,continuousBulletCatch=true,
+                                                        reachable=true,finishReachable=true,middleStemDeep=true,slowStem=true,
+                                                        slowStemTime=cutAt,slowStemSpeed=run,cutAt=cutAt,startSprintAt=cutAt,
+                                                        cutCount=1,lastCutAt=cutAt,stemYards=stemYards,stemRunSpeed=run,
+                                                        earlyStemSprintSeconds=early,stemSprintSeconds=total,stemSprintStart=late,
+                                                        estimatedStemRegeneration=regen,stemTravelDistance=flatDistance(input.position,cut),
+                                                        postThrowStem=false,finalSprint=true,finalSprintDuration=duration,
+                                                        finalSprintReserve=reserve,finalSprintStamina=remaining,carryReserve=reserve,
+                                                        carryMoveReserve=moveCost,carryClearance=clearance,estimatedSeparation=separation,
+                                                        estimatedCatchAt=witness.contactAt,estimatedFirstTouchAt=witness.firstTouchAt,
+                                                        estimatedStopAt=witness.stopAt,estimatedCatchZ=catch.Z-offset.Z,
+                                                        estimatedCatchStamina=remaining,estimatedContactMargin=witness.margin,
+                                                        estimatedCatchInsideGoal=false,ballTargetZ=plan.Target.Y,cutAngle=angle,
+                                                        requireDive=false,requireAirborne=true,preferAirborne=true,preferJumpDive=false,
+                                                        finishMode="airborne_required",cutDirection=side<0 and "left" or "right"}
+                                                    bestClearance=clearance
+                                                end
+                                            end
+                                        end
+                                    end
+                                end
+                            end
+                        end
+                    end
+                end
+            end
+        end
+    end
+    if best then best.forecastCount=(base.forecastCount or 0)+forecasts end
+    return best
+end
+
 -- Deep middle Floaters with alternating candidate sides. Observed coverage
 -- chooses among funded routes; one cycle slot may admit a checked rare Bullet.
 function Policy.chooseScheduledRoute(input,Config,Field,RouteMath,Planner)
@@ -6297,7 +6468,9 @@ function Policy.chooseScheduledRoute(input,Config,Field,RouteMath,Planner)
                             for _,stemSprint in ipairs({.4,.6,.8,1,1.2,1.4,1.6,1.8,2}) do
                                 local cutAt=(detourDistance-(sprint-run)*stemSprint)/run+.15+(shortField and .1 or 0)
                                 if shortField then cutAt=math.max(1.5,cutAt) end
-                                local earlySprint=math.min(.6,stemSprint)
+                                -- Reallocate the same bounded stem sprint earlier;
+                                -- the late burst shrinks by the same amount.
+                                local earlySprint=math.min(.9,stemSprint)
                                 local lateSprint=stemSprint-earlySprint
                                 local lateStart=cutAt-lateSprint
                                 local stemRun=shortField and clamp((detourDistance-sprint*stemSprint)
@@ -6459,40 +6632,11 @@ function Policy.chooseScheduledRoute(input,Config,Field,RouteMath,Planner)
             or stemYards==stems[#stems]) and preferredDeep or nil
         if c then
             c.forecastCount=forecastCount
-            -- A rare variation can only reuse the same deep, sharp middle
-            -- route and establish its own funded airborne endzone witness.
-            -- An unreachable Floater never turns into a Bullet fallback.
-            if index%20==19 and c.cutAngle>=60 then
-                local bullet=RouteMath.Plan(c.payload.Points,"Bullet")
-                local trial={}
-                for k,v in pairs(c._contactSnapshot) do trial[k]=v end
-                trial.now=c.cutAt;trial.launchAt=bullet.Launch;trial.passType="Bullet"
-                trial.arc={P0=trial.arc.P0,P1=worldPoint(bullet.Target,offset,turf+Config.CatchHeight),
-                    Flight=bullet.Flight,Apex=bullet.Apex}
-                trial.reactionDelay=.12;trial.canDive=false;trial.requireDive=false
-                trial.requireEndzoneCatch=false
-                trial.maxHorizon=math.min(3.5,bullet.Arrival-c.cutAt+.4)
-                -- The direct forecast starts at the cut. An earlier Bullet
-                -- launch would require a separate validated pre-cut handoff.
-                local witness=c.cutAt<=bullet.Launch and Planner.solve(trial) or nil
-                if witness and witness.kind=="jump" and witness.airborneFinish=="jump"
-                    and finite(witness.firstTouchAt) and finite(witness.stopAt) and witness.stopAt>=witness.firstTouchAt then
-                    local pose,air=Planner.pose(trial,witness,witness.contactAt)
-                    local firstAt=finite(witness.firstTouchAt) and witness.firstTouchAt or witness.contactAt
-                    local firstPose=Planner.pose(trial,witness,firstAt)
-                    local duration=witness.contactAt-c.cutAt+.12
-                    local remaining=c._staminaAtCut-duration*drain
-                    if pose and air and firstPose and firstPose.Position.Z>=Field.GoalZ+offset.Z and remaining>=reserve then
-                        c.payload.Pass,c.plan="Bullet",bullet
-                        c.family,c.signature=routeKeys("Bullet",c.shape,c.depth,c.side)
-                        c.scheduledPass="Bullet";c.rareBullet=true;c.postThrowStem=c.cutAt>bullet.Launch
-                        c.estimatedCatchAt=witness.contactAt;c.estimatedCatchZ=firstPose.Position.Z-offset.Z
-                        c.estimatedFirstTouchAt=firstAt;c.estimatedStopAt=witness.stopAt
-                        c.estimatedContactMargin=witness.margin;c.estimatedCatchStamina=remaining
-                        c.finalSprintDuration,c.finalSprintStamina=duration,remaining
-                        c.estimatedCatchInsideGoal=true
-                    end
-                end
+            -- Only a repeated, still-observed camper makes this slot eligible.
+            -- A failed counter-route remains the original funded Floater.
+            if index%20==19 and repeatedEndzoneCamping(input,Config,Field) then
+                local counter=campingBullet(input,Config,Field,RouteMath,Planner,c)
+                if counter then return counter end
             end
             c._contactSnapshot,c._staminaAtCut=nil,nil
             return c
@@ -7017,6 +7161,11 @@ function Policy.movement(input,Config,Field,RouteMath)
         -- instead of treating an already-running route as newly snapped.
         if not finite(input.elapsed) then return nil end
         local plan=input.routePlan
+        local deepStrategy=input.routeStrategy=="deep_middle_floater" or input.routeStrategy=="deep_middle_bullet"
+        local routeReserve=10
+        if input.routeStrategy=="deep_middle_bullet" then
+            routeReserve=finite(input.finalSprintReserve) and math.max(10,input.finalSprintReserve) or INF
+        end
         if input.pacedSlant==true and finite(input.slantWalkUntil)
             and type(plan)=="table" and type(plan.Points)=="table" and #plan.Points==2 then
             local committed=input.finalSprintCommitted==true or input.elapsed>=input.slantWalkUntil
@@ -7038,7 +7187,7 @@ function Policy.movement(input,Config,Field,RouteMath)
             local finalSprint=slowStem and (input.finalSprintCommitted==true
                 or input.elapsed>=input.slowStemTime)
             if slowStem and not finalSprint and index==2 and finite(plan.Arrival)
-                and input.routeStrategy~="deep_middle_floater" then
+                and not deepStrategy then
                 local remaining=input.slowStemTime-input.elapsed
                 local stem=worldPoint(plan.Points[2],offset,position.Y)
                 local origin=worldPoint(plan.Points[1],offset,position.Y)
@@ -7084,7 +7233,7 @@ function Policy.movement(input,Config,Field,RouteMath)
                 local scheduleCapacity,recoveryUntil,recoverySeconds
                 if slowStem and not finalSprint then
                     speed=math.min(run,speed)
-                    if input.routeStrategy=="deep_middle_floater" then
+                    if deepStrategy then
                         -- A short opening burst, normal running, then any
                         -- separately funded late burst. All later sprint is
                         -- reserved before spending the current burst.
@@ -7097,7 +7246,7 @@ function Policy.movement(input,Config,Field,RouteMath)
                         scheduleCapacity=stemRun*math.max(0,remaining)+(sprintSpeed-stemRun)*remainingBurst
                         local finalSeconds=math.max(0,finish-math.max(input.elapsed,deadline))+.12
                         local drain=Config.SprintDrain or 25
-                        local required=(remainingBurst+finalSeconds)*drain+10
+                        local required=(remainingBurst+finalSeconds)*drain+routeReserve
                         local openingCredit=0
                         if input.elapsed<early and finite(input.estimatedStemRegeneration) then
                             openingCredit=clamp(input.estimatedStemRegeneration,0,early*drain)
@@ -7113,7 +7262,7 @@ function Policy.movement(input,Config,Field,RouteMath)
                             and not input.ballActive and not input.passStarted
                             and debt>.75 and sprintSpeed>stemRun and spent<.6 then
                             local duration=math.min(.6-spent,late-input.elapsed,(debt+.15)/(sprintSpeed-stemRun)+.12)
-                            if duration>=.12 and stamina>=(remainingBurst+duration+finalSeconds)*drain+10 then
+                            if duration>=.12 and stamina>=(remainingBurst+duration+finalSeconds)*drain+routeReserve then
                                 recoveryUntil=input.elapsed+duration;recoverySeconds=duration
                                 recoveryActive=true;extraRemaining=duration
                             end
@@ -7141,7 +7290,7 @@ function Policy.movement(input,Config,Field,RouteMath)
                     end
                 end
                 local feint=false
-                if slowStem and not finalSprint and input.routeStrategy~="deep_middle_floater" and input.routeFamily and opponent
+                if slowStem and not finalSprint and not deepStrategy and input.routeFamily and opponent
                     and (input.routeSide==-1 or input.routeSide==1) and remaining>.5
                     and input.elapsed<input.slowStemTime*.5 and flatDistance(position,opponent)<5*yd then
                     -- A small running feint uses spare walking time, never the
@@ -7168,7 +7317,7 @@ function Policy.movement(input,Config,Field,RouteMath)
                 local sprint=speed>run+.05
                 if finalSprint then
                     local stamina=finite(input.stamina) and math.max(0,input.stamina) or 0
-                    sprint=stamina>10+math.max(1,(Config.SprintDrain or 25)*.1)
+                    sprint=stamina>routeReserve+math.max(1,(Config.SprintDrain or 25)*.1)
                     speed=sprint and sprintSpeed or run
                 end
                 local request=result(target,"route",sprint,.1)
@@ -7177,7 +7326,7 @@ function Policy.movement(input,Config,Field,RouteMath)
                 request.moveScale=speed/(sprint and sprintSpeed or run)
                 request.routeDeadline=deadline
                 request.finalSprintCommitted=finalSprint
-                request.hardCut=input.routeStrategy=="deep_middle_floater" and finalSprint
+                request.hardCut=deepStrategy and finalSprint
                     and input.finalSprintCommitted~=true
                 request.stemFeint=feint
                 request.stemRecoveryUntil=recoveryUntil
@@ -7406,6 +7555,8 @@ return function(ctx,Policy,services)
     local recentSelections,selectionIndex={},0
     local lastLateBendTrialTrigger
     local observationStarted
+    local campingObservation
+    local ownPossessionObserved=false
     local counters={routeRequests=0,rounds=0,pointsWon=0,pointsLost=0}
     local contactFxTimes={}
     local api={}
@@ -7463,7 +7614,9 @@ return function(ctx,Policy,services)
         end
         for _,key in ipairs({"estimatedCatchAt","estimatedCatchZ","estimatedFirstTouchAt","estimatedStopAt","estimatedContactMargin","stemSprintSeconds","stemSprintStart",
             "earlyStemSprintSeconds","stemRunSpeed","estimatedStemRegeneration","ballTargetZ","shortField",
-            "stemTravelDistance","postThrowStem","stemDetour","forecastCount","cutAngle","estimatedCatchInsideGoal","rareBullet"}) do
+            "stemTravelDistance","postThrowStem","stemDetour","forecastCount","cutAngle","estimatedCatchInsideGoal","rareBullet",
+            "rareCampingBullet","continuousBulletCatch","carryMoveReserve","observedEndzoneCamping","campingObservationKnown",
+            "campingObservationSeconds","campingOwnProgressYards","campingDefenderDisplacementYards"}) do
             local v=value[key]
             if type(v)=="boolean" or type(v)=="number" and v==v and math.abs(v)<math.huge then out[key]=v end
         end
@@ -7556,7 +7709,24 @@ return function(ctx,Policy,services)
     local function updateSessionHistory()
         memorySavedAt=world:GetServerTimeNow()
     end
+    local campingFields={"observedEndzoneCamping","campingObservationKnown","campingObservationSeconds",
+        "campingOwnProgressYards","campingDefenderDisplacementYards"}
+    local function clearCampingEvidence()
+        -- Explicit OFF/unload revokes this observation, including evidence from
+        -- completed plays. Ordinary route failures remain session-local.
+        for _,list in ipairs({recentRoutes,recentSelections}) do
+            for _,item in ipairs(list) do
+                for _,key in ipairs(campingFields) do item[key]=nil end
+            end
+        end
+        if activeRoute then
+            for _,key in ipairs(campingFields) do activeRoute[key]=nil end
+        end
+        campingObservation=activeRoute and {key=activeRoute.roundKey,invalid=true,frozen=true} or nil
+    end
     local function clearSessionHistory()
+        campingObservation=nil
+        ownPossessionObserved=false
         recentRoutes,activeRoute={},nil
         recentDefense,activeDefense={},nil
         recentSelections,selectionIndex={},0
@@ -7588,14 +7758,84 @@ return function(ctx,Policy,services)
     local function roundIdentity(s)
         return tostring(s.roundKey or s.preSnapEnds or "current")
     end
+    local function freezeCampingObservation()
+        local o=campingObservation
+        if not o or o.frozen then return end
+        local now=world:GetServerTimeNow()
+        if not finite(now) or not o.lastAt or now<o.lastAt or now-o.lastAt>.35 then o.invalid=true end
+        o.frozen=true
+    end
+    local function observeCamping(s,paused)
+        if not activeRoute then return end
+        local o=campingObservation
+        if not o or o.key~=activeRoute.roundKey then
+            o={key=activeRoute.roundKey};campingObservation=o
+        end
+        if o.frozen then return end
+        if s.arc~=nil or s.passStarted==true or s.phase=="RAC" or s.phase=="Run" or s.phase=="Result" then
+            freezeCampingObservation();return
+        end
+        if paused or s.alive==false or s.role~="WR" or not memoryOpponent
+            or roundIdentity(s)~=o.key then o.invalid=true;return end
+        if s.phase~="Live" then
+            if o.lastAt then o.invalid=true end
+            return
+        end
+        local root,opponent=rootOf(player.Character),rootOf(s.opponent)
+        local position,other=root and root.Position,opponent and opponent.Position
+        local velocity=opponent and opponent.AssemblyLinearVelocity
+        local offset=s.offset or Vector3.zero
+        local now,yd=world:GetServerTimeNow(),Field.YD
+        local function validPoint(p)
+            return typeof(p)=="Vector3" and finite(p.X) and finite(p.Y) and finite(p.Z)
+        end
+        if not validPoint(position) or not validPoint(other) or not validPoint(velocity)
+            or not validPoint(offset) or not finite(now) or not finite(yd) or yd<=0
+            or not finite(Field.GoalZ) or not finite(Config.RunSpeed) or Config.RunSpeed<=0 then
+            o.invalid=true;return
+        end
+        if o.lastAt then
+            local dt=now-o.lastAt
+            if dt<0 or dt>.35 then o.invalid=true end
+            if dt<=0 then return end
+            o.seconds=o.seconds+dt
+            o.distance=o.distance+((other-o.lastOpponent)*Vector3.new(1,0,1)).Magnitude
+        else
+            o.seconds=0;o.distance=0;o.startZ=position.Z;o.yd=yd;o.allCamping=true
+        end
+        if o.yd~=yd then o.invalid=true end
+        local speed=(velocity*Vector3.new(1,0,1)).Magnitude
+        local separation=((other-position)*Vector3.new(1,0,1)).Magnitude
+        -- This labels an observed stationary deep defender, never intention or
+        -- future behavior. Accumulated path rejects out-and-back movement.
+        o.allCamping=o.allCamping and other.Z>=Field.GoalZ+offset.Z-yd
+            and speed<=Config.RunSpeed*.4 and separation>=4*yd
+        o.progress=(position.Z-o.startZ)/yd
+        o.lastAt,o.lastOpponent=now,other
+    end
+    local function attachCampingObservation(item)
+        freezeCampingObservation()
+        local o=campingObservation
+        local known=o and o.key==item.roundKey and not o.invalid
+            and (o.seconds or 0)>=1-1e-6 and (o.progress or 0)>=3-1e-6
+        item.campingObservationKnown=known==true
+        item.observedEndzoneCamping=known==true and o.allCamping==true and o.distance<=o.yd+1e-6
+        if o and o.key==item.roundKey and o.lastAt then
+            item.campingObservationSeconds=o.seconds
+            item.campingOwnProgressYards=o.progress
+            item.campingDefenderDisplacementYards=o.distance/o.yd
+        end
+    end
     local function recordOutcome(result,success)
         if not activeRoute then return end
         local item=descriptor(activeRoute)
+        if item then attachCampingObservation(item) end
         activeRoute=nil
+        campingObservation=nil
         finalSprintCommitted=false
         if not item then return end
         item.success=success;item.contested=result=="Swatted" or result=="Intercepted"
-        if result=="Catch" and success then item.catchSuccess=true end
+        if result=="Catch" and success then item.catchSuccess=true;ownPossessionObserved=true end
         item.result=result;item.time=world:GetServerTimeNow()
         recentRoutes[#recentRoutes+1]=item
         while #recentRoutes>6 do table.remove(recentRoutes,1) end
@@ -7696,6 +7936,7 @@ return function(ctx,Policy,services)
             stemSprintStart=choice and choice.stemSprintStart,estimatedCatchAt=choice and choice.estimatedCatchAt,
             earlyStemSprintSeconds=choice and choice.earlyStemSprintSeconds,
             stemRunSpeed=choice and choice.stemRunSpeed,
+            finalSprintReserve=choice and choice.finalSprintReserve,
             estimatedStemRegeneration=choice and choice.estimatedStemRegeneration,
             stemRecoveryUntil=stemRecoveryUntil,stemRecoverySpent=stemRecoverySpent,
             allowPostThrowStem=s.allowPostThrowStem==true,gravity=world.Gravity,
@@ -7706,6 +7947,8 @@ return function(ctx,Policy,services)
     end
     local function resetRound(key)
         local pending=activeRoute and activeRoute.roundKey==key and activeRoute or nil
+        if not pending then campingObservation=nil end
+        ownPossessionObserved=false
         roundKey=key;submitted=pending~=nil;nextSubmit=0;submitTries=0;observedSnapAt=nil
         observationStarted=world:GetServerTimeNow()
         hardCutIssued=false
@@ -7721,6 +7964,9 @@ return function(ctx,Policy,services)
     local function setup()
         local s=ctx.snapshot()
         syncOpponent(s)
+        if (s.phase=="RAC" or s.phase=="Run") and s.carrier==player.Character and s.carrier~=nil then
+            ownPossessionObserved=true
+        end
         if s.phase~=lastPhase then
             if s.phase=="PreSnap" then resetRound(roundIdentity(s)) end
             if s.phase=="Lobby" or s.phase=="Result" then
@@ -7730,6 +7976,7 @@ return function(ctx,Policy,services)
         end
         if finite(s.snapAt) then observedSnapAt=s.snapAt end
         local paused=pauseReason(s)
+        observeCamping(s,paused)
         if paused then message=paused;return end
         if s.phase=="Lobby" then message="Full auto · waiting for match";return end
         if s.phase=="Result" then message="Full auto · waiting for next round";return end
@@ -7820,6 +8067,8 @@ return function(ctx,Policy,services)
             stemTravelDistance=chosen.stemTravelDistance,postThrowStem=chosen.postThrowStem,
             stemDetour=chosen.stemDetour,forecastCount=chosen.forecastCount,
             cutAngle=chosen.cutAngle,estimatedCatchInsideGoal=chosen.estimatedCatchInsideGoal,rareBullet=chosen.rareBullet,
+            rareCampingBullet=chosen.rareCampingBullet,continuousBulletCatch=chosen.continuousBulletCatch,
+            carryMoveReserve=chosen.carryMoveReserve,
             pacedSlant=chosen.pacedSlant,slantWalkUntil=chosen.slantWalkUntil,slantSprintDuration=chosen.slantSprintDuration,
             sidelineFallback=chosen.sidelineFallback,sidelineFallbackReason=chosen.sidelineFallbackReason,
             diveWitnessElapsed=chosen.diveWitnessElapsed,diveWitnessX=chosen.diveWitnessX,
@@ -7923,7 +8172,8 @@ return function(ctx,Policy,services)
             stemRecoveryUntil=choice.stemRecoveryUntil
             stemRecoverySpent=math.min(.6,stemRecoverySpent+choice.stemRecoverySeconds)
         end
-        local hardCut=choice.finalSprintCommitted==true and input.routeStrategy=="deep_middle_floater"
+        local hardCut=choice.finalSprintCommitted==true
+            and (input.routeStrategy=="deep_middle_floater" or input.routeStrategy=="deep_middle_bullet")
             and not hardCutIssued
         if hardCut then hardCutIssued=true end
         laneSide,priorTarget=choice.laneSide,choice.target
@@ -7970,8 +8220,13 @@ return function(ctx,Policy,services)
                 stemRecoverySpent=stemRecoverySpent,
                 routeTimingDebt=choice.routeTimingDebt,routeTimingReason=choice.routeTimingReason})
         end
+        local avoidanceArrival
+        if input.role=="WR" and choice.kind=="route" and finite(choice.routeDeadline) and finite(input.elapsed) then
+            avoidanceArrival={targetPosition=choice.target,arriveBy=now+choice.routeDeadline-input.elapsed}
+        end
         return {direction=direction,sprint=moving and choice.sprint==true,message=message,
             hardCut=hardCut,
+            avoidanceArrival=avoidanceArrival,
             preserveDepth=choice.kind=="shadow"}
     end
     function api.navigate(s,root,h,now,dt)
@@ -7992,7 +8247,7 @@ return function(ctx,Policy,services)
         enabled=value==true
         errorMessage=nil
         laneSide,priorTarget,lastKind=nil,nil,nil
-        if not enabled then finalSprintCommitted=false end
+        if not enabled then finalSprintCommitted=false;clearCampingEvidence() end
         if not enabled and ctx.release then ctx.release() end
         message=enabled and "Full auto · ready" or "Full auto off"
         savePreferences()
@@ -8002,6 +8257,9 @@ return function(ctx,Policy,services)
     function api.onMatch(data)
         if not alive or type(data)~="table" then return end
         local s=ctx.snapshot();syncOpponent(s)
+        if (data.Phase=="RAC" or data.Phase=="Run")
+            and (data.Carrier==player or data.Carrier==player.Character and data.Carrier~=nil
+                or s.carrier==player.Character and s.carrier~=nil) then ownPossessionObserved=true end
         if finite(s.snapAt) then observedSnapAt=s.snapAt end
         if defenseContext(s) then
             if data.Phase=="Result" and data.Result=="Touchdown"
@@ -8094,7 +8352,10 @@ return function(ctx,Policy,services)
         end
         if eventType~="BallResult" and eventType~="Throw" then return end
         local s=ctx.snapshot();syncOpponent(s)
-        if data.Type=="Throw" then observeDefenseThrow(s,data);return end
+        if data.Type=="Throw" then
+            if activeRoute and s.role=="WR" then freezeCampingObservation() end
+            observeDefenseThrow(s,data);return
+        end
         if defenseContext(s) then
             if data.Result=="Catch" and enemyCaught(s,data.Catcher) then recordDefense("Catch",true)
             elseif data.Result=="Swatted" or data.Result=="Intercepted" or data.Result=="Incomplete" then
@@ -8142,7 +8403,7 @@ return function(ctx,Policy,services)
         if typeof(point)~="Vector2" or not finite(point.X) or not finite(point.Y) then point=nil end
         local stage
         local cut=routePlan and routePlan.Points and routePlan.Points[2]
-        if choice.routeStrategy=="deep_middle_floater" and choice.postThrowStem==true
+        if (choice.routeStrategy=="deep_middle_floater" or choice.routeStrategy=="deep_middle_bullet") and choice.postThrowStem==true
             and not finalSprintCommitted and finite(observedSnapAt) and finite(choice.cutAt)
             and finite(choice.stemSprintStart) and finite(choice.estimatedCatchAt)
             and typeof(cut)=="Vector2" and world:GetServerTimeNow()<observedSnapAt+choice.cutAt then
@@ -8160,16 +8421,28 @@ return function(ctx,Policy,services)
             routeStrategy=choice.routeStrategy,
             postThrowStem=stage,
             pass=selected and selected.payload.Pass or activeRoute.pass,
+            continuousBulletCatch=choice.rareCampingBullet==true and choice.continuousBulletCatch==true
+                and (selected and selected.payload.Pass or activeRoute.pass)=="Bullet",
             requireAirborne=true,requireDive=choice.requireDive==true,preferAirborne=true,
             preferJumpDive=choice.preferJumpDive==true,
             continuousSprint=finalSprintCommitted,finalSprint=finalSprintCommitted}
     end
     function api.movementBudget()
         if not alive or not enabled then return nil end
-        return {dbReserve=40,wrReserve=10}
+        -- Called while the core builds its snapshot: never recurse into it.
+        -- A rare short Bullet reserves one actual native carrier move until
+        -- confirmed possession; normal carrier decisions may then spend it.
+        local choice=selected or activeRoute
+        local reserve=10
+        if activeRoute and not ownPossessionObserved and choice and choice.rareCampingBullet==true
+            and (selected and selected.payload.Pass or activeRoute.pass)=="Bullet"
+            and finite(choice.carryReserve) and choice.carryReserve>=10
+            and choice.carryReserve<=(Config.Stamina or 100) then reserve=choice.carryReserve end
+        return {dbReserve=40,wrReserve=reserve}
     end
     function api.unload()
         if not alive then return end
+        clearCampingEvidence()
         alive=false;connection:Disconnect()
         if ctx.release then ctx.release() end
     end
@@ -8804,7 +9077,7 @@ end
 
 end)()
 
-assist = createAssist({snapshot=api.context,version=RELEASE_VERSION,buildId="15c4c097417d461a0d53e3b990e4541088aa6b4f27791347b14fea1ec7ec93d5",fullplay=function(s,root,h,now,dt)
+assist = createAssist({snapshot=api.context,version=RELEASE_VERSION,buildId="0a4a454b411f14599fb1e1fb803037e5a6d21f6be1b1c4f7f6d9312b7e91d94d",fullplay=function(s,root,h,now,dt)
     if fullplay then return fullplay.navigate(s,root,h,now,dt) end
 end},Planner,createTackle,WRApproach,Motion,createCarrierMoves,PlayerAvoidance)
 assist.setEnabled(false)
@@ -8819,7 +9092,7 @@ repeatWR = createWRRepeat({snapshot=api.context,
     autoplay=function() return autoplay.status() end,
     disableAutoplay=function() return api.setAutoplay(false) end})
 repeatWR.setEnabled(false)
-fullplay = createFullplay({Planner=Planner,snapshot=api.context,version=RELEASE_VERSION,buildId="15c4c097417d461a0d53e3b990e4541088aa6b4f27791347b14fea1ec7ec93d5",
+fullplay = createFullplay({Planner=Planner,snapshot=api.context,version=RELEASE_VERSION,buildId="0a4a454b411f14599fb1e1fb803037e5a6d21f6be1b1c4f7f6d9312b7e91d94d",
     assistEnabled=function() return assist.status().enabled end,
     release=function() if assist.releaseFullplay then assist.releaseFullplay() end end},FullplayPolicy)
 fullplay.setEnabled(false)
@@ -8841,7 +9114,7 @@ local GAME_ID,PLACE_ID=10770281752,116097127629859
 local MAIN_URL="https://raw.githubusercontent.com/BananaMan2006/chalk-assist-deterministic/main/chalk-it-up-1v1.lua"
 local CACHE_FILE="chalk-deterministic-cache.lua"
 local MAIN_FILE="chalk-it-up-1v1.lua"
-local MIN_RELEASE="5.1.9"
+local MIN_RELEASE="5.1.11"
 local MARKER="__ChalkDeterministicAutoBoot"
 local env=type(getgenv)=="function" and getgenv() or _G
 local boot

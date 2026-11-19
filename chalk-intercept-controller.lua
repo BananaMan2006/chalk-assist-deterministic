@@ -301,7 +301,8 @@ return function(ctx, Planner, createTackle, WRApproach, Motion, createCarrierMov
                 finishGoal=goal+(s.offset and s.offset.Z or 0)
             end
         end
-        local directCut=s.catchIntent and s.catchIntent.routeStrategy=="deep_middle_floater"
+        local directCut=s.catchIntent and (s.catchIntent.routeStrategy=="deep_middle_floater"
+            or s.catchIntent.routeStrategy=="deep_middle_bullet")
         return {now=now, arc=s.arc, launchAt=s.launchAt,role=s.role,
             continuousApproach=not directCut and s.role=="WR" and s.catchIntent and s.catchIntent.deepFinish==true
                 and s.catchIntent.continuousSprint~=true,
@@ -309,6 +310,7 @@ return function(ctx, Planner, createTackle, WRApproach, Motion, createCarrierMov
             preferAirborne=s.role=="WR",
             requireAirborne=s.role=="WR",
             requireEndzoneCatch=s.role=="WR" and (s.passType or s.catchIntent and s.catchIntent.pass)=="Floater",
+            continuousBulletCatch=s.role=="WR" and s.catchIntent and s.catchIntent.continuousBulletCatch==true,
             -- Keep an upright aerial catch when the pass still needs a run
             -- after possession. Floater selection still races for its earliest
             -- robust airborne contact; a meaningful contested advantage may
@@ -394,7 +396,7 @@ return function(ctx, Planner, createTackle, WRApproach, Motion, createCarrierMov
         steering=Vector3.new(math.sin(a+turn),0,math.cos(a+turn))
         return steering
     end
-    local function avoidPlayers(s,root,h,now,dt,direction,requestedSprint,canDetour)
+    local function avoidPlayers(s,root,h,now,dt,direction,requestedSprint,canDetour,arrival)
         if not PlayerAvoidance or not s.playBudget then
             avoidanceState,avoidanceRoot,avoidancePhase,lastAvoidanceReason=nil,nil,nil,nil
             avoidanceStatus={active=false,blocked=false}
@@ -424,10 +426,11 @@ return function(ctx, Planner, createTackle, WRApproach, Motion, createCarrierMov
         avoidanceState,decision=PlayerAvoidance.update(avoidanceState,{now=now,dt=dt,
             position=root.Position,velocity=root.AssemblyLinearVelocity,desiredDirection=direction,
             opponents=opponents,bounds=bounds,requestedSprint=requestedSprint,walkSpeed=h.WalkSpeed,
+            targetPosition=arrival and arrival.targetPosition,arriveBy=arrival and arrival.arriveBy,
             runSpeed=Config.RunSpeed,currentDirection=steering,
             sprintSpeed=Config.SprintSpeed,
             allowSprintDetour=s.role=="WR" and s.phase=="Live" and s.catchIntent~=nil
-                and s.catchIntent.continuousSprint==true,
+                and (s.catchIntent.continuousSprint==true or s.arc~=nil and arrival~=nil),
             canDetour=canDetour and h.FloorMaterial~=Enum.Material.Air and not h.PlatformStand})
         -- The avoidance helper already limits its turns and checks that path.
         -- A second smoother could turn back inside the checked clearance.
@@ -504,7 +507,8 @@ return function(ctx, Planner, createTackle, WRApproach, Motion, createCarrierMov
             navigationIdleSince,navigationIdleRoot=nil,nil
         end
         local budget=sprintBudget(s)
-        local avoid=avoidPlayers(s,root,h,now,dt,flat,strength>0.001 and directive.sprint==true and budget.canSprint,true)
+        local avoid=avoidPlayers(s,root,h,now,dt,flat,strength>0.001 and directive.sprint==true and budget.canSprint,true,
+            s.role=="WR" and directive.avoidanceArrival or nil)
         flat=avoid.direction*Vector3.new(1,0,1)
         strength=math.min(flat.Magnitude,1)
         if strength>0.001 and avoid.sprint==true then
@@ -1018,8 +1022,10 @@ return function(ctx, Planner, createTackle, WRApproach, Motion, createCarrierMov
                     or (plan.diveAt or plan.timedArrival) and delta:Dot(plan.direction)<=0 and plan.direction
                     or (delta.Magnitude>0.1 and delta.Unit or plan.direction)
                 local actionAt=math.min(plan.jumpAt or math.huge,plan.diveAt or math.huge,plan.contactAt or math.huge)
+                local arrival=plan.kind~="pursue" and {targetPosition=plan.approachTarget,
+                    arriveBy=math.min(plan.stopAt or math.huge,plan.diveAt or math.huge,plan.contactAt or math.huge)} or nil
                 local avoid=avoidPlayers(s,root,h,now,dt,desired*(plan.movementScale or 1),sprintBudget(s).canSprint,
-                    not jumped and not jumpRequest and not dived and actionAt-now>.35)
+                    not jumped and not jumpRequest and not dived and actionAt-now>.35,arrival)
                 if avoid.sprint and me:GetAttribute("SprintOn")~=true then
                     ownsSprint=true;Moves.HoldSprint(true)
                     log("sprint",{position=xyz(root.Position),stamina=me:GetAttribute("Stamina")})

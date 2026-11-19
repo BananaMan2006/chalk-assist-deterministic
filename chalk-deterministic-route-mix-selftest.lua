@@ -48,10 +48,10 @@ return function(Policy,create,routeSource,Planner)
     end
     local function choose(value) return assert(Policy.chooseScheduledRoute(value,Config,Field,RouteMath,Planner)) end
 
-    test("automatic WR keeps deep middle Floaters with at most one checked Bullet slot",function()
+    test("automatic WR keeps Floaters even in the rare slot without observed camping",function()
         for _,cycle in ipairs({0,1,3,4,9,19}) do
             local c=choose(input({routeCycle=cycle}))
-            assert((c.payload.Pass=="Floater" or cycle==19 and c.payload.Pass=="Bullet") and c.payload.StartX==Field.MidX)
+            assert(c.payload.Pass=="Floater" and c.payload.StartX==Field.MidX)
             assert(c.routeFamily=="middle_stem" and c.scheduledFamily=="middle_stem")
             assert(c.stemYards>=Field.GoalZ/Field.YD*.65,"middle stem cut too early")
             assert(c.requireAirborne and not c.requireDive and not c.preferJumpDive)
@@ -62,6 +62,62 @@ return function(Policy,create,routeSource,Planner)
             end
             if c.payload.Pass=="Bullet" then assert(c.rareBullet and c.cutAt<=c.plan.Launch) end
         end
+    end)
+    local function campingInput(extra)
+        local p=input({routeCycle=19,opponentPosition=Vector3.new(Field.MidX,3,Field.GoalZ+2*Field.YD),
+            opponentVelocity=Vector3.zero,recentRoutes={
+                {roundKey="first",campingObservationKnown=true,observedEndzoneCamping=true},
+                {roundKey="second",campingObservationKnown=true,observedEndzoneCamping=true}}})
+        for key,value in pairs(extra or {}) do p[key]=value end
+        return p
+    end
+    test("repeated current camper permits a rare moving Bullet catch before goal with a move reserve",function()
+        local c=choose(campingInput())
+        assert(c.payload.Pass=="Bullet" and c.rareCampingBullet and c.rareBullet and c.continuousBulletCatch)
+        assert(c.routeStrategy=="deep_middle_bullet" and c.payload.StartX==Field.MidX)
+        assert(c.stemYards>=(Field.GoalZ/Field.YD)-5 and c.cutAngle>=60)
+        assert(c.cutAt<=c.plan.Launch and not c.postThrowStem)
+        assert(c.estimatedCatchZ<Field.GoalZ-.25 and c.estimatedCatchZ>=Field.GoalZ-6*Field.YD)
+        assert(not c.estimatedCatchInsideGoal and not c.requireDive and c.requireAirborne)
+        assert(c.estimatedStopAt>=c.estimatedCatchAt+.012 and c.estimatedFirstTouchAt<=c.estimatedCatchAt)
+        assert(c.finalSprintStamina>=10+Config.Moves.Juke.Cost and c.carryReserve>=30)
+        assert(c.carryClearance>=2.5*Field.YD and c.estimatedSeparation>=5*Field.YD)
+        local command=assert(Policy.movement(input({phase="Live",elapsed=.75,position=Vector3.new(0,3,20),
+            routePlan=c.plan,routeStrategy=c.routeStrategy,slowStem=true,slowStemTime=c.cutAt,
+            earlyStemSprintSeconds=c.earlyStemSprintSeconds,stemSprintStart=c.stemSprintStart,
+            estimatedStemRegeneration=c.estimatedStemRegeneration,estimatedCatchAt=c.estimatedCatchAt,
+            finalSprintReserve=c.finalSprintReserve,
+            middleStemDeep=true,routeWaypoint=2}),Config,Field,RouteMath))
+        assert(command.sprint and not command.stemFeint,"Bullet lost the funded middle-stem schedule")
+        local p=input({phase="Live",elapsed=c.cutAt,position=Vector3.new(0,3,c.stemYards*Field.YD),
+            routePlan=c.plan,routeStrategy=c.routeStrategy,slowStem=true,slowStemTime=c.cutAt,
+            middleStemDeep=true,routeWaypoint=2,stamina=c.carryReserve+1,finalSprintReserve=c.finalSprintReserve})
+        assert(not Policy.movement(p,Config,Field,RouteMath).sprint,"final approach spent the carrier move reserve")
+        p.finalSprintReserve=nil;p.stamina=100
+        assert(not Policy.movement(p,Config,Field,RouteMath).sprint,"missing rare-route reserve was guessed")
+    end)
+    test("camping evidence must cover two distinct recent plays and the opponent must still wait",function()
+        local cases={campingInput({routeCycle=18}),campingInput({routeCycle=20}),
+            campingInput({opponentVelocity=Vector3.new(Config.RunSpeed,0,0)}),
+            campingInput({opponentPosition=Vector3.new(0,3,Field.GoalZ-3*Field.YD)})}
+        local one=campingInput();table.remove(one.recentRoutes,1);cases[#cases+1]=one
+        local unknown=campingInput();unknown.recentRoutes[2].campingObservationKnown=false;cases[#cases+1]=unknown
+        local following=campingInput();following.recentRoutes[2].observedEndzoneCamping=false;cases[#cases+1]=following
+        local repeated=campingInput();repeated.recentRoutes[2].roundKey="first";cases[#cases+1]=repeated
+        local missing=campingInput();missing.opponentVelocity=nil;cases[#cases+1]=missing
+        for _,p in ipairs(cases) do assert(choose(p).payload.Pass=="Floater","unproven camping enabled a Bullet") end
+    end)
+    test("unfunded or parked Bullet counter-route preserves the Floater fallback",function()
+        local noBullet={pose=Planner.pose,forecastStem=Planner.forecastStem}
+        noBullet.solve=function(s)
+            local plan,why=Planner.solve(s)
+            if plan and s.passType=="Bullet" then plan.stopAt=plan.contactAt-.01 end
+            return plan,why
+        end
+        local c=assert(Policy.chooseScheduledRoute(campingInput(),Config,Field,RouteMath,noBullet))
+        assert(c.payload.Pass=="Floater" and not c.rareBullet,"parked counter-route was admitted")
+        c=choose(campingInput({stamina=20}))
+        assert(c.payload.Pass=="Floater" and not c.rareBullet,"low stamina enabled unfunded Bullet")
     end)
     test("both sharp-cut sides remain available without changing the middle start",function()
         local left=choose(input({routeCycle=0}));local right=choose(input({routeCycle=1}))
@@ -76,7 +132,7 @@ return function(Policy,create,routeSource,Planner)
     test("post-throw stem survives native sanitation and has a funded jump witness",function()
         local c=choose(input({position=Vector3.new(0,3,-2)}))
         assert(c.postThrowStem and c.cutAt>c.plan.Launch)
-        assert(c.stemSprintSeconds<=2 and c.earlyStemSprintSeconds>=.4 and c.earlyStemSprintSeconds<=.6)
+        assert(c.stemSprintSeconds<=2 and c.earlyStemSprintSeconds>=.4 and c.earlyStemSprintSeconds<=.9)
         assert(math.abs(c.stemSprintSeconds-(c.earlyStemSprintSeconds+c.cutAt-c.stemSprintStart))<1e-6)
         assert(c.estimatedContactMargin>=.6 and c.finalSprintStamina>=10)
         assert(c.estimatedCatchAt<c.plan.Arrival and c.estimatedCatchAt>c.cutAt)
@@ -153,6 +209,26 @@ return function(Policy,create,routeSource,Planner)
         p.stamina=15
         assert(not Policy.movement(p,Config,Field,RouteMath).sprint)
     end)
+    test("long opening sprint reallocates the late burst and later spending needs current stamina",function()
+        local c=choose(input())
+        assert(c.stemSprintSeconds>=.9 and c.earlyStemSprintSeconds==.9)
+        local late=c.cutAt-c.stemSprintStart
+        assert(math.abs(late-(c.stemSprintSeconds-.9))<1e-6 and c.stemSprintSeconds<=2)
+        local p=input({phase="Live",elapsed=.75,position=Vector3.new(0,3,20),routePlan=c.plan,
+            routeStrategy=c.routeStrategy,postThrowStem=c.postThrowStem,slowStem=true,slowStemTime=c.cutAt,
+            stemSprintStart=c.stemSprintStart,earlyStemSprintSeconds=c.earlyStemSprintSeconds,
+            estimatedStemRegeneration=c.estimatedStemRegeneration,estimatedCatchAt=c.estimatedCatchAt,
+            middleStemDeep=true,routeWaypoint=2})
+        assert(Policy.movement(p,Config,Field,RouteMath).sprint,"opening input ended at the old .6-second boundary")
+        p.elapsed=.95;p.position=Vector3.new(0,3,26)
+        assert(not Policy.movement(p,Config,Field,RouteMath).sprint,"opening input failed to release")
+        p.elapsed=c.stemSprintStart+.01;p.position=Vector3.new(0,3,c.stemYards*Field.YD-15)
+        local required=((c.cutAt-p.elapsed)+(c.estimatedCatchAt-c.cutAt+.12))*Config.SprintDrain+10
+        p.stamina=required-1
+        assert(not Policy.movement(p,Config,Field,RouteMath).sprint,"late burst borrowed future regeneration")
+        p.stamina=required+.01
+        assert(Policy.movement(p,Config,Field,RouteMath).sprint,"funded late burst was lost")
+    end)
     test("hard cut is a one-time movement directive and catch position uses first touch",function()
         local c=choose(input())
         assert(c.estimatedFirstTouchAt<=c.estimatedCatchAt)
@@ -202,6 +278,19 @@ return function(Policy,create,routeSource,Planner)
             assert(c.stemRunSpeed>0 and c.stemRunSpeed<Config.RunSpeed)
             assert(c.ballTargetZ>=Field.GoalZ+4*Field.YD and c.estimatedCatchZ>=Field.GoalZ+.25)
             assert(c.estimatedStopAt>=c.estimatedFirstTouchAt and c.finalSprintStamina>=10)
+        end
+    end)
+    test("opening reallocation retains funded Floaters across remaining field lengths",function()
+        for _,yards in ipairs({25,20,15,10,6,3,1,.25}) do
+            local los=Field.GoalZ-yards*Field.YD
+            local c=choose(input({LOS=los,position=Vector3.new(0,3,los-2)}))
+            assert(c.payload.Pass=="Floater" and c.reachable and not c.bestEffort,"lost funded Floater at "..yards)
+            assert(c.stemSprintSeconds<=2 and c.earlyStemSprintSeconds<=.9)
+            assert(math.abs(c.earlyStemSprintSeconds+c.cutAt-c.stemSprintStart-c.stemSprintSeconds)<1e-6)
+            assert(not c.postThrowStem or c.plan.Launch+.1>=c.earlyStemSprintSeconds,
+                "opening burst escaped the post-throw prefix budget")
+            assert(c.finalSprintStamina>=10 and c.estimatedStopAt>=c.estimatedFirstTouchAt)
+            assert(c.estimatedCatchZ>=Field.GoalZ+.25 and c.ballTargetZ>=Field.GoalZ+4*Field.YD)
         end
     end)
     test("regeneration forecast is bounded to spent opening sprint and needs native constants",function()

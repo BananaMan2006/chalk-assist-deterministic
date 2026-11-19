@@ -1,6 +1,32 @@
-# Evaluation scope · 5.1.9
+# Evaluation scope · 5.1.11
 
 This release continues the authored, deterministic controller. Its checks establish local rule behavior and packaging properties. **They do not demonstrate a live win rate, a winning streak, perfect catching, or improvement through training.** The release has no training system or shared model.
+
+## 5.1.11 scope
+
+Catch forecasts now use observed running speed from the first acknowledged but unconfirmed sprint request. The previous 150 ms grace period could predict sprint-speed travel before native speed had increased. Confirmation still restores the sprint-speed forecast; movement penalties remain a separate signal. This removes a demonstrated optimistic witness, but does not recover distance already lost to startup or a blocker.
+
+A rare Bullet counter requires repeated observed deep, stationary defense and current matching coverage, plus its own funded airborne catch and run-in clearance checks. It retains a middle stem and hard side cut, catches before the end zone while continuing to move, and preserves stamina for a native carrying move. It is not a routine Bullet fallback. Timing retains a small dispatch allowance rather than aiming for a literal last-millisecond input.
+
+WR route and catch-specific player avoidance receive the current approach point and arrival deadline so unnecessary side travel and holding can be reduced while collision and field-boundary checks retain priority. A live catch that takes over from an abandoned middle stem can also retain sprint on a checked clear bypass before the old cut deadline; touching, blocked or unsafe headings still reject sprint. In the first intermediate-build miss, logs showed walking detours before that deadline and sprinting detours afterward, consistent with the old gate tying permission to route commitment instead of current catch ownership. None of these checks disables native jams or guarantees an opponent cannot react.
+
+Local 5.1.11 validation passed 495 rule checks, 65 deterministic route/controller checks, 57 airborne checks and 15 build/install checks. A separate native-configuration fixture run passed 156 combined route/controller checks. These remain offline checks; the extracted native fixture is private and is not distributed.
+
+## Limited 5.1.11 live observation
+
+Two fully observed matches ended 4–0. Across eight completed throws, all four WR Floaters had native Catch followed by Touchdown, and all four DB throws were intercepted. No receiving incomplete, opponent catch or runtime error appeared in this bounded sample. The rare camping Bullet did not trigger, so its route and reserve validation remain offline evidence.
+
+Prethrow navigation included checked 5-degree, 10-degree and 25-degree bypasses rather than always starting with the old 35-degree candidate. Larger detours remained necessary around some obstacles. Opening sprint samples showed stamina decreasing from 100 to 84 and 87 on the first two receiving plays. These observations verify that the revised inputs were used; they do not isolate their causal effect on catches. No live postthrow bypass exercised the new safe-sprint handoff permission in this sample, and no claim is made that the native jam effect is removed.
+
+## 5.1.10 scope
+
+The maximum opening sprint within a deep-middle Floater schedule increases from 0.6 to 0.9 seconds. The total scheduled middle-stem sprint remains capped at two seconds; the later portion shrinks accordingly. The catch budget, conservative regeneration delay, fresh current-stamina checks, airborne contact and endzone gates remain in force. This is an allocation of the existing sprint budget, not extra speed or an instruction to burn stamina whenever the bar is full.
+
+In a private replay of the first two corrected 5.1.9 route inputs, the change retained the same twenty-yard middle stem, 48.23-degree cut, cut deadline and earliest contact. Scheduled progress before the late burst increased by 2.1 studs, and predicted final reserve increased by 7.5 stamina because more of the opening expenditure could recover before the final run. These are forecasts under unchanged inputs, not evidence of greater live separation or a sharper selected route. Live validation is recorded separately when available.
+
+## Limited 5.1.10 local observation (unpublished intermediate build)
+
+The first fully observed match ended 4–1, but WR had two Floater incompletes and one catch followed by a touchdown. DB recorded three interceptions. Neither incomplete dispatched a jump or dive or produced a local catch claim. In the first, repeated avoidance detours and a brief stop consumed travel after an initially reachable forecast. In the second, native speed remained at normal running speed while a sprint request was pending, and the initial witness disappeared before speed rose. These failures differ from the older midair stop/reversal defect. The observation does not establish that the opening-sprint allocation caused either miss, and it does not establish improved receiving from that allocation.
 
 ## 5.1.9 scope
 
@@ -23,6 +49,8 @@ The allowed defensive Floater had an on-time jump request, observed takeoff and 
 The inspected postthrow middle-stem continuations still failed the live capacity guard and yielded to catching. Thus these results validate actual receiving and the paced airborne correction, but do not establish reliable execution of the full planned twenty-yard middle stem under startup delay or avoidance. A proposed extra recovery burst was held back when its current catch-stamina check failed.
 
 Local validation: 485 rule checks, 52 deterministic route/controller checks, 56 airborne checks and 15 build/install checks passed. These offline checks do not reproduce native physics or server arbitration.
+
+The completed bounded corrected-build observation contained six 4–0 matches and two separate native forfeits at 2–0 and 0–0 with no explicit winner. Across 27 completed throws, WR recorded thirteen Floater catches followed by touchdowns, all with observed airborne first local contact inside the end zone. DB recorded thirteen interceptions and the one allowed Floater catch followed by a tackle. Twenty-seven jumps had observed takeoff; both WR dives began inside the end zone. No runtime errors were recorded. Three explicit WR jam notices occurred, and those receiving plays still ended in catches. One postthrow middle continuation moved 17.55 studs over 0.653 seconds before a sharp directional input; most other continuations yielded early. The forfeits are not counted as 4–0 wins or proof of an uninterrupted six-game streak. This bounded test is not a long-run reliability estimate.
 
 ## 5.1.9 initial live build (before the continuous-catch correction)
 

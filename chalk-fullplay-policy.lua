@@ -346,6 +346,146 @@ local function middleStemRoutes(input,Config,Field,RouteMath,los,stamina,opponen
     return candidates
 end
 
+local function repeatedEndzoneCamping(input,Config,Field)
+    local history=type(input.recentRoutes)=="table" and input.recentRoutes or {}
+    if input.role~="WR" or #history<2 or not vec(input.opponentPosition) or not vec(input.opponentVelocity) then return false end
+    local previousKey
+    for i=#history-1,#history do
+        local item=history[i]
+        if type(item)~="table" or item.campingObservationKnown~=true or item.observedEndzoneCamping~=true
+            or type(item.roundKey)~="string" or item.roundKey=="" or item.roundKey=="current"
+            or item.roundKey==previousKey then return false end
+        previousKey=item.roundKey
+    end
+    local offset=offsetOf(input)
+    return input.opponentPosition.Z>=Field.GoalZ+offset.Z-Field.YD
+        and input.opponentPosition.Z<=Field.EndZ+offset.Z
+        and (input.opponentVelocity*FLAT).Magnitude<=Config.RunSpeed*.4
+end
+
+-- A rare response to observed camping, not a default Bullet rotation. Keep
+-- the real Bullet arc and require a moving jump catch before the goal line.
+local function campingBullet(input,Config,Field,RouteMath,Planner,base)
+    local offset=offsetOf(input);local yd=Field.YD
+    local los=input.LOS or Field.LOSZ;local goal=Field.GoalZ+offset.Z
+    local mid=(Field.MinX+Field.MaxX)*.5
+    local run,sprint,drain=Config.RunSpeed,Config.SprintSpeed,Config.SprintDrain or 25
+    local moveCost=math.huge
+    for _,name in ipairs({"Juke","Spin"}) do
+        local move=Config.Moves and Config.Moves[name]
+        if move and finite(move.Cost) and move.Cost>0 then moveCost=math.min(moveCost,move.Cost) end
+    end
+    if not finite(moveCost) or not vec(input.position) or not finite(input.stamina) then return nil end
+    local reserve=10+moveCost
+    local rootY=input.position.Y;local turf=Field.TurfY or 0
+    local gravity=finite(input.gravity) and input.gravity>0 and input.gravity or 196.2
+    local jumpHeight=Config.JumpHeight or 6
+    local edge=math.max(1,Config.RouteEdgeMargin or 1)
+    local best,bestClearance;local forecasts=0
+    -- At most five yards before goal: the familiar deep stem remains intact.
+    for _,back in ipairs({3,4,5}) do
+        local stemYards=(Field.GoalZ-los)/yd-back
+        if stemYards>=10 then
+            for _,side in ipairs({base.side,-base.side}) do
+                for _,targetBack in ipairs({1,2}) do
+                    for _,width in ipairs({.8,1}) do
+                        local raw={Vector2.new(mid,los),Vector2.new(mid,Field.GoalZ-back*yd),
+                            Vector2.new(mid+side*((Field.MaxX-Field.MinX)*.5-edge)*width,Field.GoalZ-targetBack*yd)}
+                        local points=RouteMath.Sanitize(raw,mid,los)
+                        if #points==3 and (points[1]-raw[1]).Magnitude<.01 and (points[2]-raw[2]).Magnitude<.01 then
+                            local leg=points[3]-points[2]
+                            local angle=math.deg(math.acos(clamp(leg.Y/math.max(.001,leg.Magnitude),-1,1)))
+                            local plan=RouteMath.Plan(points,"Bullet")
+                            if angle>=60 and angle<=115 and side*leg.X>=2*yd and plan.Target.Y<Field.GoalZ-.25 then
+                                local cut=worldPoint(points[2],offset,rootY)
+                                for _,total in ipairs({1.2,1.6,2}) do
+                                    local early=math.min(.9,total)
+                                    local cutAt=(flatDistance(input.position,cut)-(sprint-run)*total)/run+.15
+                                    local late=cutAt-(total-early)
+                                    local regenRate=finite(Config.StaminaRegen) and math.max(0,Config.StaminaRegen) or 0
+                                    local regenDelay=finite(Config.RegenDelay) and Config.RegenDelay+.2 or INF
+                                    local regen=math.min(early*drain,math.max(0,late-early-regenDelay)*regenRate)
+                                    local stamina=input.stamina-total*drain+regen
+                                    -- A direct pre-cut forecast is sufficient only when the
+                                    -- whole stem precedes the actual Bullet launch.
+                                    if cutAt>=total+.15 and cutAt<=plan.Launch and stamina>reserve then
+                                        local snap={now=cutAt,launchAt=plan.Launch,role="WR",passType="Bullet",config=Config,
+                                            arc={P0=Vector3.new(mid+offset.X,turf+Config.ReleaseHeight,los-Config.QBBackYards*yd+offset.Z),
+                                                P1=worldPoint(plan.Target,offset,turf+Config.CatchHeight),Flight=plan.Flight,Apex=plan.Apex},
+                                            position=cut,velocity=Vector3.new(0,0,run),lookDirection=Vector3.new(0,0,1),
+                                            steeringDirection=Vector3.new(0,0,1),grounded=true,canJump=true,canDive=false,
+                                            gravity=gravity,jumpSpeed=math.sqrt(2*gravity*jumpHeight),groundRootY=rootY,
+                                            turfY=turf,diveTurfY=turf,diveDistance=0,walkSpeed=sprint,runSpeed=run,
+                                            sprintSeconds=math.max(0,(stamina-reserve)/drain-.12),chase=true,allowHold=false,
+                                            margin=.6,requireAirborne=true,preferAirborne=true,preferJumpDive=false,
+                                            continuousSprint=true,continuousBulletCatch=true,reactionDelay=.12,maxHorizon=3.5,
+                                            bounds={minX=Field.MinX+offset.X+.5,maxX=Field.MaxX+offset.X-.5,
+                                                minZ=Field.BackZ+offset.Z+.5,maxZ=Field.EndZ+offset.Z-.5}}
+                                        forecasts=forecasts+1
+                                        local witness=Planner.solve(snap)
+                                        if witness and witness.kind=="jump" and witness.airborneFinish=="jump"
+                                            and witness.continuousCatch==true and not witness.diveAt
+                                            and finite(witness.firstTouchAt) and finite(witness.stopAt)
+                                            and witness.stopAt>=witness.contactAt+(witness.timingMargin or .012) then
+                                            local firstPose=Planner.pose(snap,witness,witness.firstTouchAt)
+                                            local catch=firstPose and firstPose.Position
+                                            local beforeGoal=catch and catch.Z<goal-.25 and catch.Z>=goal-6*yd
+                                            for _,at in ipairs({witness.contactAt-.012,witness.contactAt,witness.contactAt+.012}) do
+                                                local cf,air=Planner.pose(snap,witness,at)
+                                                if not cf or not air or cf.Position.Z>=goal-.25 then beforeGoal=false end
+                                            end
+                                            local duration=witness.contactAt-cutAt+.12
+                                            local remaining=stamina-duration*drain
+                                            if beforeGoal and remaining>=reserve then
+                                                local exit=Vector3.new(catch.X,catch.Y,goal+.5)
+                                                local lane=(exit-catch)*FLAT
+                                                local relative=(input.opponentPosition-catch)*FLAT
+                                                local closest=catch+lane*clamp(relative:Dot(lane)/math.max(.001,lane:Dot(lane)),0,1)
+                                                local clearance=flatDistance(closest,input.opponentPosition)
+                                                local separation=flatDistance(catch,input.opponentPosition)
+                                                -- This is a known-position corridor check. It
+                                                -- does not assume the defender cannot react.
+                                                if clearance>=2.5*yd and separation>=5*yd
+                                                    and (not best or clearance>bestClearance+.05
+                                                        or math.abs(clearance-bestClearance)<=.05 and witness.firstTouchAt<best.estimatedFirstTouchAt) then
+                                                    local shape=side<0 and "middle_stem_left" or "middle_stem_right"
+                                                    local depth=(points[3].Y-los)/yd
+                                                    local family,signature=routeKeys("Bullet",shape,depth,side)
+                                                    best={payload={Points=points,StartX=mid,Pass="Bullet"},plan=plan,side=side,shape=shape,
+                                                        depth=depth,family=family,signature=signature,routeFamily="middle_stem",
+                                                        scheduledFamily="middle_stem",scheduledPass="Bullet",routeStrategy="deep_middle_bullet",
+                                                        rareBullet=true,rareCampingBullet=true,continuousBulletCatch=true,
+                                                        reachable=true,finishReachable=true,middleStemDeep=true,slowStem=true,
+                                                        slowStemTime=cutAt,slowStemSpeed=run,cutAt=cutAt,startSprintAt=cutAt,
+                                                        cutCount=1,lastCutAt=cutAt,stemYards=stemYards,stemRunSpeed=run,
+                                                        earlyStemSprintSeconds=early,stemSprintSeconds=total,stemSprintStart=late,
+                                                        estimatedStemRegeneration=regen,stemTravelDistance=flatDistance(input.position,cut),
+                                                        postThrowStem=false,finalSprint=true,finalSprintDuration=duration,
+                                                        finalSprintReserve=reserve,finalSprintStamina=remaining,carryReserve=reserve,
+                                                        carryMoveReserve=moveCost,carryClearance=clearance,estimatedSeparation=separation,
+                                                        estimatedCatchAt=witness.contactAt,estimatedFirstTouchAt=witness.firstTouchAt,
+                                                        estimatedStopAt=witness.stopAt,estimatedCatchZ=catch.Z-offset.Z,
+                                                        estimatedCatchStamina=remaining,estimatedContactMargin=witness.margin,
+                                                        estimatedCatchInsideGoal=false,ballTargetZ=plan.Target.Y,cutAngle=angle,
+                                                        requireDive=false,requireAirborne=true,preferAirborne=true,preferJumpDive=false,
+                                                        finishMode="airborne_required",cutDirection=side<0 and "left" or "right"}
+                                                    bestClearance=clearance
+                                                end
+                                            end
+                                        end
+                                    end
+                                end
+                            end
+                        end
+                    end
+                end
+            end
+        end
+    end
+    if best then best.forecastCount=(base.forecastCount or 0)+forecasts end
+    return best
+end
+
 -- Deep middle Floaters with alternating candidate sides. Observed coverage
 -- chooses among funded routes; one cycle slot may admit a checked rare Bullet.
 function Policy.chooseScheduledRoute(input,Config,Field,RouteMath,Planner)
@@ -470,7 +610,9 @@ function Policy.chooseScheduledRoute(input,Config,Field,RouteMath,Planner)
                             for _,stemSprint in ipairs({.4,.6,.8,1,1.2,1.4,1.6,1.8,2}) do
                                 local cutAt=(detourDistance-(sprint-run)*stemSprint)/run+.15+(shortField and .1 or 0)
                                 if shortField then cutAt=math.max(1.5,cutAt) end
-                                local earlySprint=math.min(.6,stemSprint)
+                                -- Reallocate the same bounded stem sprint earlier;
+                                -- the late burst shrinks by the same amount.
+                                local earlySprint=math.min(.9,stemSprint)
                                 local lateSprint=stemSprint-earlySprint
                                 local lateStart=cutAt-lateSprint
                                 local stemRun=shortField and clamp((detourDistance-sprint*stemSprint)
@@ -632,40 +774,11 @@ function Policy.chooseScheduledRoute(input,Config,Field,RouteMath,Planner)
             or stemYards==stems[#stems]) and preferredDeep or nil
         if c then
             c.forecastCount=forecastCount
-            -- A rare variation can only reuse the same deep, sharp middle
-            -- route and establish its own funded airborne endzone witness.
-            -- An unreachable Floater never turns into a Bullet fallback.
-            if index%20==19 and c.cutAngle>=60 then
-                local bullet=RouteMath.Plan(c.payload.Points,"Bullet")
-                local trial={}
-                for k,v in pairs(c._contactSnapshot) do trial[k]=v end
-                trial.now=c.cutAt;trial.launchAt=bullet.Launch;trial.passType="Bullet"
-                trial.arc={P0=trial.arc.P0,P1=worldPoint(bullet.Target,offset,turf+Config.CatchHeight),
-                    Flight=bullet.Flight,Apex=bullet.Apex}
-                trial.reactionDelay=.12;trial.canDive=false;trial.requireDive=false
-                trial.requireEndzoneCatch=false
-                trial.maxHorizon=math.min(3.5,bullet.Arrival-c.cutAt+.4)
-                -- The direct forecast starts at the cut. An earlier Bullet
-                -- launch would require a separate validated pre-cut handoff.
-                local witness=c.cutAt<=bullet.Launch and Planner.solve(trial) or nil
-                if witness and witness.kind=="jump" and witness.airborneFinish=="jump"
-                    and finite(witness.firstTouchAt) and finite(witness.stopAt) and witness.stopAt>=witness.firstTouchAt then
-                    local pose,air=Planner.pose(trial,witness,witness.contactAt)
-                    local firstAt=finite(witness.firstTouchAt) and witness.firstTouchAt or witness.contactAt
-                    local firstPose=Planner.pose(trial,witness,firstAt)
-                    local duration=witness.contactAt-c.cutAt+.12
-                    local remaining=c._staminaAtCut-duration*drain
-                    if pose and air and firstPose and firstPose.Position.Z>=Field.GoalZ+offset.Z and remaining>=reserve then
-                        c.payload.Pass,c.plan="Bullet",bullet
-                        c.family,c.signature=routeKeys("Bullet",c.shape,c.depth,c.side)
-                        c.scheduledPass="Bullet";c.rareBullet=true;c.postThrowStem=c.cutAt>bullet.Launch
-                        c.estimatedCatchAt=witness.contactAt;c.estimatedCatchZ=firstPose.Position.Z-offset.Z
-                        c.estimatedFirstTouchAt=firstAt;c.estimatedStopAt=witness.stopAt
-                        c.estimatedContactMargin=witness.margin;c.estimatedCatchStamina=remaining
-                        c.finalSprintDuration,c.finalSprintStamina=duration,remaining
-                        c.estimatedCatchInsideGoal=true
-                    end
-                end
+            -- Only a repeated, still-observed camper makes this slot eligible.
+            -- A failed counter-route remains the original funded Floater.
+            if index%20==19 and repeatedEndzoneCamping(input,Config,Field) then
+                local counter=campingBullet(input,Config,Field,RouteMath,Planner,c)
+                if counter then return counter end
             end
             c._contactSnapshot,c._staminaAtCut=nil,nil
             return c
@@ -1190,6 +1303,11 @@ function Policy.movement(input,Config,Field,RouteMath)
         -- instead of treating an already-running route as newly snapped.
         if not finite(input.elapsed) then return nil end
         local plan=input.routePlan
+        local deepStrategy=input.routeStrategy=="deep_middle_floater" or input.routeStrategy=="deep_middle_bullet"
+        local routeReserve=10
+        if input.routeStrategy=="deep_middle_bullet" then
+            routeReserve=finite(input.finalSprintReserve) and math.max(10,input.finalSprintReserve) or INF
+        end
         if input.pacedSlant==true and finite(input.slantWalkUntil)
             and type(plan)=="table" and type(plan.Points)=="table" and #plan.Points==2 then
             local committed=input.finalSprintCommitted==true or input.elapsed>=input.slantWalkUntil
@@ -1211,7 +1329,7 @@ function Policy.movement(input,Config,Field,RouteMath)
             local finalSprint=slowStem and (input.finalSprintCommitted==true
                 or input.elapsed>=input.slowStemTime)
             if slowStem and not finalSprint and index==2 and finite(plan.Arrival)
-                and input.routeStrategy~="deep_middle_floater" then
+                and not deepStrategy then
                 local remaining=input.slowStemTime-input.elapsed
                 local stem=worldPoint(plan.Points[2],offset,position.Y)
                 local origin=worldPoint(plan.Points[1],offset,position.Y)
@@ -1257,7 +1375,7 @@ function Policy.movement(input,Config,Field,RouteMath)
                 local scheduleCapacity,recoveryUntil,recoverySeconds
                 if slowStem and not finalSprint then
                     speed=math.min(run,speed)
-                    if input.routeStrategy=="deep_middle_floater" then
+                    if deepStrategy then
                         -- A short opening burst, normal running, then any
                         -- separately funded late burst. All later sprint is
                         -- reserved before spending the current burst.
@@ -1270,7 +1388,7 @@ function Policy.movement(input,Config,Field,RouteMath)
                         scheduleCapacity=stemRun*math.max(0,remaining)+(sprintSpeed-stemRun)*remainingBurst
                         local finalSeconds=math.max(0,finish-math.max(input.elapsed,deadline))+.12
                         local drain=Config.SprintDrain or 25
-                        local required=(remainingBurst+finalSeconds)*drain+10
+                        local required=(remainingBurst+finalSeconds)*drain+routeReserve
                         local openingCredit=0
                         if input.elapsed<early and finite(input.estimatedStemRegeneration) then
                             openingCredit=clamp(input.estimatedStemRegeneration,0,early*drain)
@@ -1286,7 +1404,7 @@ function Policy.movement(input,Config,Field,RouteMath)
                             and not input.ballActive and not input.passStarted
                             and debt>.75 and sprintSpeed>stemRun and spent<.6 then
                             local duration=math.min(.6-spent,late-input.elapsed,(debt+.15)/(sprintSpeed-stemRun)+.12)
-                            if duration>=.12 and stamina>=(remainingBurst+duration+finalSeconds)*drain+10 then
+                            if duration>=.12 and stamina>=(remainingBurst+duration+finalSeconds)*drain+routeReserve then
                                 recoveryUntil=input.elapsed+duration;recoverySeconds=duration
                                 recoveryActive=true;extraRemaining=duration
                             end
@@ -1314,7 +1432,7 @@ function Policy.movement(input,Config,Field,RouteMath)
                     end
                 end
                 local feint=false
-                if slowStem and not finalSprint and input.routeStrategy~="deep_middle_floater" and input.routeFamily and opponent
+                if slowStem and not finalSprint and not deepStrategy and input.routeFamily and opponent
                     and (input.routeSide==-1 or input.routeSide==1) and remaining>.5
                     and input.elapsed<input.slowStemTime*.5 and flatDistance(position,opponent)<5*yd then
                     -- A small running feint uses spare walking time, never the
@@ -1341,7 +1459,7 @@ function Policy.movement(input,Config,Field,RouteMath)
                 local sprint=speed>run+.05
                 if finalSprint then
                     local stamina=finite(input.stamina) and math.max(0,input.stamina) or 0
-                    sprint=stamina>10+math.max(1,(Config.SprintDrain or 25)*.1)
+                    sprint=stamina>routeReserve+math.max(1,(Config.SprintDrain or 25)*.1)
                     speed=sprint and sprintSpeed or run
                 end
                 local request=result(target,"route",sprint,.1)
@@ -1350,7 +1468,7 @@ function Policy.movement(input,Config,Field,RouteMath)
                 request.moveScale=speed/(sprint and sprintSpeed or run)
                 request.routeDeadline=deadline
                 request.finalSprintCommitted=finalSprint
-                request.hardCut=input.routeStrategy=="deep_middle_floater" and finalSprint
+                request.hardCut=deepStrategy and finalSprint
                     and input.finalSprintCommitted~=true
                 request.stemFeint=feint
                 request.stemRecoveryUntil=recoveryUntil

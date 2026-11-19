@@ -55,6 +55,21 @@ return function(Planner,source)
         assert(p and p.airborneFinish=="jump" and not p.diveAt and p.jumpAt,why)
         assert(p.margin>=s.margin and not p.risk)
     end)
+    test("explicit counter-camping Bullet keeps moving through an airborne catch before goal",function()
+        local s=fixture();s.passType="Bullet";s.preferJumpDive=false;s.canDive=false
+        s.wrDiveGoalZ=30;s.continuousBulletCatch=true
+        local p,why=Planner.solve(s)
+        assert(p and p.kind=="jump" and p.continuousCatch and not p.diveAt,why)
+        assert(p.movementScale>=.45 and p.movementScale<=1 and p.stopAt>=p.contactAt+.012)
+        local first,air=Planner.pose(s,p,p.firstTouchAt)
+        assert(air and first.Position.Z<s.wrDiveGoalZ and p.margin>=s.margin)
+        local before=Planner.pose(s,p,p.contactAt-.012).Position
+        local after=Planner.pose(s,p,p.contactAt+.012).Position
+        assert(((after-before)*Vector3.new(1,0,1)):Dot(p.direction)>.1)
+        s.continuousBulletCatch=false
+        local ordinary=assert(Planner.solve(s))
+        assert(not ordinary.continuousCatch,"ordinary Bullets must not silently opt into the new approach")
+    end)
     local function advanceToJump(s,p,late)
         local fresh={}for key,value in pairs(s)do fresh[key]=value end
         fresh.now=p.jumpAt+late

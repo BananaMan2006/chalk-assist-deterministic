@@ -446,5 +446,111 @@ return function(Avoidance)
         assert(sprintDetour and slowTurn and clear,"did not exercise slow turn and safe sprint bypass")
         assert(minDistance>=3.6,"retaining sprint entered the physical capsule")
     end)
+    test("timed catch takes a small clear bypass instead of the first coarse35degree angle",function()
+        local p=fixture({dt=.1,walkSpeed=20,requestedSprint=false,
+            opponents={{position=Vector3.new(3.6,0,4),velocity=Vector3.zero}}})
+        local _,ordinary=Avoidance.update(nil,p)
+        p.targetPosition=Vector3.new(0,0,30);p.arriveBy=1.5
+        local state,d=Avoidance.update(nil,p)
+        assert(d.active and state.side==-1 and not d.sprint)
+        local angle=math.acos(math.clamp(d.direction.Unit:Dot(p.desiredDirection),-1,1))
+        assert(angle<=math.rad(10)+1e-6 and angle>0,"small safe passing angle was skipped")
+        assert(d.direction.Z>ordinary.direction.Z,"refinement did not reduce sideways travel")
+        local relative=p.opponents[1].position-p.position
+        local velocity=-d.direction*p.walkSpeed
+        local at=math.clamp(-relative:Dot(velocity)/velocity:Dot(velocity),0,.25)
+        assert((relative+velocity*at).Magnitude>=3.75-1e-6,"shorter path crossed the capsule")
+        legal(p,d.direction)
+    end)
+    test("catch with no travel slack returns without spending the clearpath hold",function()
+        local old=Vector3.new(-math.sin(math.rad(35)),0,math.cos(math.rad(35)))
+        local p=fixture({now=.05,walkSpeed=20,requestedSprint=false,currentDirection=old,
+            targetPosition=Vector3.new(0,0,30),arriveBy=1.55})
+        local previous={active=true,heading=old,side=-1,desiredHeading=p.desiredDirection,clearSince=.04}
+        local state,d=Avoidance.update(previous,p)
+        assert(d.reason=="returning to path" and state.returningForDeadline)
+        assert(state.heading:Dot(p.desiredDirection)>old:Dot(p.desiredDirection))
+        assert(math.acos(math.clamp(state.heading:Dot(old),-1,1))<=8*p.dt+1e-6)
+        assert(previous.returningForDeadline==nil,"deadline decision mutated prior state")
+        for _=1,3 do
+            p.now=p.now+p.dt;p.currentDirection=state.heading
+            local before=state.heading
+            state,d=Avoidance.update(state,p)
+            assert(d.reason~="holding passing side","deadline return restarted the old hold")
+            assert(state.heading:Dot(p.desiredDirection)>=before:Dot(p.desiredDirection)-1e-6)
+            legal(p,d.direction)
+        end
+    end)
+    test("funded catch path retains ordinary boundary hysteresis",function()
+        local old=Vector3.new(-math.sin(math.rad(35)),0,math.cos(math.rad(35)))
+        local p=fixture({now=.05,walkSpeed=20,requestedSprint=false,currentDirection=old,
+            targetPosition=Vector3.new(0,0,10),arriveBy=2})
+        local state,d=Avoidance.update({active=true,heading=old,side=-1,clearSince=.04},p)
+        assert(d.reason=="holding passing side" and not state.returningForDeadline)
+        same(d.direction,old)
+    end)
+    test("expired catch deadline cannot bypass collision or field bounds",function()
+        local p=fixture({now=1,targetPosition=Vector3.new(0,0,20),arriveBy=.9,
+            allowSprintDetour=true,sprintSpeed=27,bounds={minX=-1,maxX=1,minZ=-10,maxZ=30},
+            opponents={{position=Vector3.new(0,0,3.5),velocity=Vector3.zero}}})
+        local _,d=Avoidance.update(nil,p)
+        same(d.direction,Vector3.zero);assert(d.active and not d.sprint)
+        legal(p,d.direction)
+    end)
+    test("deadline return still checks the bounded currentheading collision",function()
+        local old=Vector3.new(1,0,0)
+        local p=fixture({now=.05,currentDirection=old,targetPosition=Vector3.new(0,0,30),arriveBy=.5,
+            allowSprintDetour=true,sprintSpeed=27,
+            opponents={{position=Vector3.new(4.5,0,0),velocity=Vector3.zero}}})
+        local state,d=Avoidance.update({active=true,heading=old,side=-1,clearSince=.04},p)
+        assert(d.active and not d.sprint)
+        local relative=p.opponents[1].position-p.position
+        local velocity=-d.direction*p.walkSpeed
+        local at=velocity:Dot(velocity)>.000001
+            and math.clamp(-relative:Dot(velocity)/velocity:Dot(velocity),0,.25) or 0
+        assert((relative+velocity*at).Magnitude>=3.75-1e-6)
+        assert(math.acos(math.clamp(state.heading:Dot(old),-1,1))<=8*p.dt+1e-6)
+        legal(p,d.direction)
+    end)
+    test("malformed optional deadlines preserve default avoidance",function()
+        local p=fixture({now=.05,walkSpeed=20,currentDirection=Vector3.new(1,0,1).Unit})
+        local previous={active=true,heading=p.currentDirection,side=1,clearSince=.04}
+        local _,expected=Avoidance.update(previous,p)
+        for _,deadline in ipairs({false,0/0,math.huge}) do
+            p.targetPosition=Vector3.new(0,0,20);p.arriveBy=deadline
+            local _,d=Avoidance.update(previous,p)
+            same(d.direction,expected.direction);assert(d.reason==expected.reason and d.sprint==expected.sprint)
+        end
+        p.arriveBy=1;p.targetPosition=Vector3.new(0/0,0,20)
+        local _,d=Avoidance.update(previous,p);same(d.direction,expected.direction)
+    end)
+    test("timed bypass keeps one side and reduces lateral distance in authored movement",function()
+        local function run(timed)
+            local p=fixture({allowSprintDetour=true,sprintSpeed=27,
+                opponents={{position=Vector3.new(0,0,8),velocity=Vector3.zero}}})
+            local goal=Vector3.new(0,0,35)
+            if timed then p.targetPosition=goal;p.arriveBy=1.3 end
+            local state,side,path,minimum=nil,nil,0,math.huge
+            for _=1,200 do
+                p.desiredDirection=(goal-p.position).Unit
+                local d;state,d=Avoidance.update(state,p)
+                if d.side then side=side or d.side;assert(d.side==side,"timed bypass switched sides") end
+                legal(p,d.direction)
+                local step=d.direction*p.walkSpeed*p.dt
+                p.position=p.position+step;path=path+step.Magnitude
+                minimum=math.min(minimum,(p.position-p.opponents[1].position).Magnitude)
+                p.walkSpeed=d.sprint and 27 or 20
+                p.currentDirection=state.heading or p.desiredDirection;p.now=p.now+p.dt
+                if not d.active and p.position.Z>16 then return path,minimum end
+            end
+            error("timed bypass never returned to the path")
+        end
+        local ordinary=run(false)
+        local timed,minimum=run(true)
+        assert(timed<ordinary-.3,"shorter safe angles did not reduce the detour")
+        assert(minimum>=3.75-1e-6,"deadline spent physical capsule clearance")
+        -- This fixture integrates requested movement directly. It does not
+        -- claim Roblox inertia, latency, or a catch outcome is reproduced.
+    end)
     return report
 end

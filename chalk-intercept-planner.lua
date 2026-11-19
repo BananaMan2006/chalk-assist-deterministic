@@ -592,7 +592,8 @@ function Planner.solve(s)
         end
     end
     local function consider(p,t)
-        if s.role=="WR" and s.passType=="Floater" and s.grounded and not p.diveAt
+        if s.role=="WR" and (s.passType=="Floater"
+            or s.passType=="Bullet" and s.continuousBulletCatch==true) and s.grounded and not p.diveAt
             and (p.kind=="jump" or p.kind=="move") and t>p._reaction+.06 then
             -- A moving receiver cannot stop instantly while airborne. Pace
             -- the approach before takeoff and keep ordinary input through the

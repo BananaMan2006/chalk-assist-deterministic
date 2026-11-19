@@ -86,6 +86,15 @@ function Avoidance.update(previous,input)
     local horizon=clamp(finite(input.lookahead) and input.lookahead or .25,.1,.3)
     local height=clamp(finite(input.verticalClearance) and input.verticalClearance or 5,2,8)
     local turnRate=clamp(finite(input.turnRate) and input.turnRate or 8,2,12)
+    -- Catch approaches may have only a small travel margin. This optional
+    -- deadline never relaxes collision checks; it only avoids spending that
+    -- margin on a needlessly wide angle or a clear-path debounce hold.
+    local catchPath=vec(input.targetPosition) and finite(input.arriveBy)
+    local goalDelta=catchPath and (input.targetPosition-position)*FLAT or ZERO
+    local goalHeading=goalDelta.Magnitude>.001 and goalDelta.Unit or heading
+    local remaining=catchPath and math.max(0,input.arriveBy-now) or 0
+    local travelSlack=catchPath and math.max(0,remaining*speed*strength-goalDelta.Magnitude-.15) or nil
+    if not catchPath then state.returningForDeadline=nil end
 
     -- Position changes are authoritative for progress. Reported velocity can
     -- remain at 20/27 while another character physically stops our movement.
@@ -187,9 +196,17 @@ function Avoidance.update(previous,input)
             -- A single clear frame near the capsule boundary is not an exit.
             -- Retain the checked passing heading briefly so alternating clear/
             -- threatened frames cannot reverse the turn on every heartbeat.
-            if not state.returningToChangedGoal and now-state.clearSince<.12 then
+            local holdTime=math.max(0,.12-(now-state.clearSince))
+            local heldSprint=keepSprint(old.Unit)
+            local heldSpeed=heldSprint and speed*strength or speed*amount
+            local lostProgress=math.max(0,speed*strength*heading:Dot(goalHeading)
+                -heldSpeed*old.Unit:Dot(goalHeading))*holdTime
+            if catchPath and lostProgress>travelSlack+.000001 then
+                state.returningForDeadline=true
+            end
+            if not state.returningToChangedGoal and not state.returningForDeadline and now-state.clearSince<.12 then
                 local safe=evaluate(old.Unit,speed*amount)
-                local sprint=keepSprint(old.Unit)
+                local sprint=heldSprint
                 if safe or sprint then
                     state.heading,state.active=old.Unit,true
                     return state,decision(old.Unit*(sprint and strength or amount),sprint,true,false,"holding passing side",
@@ -212,6 +229,7 @@ function Avoidance.update(previous,input)
         end
         state.active,state.heading=false,current
         state.returningToChangedGoal=nil
+        state.returningForDeadline=nil
         state.clearSince=state.clearSince or now
         if now-state.clearSince>=.35 then state.side=nil end
         return state,decision(desired,requested,false,false,"clear",{progressSpeed=measured})
@@ -225,11 +243,16 @@ function Avoidance.update(previous,input)
     end
     local function candidate(side)
         local best
-        for _,degrees in ipairs({35,55,75,90}) do
+        local angles=catchPath and {5,10,15,20,25,30,35,40,45,50,55,60,65,70,75,80,85,90}
+            or {35,55,75,90}
+        for _,degrees in ipairs(angles) do
             local direction=rotate(heading,side*math.rad(degrees))
             local safe,gap,bounded=evaluate(direction,walkSpeed*strength)
             if safe then
-                local score=direction:Dot(heading)+math.min(gap,radius+3)*.015
+                -- Prefer the shortest safe turn on a timed catch path. Keep
+                -- the same passing side rather than alternating around the
+                -- defender as each new catch forecast changes slightly.
+                local score=direction:Dot(heading)+(catchPath and 0 or math.min(gap,radius+3)*.015)
                 if not best or score>best.score then best={direction=direction,score=score,side=side} end
             elseif bounded and nearest<radius then
                 -- Once overlapping, a sideways exit may initially touch the

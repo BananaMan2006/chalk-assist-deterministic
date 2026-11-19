@@ -29,7 +29,9 @@ function Motion.sprintState(previous,now,actualSpeed,sprinting,runSpeed,sprintSp
     local since=type(previous)=="table" and previous.since or nil
     if not finite(since) or since>now then since=now end
     local age=math.max(0,now-since)
-    return {since=since,age=age,pending=age>=.15}
+    -- The local acknowledgement can lead native speed by several frames.
+    -- Even the first forecast must use the speed actually observed.
+    return {since=since,age=age,pending=true}
 end
 -- A live movement penalty must affect the forecast. A delayed sprint request
 -- instead uses observed normal speed with scale1 until sprint is confirmed.
@@ -41,7 +43,6 @@ function Motion.locomotion(actualSpeed,sprinting,runSpeed,sprintSpeed,sprintSeco
     end
     local pending=scale==1 and sprinting and sprintSeconds>0
         and finite(actualSpeed) and actualSpeed>=runSpeed*.95 and actualSpeed<sprintSpeed*.95
-        and type(sprintState)=="table" and sprintState.pending==true
     local speed=pending and math.min(sprintSpeed,actualSpeed)
         or (sprintSeconds>0 and sprintSpeed or runSpeed)*scale
     return {walkSpeed=speed,runSpeed=pending and math.min(runSpeed,speed) or runSpeed*scale,

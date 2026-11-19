@@ -127,12 +127,35 @@ end
         equal(#f.helperCalls,0);equal(#f.sprintCalls,0);equal(f.sprinting,true)
         close(f.moves[1],Vector3.new(0,0,.4))
     end)
+    test("catch avoidance receives the current approach point and earliest arrival deadline",function()
+        local f=fixture();f.plan.kind="jumpDive";f.plan.stopAt=11.8;f.plan.diveAt=11.5
+        f.api.catch(f.context)
+        local input=f.helperCalls[#f.helperCalls].input
+        close(input.targetPosition,f.plan.approachTarget)
+        equal(input.arriveBy,11.5)
+        f.plan.kind="jump";f.plan.diveAt=nil;f.plan.stopAt=12.08
+        f.api.catch(f.context);equal(f.helperCalls[#f.helperCalls].input.arriveBy,12)
+        f.plan.kind="pursue";f.api.catch(f.context)
+        equal(f.helperCalls[#f.helperCalls].input.arriveBy,nil)
+        equal(f.helperCalls[#f.helperCalls].input.targetPosition,nil)
+    end)
     test("clear navigation preserves directive strength and an already-on sprint",function()
         local f=fixture();f.sprinting=true
         f.directive={direction=Vector3.new(0,0,.35),sprint=true,preserveDepth=true}
         assert(f.api.navigate(f.context));assert(f.api.navigate(f.context))
         close(f.moves[1],f.directive.direction);close(f.moves[2],f.directive.direction)
         equal(#f.sprintCalls,0);equal(f.helperCalls[1].input.requestedSprint,true)
+    end)
+    test("WR route arrival is forwarded without giving DB navigation a catch deadline",function()
+        local f=fixture();f.context.role="WR"
+        f.directive={direction=Vector3.new(0,0,1),sprint=false,
+            avoidanceArrival={targetPosition=Vector3.new(0,3,40),arriveBy=11.8}}
+        f.api.navigate(f.context)
+        local input=f.helperCalls[#f.helperCalls].input
+        close(input.targetPosition,f.directive.avoidanceArrival.targetPosition);equal(input.arriveBy,11.8)
+        f.context.role="DB";f.api.navigate(f.context)
+        equal(f.helperCalls[#f.helperCalls].input.targetPosition,nil)
+        equal(f.helperCalls[#f.helperCalls].input.arriveBy,nil)
     end)
     test("blocked navigation applies bypass direction and disables sprint once",function()
         local f=fixture();f.sprinting=true
@@ -301,6 +324,16 @@ end
         equal(f.helperCalls[2].input.canDetour,false)
         f.context.playBudget=nil;f.api.catch(f.context)
         equal(#f.helperCalls,2)
+    end)
+    test("a WR catch handoff can keep a checked sprint before the abandoned stem deadline",function()
+        local f=fixture();f.context.role="WR";f.context.arc={};f.context.catchIntent={continuousSprint=false}
+        f.api.catch(f.context)
+        equal(f.helperCalls[1].input.allowSprintDetour,true)
+        equal(f.helperCalls[1].input.requestedSprint,true)
+        f.canSprint=false;f.api.catch(f.context)
+        equal(f.helperCalls[2].input.requestedSprint,false)
+        f.plan.kind="pursue";f.api.catch(f.context)
+        equal(f.helperCalls[3].input.allowSprintDetour,false)
     end)
     test("committed WR navigation retains a helper-approved active sprint",function()
         local f=fixture();f.context.role="WR";f.context.catchIntent={continuousSprint=true}
