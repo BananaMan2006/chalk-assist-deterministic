@@ -113,6 +113,15 @@ return function(Policy,create,routeSource)
         local c=choose(input({opponentPosition=Vector3.new(0,3,.8*Field.YD),opponentVelocity=Vector3.zero}))
         assert(c.routeFamily=="quarter_stem" and c.scheduleOverride=="observed_lane_coverage")
     end)
+    test("a slow defender deep on a tight middle stem selects a clear alternative",function()
+        for _,velocity in ipairs({Vector3.zero,Vector3.new(-4.96,0,-10.89),Vector3.new(2.49,0,-11.74)}) do
+            local c=choose(input({position=Vector3.new(0,3,-1.52),
+                opponentPosition=Vector3.new(0,3,8*Field.YD),opponentVelocity=velocity}))
+            assert(c.routeFamily=="quarter_stem" and c.scheduleOverride=="observed_lane_coverage")
+            assert(not c.stemBlocked and not c.anticipatedLane)
+            assert(c.finalSprintStamina>=10 and c.cutAt<=c.plan.Launch+.015)
+        end
+    end)
     test("quarter starts occupy actual quarter width and never finish straight",function()
         local starts,turns={},{}
         for _,index in ipairs({4,9,14,19}) do
@@ -147,6 +156,18 @@ return function(Policy,create,routeSource)
         local c=choose(input({recentRoutes={{routeFamily="middle_stem",result="Swatted",success=false},
             {routeFamily="middle_stem",result="Intercepted",success=false}}}))
         assert(c.routeFamily=="quarter_stem" and c.scheduleOverride=="recent_contests")
+    end)
+    test("explicit incompletes change the failed lane then repeated failures change family",function()
+        local before=choose(input())
+        local failure={routeFamily="middle_stem",pass=before.payload.Pass,side=before.side,
+            result="Incomplete",success=false}
+        local once=choose(input({recentRoutes={failure}}))
+        assert(once.routeFamily=="middle_stem" and once.side~=before.side)
+        local twice=choose(input({recentRoutes={failure,failure}}))
+        assert(twice.routeFamily=="quarter_stem" and twice.scheduleOverride=="recent_contests")
+        local unknown=choose(input({recentRoutes={{routeFamily="middle_stem",pass=before.payload.Pass,
+            side=before.side,result="Unknown",success=false}}}))
+        assert(unknown.routeFamily==before.routeFamily and unknown.side==before.side and unknown.scheduleOverride==nil)
     end)
     test("a defender waiting in the intended lane changes the route or family",function()
         local before=choose(input())
@@ -183,6 +204,28 @@ return function(Policy,create,routeSource)
         p.elapsed=c.cutAt+.01;p.stamina=100;p.opponentPosition=nil
         local final=assert(Policy.movement(p,Config,Field,RouteMath))
         assert(final.sprint and final.finalSprintCommitted and final.moveSpeed==Config.SprintSpeed)
+    end)
+    test("the three observed late stem states do not spend more deadline time slowing to seven",function()
+        local plan={Points={Vector2.new(0,0),Vector2.new(0,60),Vector2.new(48,120)},
+            Times={0,3,6},Arrival=6.258876}
+        for _,state in ipairs({{.965,12.764,6.347},{.705,8.086,6.428},{1.110,15.455,6.008}}) do
+            local p=input({phase="Live",elapsed=state[1],position=Vector3.new(0,3,state[2]),
+                opponentPosition=Vector3.new(0,3,state[2]+state[3]),opponentVelocity=Vector3.zero,
+                routePlan=plan,middleStemDeep=true,slowStem=true,slowStemTime=2.985462,routeWaypoint=2})
+            local c=assert(Policy.movement(p,Config,Field,RouteMath))
+            assert(c.moveSpeed==Config.RunSpeed and not c.sprint and c.routeWaypoint==2)
+            assert(c.routeTimingDebt and c.routeTimingReason=="observed_stem_delay")
+        end
+    end)
+    test("body pacing can still slow when actual remaining distance leaves spare time",function()
+        local plan={Points={Vector2.new(0,0),Vector2.new(0,30),Vector2.new(48,100)},
+            Times={0,3,6},Arrival=6}
+        local p=input({phase="Live",elapsed=.2,position=Vector3.new(0,3,20),
+            opponentPosition=Vector3.new(0,3,26),opponentVelocity=Vector3.zero,
+            routePlan=plan,middleStemDeep=true,slowStem=true,slowStemTime=3,routeWaypoint=2})
+        local c=assert(Policy.movement(p,Config,Field,RouteMath))
+        assert(c.moveSpeed<=7 and not c.sprint and not c.routeTimingDebt)
+        assert((c.target-p.position).Magnitude<=7*(3-.2-.12))
     end)
     test("stem deception uses only reachable spare walking time and never moves into the defender",function()
         local plan={Points={Vector2.new(0,0),Vector2.new(0,30),Vector2.new(48,100)},Times={0,3,6},Arrival=6}

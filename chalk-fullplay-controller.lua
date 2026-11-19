@@ -556,7 +556,8 @@ return function(ctx,Policy,services)
                 routeWaypoint=choice.routeWaypoint,defenseDepthBiasYards=input.defenseProfile.depthBiasYards,
                 defenseAttemptShadeYards=input.defenseProfile.deepAttemptShadeYards,
                 defenseSamples=input.defenseProfile.samples,routeMoveSpeed=choice.moveSpeed,
-                routeDeadline=choice.routeDeadline,finalSprintCommitted=finalSprintCommitted})
+                routeDeadline=choice.routeDeadline,finalSprintCommitted=finalSprintCommitted,
+                routeTimingDebt=choice.routeTimingDebt,routeTimingReason=choice.routeTimingReason})
         end
         return {direction=direction,sprint=moving and choice.sprint==true,message=message,
             preserveDepth=choice.kind=="shadow"}

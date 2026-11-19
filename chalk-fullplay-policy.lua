@@ -371,11 +371,17 @@ function Policy.chooseScheduledRoute(input,Config,Field,RouteMath)
     local opponent=projectedOpponent(input,Config,.2)
     local history=type(input.recentRoutes)=="table" and input.recentRoutes or {}
     local recentFailure={middle_stem=0,quarter_stem=0}
+    local failedLanes={}
     for i=#history,math.max(1,#history-3),-1 do
         local item=history[i]
         if type(item)=="table" and recentFailure[item.routeFamily]~=nil and item.success==false
-            and (item.result=="Swatted" or item.result=="Intercepted") then
+            and (item.result=="Swatted" or item.result=="Intercepted" or item.result=="Incomplete") then
             recentFailure[item.routeFamily]=recentFailure[item.routeFamily]+1
+            if item.result=="Incomplete" and (item.side==-1 or item.side==1)
+                and (item.pass=="Floater" or item.pass=="Bullet") then
+                local key=item.routeFamily..":"..item.pass..":"..item.side
+                failedLanes[key]=(failedLanes[key] or 0)+1
+            end
         end
     end
     local edge=math.max(1,Config.RouteEdgeMargin or 1)
@@ -440,6 +446,24 @@ function Policy.chooseScheduledRoute(input,Config,Field,RouteMath)
                                                 stemBlocked=vec(input.position) and flatDistance(observed,input.position)<1.4*yd
                                                     and math.abs(opponent.X-offset.X-startX)<1.4*yd
                                                     and localZ>los and localZ<points[2].Y+yd
+                                                -- A slow defender already deep on the stem is
+                                                -- different from ordinary nearby lineup coverage.
+                                                -- Require enough walking time to go around that
+                                                -- body from the actual observed starting position.
+                                                if not stemBlocked and vec(input.position)
+                                                    and localZ-los>=4*yd and localZ<points[2].Y+yd
+                                                    and math.abs(opponent.X-offset.X-startX)<1.4*yd
+                                                    and boundedVelocity(input.opponentVelocity,sprint).Magnitude<=run*.65 then
+                                                    local detour=INF
+                                                    for _,around in ipairs({-1,1}) do
+                                                        local x=opponent.X+around*1.6*yd
+                                                        if x>=Field.MinX+offset.X+edge and x<=Field.MaxX+offset.X-edge then
+                                                            local via=Vector3.new(x,cut.Y,opponent.Z)
+                                                            detour=math.min(detour,flatDistance(input.position,via)+flatDistance(via,cut))
+                                                        end
+                                                    end
+                                                    stemBlocked=detour>run*math.max(0,cutAt-dispatch)
+                                                end
                                             end
                                             local turn=side*(startX-mid)>0 and "same_side" or "opposite_side"
                                             if family=="middle_stem" then turn=side<0 and "left" or "right" end
@@ -451,6 +475,7 @@ function Policy.chooseScheduledRoute(input,Config,Field,RouteMath)
                                                 +(pass=="Floater" and .4 or 0)+(side==preferredSide and .4 or 0)
                                                 +(turn==preferredTurn and .6 or 0)-(waiting and 12 or 0)
                                                 -(stemBlocked and 6 or 0)-recentFailure[family]*8
+                                                -(failedLanes[family..":"..pass..":"..side] or 0)*12
                                             local candidate={payload={Points=points,StartX=startX,Pass=pass},plan=plan,
                                                 side=side,depth=depth,shape=shape,family=routeKey,signature=signature,
                                                 routeFamily=family,cutDirection=turn,scheduledFamily=desired,
@@ -522,8 +547,21 @@ function Policy.chooseScheduledRoute(input,Config,Field,RouteMath)
     local override
     if not chosen then chosen=other;override="scheduled_family_unreachable"
     elseif other and (recentFailure[desired]>=2 or chosen.anticipatedLane or chosen.stemBlocked)
-        and (other.score>chosen.score+1 or recentFailure[desired]>=2 and not other.anticipatedLane and not other.stemBlocked) then
+        and (other.score>chosen.score+1
+            or (recentFailure[desired]>=2 or chosen.stemBlocked) and not other.anticipatedLane and not other.stemBlocked) then
         chosen=other;override=recentFailure[desired]>=2 and "recent_contests" or "observed_lane_coverage"
+    end
+    if chosen and other and chosen.routeFamily=="middle_stem" and other.routeFamily=="quarter_stem"
+        and not other.anticipatedLane and not other.stemBlocked and other.depth>chosen.depth+2
+        and other.defenderEnvelopeMargin>=chosen.defenderEnvelopeMargin then
+        -- Do not preserve a Floater preference by cutting a much deeper route
+        -- short when its original middle stem is occupied. A clear, funded
+        -- quarter start preserves more of the intended downfield route.
+        for _,candidate in ipairs(pool.middle_stem) do
+            if candidate.stemBlocked and candidate.depth>=other.depth-2 then
+                chosen=other;override="observed_lane_coverage";break
+            end
+        end
     end
     if chosen then
         chosen.scheduleOverride=override
@@ -1109,16 +1147,19 @@ function Policy.movement(input,Config,Field,RouteMath)
                 local speed=clamp(distance/math.max(.05,remaining+.05),minimum,sprintSpeed)
                 if slowStem and not finalSprint then
                     speed=math.min(run,speed)
-                    -- Slow before close body contact instead of burning sprint
-                    -- into a jam. The collision controller chooses the detour;
-                    -- the unchanged cut deadline prevents waiting indefinitely.
+                    -- Slowing before a body is only affordable with real spare
+                    -- time. A jam never pauses the native throw clock; retain
+                    -- normal avoidance without spending an already missed stem.
                     if opponent then
                         local toTarget=(target-position)*FLAT
                         local relative=(opponent-position)*FLAT
                         local along=toTarget.Magnitude>.01 and relative:Dot(toTarget.Unit) or -1
                         local lateral=toTarget.Magnitude>.01 and (relative-toTarget.Unit*along).Magnitude or INF
                         if along>0 and along<2*yd and lateral<1.4*yd then
-                            speed=math.min(speed,math.max(run*.35,along))
+                            local paced=math.max(run*.35,along)
+                            if distance<=paced*math.max(0,remaining-.12) then
+                                speed=math.min(speed,paced)
+                            end
                         end
                     end
                 end
@@ -1160,6 +1201,9 @@ function Policy.movement(input,Config,Field,RouteMath)
                 request.routeDeadline=deadline
                 request.finalSprintCommitted=finalSprint
                 request.stemFeint=feint
+                request.routeTimingDebt=slowStem and not finalSprint
+                    and distance>run*math.max(0,remaining-.12)
+                if request.routeTimingDebt then request.routeTimingReason="observed_stem_delay" end
                 return request
             end
         end
