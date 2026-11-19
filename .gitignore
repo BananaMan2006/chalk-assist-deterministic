@@ -1,0 +1,22 @@
+# Local executor credentials and per-laptop preferences
+chalk-github-token.txt
+*token*
+*credential*
+.env*
+ciu_*
+# Local artifacts and third-party game dumps
+__pycache__/
+*.pyc
+.venv/
+*.log
+*.jsonl
+*.luau
+.DS_Store
+
+# Local development state
+*.sqlite*
+*.db
+node_modules/
+.wrangler/
+dist/
+outputs/

@@ -1,0 +1,89 @@
+{
+  "syntheticOnly": true,
+  "results": {
+    "failed": 0,
+    "passed": 19,
+    "results": [
+      {
+        "name": "WR times jump and dive for airborne first contact, not early prone arrival",
+        "passed": true
+      },
+      {
+        "name": "unavailable dive retains an airborne jump catch",
+        "passed": true
+      },
+      {
+        "name": "already grounded overlap has no deliberate catch plan and reports that limitation",
+        "passed": true
+      },
+      {
+        "name": "grounded dive recovery is never called an airborne catch",
+        "passed": true
+      },
+      {
+        "name": "later airborne pose cannot hide contact before the dive",
+        "passed": true
+      },
+      {
+        "name": "dispatch check uses observed current position and rejects changed trajectory",
+        "passed": true
+      },
+      {
+        "name": "dispatch check refuses grounded or shortened native-air reach",
+        "passed": true
+      },
+      {
+        "name": "WR aerial flags leave DB earliest-contact selection unchanged",
+        "passed": true
+      },
+      {
+        "name": "no arc and unreachable pursuit never invent a jump or dive",
+        "passed": true
+      },
+      {
+        "name": "floater takes earlier robust airborne contact instead of later downfield contact",
+        "passed": true
+      },
+      {
+        "name": "late dispatch is rejected instead of chasing a missed airborne contact",
+        "passed": true
+      },
+      {
+        "name": "adaptive first contact finds short grounded bullet overlap before a later jump",
+        "passed": true
+      },
+      {
+        "name": "first-contact sampling budget fails closed",
+        "passed": true
+      },
+      {
+        "name": "slow planning cancels overdue jump and dive before inputs for both roles",
+        "passed": true
+      },
+      {
+        "name": "elapsed contact blocks an action even inside its 75 ms action grace",
+        "passed": true
+      },
+      {
+        "name": "clock delay during pre-jump native checks is caught at actual dispatch",
+        "passed": true
+      },
+      {
+        "name": "clock delay during pre-dive validation is caught at actual dispatch",
+        "passed": true
+      },
+      {
+        "name": "future and timely actions retain their original dispatch behavior",
+        "passed": true
+      },
+      {
+        "name": "controller exits catch actions outside live ball phase",
+        "passed": true
+      }
+    ],
+    "total": 19
+  },
+  "limitations": [
+    "Authored geometry and mocked controller guards; no native catch or win proof."
+  ]
+}

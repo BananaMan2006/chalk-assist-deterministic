@@ -1,0 +1,149 @@
+{
+  "schemaVersion": 1,
+  "syntheticOnly": true,
+  "limitations": [
+    "Offline authored math/services; no Roblox physics, network, or live win proof."
+  ],
+  "suites": {
+    "scheduled-route-mix": {
+      "results": [
+        {
+          "name": "fixed five-play schedule defaults to four middle stems and one quarter stem",
+          "passed": true
+        },
+        {
+          "name": "ordinary center DB two yards ahead retains the four-to-one default schedule",
+          "passed": true
+        },
+        {
+          "name": "actual close center jam may override the scheduled middle family",
+          "passed": true
+        },
+        {
+          "name": "quarter starts occupy actual quarter width and never finish straight",
+          "passed": true
+        },
+        {
+          "name": "every scheduled final sprint is funded through native arrival plus dispatch",
+          "passed": true
+        },
+        {
+          "name": "repeated actual contests override the preferred route family",
+          "passed": true
+        },
+        {
+          "name": "a defender waiting in the intended lane changes the route or family",
+          "passed": true
+        },
+        {
+          "name": "schedule uses field coordinates consistently across translated arenas",
+          "passed": true
+        },
+        {
+          "name": "setup steering moves to submitted start through normal unsprinted movement",
+          "passed": true
+        },
+        {
+          "name": "live stem slows before a blocker while retaining the final sprint deadline",
+          "passed": true
+        },
+        {
+          "name": "stem deception uses only reachable spare walking time and never moves into the defender",
+          "passed": true
+        },
+        {
+          "name": "DB holds a small flexible live cushion without sprinting to chase an offset",
+          "passed": true
+        }
+      ],
+      "fixture": "Authored geometry and local native/approximate route timing. No server catch or win guarantee.",
+      "failed": 0,
+      "passed": 12,
+      "total": 12
+    },
+    "deterministic-isolation": {
+      "results": [
+        {
+          "name": "old enabled settings and model histories cannot enable or seed this product",
+          "passed": true
+        },
+        {
+          "name": "explicit enable writes only isolated non-resuming settings",
+          "passed": true
+        },
+        {
+          "name": "actual route selection is repeatable without model or RNG calls",
+          "passed": true
+        },
+        {
+          "name": "legacy learned policy overrides cannot replace deterministic choices",
+          "passed": true
+        },
+        {
+          "name": "route session observations are bounded and never persisted",
+          "passed": true
+        },
+        {
+          "name": "lobby clears session outcomes even when the old opponent remains in context",
+          "passed": true
+        },
+        {
+          "name": "unknown catch ownership does not fabricate a successful route",
+          "passed": true
+        },
+        {
+          "name": "known opponent catches count as failed route outcomes",
+          "passed": true
+        },
+        {
+          "name": "pause and 1v1-only gates prevent setup or movement without changing native speed",
+          "passed": true
+        },
+        {
+          "name": "normal movement keeps native speed and stamina reserves",
+          "passed": true
+        },
+        {
+          "name": "failed submissions do not create successful or selected session history",
+          "passed": true
+        },
+        {
+          "name": "observed defensive outcomes update fixed rules once within this session",
+          "passed": true
+        },
+        {
+          "name": "ambiguous or missing defensive throw information cannot alter session rules",
+          "passed": true
+        },
+        {
+          "name": "settings write failure is visible and does not call legacy storage",
+          "passed": true
+        },
+        {
+          "name": "selected starting X is submitted and steering distinguishes request from observed placement",
+          "passed": true
+        },
+        {
+          "name": "fixed route cycle persists across sessions while Full Auto still starts off",
+          "passed": true
+        },
+        {
+          "name": "unreachable cut request never submits a straight route or advances the schedule",
+          "passed": true
+        },
+        {
+          "name": "corrupt route cycle defaults to zero and never enables automatic play",
+          "passed": true
+        },
+        {
+          "name": "unload stops callbacks and releases control",
+          "passed": true
+        }
+      ],
+      "fixture": "Authored offline services and geometry; locally supplied RouteMath is not copied or published. No server outcome claim.",
+      "failed": 0,
+      "passed": 19,
+      "total": 19
+    }
+  }
+}

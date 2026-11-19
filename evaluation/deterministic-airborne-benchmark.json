@@ -1,0 +1,112 @@
+{
+  "syntheticOnly": true,
+  "repetitions": 3,
+  "cases": [
+    {
+      "case": "near_bullet",
+      "old_upright_first": {
+        "medianMs": 3.98,
+        "maxMs": 4.391,
+        "action": "move",
+        "airborneFinish": null,
+        "contactSeconds": 0.83
+      },
+      "old_required_dive": {
+        "medianMs": 76.616,
+        "maxMs": 77.605,
+        "action": "dive",
+        "airborneFinish": null,
+        "contactSeconds": 1.04
+      },
+      "strict_airborne": {
+        "medianMs": 90.674,
+        "maxMs": 94.479,
+        "action": "jumpDive",
+        "airborneFinish": "jumpDive",
+        "contactSeconds": 1.005
+      }
+    },
+    {
+      "case": "far_bullet",
+      "old_upright_first": {
+        "medianMs": 92.52,
+        "maxMs": 93.053,
+        "action": "jumpDive",
+        "airborneFinish": null,
+        "contactSeconds": 1.005
+      },
+      "old_required_dive": {
+        "medianMs": 91.199,
+        "maxMs": 91.515,
+        "action": "jumpDive",
+        "airborneFinish": null,
+        "contactSeconds": 1.005
+      },
+      "strict_airborne": {
+        "medianMs": 123.699,
+        "maxMs": 124.76,
+        "action": "jumpDive",
+        "airborneFinish": "jumpDive",
+        "contactSeconds": 1.005
+      }
+    },
+    {
+      "case": "deep_floater",
+      "old_upright_first": {
+        "medianMs": 20.739,
+        "maxMs": 20.991,
+        "action": "jump",
+        "airborneFinish": null,
+        "contactSeconds": 1.32
+      },
+      "old_required_dive": {
+        "medianMs": 101.461,
+        "maxMs": 104.07,
+        "action": "dive",
+        "airborneFinish": null,
+        "contactSeconds": 1.565
+      },
+      "strict_airborne": {
+        "medianMs": 22.73,
+        "maxMs": 22.803,
+        "action": "jumpDive",
+        "airborneFinish": "jumpDive",
+        "contactSeconds": 0.387373
+      }
+    },
+    {
+      "case": "high_floater",
+      "old_upright_first": {
+        "medianMs": 12.5,
+        "maxMs": 12.787,
+        "action": "move",
+        "airborneFinish": null,
+        "contactSeconds": 1.565
+      },
+      "old_required_dive": {
+        "medianMs": 32.655,
+        "maxMs": 32.874,
+        "action": "dive",
+        "airborneFinish": null,
+        "contactSeconds": 1.565
+      },
+      "strict_airborne": {
+        "medianMs": 29.168,
+        "maxMs": 29.183,
+        "action": "jump",
+        "airborneFinish": "jump",
+        "contactSeconds": 1.120732
+      }
+    }
+  ],
+  "sourceHashes": {
+    "oldPlanner": "997583f2b9dac320076e0296bee7f68b7c0ee4341bb0851fbb259ae16ff4f9b6",
+    "strictPlanner": "ad0721abdf237ee90b1aaa0f3eb5dcb581d6f9939ac5bc2cce73f9c1f0d00f68"
+  },
+  "limitations": [
+    "Authored snapshots and Lupa Lua with math shim; not a Roblox/Luau frame-time measurement.",
+    "Old upright-first and old required-dive have different contact objectives; this comparison measures cost, not equal selected behavior.",
+    "Only four representative no-opponent snapshots, not a worst-case upper bound. Native defender forecasts add work.",
+    "Actual planner duration is recorded as solveMs in local plan events. Long solves can consume a frame; live timing must be checked before performance claims."
+  ]
+}

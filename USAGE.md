@@ -1,0 +1,93 @@
+# Running Chalk Assist 5.1.0
+
+The public repository is [BananaMan2006/chalk-assist-deterministic](https://github.com/BananaMan2006/chalk-assist-deterministic). The ready-to-run file is `chalk-it-up-1v1.lua`.
+
+## Start on a computer
+
+Join Chalk It Up, attach your executor, and run:
+
+```lua
+loadstring(game:HttpGet("https://raw.githubusercontent.com/BananaMan2006/chalk-assist-deterministic/main/chalk-it-up-1v1.lua"))()
+```
+
+The executor must support HTTP requests and `loadstring`. No GitHub account or token is needed. Verify **5.1.0** in the window's release badge. Gameplay automation starts OFF after a manual load, reload or new join; turn it on deliberately.
+
+The script queues the loader for later teleports when the executor provides a supported teleport queue. For a fresh Roblox launch, configure the executor's own auto-attach and autoexec on **each computer**. Executors without a teleport queue need their autoexec mechanism on each join. Automatic loading is restricted to the supported Chalk It Up place and waits for the game's dependencies.
+
+## Install a local copy and autoexec
+
+Download the repository ZIP and extract it, or clone it:
+
+```sh
+git clone https://github.com/BananaMan2006/chalk-assist-deterministic.git
+cd chalk-assist-deterministic
+```
+
+Run the installer with Python 3. Replace these paths with your executor's actual folders. It uses Python's standard library and does not attach to Roblox.
+
+macOS example:
+
+```sh
+python3 install-chalk.py --workspace "$HOME/Opiumware/workspace" --autoexec "$HOME/Opiumware/autoexec"
+```
+
+Windows PowerShell example:
+
+```powershell
+py -3 install-chalk.py --workspace "C:\path\to\executor\workspace" --autoexec "C:\path\to\executor\autoexec"
+```
+
+Add `--dry-run` to inspect the proposed copies. Omit `--autoexec` for manual loading. Keep both executor folders outside the repository. The installer replaces only the bundle and optional loader; it preserves unrelated files and settings.
+
+The default public autoexec loader checks for an update and can fall back to an eligible local copy. Its release and product checks reject older or incompatible downloads. Use `--autoexec-source local` to pin the installed copy. You may also place `chalk-autoexec-public.lua` directly in the executor's autoexec folder.
+
+Load an installed local bundle with:
+
+```lua
+loadstring(readfile("chalk-it-up-1v1.lua"))()
+```
+
+Installing the loader does not enable gameplay actions. A script cannot attach an executor, create its autoexec folder outside its allowed workspace, or install itself on another laptop.
+
+## Controls
+
+| Control | Purpose |
+| --- | --- |
+| Drag title bar / minimize | Move or collapse the window |
+| Right Shift | Hide or show the window |
+| B | Toggle the main assist switch |
+| V | Toggle catch assistance |
+| Full Auto | Enable authored 1v1 route, coverage and movement decisions |
+| Autoplay / mode selector | Queue the chosen supported mode after a completed match |
+| Win farm | Walk to the nearest available WR pad between matches |
+| Match alerts | Enable or disable match notifications |
+| Auto leave | Leave/rejoin when a verified current opponent matches the saved list |
+| F8 | Unload and release controls in the current server |
+
+Full Auto, catch assistance, autoplay, WR-pad return and auto-leave start OFF. Enabling Full Auto also enables the main assist and catch assistance. Idle protection starts only while an enabled gameplay feature needs it. Turning Full Auto off does not necessarily turn off separately enabled catch assistance; use V or F8 as appropriate.
+
+Full Auto supports **1v1 only**. The autoplay selector may list other modes, but selecting one does not enable team Full Auto. Movement uses the game's normal available movement actions; sprint reservations and collision checks can delay or reject a plan. WR catch assistance plans only a jump or jump-and-dive with airborne first contact; it does not substitute a grounded catch or dive alone. For a Floater, it targets the earliest robust airborne contact, using jump-and-dive when that produces an earlier useful contact. Bullets retain the downfield contact preference. If no valid airborne window exists, it reports that there is no catch plan and may continue pursuit without issuing a catch action. The current position is checked again before a dive; a delayed jump or changed ball path can cancel that action. DB still targets the earliest reachable interception. None of these estimates guarantees the server will award the catch. The game can also catch automatically when its own contact conditions are met; the script cannot promise to prevent every native grounded catch.
+
+The auto-leave field accepts exact account usernames separated by commas, semicolons or whitespace; `@` is optional. Press Enter or leave the field to save. Invalid entries preserve the last valid list. Clearing the list disables matching. The game decides whether leaving counts as a forfeit. Saved mode, username and window preferences can persist, but gameplay toggles still reset OFF at startup.
+
+F8 keeps this copy unloaded in the current server. A later join or explicit manual load can load it again, with actions OFF.
+
+## Full Auto route and defense rules
+
+The nominal WR route schedule uses four middle starts followed by one quarter-width start. Middle routes walk a stem, then cut left or right toward the far side. Quarter-width starts can cut toward either the same side or the opposite side. This is a deterministic schedule preference, not a random probability or a guaranteed ratio: observed coverage, recent contests, legal route geometry and available stamina can change the choice.
+
+Before accepting a scheduled route, the planner budgets the final sprint through the projected arrival plus an input allowance and a stamina reserve. Setup and the early stem do not spend that sprint budget. Nearby blockers can slow the stem or trigger a checked detour; the planned cut deadline keeps advancing. A small early feint is allowed only when its extra travel fits the remaining walking time. Contact delays can still make a pass unreachable.
+
+DB positioning uses a nearby flexible band around the receiver rather than chasing one exact offset. It keeps room at setup, follows observed movement, and reserves sprint for an actual gap or threat. Recent observed deep passes can adjust the authored coverage rule during the session. These are finite rule adjustments, not training or shared knowledge.
+
+## Desktop notifications
+
+The in-game alert and a desktop notification are separate. For the optional macOS floating alert helper, extract `macos-match-alerts-source.zip` and follow [MACOS_ALERTS.md](MACOS_ALERTS.md). The Lua loader does not install or launch that helper. Other operating systems require a compatible desktop notifier.
+
+## Troubleshooting
+
+Check the release badge, the window's status text, and the executor console. Autoexec also writes `ciu_autoload_status.txt` in the executor workspace. If the public download is temporarily unavailable, try the installed local copy. If Full Auto is idle, confirm that it is enabled, the mode is supported, and the game has supplied the current match and character state.
+
+This edition does not read or update neural journals, upload plays for training, or pool learning between laptops. Existing files from a previous installation are not deleted by the installer, but are not a source of learned behavior in this bundle.
+
+For reproducible offline checks, use the commands in [EVALUATION.md](EVALUATION.md). Passing those checks does not establish live catches, wins or compatibility with future game changes.

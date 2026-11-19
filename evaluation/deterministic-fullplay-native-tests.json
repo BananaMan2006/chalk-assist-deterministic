@@ -1,0 +1,521 @@
+{
+  "schemaVersion": 1,
+  "syntheticOnly": true,
+  "limitations": [
+    "Offline authored math/services; no Roblox physics, network, or live win proof."
+  ],
+  "suites": {
+    "scheduled-route-mix": {
+      "passed": 12,
+      "total": 12,
+      "fixture": "Authored geometry and local native/approximate route timing. No server catch or win guarantee.",
+      "results": [
+        {
+          "passed": true,
+          "name": "fixed five-play schedule defaults to four middle stems and one quarter stem"
+        },
+        {
+          "passed": true,
+          "name": "ordinary center DB two yards ahead retains the four-to-one default schedule"
+        },
+        {
+          "passed": true,
+          "name": "actual close center jam may override the scheduled middle family"
+        },
+        {
+          "passed": true,
+          "name": "quarter starts occupy actual quarter width and never finish straight"
+        },
+        {
+          "passed": true,
+          "name": "every scheduled final sprint is funded through native arrival plus dispatch"
+        },
+        {
+          "passed": true,
+          "name": "repeated actual contests override the preferred route family"
+        },
+        {
+          "passed": true,
+          "name": "a defender waiting in the intended lane changes the route or family"
+        },
+        {
+          "passed": true,
+          "name": "schedule uses field coordinates consistently across translated arenas"
+        },
+        {
+          "passed": true,
+          "name": "setup steering moves to submitted start through normal unsprinted movement"
+        },
+        {
+          "passed": true,
+          "name": "live stem slows before a blocker while retaining the final sprint deadline"
+        },
+        {
+          "passed": true,
+          "name": "stem deception uses only reachable spare walking time and never moves into the defender"
+        },
+        {
+          "passed": true,
+          "name": "DB holds a small flexible live cushion without sprinting to chase an offset"
+        }
+      ],
+      "failed": 0
+    },
+    "deterministic-isolation": {
+      "passed": 19,
+      "total": 19,
+      "fixture": "Authored offline services and geometry; locally supplied RouteMath is not copied or published. No server outcome claim.",
+      "results": [
+        {
+          "passed": true,
+          "name": "old enabled settings and model histories cannot enable or seed this product"
+        },
+        {
+          "passed": true,
+          "name": "explicit enable writes only isolated non-resuming settings"
+        },
+        {
+          "passed": true,
+          "name": "actual route selection is repeatable without model or RNG calls"
+        },
+        {
+          "passed": true,
+          "name": "legacy learned policy overrides cannot replace deterministic choices"
+        },
+        {
+          "passed": true,
+          "name": "route session observations are bounded and never persisted"
+        },
+        {
+          "passed": true,
+          "name": "lobby clears session outcomes even when the old opponent remains in context"
+        },
+        {
+          "passed": true,
+          "name": "unknown catch ownership does not fabricate a successful route"
+        },
+        {
+          "passed": true,
+          "name": "known opponent catches count as failed route outcomes"
+        },
+        {
+          "passed": true,
+          "name": "pause and 1v1-only gates prevent setup or movement without changing native speed"
+        },
+        {
+          "passed": true,
+          "name": "normal movement keeps native speed and stamina reserves"
+        },
+        {
+          "passed": true,
+          "name": "failed submissions do not create successful or selected session history"
+        },
+        {
+          "passed": true,
+          "name": "observed defensive outcomes update fixed rules once within this session"
+        },
+        {
+          "passed": true,
+          "name": "ambiguous or missing defensive throw information cannot alter session rules"
+        },
+        {
+          "passed": true,
+          "name": "settings write failure is visible and does not call legacy storage"
+        },
+        {
+          "passed": true,
+          "name": "selected starting X is submitted and steering distinguishes request from observed placement"
+        },
+        {
+          "passed": true,
+          "name": "fixed route cycle persists across sessions while Full Auto still starts off"
+        },
+        {
+          "passed": true,
+          "name": "unreachable cut request never submits a straight route or advances the schedule"
+        },
+        {
+          "passed": true,
+          "name": "corrupt route cycle defaults to zero and never enables automatic play"
+        },
+        {
+          "passed": true,
+          "name": "unload stops callbacks and releases control"
+        }
+      ],
+      "failed": 0
+    },
+    "retained-policy": {
+      "passed": 91,
+      "total": 91,
+      "fixture": "Retained deterministic policy fixtures with locally supplied route mathematics. No server outcome claim.",
+      "results": [
+        {
+          "passed": true,
+          "name": "route payload obeys native sanitizer bounds and ink budget"
+        },
+        {
+          "passed": true,
+          "name": "route choice is invariant under field translation"
+        },
+        {
+          "passed": true,
+          "name": "missing opponent and exhausted stamina produce finite route diagnostics"
+        },
+        {
+          "passed": true,
+          "name": "only valid owned-release names supplied by caller survive schema"
+        },
+        {
+          "passed": true,
+          "name": "route is refused for team mode and invalid field"
+        },
+        {
+          "passed": true,
+          "name": "failed long Floater family is not immediately repeated on either side"
+        },
+        {
+          "passed": true,
+          "name": "successful history retains a legal deep option"
+        },
+        {
+          "passed": true,
+          "name": "repeated offensive selections vary shape and depth within the quality envelope"
+        },
+        {
+          "passed": true,
+          "name": "ordinary offensive variety preserves native route legality and stamina reachability"
+        },
+        {
+          "passed": true,
+          "name": "observed deep defender selects a reachable underneath catch with carry stamina"
+        },
+        {
+          "passed": true,
+          "name": "underneath strategy requires observed depth and does not carry over to a shallow defender"
+        },
+        {
+          "passed": true,
+          "name": "underneath threshold derives from eight-yard route plus four-yard observed buffer"
+        },
+        {
+          "passed": true,
+          "name": "underneath routes vary legal families and sides without using the deep end-zone strategy"
+        },
+        {
+          "passed": true,
+          "name": "underneath selection respects current LOS field translation and available stamina"
+        },
+        {
+          "passed": true,
+          "name": "shallow coverage mixes a paced long slant after a deep Floater while retaining native carry reserve"
+        },
+        {
+          "passed": true,
+          "name": "long-slant mix rejects known failed family low stamina missing depth and safe ordinary alternatives"
+        },
+        {
+          "passed": true,
+          "name": "paced long-slant movement walks first then commits sprint with field translation and throw handoff"
+        },
+        {
+          "passed": true,
+          "name": "default offense runs a real middle stem before a timed deep end-zone cut"
+        },
+        {
+          "passed": true,
+          "name": "repeated middle-stem selections vary finish side and actual turn timing"
+        },
+        {
+          "passed": true,
+          "name": "sideline dive finish preserves ten stamina after a walking stem and bounded continuous sprint"
+        },
+        {
+          "passed": true,
+          "name": "middle strategy respects translated fields and falls back instead of forcing exhausted or short-field routes"
+        },
+        {
+          "passed": true,
+          "name": "middle-stem navigation immediately turns after reaching the cut and yields at the throw"
+        },
+        {
+          "passed": true,
+          "name": "middle prethrow pacing follows native 16 and 24 timelines without cutting early or camping"
+        },
+        {
+          "passed": true,
+          "name": "early two-to-four stud stem overrun never reverses or takes the cut before its deadline"
+        },
+        {
+          "passed": true,
+          "name": "late jammed middle runner catches up at native sprint and never skips an unreached cut"
+        },
+        {
+          "passed": true,
+          "name": "middle route endpoint continues gently along the final leg until the real throw"
+        },
+        {
+          "passed": true,
+          "name": "slow stem conserves sprint until actual walking deadline then sprints continuously through the cut"
+        },
+        {
+          "passed": true,
+          "name": "slow stem commits at the scheduled cut despite delay but never before that time"
+        },
+        {
+          "passed": true,
+          "name": "recorded WR detour and jam delays cut from current position on either side with offsets"
+        },
+        {
+          "passed": true,
+          "name": "scheduled late cut keeps reserve and yields to actual ball while ordinary routes retain waypoints"
+        },
+        {
+          "passed": true,
+          "name": "recorded9445 delayed stem spends only its current funded early-cut interval"
+        },
+        {
+          "passed": true,
+          "name": "early recovery does not alter on-schedule small-lag crossed or ordinary routes"
+        },
+        {
+          "passed": true,
+          "name": "budgeted early cuts mirror translate and remain latched through flight ownership"
+        },
+        {
+          "passed": true,
+          "name": "final sprint latch survives waypoint refresh and retains the emergency stamina floor"
+        },
+        {
+          "passed": true,
+          "name": "actual selector cannot compound goal filtering and ordinary Bullet variety allowances"
+        },
+        {
+          "passed": true,
+          "name": "native opponent and selection histories retain one original quality floor"
+        },
+        {
+          "passed": true,
+          "name": "central DB pressure respects explicit long slanted Bullet or Floater restriction"
+        },
+        {
+          "passed": true,
+          "name": "success and variety history cannot reintroduce forbidden short passes"
+        },
+        {
+          "passed": true,
+          "name": "known Hike preparation adds exactly native defender reposition budget"
+        },
+        {
+          "passed": true,
+          "name": "near goal with no long Bullet room uses longest legal Floater space"
+        },
+        {
+          "passed": true,
+          "name": "recorded shallow Floater variation cannot add avoidable run after catch"
+        },
+        {
+          "passed": true,
+          "name": "upright catch estimate follows the descending native arc rather than landing point"
+        },
+        {
+          "passed": true,
+          "name": "goal-catch preference uses current LOS and never invents exhausted reach"
+        },
+        {
+          "passed": true,
+          "name": "failed near-goal family cannot force a large quality loss"
+        },
+        {
+          "passed": true,
+          "name": "two observed straight contests permit one bounded native late-bend trial"
+        },
+        {
+          "passed": true,
+          "name": "late-bend trial requires two relevant failures after a straight success or previous trial"
+        },
+        {
+          "passed": true,
+          "name": "missing trial outcome still requires two fresh failures before another trial"
+        },
+        {
+          "passed": true,
+          "name": "late-bend trial cannot replace normal strategy without reach or inside-goal clearance bounds"
+        },
+        {
+          "passed": true,
+          "name": "actual experimental selector enforces original score and four-stud additional gap"
+        },
+        {
+          "passed": true,
+          "name": "8127 catch-zone fixture prefers reachable inside-goal catch with bounded tolerance"
+        },
+        {
+          "passed": true,
+          "name": "inside-goal tolerance never admits contested routes into a positive-clearance group"
+        },
+        {
+          "passed": true,
+          "name": "goal clearance exception cannot be spent on a catch short of the goal"
+        },
+        {
+          "passed": true,
+          "name": "failed inside-goal option retains the near-goal quality fallback"
+        },
+        {
+          "passed": true,
+          "name": "inside-goal tolerance cannot override insufficient catch-window stamina"
+        },
+        {
+          "passed": true,
+          "name": "inside-goal clearance tolerance does not expand past half a stud"
+        },
+        {
+          "passed": true,
+          "name": "native multi-leg choices retain timed cuts and vary real route shapes"
+        },
+        {
+          "passed": true,
+          "name": "late route clock cannot skip an unreached cut waypoint"
+        },
+        {
+          "passed": true,
+          "name": "prethrow WR target progresses along native timeline with offset"
+        },
+        {
+          "passed": true,
+          "name": "missing snap timing does not steer a midplay reload to route start"
+        },
+        {
+          "passed": true,
+          "name": "DB presnap stays one to three yards on the goal side instead of crossing the receiver"
+        },
+        {
+          "passed": true,
+          "name": "recorded DB Hike aligns with visible side setup using ordinary walking"
+        },
+        {
+          "passed": true,
+          "name": "Hike navigation leaves WR frozen and yields to ball team or absent-opponent state"
+        },
+        {
+          "passed": true,
+          "name": "DB presnap respects goal cap while fixed session deep-pass bias remains bounded"
+        },
+        {
+          "passed": true,
+          "name": "repeated deep-attempt shade starts Live walking without changing setup or adding loss bias"
+        },
+        {
+          "passed": true,
+          "name": "deep-attempt walking shade preserves hold width sprint reserves and field symmetry"
+        },
+        {
+          "passed": true,
+          "name": "DB intentional opening gap and ordinary receiver movement do not spend sprint"
+        },
+        {
+          "passed": true,
+          "name": "recorded DB presnap stall requests free goal-side space and honors shifted LOS"
+        },
+        {
+          "passed": true,
+          "name": "recorded WR setback preserves DB opening band through hike without extending later coverage"
+        },
+        {
+          "passed": true,
+          "name": "DB deep-run forecast starts before recorded late recovery and retains normal reserve"
+        },
+        {
+          "passed": true,
+          "name": "DB gap forecast hysteresis does not toggle on every small velocity or position sample"
+        },
+        {
+          "passed": true,
+          "name": "DB advancing receiver does not manufacture more trail from level or shallow position"
+        },
+        {
+          "passed": true,
+          "name": "DB live opening retains nearby goal-side space until forward movement is visible"
+        },
+        {
+          "passed": true,
+          "name": "DB recorded opening retreat is corrected symmetrically and under field offset"
+        },
+        {
+          "passed": true,
+          "name": "DB forward progress retains near-goal cap and native sprint reserve thresholds"
+        },
+        {
+          "passed": true,
+          "name": "DB small cushion is stable over play age without inventing sprint urgency"
+        },
+        {
+          "passed": true,
+          "name": "DB unknown snap timing leaves geometric spacing unchanged"
+        },
+        {
+          "passed": true,
+          "name": "DB taper retains original urgent lateral and near-goal sprint thresholds"
+        },
+        {
+          "passed": true,
+          "name": "DB follows equal-speed movement while retaining opening room"
+        },
+        {
+          "passed": true,
+          "name": "DB ordinary recovery uses85/70 hysteresis and urgent recovery uses75/60"
+        },
+        {
+          "passed": true,
+          "name": "DB sprint consumption stops with sixty percent remaining even during persistent urgency"
+        },
+        {
+          "passed": true,
+          "name": "DB downfield recovery only starts beyond meaningful separation and releases before closing tightly"
+        },
+        {
+          "passed": true,
+          "name": "DB wider lateral buffer ignores small feints on both sides"
+        },
+        {
+          "passed": true,
+          "name": "DB clear lateral crossings walk with space rather than sprinting to body-press"
+        },
+        {
+          "passed": true,
+          "name": "DB recorded small crossing now stays inside the deliberately widened buffer"
+        },
+        {
+          "passed": true,
+          "name": "DB retreating receivers cannot trigger sprint or forward near-goal restoration"
+        },
+        {
+          "passed": true,
+          "name": "DB coverage reserves do not replace ball ownership and pursuit preserves forty"
+        },
+        {
+          "passed": true,
+          "name": "Throw to BallStop decision gap cannot restart live route or shadow"
+        },
+        {
+          "passed": true,
+          "name": "carrier chase has bounded lead even with implausible observed velocity"
+        },
+        {
+          "passed": true,
+          "name": "carry lane remains sticky and bounded when defender moves across center"
+        },
+        {
+          "passed": true,
+          "name": "carry continues past goal plane pending server result"
+        },
+        {
+          "passed": true,
+          "name": "flight team unsupported phases and unconfirmed possession yield control"
+        }
+      ],
+      "failed": 0
+    }
+  }
+}

@@ -1,0 +1,47 @@
+name: Deterministic checks
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  deterministic:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: actions/setup-python@v7.1.0
+        with:
+          python-version: '3.11'
+          cache: pip
+          cache-dependency-path: requirements-dev.txt
+      - run: python -m pip install -r requirements-dev.txt
+      - name: Rules and movement
+        run: python run-chalk-tests.py --all --json rule-results.json
+      - name: Full Auto rules and startup isolation
+        run: python run-chalk-deterministic-tests.py --json deterministic-results.json
+      - name: Airborne catch geometry
+        run: python run-chalk-airborne-tests.py --json airborne-results.json
+      - name: Bundle and installer checks
+        run: python -m unittest -v test_deterministic_build test_install_chalk
+      - name: Check generated bundle
+        run: |
+          python build-chalk-script.py
+          git diff --exit-code -- chalk-it-up-1v1.lua chalk-autoexec-public.lua
+          python - <<'PY'
+          from pathlib import Path
+          from lupa import LuaRuntime
+          lua = LuaRuntime(unpack_returned_tuples=True)
+          check = lua.eval('function(s) local f,e=load(s); return f~=nil,e end')
+          for name in ('chalk-it-up-1v1.lua', 'chalk-autoexec-public.lua'):
+              compiled, error = check(Path(name).read_text())
+              assert compiled, error
+          PY
+      - uses: actions/upload-artifact@v7.0.2
+        if: always()
+        with:
+          name: deterministic-checks
+          path: |
+            rule-results.json
+            deterministic-results.json
+            airborne-results.json
