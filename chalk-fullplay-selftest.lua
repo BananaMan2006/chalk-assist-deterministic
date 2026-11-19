@@ -1045,10 +1045,11 @@ return function(Policy,create,routeSource,policySource)
                     defenseProfile={depthBiasYards=0,deepAttemptShadeYards=.75}})
                 local choice=assert(Policy.movement(p,Config,f,r))
                 assert(choice.kind=="shadow" and not choice.sprint)
-                near(choice.target.X,p.opponentPosition.X-side*2*f.YD)
+                near(choice.target.X,p.opponentPosition.X-side*.2*f.YD)
                 near(choice.target.Z,p.LOS+offset.Z+2*f.YD)
-                assert((choice.target-p.position).Magnitude<Config.PreSnapDBSpeed*Config.HikeTime,
-                    "recorded visible setup unnecessarily exceeds native countdown walking budget")
+                -- A far-side start can exceed three seconds of native walking.
+                -- The target expresses alignment; no speed increase or warp is requested.
+                assert((choice.target-p.position).Magnitude>0 and not choice.sprint)
                 p.phase="PreSnap";local setup=Policy.movement(p,Config,f,r)
                 near(setup.target.X,choice.target.X);near(setup.target.Z,choice.target.Z)
                 p.phase="Hike";p.position=choice.target
@@ -1164,7 +1165,7 @@ return function(Policy,create,routeSource,policySource)
         local d=Policy.movement(p,Config,f,r)
         assert(d.target.Z>p.position.Z+f.YD and d.target.Z>p.LOS+f.YD,
             "recorded pinned DB was still sent into WR/LOS")
-        assert(not d.sprint);near(d.target.X,p.position.X)
+        assert(not d.sprint);near(d.target.X,p.opponentPosition.X)
         local offset=Vector3.new(100,0,47.3)
         p.offset=offset;p.position=p.position+offset;p.opponentPosition=p.opponentPosition+offset
         local shifted=Policy.movement(p,Config,f,r)
@@ -1392,34 +1393,37 @@ return function(Policy,create,routeSource,policySource)
         p.position=Vector3.new(0,3,83);assert(not move(p).sprint)
         p.stamina=60;p.position=Vector3.new(0,3,65);assert(not move(p).sprint)
     end)
-    test("DB wider lateral buffer ignores small feints on both sides",function()
+    test("DB small lateral buffer ignores idle sub-yard jitter on both sides",function()
         for _,side in ipairs({-1,1}) do
-            for _,gap in ipairs({.25,.75,1,1.49,1.5}) do
+            for _,gap in ipairs({.1,.25,.5}) do
                 local p=input({role="DB",phase="Live",position=Vector3.new(0,3,18),
                     opponentPosition=Vector3.new(side*gap*Field.YD,3,30),
-                    opponentVelocity=Vector3.new(side*27,0,0),stamina=100,sprintOn=true})
+                    opponentVelocity=Vector3.zero,stamina=100,sprintOn=true})
                 local d=move(p);near(d.target.X,0);assert(not d.sprint)
             end
             local p=input({role="DB",phase="Live",position=Vector3.new(0,3,18),
                 opponentPosition=Vector3.new(side*1.9*Field.YD,3,30),opponentVelocity=Vector3.zero})
-            near(move(p).target.X,0)
+            near(move(p).target.X,side*1.7*Field.YD);assert(not move(p).sprint)
         end
     end)
-    test("DB clear lateral crossings walk with space rather than sprinting to body-press",function()
+    test("DB ordinary crossings track with walking while inward motion receives no outward lead",function()
         for _,side in ipairs({-1,1}) do
             local p=input({role="DB",phase="Live",position=Vector3.new(0,3,18),
                 opponentPosition=Vector3.new(side*1.75*Field.YD,3,30),
                 opponentVelocity=Vector3.new(side*20,0,0),stamina=100})
-            local d=move(p)
-            assert((d.target.X-p.position.X)*side>0 and not d.sprint)
-            p.opponentVelocity=Vector3.new(-side*20,0,0);near(move(p).target.X,0)
-            p.opponentVelocity=Vector3.zero;near(move(p).target.X,0)
-            p.phase="PreSnap";p.opponentVelocity=Vector3.new(side*27,0,0);near(move(p).target.X,0)
+            local outward=move(p)
+            assert((outward.target.X-p.position.X)*side>0 and not outward.sprint)
+            p.opponentVelocity=Vector3.new(-side*20,0,0)
+            local inward=move(p);assert(not inward.sprint and inward.target.X*side<outward.target.X*side)
+            near(inward.target.X,side*1.55*Field.YD)
+            p.opponentVelocity=Vector3.zero;near(move(p).target.X,inward.target.X)
+            p.phase="PreSnap";p.opponentVelocity=Vector3.new(side*27,0,0)
+            near(move(p).target.X,inward.target.X);assert(not move(p).sprint)
             p.opponentPosition=Vector3.new(side*3*Field.YD,3,30)
-            near(move(p).target.X,side*Field.YD)
+            near(move(p).target.X,side*2.8*Field.YD)
         end
     end)
-    test("DB recorded small crossing now stays inside the deliberately widened buffer",function()
+    test("recorded fast side crossing follows before the former wide deadband opens",function()
         local f={MinX=-30.2121302485466,MaxX=67.99998158216476,MidX=18.8939256668,
             BackZ=-44.012135207653046,EndZ=152.4120985865593,LOSZ=-19.45910851670435,
             GoalZ=103.3060463,YD=4.9106056,TurfY=1.63686865568161}
@@ -1427,7 +1431,8 @@ return function(Policy,create,routeSource,policySource)
             opponentPosition=Vector3.new(16.146072387695312,4.636789,59.03019714355469),
             opponentVelocity=Vector3.new(24.345457077026367,0,-.009150903671979904),stamina=100})
         local d=Policy.movement(p,Config,f,RouteMath)
-        near(d.target.X,p.position.X);assert(not d.sprint)
+        assert(d.target.X>p.position.X and d.sprint)
+        p.stamina=84;assert(not Policy.movement(p,Config,f,RouteMath).sprint)
     end)
     test("DB retreating receivers cannot trigger sprint or forward near-goal restoration",function()
         local p=input({role="DB",phase="Live",position=Vector3.new(0,3,105),

@@ -33,6 +33,7 @@ def main():
     route_source = args.route_math.read_text() if args.route_math else (HERE / 'chalk-deterministic-route-fixture.lua').read_text()
     pure = (HERE / 'chalk-fullplay-selftest.lua').read_text()
     suites = {
+        'defensive-cuts': plain(load('chalk-defensive-cut-selftest.lua')(policy)),
         'scheduled-route-mix': plain(load('chalk-deterministic-route-mix-selftest.lua')(policy, controller, route_source)),
         'deterministic-isolation': plain(load('chalk-deterministic-fullplay-selftest.lua')(policy, controller, route_source)),
     }

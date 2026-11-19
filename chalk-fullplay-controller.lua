@@ -95,7 +95,8 @@ return function(ctx,Policy,services)
             "diveWitnessX","diveWitnessZ","diveWitnessMargin","adaptiveUnderneath",
             "observedDefenderDepthYards","underneathDepthLimit","carryReserve","carryMoveReady","estimatedCatchStamina",
             "pacedSlant","slantWalkUntil","slantSprintDuration","routeFamily","cutDirection",
-            "scheduledFamily","scheduleOverride","anticipatedLane","stemBlocked","preferAirborne","preferJumpDive","requireAirborne"}) do
+            "scheduledFamily","scheduleOverride","scheduledPass","passPreferenceOverride",
+            "anticipatedLane","stemBlocked","preferAirborne","preferJumpDive","requireAirborne"}) do
             local v=value[key]
             if type(v)=="boolean" or type(v)=="string" and #v<=512
                 or type(v)=="number" and v==v and math.abs(v)<math.huge then out[key]=v end
@@ -307,7 +308,7 @@ return function(ctx,Policy,services)
     local function inputFor(s,root)
         local opponent=rootOf(s.enemyCarrier and s.carrier or s.opponent)
         local choice=selected or activeRoute
-        return {LOS=s.LOS,offset=s.offset or Vector3.zero,position=root.Position,
+        return {LOS=s.LOS,offset=s.offset or Vector3.zero,position=root.Position,velocity=root.AssemblyLinearVelocity,
             opponentPosition=opponent and opponent.Position,
             opponentVelocity=opponent and opponent.AssemblyLinearVelocity,
             stamina=tonumber(player:GetAttribute("Stamina")) or 0,
@@ -409,6 +410,7 @@ return function(ctx,Policy,services)
             shape=chosen.shape,family=chosen.family,signature=chosen.signature,
             routeFamily=chosen.routeFamily,cutDirection=chosen.cutDirection,scheduledFamily=chosen.scheduledFamily,
             scheduleOverride=chosen.scheduleOverride,anticipatedLane=chosen.anticipatedLane,stemBlocked=chosen.stemBlocked,
+            scheduledPass=chosen.scheduledPass,passPreferenceOverride=chosen.passPreferenceOverride,
             preferAirborne=chosen.preferAirborne,preferJumpDive=chosen.preferJumpDive,requireAirborne=true,
             roundKey=roundKey,time=now,arrival=chosen.plan.Arrival,cutCount=chosen.cutCount,lastCutAt=chosen.lastCutAt,
             experimentalAttempt=chosen.experimentalAttempt,trialTrigger=chosen.trialTrigger,

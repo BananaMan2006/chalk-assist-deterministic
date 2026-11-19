@@ -1,4 +1,4 @@
--- Chalk-Release: 5.1.1
+-- Chalk-Release: 5.1.2
 -- Chalk-Product: deterministic
 -- Chalk It Up DB/WR ball assist using normal sprint/jump/dive controls.
 -- Cyan: replicated route (when supplied). Yellow: movement estimate.
@@ -43,7 +43,7 @@ assert(matchEvent and fxEvent and matchEvent:IsA("RemoteEvent") and fxEvent:IsA(
     "Chalk It Up Match/Fx events were not found")
 
 local api = {}
-local RELEASE_VERSION="5.1.1"
+local RELEASE_VERSION="5.1.2"
 local loadedGameId,loadedPlaceId,loadedJobId=game.GameId,game.PlaceId,game.JobId
 env.ChalkDB = api
 local alive, enabled = true, true
@@ -937,7 +937,7 @@ end
 function api.status()
     local ch = characterOf(opponent)
     local holder,isEnemy,holderRole=carrierContext()
-    return {product="deterministic",version=RELEASE_VERSION,buildId="1d18c0f004e352b6d830e32663fd79838e30d19a4394368b4c76ebc6d134b503",policyMode="deterministic", enabled=enabled, role=role or "unknown",rawRole=rawRole or "unknown", phase=phase,
+    return {product="deterministic",version=RELEASE_VERSION,buildId="eacc645a995f1298f6b55ced295475423fc1b6a17c75ec3cb33c3d6bdd69b7a3",policyMode="deterministic", enabled=enabled, role=role or "unknown",rawRole=rawRole or "unknown", phase=phase,
         ui={visible=windowVisible,minimized=minimized,x=panel.Position.X.Offset,y=panel.Position.Y.Offset},
         matchAlerts={enabled=alertSettings.enabled,saveError=alertSettings.saveError},
         idleGuard=idleGuard and idleGuard.status() or nil,
@@ -5787,6 +5787,9 @@ function Policy.chooseScheduledRoute(input,Config,Field,RouteMath)
     local index=finite(input.routeCycle) and math.floor(input.routeCycle)%20
         or finite(input.selectionIndex) and math.max(0,math.floor(input.selectionIndex)) or 0
     local desired=index%5==4 and "quarter_stem" or "middle_stem"
+    -- Three of the four middle starts prefer a Floater; the fourth preserves
+    -- a Bullet variation. This only selects among already reachable routes.
+    local middlePass=index%5==3 and "Bullet" or "Floater"
     local opponent=projectedOpponent(input,Config,.2)
     local history=type(input.recentRoutes)=="table" and input.recentRoutes or {}
     local recentFailure={middle_stem=0,quarter_stem=0}
@@ -5899,6 +5902,31 @@ function Policy.chooseScheduledRoute(input,Config,Field,RouteMath)
         local best
         for _,candidate in ipairs(pool[family]) do
             if not best or candidate.score>best.score then best=candidate end
+        end
+        if family=="middle_stem" and best then
+            local preferred,preferredReachable,clearAlternative
+            for _,candidate in ipairs(pool[family]) do
+                if not candidate.anticipatedLane and not candidate.stemBlocked
+                    and (not clearAlternative or candidate.score>clearAlternative.score) then
+                    clearAlternative=candidate
+                end
+                if candidate.payload.Pass==middlePass then
+                    preferredReachable=true
+                    -- A pass preference never excuses a known body obstruction
+                    -- or a defender already waiting in its final running lane.
+                    if not candidate.anticipatedLane and not candidate.stemBlocked
+                        and (not preferred or candidate.score>preferred.score) then
+                        preferred=candidate
+                    end
+                end
+            end
+            if preferred then best=preferred
+            elseif clearAlternative then best=clearAlternative end
+            best.scheduledPass=middlePass
+            if not preferred then
+                best.passPreferenceOverride=preferredReachable and "observed_lane_coverage"
+                    or "preferred_pass_unreachable"
+            end
         end
         if family=="quarter_stem" and best then
             local turn=math.floor(index/10)%2==0 and "opposite_side" or "same_side"
@@ -6583,11 +6611,10 @@ function Policy.movement(input,Config,Field,RouteMath)
             if targetZ<base+yd+bias or targetZ>base+3*yd+bias then
                 targetZ=base+2*yd+bias
             end
-            local lateralDelta=position.X-observed.X
-            local targetX=position.X
-            if math.abs(lateralDelta)>2*yd then
-                targetX=observed.X+(lateralDelta>0 and 2*yd or -2*yd)
-            end
+            local mid=(Field.MinX+Field.MaxX)*.5+offset.X
+            local openSide=observed.X<mid-yd*.5 and 1 or observed.X>mid+yd*.5 and -1 or 0
+            local lateralAim=observed.X+openSide*.2*yd
+            local targetX=math.abs(position.X-lateralAim)>.6*yd and lateralAim or position.X
             return result(Vector3.new(targetX,position.Y,math.min(goal+yd,targetZ)),"shadow",false,1.5)
         end
         -- Keep a small live trail within a flexible band. A nearby legal lead
@@ -6633,20 +6660,25 @@ function Policy.movement(input,Config,Field,RouteMath)
         end
         local lateralDelta=position.X-observed.X
         local lateral=math.abs(lateralDelta)
-        local targetX=position.X
-        local lateralBuffer=2*yd
+        local fieldMiddle=(Field.MinX+Field.MaxX)*.5+offset.X
+        local openSide=observed.X<fieldMiddle-yd*.5 and 1 or observed.X>fieldMiddle+yd*.5 and -1 or 0
+        local lateralAim=observed.X+openSide*.2*yd
+        -- Stay mostly behind the receiver, with only a small shade toward
+        -- the greater open field. Routine alignment is walking, not sprint.
+        local lateralBuffer=.6*yd
+        local targetX=math.abs(position.X-lateralAim)>lateralBuffer and lateralAim or position.X
         local lookahead=.25
-        if lateral>lateralBuffer then
-            targetX=observed.X+(lateralDelta>0 and lateralBuffer or -lateralBuffer)
-        end
         local velocity=boundedVelocity(input.opponentVelocity,Config.SprintSpeed)
-        -- A clear crossing can leave the receiver inside the lateral deadband
-        -- just as forward motion stops. Walk toward the observed crossing's
-        -- short lead instead of freezing until a full yard has opened.
-        if phase=="Live" and velocity.X*(observed.X-position.X)>0
-            and math.abs(velocity.X)>Config.RunSpeed*.5 and lateral>1.5*yd then
-            local side=velocity.X>0 and 1 or -1
-            targetX=observed.X-side*1.5*yd+velocity.X*lookahead
+        local selfVelocity=boundedVelocity(input.velocity,Config.SprintSpeed)
+        local side=observed.X>position.X and 1 or observed.X<position.X and -1 or 0
+        local outward=side~=0 and velocity.X*side>Config.RunSpeed*.5
+        local openingSpeed=math.max(0,(velocity.X-selfVelocity.X)*side)
+        local forecastLateral=lateral+openingSpeed*.35
+        -- The old 1.5-yard steering gate ignored a fast cut until the throw.
+        -- Use only observed direction/velocity and a short forecast; a turn
+        -- back toward us or an idle receiver does not trigger this lead.
+        if phase=="Live" and outward and (lateral>.5*yd or forecastLateral>yd) then
+            targetX=lateralAim+velocity.X*lookahead
         end
         -- Walk with clear forward movement before a persistent gap develops.
         -- The velocity lead is measured from the chosen shallow/deep shade,
@@ -6669,6 +6701,10 @@ function Policy.movement(input,Config,Field,RouteMath)
             or nearGoal and observedDepth<sprintMinDepth-yd)
         local forwardThreat=velocity.Z>Config.RunSpeed*.5 and observedDepth < sprintMinDepth-yd
         local lateralThreat=lateral>6*yd and observedDepth<3*yd and velocity.Z>=-2
+        local lateralCutRecovery=outward and velocity.Z>=-2 and observedDepth<3*yd
+            and (input.sprintOn==true and lateral>.65*yd and forecastLateral>yd
+                or input.sprintOn~=true and math.abs(velocity.X)>Config.RunSpeed+2
+                    and lateral>.6*yd and forecastLateral>1.5*yd)
         local downfieldRecovery=not nearGoal and goal-observed.Z<=12*yd
             and velocity.Z>Config.RunSpeed*.5
             and observedDepth<(input.sprintOn==true and sprintMinDepth or sprintMinDepth-yd)
@@ -6686,7 +6722,7 @@ function Policy.movement(input,Config,Field,RouteMath)
         -- Walk routine recovery; save sprint for real separation or a goal-line
         -- threat, retaining a lateral buffer instead of copying every cut.
         local needsSprint=phase=="Live" and not retreatingSafe
-            and (urgent or forwardThreat or lateralThreat or downfieldRecovery or deepRunRecovery)
+            and (urgent or forwardThreat or lateralThreat or lateralCutRecovery or downfieldRecovery or deepRunRecovery)
         local stamina=finite(input.stamina) and math.max(0,input.stamina) or 0
         local startAt,stopAt=urgent and 75 or 85,urgent and 60 or 70
         local sprint=needsSprint and (input.sprintOn==true and stamina>stopAt
@@ -6797,7 +6833,8 @@ return function(ctx,Policy,services)
             "diveWitnessX","diveWitnessZ","diveWitnessMargin","adaptiveUnderneath",
             "observedDefenderDepthYards","underneathDepthLimit","carryReserve","carryMoveReady","estimatedCatchStamina",
             "pacedSlant","slantWalkUntil","slantSprintDuration","routeFamily","cutDirection",
-            "scheduledFamily","scheduleOverride","anticipatedLane","stemBlocked","preferAirborne","preferJumpDive","requireAirborne"}) do
+            "scheduledFamily","scheduleOverride","scheduledPass","passPreferenceOverride",
+            "anticipatedLane","stemBlocked","preferAirborne","preferJumpDive","requireAirborne"}) do
             local v=value[key]
             if type(v)=="boolean" or type(v)=="string" and #v<=512
                 or type(v)=="number" and v==v and math.abs(v)<math.huge then out[key]=v end
@@ -7009,7 +7046,7 @@ return function(ctx,Policy,services)
     local function inputFor(s,root)
         local opponent=rootOf(s.enemyCarrier and s.carrier or s.opponent)
         local choice=selected or activeRoute
-        return {LOS=s.LOS,offset=s.offset or Vector3.zero,position=root.Position,
+        return {LOS=s.LOS,offset=s.offset or Vector3.zero,position=root.Position,velocity=root.AssemblyLinearVelocity,
             opponentPosition=opponent and opponent.Position,
             opponentVelocity=opponent and opponent.AssemblyLinearVelocity,
             stamina=tonumber(player:GetAttribute("Stamina")) or 0,
@@ -7111,6 +7148,7 @@ return function(ctx,Policy,services)
             shape=chosen.shape,family=chosen.family,signature=chosen.signature,
             routeFamily=chosen.routeFamily,cutDirection=chosen.cutDirection,scheduledFamily=chosen.scheduledFamily,
             scheduleOverride=chosen.scheduleOverride,anticipatedLane=chosen.anticipatedLane,stemBlocked=chosen.stemBlocked,
+            scheduledPass=chosen.scheduledPass,passPreferenceOverride=chosen.passPreferenceOverride,
             preferAirborne=chosen.preferAirborne,preferJumpDive=chosen.preferJumpDive,requireAirborne=true,
             roundKey=roundKey,time=now,arrival=chosen.plan.Arrival,cutCount=chosen.cutCount,lastCutAt=chosen.lastCutAt,
             experimentalAttempt=chosen.experimentalAttempt,trialTrigger=chosen.trialTrigger,
@@ -7860,7 +7898,7 @@ end
 
 end)()
 
-assist = createAssist({snapshot=api.context,version=RELEASE_VERSION,buildId="1d18c0f004e352b6d830e32663fd79838e30d19a4394368b4c76ebc6d134b503",fullplay=function(s,root,h,now,dt)
+assist = createAssist({snapshot=api.context,version=RELEASE_VERSION,buildId="eacc645a995f1298f6b55ced295475423fc1b6a17c75ec3cb33c3d6bdd69b7a3",fullplay=function(s,root,h,now,dt)
     if fullplay then return fullplay.navigate(s,root,h,now,dt) end
 end},Planner,createTackle,WRApproach,Motion,createCarrierMoves,PlayerAvoidance)
 assist.setEnabled(false)
@@ -7869,7 +7907,7 @@ repeatWR = createWRRepeat({snapshot=api.context,
     autoplay=function() return autoplay.status() end,
     disableAutoplay=function() return api.setAutoplay(false) end})
 repeatWR.setEnabled(false)
-fullplay = createFullplay({snapshot=api.context,version=RELEASE_VERSION,buildId="1d18c0f004e352b6d830e32663fd79838e30d19a4394368b4c76ebc6d134b503",
+fullplay = createFullplay({snapshot=api.context,version=RELEASE_VERSION,buildId="eacc645a995f1298f6b55ced295475423fc1b6a17c75ec3cb33c3d6bdd69b7a3",
     assistEnabled=function() return assist.status().enabled end,
     release=function() if assist.releaseFullplay then assist.releaseFullplay() end end},FullplayPolicy)
 fullplay.setEnabled(false)
@@ -7890,7 +7928,7 @@ local GAME_ID,PLACE_ID=10770281752,116097127629859
 local MAIN_URL="https://raw.githubusercontent.com/BananaMan2006/chalk-assist-deterministic/main/chalk-it-up-1v1.lua"
 local CACHE_FILE="chalk-deterministic-cache.lua"
 local MAIN_FILE="chalk-it-up-1v1.lua"
-local MIN_RELEASE="5.1.1"
+local MIN_RELEASE="5.1.2"
 local MARKER="__ChalkDeterministicAutoBoot"
 local env=type(getgenv)=="function" and getgenv() or _G
 local boot

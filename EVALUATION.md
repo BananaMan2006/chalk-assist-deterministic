@@ -1,6 +1,16 @@
-# Evaluation scope · 5.1.1
+# Evaluation scope · 5.1.2
 
 This release continues the authored, deterministic controller. Its checks establish local rule behavior and packaging properties. **They do not demonstrate a live win rate, a winning streak, perfect catching, or improvement through training.** The release has no training system or shared model.
+
+## 5.1.2 scope
+
+The new rules tighten lateral DB following and use bounded recovery bursts with stamina reserves. Receiving favors a longer middle stem and wide cut, mostly Floaters with occasional Bullets when feasible. These are authored changes motivated by observed gaps; 5.1.2 has not yet established a live improvement.
+
+## Limited 5.1.1 observation
+
+One native completed-match record showed a **4–2 win**. Full Auto was enabled midmatch, so this is not an eligible fully observed automatic win or streak, and one match cannot establish a win rate. Five jump requests had matching observed takeoffs; four airborne dive requests were followed by the native dive state. Those action observations alone are not proof of catches.
+
+The match included a WR incomplete while native movement speed fell from 27 to 12.15 for about 0.92 seconds. Full steering and substantial stamina were still present; the lost travel made the planned catch unreachable. The logs do not establish whether a jam caused the slowdown. Detailed runtime records remain private, and no player names or identifiers are published here.
 
 ## 5.1.1 correction
 

@@ -69,6 +69,46 @@ return function(Policy,create,routeSource)
         end
         assert(counts.middle_stem==16 and counts.quarter_stem==4)
     end)
+    test("reachable middle routes use three Floaters and one Bullet with ordinary center coverage",function()
+        for _,defender in ipairs({false,Vector3.new(0,3,2*Field.YD)}) do
+            local counts={Floater=0,Bullet=0}
+            for i=0,19 do
+                local c=choose(input({selectionIndex=i,opponentPosition=defender or nil,
+                    opponentVelocity=Vector3.zero}))
+                if i%5~=4 then
+                    local expected=i%5==3 and "Bullet" or "Floater"
+                    assert(c.routeFamily=="middle_stem" and c.payload.Pass==expected)
+                    assert(c.scheduledPass==expected and c.passPreferenceOverride==nil)
+                    assert(not c.anticipatedLane and not c.stemBlocked)
+                    assert(c.finalSprintStamina>=10 and c.cutAt<=c.plan.Launch+.015)
+                    if expected=="Floater" then
+                        assert(c.stemYards>=12 and c.depth>=24,"preferred Floater cut too early or shortened the route")
+                    end
+                    counts[c.payload.Pass]=counts[c.payload.Pass]+1
+                end
+            end
+            assert(counts.Floater==12 and counts.Bullet==4)
+        end
+    end)
+    test("middle Floater preference falls back when its final sprint cannot be funded",function()
+        local c=choose(input({selectionIndex=0,stamina=90,
+            opponentPosition=Vector3.new(0,3,2*Field.YD),opponentVelocity=Vector3.zero}))
+        assert(c.routeFamily=="middle_stem" and c.payload.Pass=="Bullet")
+        assert(c.scheduledPass=="Floater" and c.passPreferenceOverride=="preferred_pass_unreachable")
+        assert(c.finalSprintStamina>=10 and c.cutAt<=c.plan.Launch+.015)
+    end)
+    test("a deep defender waiting on the preferred Floater lane changes that route",function()
+        local before=choose(input({selectionIndex=0}))
+        assert(before.payload.Pass=="Floater")
+        local waiting=before.payload.Points[2]:Lerp(before.plan.Target,.85)
+        local after=choose(input({selectionIndex=0,
+            opponentPosition=Vector3.new(waiting.X,3,waiting.Y),opponentVelocity=Vector3.zero}))
+        assert(not after.anticipatedLane and not after.stemBlocked)
+        assert(after.side~=before.side or after.routeFamily~=before.routeFamily
+            or after.payload.Pass~=before.payload.Pass or after.payload.StartX~=before.payload.StartX,
+            "Floater preference ignored observed deep coverage")
+        assert(after.finalSprintStamina>=10 and after.cutAt<=after.plan.Launch+.015)
+    end)
     test("actual close center jam may override the scheduled middle family",function()
         local c=choose(input({opponentPosition=Vector3.new(0,3,.8*Field.YD),opponentVelocity=Vector3.zero}))
         assert(c.routeFamily=="quarter_stem" and c.scheduleOverride=="observed_lane_coverage")

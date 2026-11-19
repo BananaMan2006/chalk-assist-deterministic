@@ -365,6 +365,9 @@ function Policy.chooseScheduledRoute(input,Config,Field,RouteMath)
     local index=finite(input.routeCycle) and math.floor(input.routeCycle)%20
         or finite(input.selectionIndex) and math.max(0,math.floor(input.selectionIndex)) or 0
     local desired=index%5==4 and "quarter_stem" or "middle_stem"
+    -- Three of the four middle starts prefer a Floater; the fourth preserves
+    -- a Bullet variation. This only selects among already reachable routes.
+    local middlePass=index%5==3 and "Bullet" or "Floater"
     local opponent=projectedOpponent(input,Config,.2)
     local history=type(input.recentRoutes)=="table" and input.recentRoutes or {}
     local recentFailure={middle_stem=0,quarter_stem=0}
@@ -477,6 +480,31 @@ function Policy.chooseScheduledRoute(input,Config,Field,RouteMath)
         local best
         for _,candidate in ipairs(pool[family]) do
             if not best or candidate.score>best.score then best=candidate end
+        end
+        if family=="middle_stem" and best then
+            local preferred,preferredReachable,clearAlternative
+            for _,candidate in ipairs(pool[family]) do
+                if not candidate.anticipatedLane and not candidate.stemBlocked
+                    and (not clearAlternative or candidate.score>clearAlternative.score) then
+                    clearAlternative=candidate
+                end
+                if candidate.payload.Pass==middlePass then
+                    preferredReachable=true
+                    -- A pass preference never excuses a known body obstruction
+                    -- or a defender already waiting in its final running lane.
+                    if not candidate.anticipatedLane and not candidate.stemBlocked
+                        and (not preferred or candidate.score>preferred.score) then
+                        preferred=candidate
+                    end
+                end
+            end
+            if preferred then best=preferred
+            elseif clearAlternative then best=clearAlternative end
+            best.scheduledPass=middlePass
+            if not preferred then
+                best.passPreferenceOverride=preferredReachable and "observed_lane_coverage"
+                    or "preferred_pass_unreachable"
+            end
         end
         if family=="quarter_stem" and best then
             local turn=math.floor(index/10)%2==0 and "opposite_side" or "same_side"
@@ -1161,11 +1189,10 @@ function Policy.movement(input,Config,Field,RouteMath)
             if targetZ<base+yd+bias or targetZ>base+3*yd+bias then
                 targetZ=base+2*yd+bias
             end
-            local lateralDelta=position.X-observed.X
-            local targetX=position.X
-            if math.abs(lateralDelta)>2*yd then
-                targetX=observed.X+(lateralDelta>0 and 2*yd or -2*yd)
-            end
+            local mid=(Field.MinX+Field.MaxX)*.5+offset.X
+            local openSide=observed.X<mid-yd*.5 and 1 or observed.X>mid+yd*.5 and -1 or 0
+            local lateralAim=observed.X+openSide*.2*yd
+            local targetX=math.abs(position.X-lateralAim)>.6*yd and lateralAim or position.X
             return result(Vector3.new(targetX,position.Y,math.min(goal+yd,targetZ)),"shadow",false,1.5)
         end
         -- Keep a small live trail within a flexible band. A nearby legal lead
@@ -1211,20 +1238,25 @@ function Policy.movement(input,Config,Field,RouteMath)
         end
         local lateralDelta=position.X-observed.X
         local lateral=math.abs(lateralDelta)
-        local targetX=position.X
-        local lateralBuffer=2*yd
+        local fieldMiddle=(Field.MinX+Field.MaxX)*.5+offset.X
+        local openSide=observed.X<fieldMiddle-yd*.5 and 1 or observed.X>fieldMiddle+yd*.5 and -1 or 0
+        local lateralAim=observed.X+openSide*.2*yd
+        -- Stay mostly behind the receiver, with only a small shade toward
+        -- the greater open field. Routine alignment is walking, not sprint.
+        local lateralBuffer=.6*yd
+        local targetX=math.abs(position.X-lateralAim)>lateralBuffer and lateralAim or position.X
         local lookahead=.25
-        if lateral>lateralBuffer then
-            targetX=observed.X+(lateralDelta>0 and lateralBuffer or -lateralBuffer)
-        end
         local velocity=boundedVelocity(input.opponentVelocity,Config.SprintSpeed)
-        -- A clear crossing can leave the receiver inside the lateral deadband
-        -- just as forward motion stops. Walk toward the observed crossing's
-        -- short lead instead of freezing until a full yard has opened.
-        if phase=="Live" and velocity.X*(observed.X-position.X)>0
-            and math.abs(velocity.X)>Config.RunSpeed*.5 and lateral>1.5*yd then
-            local side=velocity.X>0 and 1 or -1
-            targetX=observed.X-side*1.5*yd+velocity.X*lookahead
+        local selfVelocity=boundedVelocity(input.velocity,Config.SprintSpeed)
+        local side=observed.X>position.X and 1 or observed.X<position.X and -1 or 0
+        local outward=side~=0 and velocity.X*side>Config.RunSpeed*.5
+        local openingSpeed=math.max(0,(velocity.X-selfVelocity.X)*side)
+        local forecastLateral=lateral+openingSpeed*.35
+        -- The old 1.5-yard steering gate ignored a fast cut until the throw.
+        -- Use only observed direction/velocity and a short forecast; a turn
+        -- back toward us or an idle receiver does not trigger this lead.
+        if phase=="Live" and outward and (lateral>.5*yd or forecastLateral>yd) then
+            targetX=lateralAim+velocity.X*lookahead
         end
         -- Walk with clear forward movement before a persistent gap develops.
         -- The velocity lead is measured from the chosen shallow/deep shade,
@@ -1247,6 +1279,10 @@ function Policy.movement(input,Config,Field,RouteMath)
             or nearGoal and observedDepth<sprintMinDepth-yd)
         local forwardThreat=velocity.Z>Config.RunSpeed*.5 and observedDepth < sprintMinDepth-yd
         local lateralThreat=lateral>6*yd and observedDepth<3*yd and velocity.Z>=-2
+        local lateralCutRecovery=outward and velocity.Z>=-2 and observedDepth<3*yd
+            and (input.sprintOn==true and lateral>.65*yd and forecastLateral>yd
+                or input.sprintOn~=true and math.abs(velocity.X)>Config.RunSpeed+2
+                    and lateral>.6*yd and forecastLateral>1.5*yd)
         local downfieldRecovery=not nearGoal and goal-observed.Z<=12*yd
             and velocity.Z>Config.RunSpeed*.5
             and observedDepth<(input.sprintOn==true and sprintMinDepth or sprintMinDepth-yd)
@@ -1264,7 +1300,7 @@ function Policy.movement(input,Config,Field,RouteMath)
         -- Walk routine recovery; save sprint for real separation or a goal-line
         -- threat, retaining a lateral buffer instead of copying every cut.
         local needsSprint=phase=="Live" and not retreatingSafe
-            and (urgent or forwardThreat or lateralThreat or downfieldRecovery or deepRunRecovery)
+            and (urgent or forwardThreat or lateralThreat or lateralCutRecovery or downfieldRecovery or deepRunRecovery)
         local stamina=finite(input.stamina) and math.max(0,input.stamina) or 0
         local startAt,stopAt=urgent and 75 or 85,urgent and 60 or 70
         local sprint=needsSprint and (input.sprintOn==true and stamina>stopAt

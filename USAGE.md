@@ -1,4 +1,4 @@
-# Running Chalk Assist 5.1.1
+# Running Chalk Assist 5.1.2
 
 The public repository is [BananaMan2006/chalk-assist-deterministic](https://github.com/BananaMan2006/chalk-assist-deterministic). The ready-to-run file is `chalk-it-up-1v1.lua`.
 
@@ -10,7 +10,7 @@ Join Chalk It Up, attach your executor, and run:
 loadstring(game:HttpGet("https://raw.githubusercontent.com/BananaMan2006/chalk-assist-deterministic/main/chalk-it-up-1v1.lua"))()
 ```
 
-The executor must support HTTP requests and `loadstring`. No GitHub account or token is needed. Verify **5.1.1** in the window's release badge. Gameplay automation starts OFF after a manual load, reload or new join; turn it on deliberately.
+The executor must support HTTP requests and `loadstring`. No GitHub account or token is needed. Verify **5.1.2** in the window's release badge. Gameplay automation starts OFF after a manual load, reload or new join; turn it on deliberately.
 
 The script queues the loader for later teleports when the executor provides a supported teleport queue. For a fresh Roblox launch, configure the executor's own auto-attach and autoexec on **each computer**. Executors without a teleport queue need their autoexec mechanism on each join. Automatic loading is restricted to the supported Chalk It Up place and waits for the game's dependencies.
 
@@ -74,11 +74,11 @@ F8 keeps this copy unloaded in the current server. A later join or explicit manu
 
 ## Full Auto route and defense rules
 
-The nominal WR route schedule uses four middle starts followed by one quarter-width start. Its small cycle counter is saved on this computer across sessions; opponent observations and outcomes remain session-only. Middle routes walk a stem, then cut left or right toward the far side. Quarter-width starts can cut toward either the same side or the opposite side. This is a deterministic schedule preference, not a random probability or a guaranteed ratio: observed coverage, recent contests, legal route geometry and available stamina can change the choice.
+The nominal WR route schedule uses four middle starts followed by one quarter-width start. Its small cycle counter is saved on this computer across sessions; opponent observations and outcomes remain session-only. Middle routes favor a longer walking stem, then a wide left or right cut. The preferred mix uses mostly Floaters with occasional Bullets when the route remains reachable within the timing and stamina budget. Quarter-width starts can cut toward either the same side or the opposite side. This is a deterministic schedule preference, not a random probability or a guaranteed ratio: observed coverage, recent contests, legal route geometry and available stamina can change the choice.
 
 Before accepting a scheduled route, the planner budgets the final sprint through the projected arrival plus an input allowance and a stamina reserve. Setup and the early stem do not spend that sprint budget. Nearby blockers can slow the stem or trigger a checked detour; the planned cut deadline keeps advancing. A small early feint is allowed only when its extra travel fits the remaining walking time. Contact delays can still make a pass unreachable.
 
-DB positioning uses a nearby flexible band around the receiver rather than chasing one exact offset. It keeps room at setup, follows observed movement, and reserves sprint for an actual gap or threat. Recent observed deep passes can adjust the authored coverage rule during the session. These are finite rule adjustments, not training or shared knowledge.
+DB aims to stay just behind the receiver with a small shade toward open field. Tighter lateral following reduces the space lost to a side cut; bounded recovery sprints address a real gap while preserving stamina. Setup still leaves room, and nearby positioning remains flexible. Recent observed deep passes can adjust the authored coverage rule during the session. These are finite rule adjustments, not training or shared knowledge.
 
 ## Desktop notifications
 

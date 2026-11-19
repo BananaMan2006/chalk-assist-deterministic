@@ -1,12 +1,14 @@
 # Chalk Assist · deterministic edition
 
-Chalk Assist 5.1.1 is a rule-based Roblox client for Chalk It Up. It combines route and ball visualization, catch planning, nearby tackle attempts, collision-aware movement, and optional 1v1 Full Auto.
+Chalk Assist 5.1.2 is a rule-based Roblox client for Chalk It Up. It combines route and ball visualization, catch planning, nearby tackle attempts, collision-aware movement, and optional 1v1 Full Auto.
 
 This edition contains **no neural policy, training loop, model downloads, shared-learning service, or learned-action selection**. It does not improve itself by playing more games. Short-lived match observations can adjust authored rules, but no knowledge is pooled across computers.
 
 All gameplay automation starts **OFF** on every load. Loading the script displays its controls; enable the features you want explicitly.
 
-Version 5.1.1 fixes a WR/DB jump-retry timing error: requesting a jump no longer counts as confirmed takeoff, and an unconfirmed request is cancelled when its planned contact window has expired. The controller must replan instead of retrying that expired jump. Both roles also recheck current-position reach with the actual dispatch time before jumping; being inside the timing allowance alone is insufficient. Live catch and win improvements remain unverified.
+Version 5.1.2 tightens lateral DB following, with bounded recovery sprints and a small shade toward open field. WR middle routes favor a longer stem and wide cut, mostly Floaters with occasional Bullets when geometry and stamina permit.
+
+The 5.1.1 correction remains in place: requesting a jump no longer counts as confirmed takeoff, and an unconfirmed request is cancelled when its planned contact window has expired. The controller must replan instead of retrying that expired jump. Both roles also recheck current-position reach with the actual dispatch time before jumping; being inside the timing allowance alone is insufficient. These checks do not guarantee a catch or win.
 
 ## Load
 
@@ -41,4 +43,4 @@ python3 -m unittest -v test_deterministic_build test_install_chalk
 python3 build-chalk-script.py
 ```
 
-The tests exercise authored offline fixtures and the actual Lua modules. They do not reproduce Roblox physics, networking or server decisions. No new live win rate or perfect-play result is claimed for this release. See [evaluation scope](EVALUATION.md).
+The tests exercise authored offline fixtures and the actual Lua modules. They do not reproduce Roblox physics, networking or server decisions. One observed 5.1.1 match ended 4–2, with Full Auto enabled midmatch; it is not a verified Full Auto streak or a win-rate estimate. Live performance of 5.1.2 is not yet established. See [evaluation scope](EVALUATION.md).
