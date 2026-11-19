@@ -36,7 +36,8 @@ class DeterministicBuildTests(unittest.TestCase):
         names = [name for name, _ in builder.MODULES]
         self.assertEqual(names, ['Planner', 'createTackle', 'WRApproach', 'Motion', 'PlayerAvoidance',
             'createCarrierMoves', 'createAssist', 'AutoplayPolicy', 'createAutoplay', 'createWRRepeat',
-            'createIdleGuard', 'FullplayPolicy', 'createFullplay', 'createMatchSkip', 'createAutoload'])
+            'createIdleGuard', 'FullplayPolicy', 'createFullplay', 'createMatchSkip',
+            'createSessionContinuity', 'createAutoload'])
         self.assertNotRegex('\n'.join(path for _, path in builder.MODULES),
                             r'(rl-|skill-|performance-|generator|exploration|audit|results)')
         self.assertIn('},FullplayPolicy)', builder.INITIALIZE)
@@ -158,7 +159,8 @@ class DeterministicBuildTests(unittest.TestCase):
             RELEASE_VERSION="authored-release"
             previousState={enabled=true,auto={enabled=true},autoplay={enabled=true},
                 wrRepeat={enabled=true},fullplay={enabled=true},matchSkip={enabled=true}}
-            api={context=function()return {}end,setAutoplay=function()error("No startup queue request")end}
+            api={context=function()return {}end,setAutoplay=function()error("No startup queue request")end,
+                initializeSessionContinuity=function()end}
             created={};idleStarts,idleStops=0,0
             local function feature(name,initial)
                 local state={enabled=initial}

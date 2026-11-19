@@ -1,6 +1,20 @@
-# Evaluation scope · 5.1.6
+# Evaluation scope · 5.1.7
 
 This release continues the authored, deterministic controller. Its checks establish local rule behavior and packaging properties. **They do not demonstrate a live win rate, a winning streak, perfect catching, or improvement through training.** The release has no training system or shared model.
+
+## 5.1.7 scope
+
+Autoplay can carry an explicitly enabled session through its own match and return teleports. Constructors still start OFF. A short-lived local record must be validated and consumed before resuming; a manual load, explicit OFF or unload takes precedence. This release changes session lifecycle, not the catch geometry or route strategy. The unresolved movement limitation below remains.
+
+These lifecycle properties depend on functioning native teleport-setting storage. If arming succeeds but a later cancellation write fails, the earlier record may remain until expiry; failure is reported rather than treated as confirmed revocation. Old executor queues can also retain a pre-upgrade loader for one hop. A clean join is needed for the upgrade test. Queue provenance and the destination's match/lobby kind are checked; the observed client queue packets do not provide a specific destination server or opponent identity.
+
+## Limited 5.1.7 observation
+
+After one upgrade rejoin with automation OFF, Full Auto and Autoplay were explicitly enabled once. The client entered its queued match, completed it, returned to the lobby and entered another match without an enable helper or manual reload. Read-only status captures showed a consumed match continuation, an armed lobby return, and a consumed continuation in the next match. The short lobby interval was verified through load/enable records and the subsequent automatic match entry rather than a separate lobby status capture.
+
+The completed match ended **4–0** across six throws. All three WR passes were caught: two were followed by touchdowns and one by a tackle. Defense recorded one interception, one opponent catch followed by a successful tackle, and one opponent incomplete. The latter two outcomes are not counted as breakups. The allowed catch followed an on-time local dive and a local contact claim; the server still awarded the opponent's catch. Four catch-jump requests had observed takeoff, with no fresh-jump rejection, late request or runtime error. Solve time had median 20.3 ms, 95th percentile 40.9 ms and maximum 55.8 ms. Local jam notices occurred on the receiving plays. These observations validate this session round-trip, not perfect play. The automatically started next match subsequently ended 2–4, so this scoreline is not evidence of consistent winning.
+
+The second 5.1.7 match contained nine complete plays: WR recorded three catches and two incompletes; DB recorded one interception and three opponent catches, two followed by touchdowns and one by a tackle. One missed WR Bullet was first observed by the throw receiver about 1.67 seconds after its launch, beyond its 1.05-second flight; the underlying delivery delay is not established. Another receiving Floater became unreachable after an explicit local jam notice and a roughly 0.90-second native speed reduction from 27 to 12.15. Neither failure was a late jump request. Automatic continuation again survived the completed loss and entered the next match without an active-play reload.
 
 ## 5.1.6 scope
 
@@ -11,6 +25,10 @@ Local diagnostic records distinguish explicit client-relative jam/block notices 
 ## Limited 5.1.6 observation
 
 One fully observed match ended **4–0** across six throws. Both WR Floaters (one quarter start, one middle stem) produced native catches followed by our touchdowns. The latter also included an observed carrier finish dive before the native touchdown. Defense recorded three breakups and one opponent Floater incomplete; that incomplete is not counted as an interception. All five catch-jump requests had observed takeoff, with no fresh-jump rejection, late input request or runtime error. Fifty native solves had median 8.7 ms, 95th percentile 31.4 ms and maximum 32.4 ms. No jam/block notice occurred. This is one clean match, not evidence of a long-run win rate or immunity to slowdown/steering failures.
+
+A second fully observed match also ended **4–0**, but included one receiving Floater incomplete. The next middle Floater and a middle Bullet were caught and followed by touchdowns; both scoring sequences included an observed carrier finish dive. Defense recorded one interception, one breakup and one opponent incomplete. All four catch-jump requests had observed takeoff. One fresh jump check rejected a Bullet plan, and a replacement plan recovered to a catch. There were no late action requests or runtime errors. Sixty-seven solves had median 6.9 ms, 95th percentile 23.2 ms and maximum 52.4 ms.
+
+The missed Floater lost its early jump-and-dive opportunity while collision avoidance steered around a close defender and withheld sprint. No jump was requested, and there was no fresh-jump rejection or explicit jam/block notice on that play. Recorded-position replays did not support simply switching passing sides or cutting slightly earlier. The straight-line catch forecast does not account for the full detour. This remains an unresolved movement/planning limitation. Two 4–0 scorelines are not two matches without receiving failures, and do not establish a win rate.
 
 ## Limited 5.1.5 observation
 
@@ -91,8 +109,8 @@ git diff --exit-code -- chalk-it-up-1v1.lua chalk-autoexec-public.lua
 | Carry moves | Repeatable choices, close-threat gates, both spin paths, stamina, cooldown and observed takeoff |
 | Movement | Sprint handoffs, stationary holds, field bounds, blocker detours and avoiding steering oscillation |
 | Full Auto | Authored route selection, finite rule history, control release and startup isolation |
-| UI and packaging | Automation starts OFF, learner/transport modules are absent, Lua compiles, and builds are reproducible |
-| Loading | Product/release guards, stale download rejection, failed-start fallback, F8 and rejoin behavior |
+| UI and packaging | Fresh/manual starts remain OFF, learner/transport modules are absent, Lua compiles, and builds are reproducible |
+| Loading | Product/release guards, stale download rejection, failed-start fallback, F8 and verified session continuation |
 | Installation | Isolated destination checks, dry run, preserved unrelated files and rejection of unsafe destination layouts |
 
 The default route tests use an authored RouteMath approximation. Field bounds are also authored test values. Numeric configuration fixtures exercise rules at explicit values; they are not evidence that the current live game's values match. An optional separately authorized RouteMath fixture can run additional local regressions through `run-chalk-deterministic-tests.py --route-math PATH`; that native source is not distributed here. The retained `chalk-fullplay-selftest.lua` supports those optional regressions.

@@ -7,11 +7,16 @@ local GAME_ID,PLACE_ID=10770281752,116097127629859
 local MAIN_URL="https://raw.githubusercontent.com/BananaMan2006/chalk-assist-deterministic/main/chalk-it-up-1v1.lua"
 local CACHE_FILE="chalk-deterministic-cache.lua"
 local MAIN_FILE="chalk-it-up-1v1.lua"
-local MIN_RELEASE="5.1.6"
+local MIN_RELEASE="5.1.7"
 local MARKER="__ChalkDeterministicAutoBoot"
 local env=type(getgenv)=="function" and getgenv() or _G
 local boot
 local deadline=os.clock()+90
+local teleportSource=options.automatic==true and type(options.teleportSourceJob)=="string"
+    and #options.teleportSourceJob>0 and #options.teleportSourceJob<=128 and options.teleportSourceJob or nil
+local function revokeHandoff()
+    pcall(function() game:GetService("TeleportService"):SetTeleportSetting("ChalkDeterministicSessionV1",false) end)
+end
 local function report(message)
     if type(writefile)=="function" then pcall(writefile,"ciu_autoload_status.txt",message) end
 end
@@ -29,10 +34,25 @@ local function sameJob(value)
     return type(value)=="table" and value.gameId==game.GameId
         and value.placeId==game.PlaceId and value.jobId==game.JobId
 end
+local function settleRunning()
+    if not running() then return false end
+    local api=env.ChalkDB
+    if teleportSource and type(api.resumeTeleportSession)=="function" then
+        local ready,s=pcall(api.status)
+        if not ready or type(s)~="table" or type(s.sessionContinuity)~="table" then return false end
+        pcall(api.resumeTeleportSession,teleportSource)
+    elseif options.automatic~=true then
+        if type(api.cancelTeleportSession)=="function" then pcall(api.cancelTeleportSession,"Manual reload") end
+        for _,name in ipairs({"setFullplay","setAuto","setAutoplay"}) do
+            if type(api[name])=="function" then pcall(api[name],false) end
+        end
+    end
+    return true
+end
 local function interrupted()
     if env[MARKER]~=boot then return "superseded" end
     if boot.state=="unloaded" then return "unloaded" end
-    if running() then boot.state="loaded";return "already-running" end
+    if settleRunning() then boot.state="loaded";return "already-running" end
 end
 local function waitFor(read,name)
     repeat
@@ -91,13 +111,29 @@ local function download()
 end
 local ok,result=pcall(function()
     waitFor(function() return game:IsLoaded() end,"Roblox")
-    if game.GameId~=GAME_ID or game.PlaceId~=PLACE_ID then return "unsupported-game" end
+    if game.GameId~=GAME_ID or game.PlaceId~=PLACE_ID then
+        if teleportSource then revokeHandoff() end
+        return "unsupported-game"
+    end
+    if options.automatic~=true then revokeHandoff() end
     local previous=env[MARKER]
     if sameJob(previous) then
-        if previous.state=="waiting" or previous.state=="starting" then return "already-starting" end
-        if running() then return "already-running" end
+        if previous.state=="waiting" or previous.state=="starting" then
+            if teleportSource then
+                -- Local autoexec may win the loading race. Wait for its OFF
+                -- runtime, then let that runtime validate the one-hop lease.
+                repeat
+                    if settleRunning() then return "already-running" end
+                    local current=env[MARKER]
+                    if sameJob(current) and current.state=="unloaded" then return "already-started" end
+                    task.wait(.1)
+                until os.clock()>=deadline
+            end
+            return "already-starting"
+        end
+        if settleRunning() then return "already-running" end
         if options.automatic then return "already-started" end -- F8 stays unloaded in this server.
-    elseif previous==nil and running() then
+    elseif previous==nil and settleRunning() then
         env[MARKER]={gameId=game.GameId,placeId=game.PlaceId,jobId=game.JobId,state="loaded"}
         return "already-running"
     end
@@ -150,7 +186,8 @@ local ok,result=pcall(function()
     if stopped then return stopped end
     assert(chunk,"No valid Chalk Assist release at or above "..MIN_RELEASE.." is available; try again manually")
     boot.state="starting"
-    chunk()
+    chunk({entryKind=teleportSource and "teleport" or options.automatic==true and "autoexec" or "manual",
+        teleportSourceJob=teleportSource})
     assert(running(),"Chalk Assist did not finish starting")
     boot.state="loaded"
     if downloaded and type(writefile)=="function" then
@@ -162,6 +199,7 @@ local ok,result=pcall(function()
     return downloaded and "loaded-public" or "loaded-cache"
 end)
 if not ok then
+    if teleportSource then revokeHandoff() end
     if boot and env[MARKER]==boot then env[MARKER]=nil end
     report("Chalk Assist startup failed. Try the loader again manually.")
     if type(warn)=="function" then warn("Chalk Assist startup failed: "..tostring(result)) end

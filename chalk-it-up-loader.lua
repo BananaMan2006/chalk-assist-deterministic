@@ -103,7 +103,7 @@ task.spawn(function()
         if interrupted() then return end
         assert(run, compileError)
         boot.state = "starting"
-        run()
+        run({entryKind="autoexec"})
         assert(runningAssist(),
             "Chalk Assist did not finish starting")
         boot.state = "loaded"

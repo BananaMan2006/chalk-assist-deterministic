@@ -57,8 +57,10 @@ return function(ctx,Policy)
     end
     connections[#connections+1]=queue.OnClientEvent:Connect(function(packet)
         if not alive then return end
+        if type(ctx.onQueue)=="function" then pcall(ctx.onQueue,packet,state:status()) end
         if state:observeQueue(packet,workspace:GetServerTimeNow()) then found(packet.Mode) end
         save()
+        if type(ctx.onStateChanged)=="function" then pcall(ctx.onStateChanged) end
     end)
     local function visible(object)
         local node=object
@@ -109,6 +111,7 @@ return function(ctx,Policy)
             if not ok then state:observeQueue({Status="Error",Message=tostring(err)},now) end
         end
         save()
+        if type(ctx.onStateChanged)=="function" then pcall(ctx.onStateChanged) end
     end
     local accumulator=0
     connections[#connections+1]=RunService.Heartbeat:Connect(function(dt)
@@ -117,7 +120,10 @@ return function(ctx,Policy)
         if accumulator<0.25 then return end
         accumulator=0
         local ok,err=pcall(tick)
-        if not ok then state.enabled=false;state.message="Autoplay paused: "..tostring(err);save() end
+        if not ok then
+            state.enabled=false;state.message="Autoplay paused: "..tostring(err);save()
+            if type(ctx.onStateChanged)=="function" then pcall(ctx.onStateChanged) end
+        end
     end)
     local api={}
     function api.modes()

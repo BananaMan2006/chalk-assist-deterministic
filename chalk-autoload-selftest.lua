@@ -99,9 +99,10 @@ return function(bootstrapSource, controllerSource, localLoaderSource)
             assert(path==MAIN or path==CACHE or path=="ciu_autoload_status.txt","Unexpected file write")
             h.writes=h.writes+1;h.files[path]=value
         end
-        env.markExecuted=function(version)
+        env.markExecuted=function(version,options)
             h.executions=h.executions+1
             h.executedRelease=version
+            h.launchOptions=options
             if h.startupError then error("Fixture startup failure") end
             local appJob=h.game.JobId
             env.ChalkDB={status=function() return {auto={},product="deterministic"} end,
@@ -382,6 +383,57 @@ return function(bootstrapSource, controllerSource, localLoaderSource)
     test("local loader rejects old product before compiling",function()
         local h=harness();h.files[MAIN]="-- Chalk-Release: 99.0.0\nmarkExecuted()"
         h:localLoader();equal(h.executions,0);equal(#h.compiledSources,0);equal(h.env[BOOT],nil)
+    end)
+    test("queued bootstrap forwards one-hop provenance while ordinary entries do not",function()
+        for _,kind in ipairs({"manual","autoexec","teleport"}) do
+            local h=harness();h.body=build("4.2.0","markExecuted('4.2.0',...)")
+            local options=kind=="manual" and {} or {automatic=true}
+            if kind=="teleport" then options.teleportSourceJob="source-job" end
+            equal(h:bootstrap(options),true)
+            equal(h.launchOptions.entryKind,kind)
+            equal(h.launchOptions.teleportSourceJob,kind=="teleport" and "source-job" or nil)
+        end
+    end)
+    test("local autoexec identifies entry without adding ON flags",function()
+        local h=harness();h.files[MAIN]=build("4.2.0","markExecuted('4.2.0',...)")
+        h:localLoader();equal(h.launchOptions.entryKind,"autoexec")
+        equal(h.launchOptions.fullAuto,nil);equal(h.launchOptions.autoplay,nil)
+    end)
+    test("queued handoff waits for partial autoexec runtime continuity readiness",function()
+        local h=harness();local ready=false;local resumes=0
+        h.env[BOOT]={gameId=h.game.GameId,placeId=h.game.PlaceId,jobId=h.game.JobId,state="starting"}
+        h.env.ChalkDB={status=function() return {product="deterministic",auto={},sessionContinuity=ready and {} or nil} end,
+            context=function() return {jobId=h.game.JobId} end,
+            resumeTeleportSession=function(source) assert(ready);equal(source,"source-job");resumes=resumes+1 end}
+        h.onWait=function() ready=true end
+        local ok,state=h:bootstrap({automatic=true,teleportSourceJob="source-job"})
+        equal(ok,true);equal(state,"already-running");equal(resumes,1);equal(h.downloads,0);equal(h.waits,1)
+    end)
+    test("manual bootstrap cancels a running session and switches automation off",function()
+        local h=harness();local calls={};h.env.markExecuted()
+        local api=h.env.ChalkDB
+        api.cancelTeleportSession=function(reason) calls.cancel=reason end
+        for _,key in ipairs({"setFullplay","setAuto","setAutoplay"}) do
+            api[key]=function(value) equal(value,false);calls[key]=true end
+        end
+        equal(h:bootstrap(),true);equal(calls.cancel,"Manual reload")
+        equal(calls.setFullplay,true);equal(calls.setAuto,true);equal(calls.setAutoplay,true)
+    end)
+    test("teleport callbacks still reach session gate after queue registration",function()
+        local h=harness();local calls={}
+        h.env.queue_on_teleport=function(payload)
+            assert(payload:find('teleportSourceJob="job-a"',1,true));return true
+        end
+        local chunk=assert(compile(controllerSource,h.env))
+        chunk()({bootstrapSource=bootstrapSource,onTeleport=function(state,place) calls={state,place} end},
+            {game=h.game,env=h.env,globals=h.env,player=h.player})
+        h.signal:fire("Started");equal(calls[1],"Started")
+    end)
+    test("legacy queued payload is supplemented once with session-aware bootstrap",function()
+        local h=harness();local count=0
+        h.env[QUEUE]={gameId=h.game.GameId,placeId=h.game.PlaceId,jobId=h.game.JobId,queued=true}
+        h.env.queue_on_teleport=function() count=count+1 end
+        h:controller();h:controller();equal(count,1);equal(h.env[QUEUE].sessionProtocol,1)
     end)
     return result
 end

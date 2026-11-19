@@ -21,18 +21,26 @@ MODULES = (
     ("FullplayPolicy", "chalk-fullplay-policy.lua"),
     ("createFullplay", "chalk-fullplay-controller.lua"),
     ("createMatchSkip", "chalk-match-skip-controller.lua"),
+    ("createSessionContinuity", "chalk-session-continuity.lua"),
     ("createAutoload", "chalk-autoload-controller.lua"),
 )
 
-# All input-producing features start off, including after a same-job reload.
+# All input-producing constructors start off, including after a same-job reload.
 # Prior UI geometry, selected queue mode and username preferences can survive;
 # an old enabled flag cannot silently opt a new installation into gameplay.
+# Only a validated current-session teleport handoff can restore opted-in play.
 INITIALIZE = r'''
 assist = createAssist({snapshot=api.context,version=RELEASE_VERSION,buildId="CHALK_BUNDLED_BUILD_ID",fullplay=function(s,root,h,now,dt)
     if fullplay then return fullplay.navigate(s,root,h,now,dt) end
 end},Planner,createTackle,WRApproach,Motion,createCarrierMoves,PlayerAvoidance)
 assist.setEnabled(false)
-autoplay = createAutoplay({snapshot=api.context,startDisabled=true},AutoplayPolicy)
+autoplay = createAutoplay({snapshot=api.context,startDisabled=true,
+    onQueue=function(packet,before)
+        if sessionContinuity then sessionContinuity.onQueue(packet,before) end
+    end,
+    onStateChanged=function()
+        if sessionContinuity then sessionContinuity.refresh() end
+    end},AutoplayPolicy)
 repeatWR = createWRRepeat({snapshot=api.context,
     autoplay=function() return autoplay.status() end,
     disableAutoplay=function() return api.setAutoplay(false) end})
@@ -50,7 +58,11 @@ function api.updateIdleGuard()
     if active and not idleGuard then idleGuard=createIdleGuard()
     elseif not active and idleGuard then idleGuard.unload();idleGuard=nil end
 end
-autoload = createAutoload({bootstrapSource=BOOTSTRAP_SOURCE})
+api.initializeSessionContinuity(createSessionContinuity)
+autoload = createAutoload({bootstrapSource=BOOTSTRAP_SOURCE,
+    onTeleport=function(state,placeId)
+        if sessionContinuity then sessionContinuity.onTeleport(state,placeId) end
+    end})
 '''
 
 

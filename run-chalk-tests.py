@@ -10,7 +10,7 @@ SUITES = (
     "planner", "approach", "tackle", "risky", "mode", "motion",
     "autoplay", "wr-repeat", "idle-guard", "fullplay-steering",
     "carrier-moves", "pending-sprint", "match-skip", "match-skip-identity",
-    "autoload", "avoidance", "avoidance-controller",
+    "autoload", "session", "avoidance", "avoidance-controller",
 )
 
 HERE = Path(__file__).resolve().parent
@@ -96,6 +96,9 @@ def main(argv=None):
                 result = load(HERE / 'chalk-player-avoidance-selftest.lua')(load(HERE / 'chalk-player-avoidance.lua'))
             elif suite == 'autoload':
                 result = load(HERE / 'chalk-autoload-selftest.lua')((HERE / 'chalk-bootstrap.lua').read_text(), (HERE / 'chalk-autoload-controller.lua').read_text(), (HERE / 'chalk-it-up-loader.lua').read_text())
+            elif suite == 'session':
+                result = load(HERE / 'chalk-session-continuity-selftest.lua')(
+                    load(HERE / 'chalk-session-continuity.lua'), (HERE / 'chalk-overlay-core.lua').read_text())
             elif suite == 'match-skip':
                 result = load(HERE / 'chalk-match-skip-selftest.lua')(load(HERE / 'chalk-match-skip-controller.lua'))
             elif suite == 'match-skip-identity':

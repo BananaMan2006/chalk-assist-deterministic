@@ -4,6 +4,8 @@
 -- Re-run safely; getgenv().ChalkDB.status() inspects state.
 -- getgenv().ChalkDB.test(12) temporarily renders a LOCAL demonstration.
 
+local launchOptions=(...)
+launchOptions=type(launchOptions)=="table" and launchOptions or {}
 local Players = game:GetService("Players")
 local RS = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
@@ -25,7 +27,9 @@ if env.ChalkDB and type(env.ChalkDB.context)=="function" then
     if success and type(state)=="table" and not state.testing then previousContext=state end
 end
 if env.ChalkDB and type(env.ChalkDB.unload) == "function" then
-    pcall(env.ChalkDB.unload,true)
+    local automatic=launchOptions.entryKind=="autoexec" or launchOptions.entryKind=="teleport"
+    local destination=automatic and previousContext and previousContext.jobId~=game.JobId and game.JobId or nil
+    pcall(env.ChalkDB.unload,true,destination)
 end
 
 local shared = RS:WaitForChild("Shared", 10)
@@ -45,7 +49,7 @@ local RELEASE_VERSION="CHALK_RELEASE_VERSION"
 local loadedGameId,loadedPlaceId,loadedJobId=game.GameId,game.PlaceId,game.JobId
 env.ChalkDB = api
 local alive, enabled = true, true
-local assist,autoplay,repeatWR,idleGuard,fullplay,matchSkip,autoload
+local assist,autoplay,repeatWR,idleGuard,fullplay,matchSkip,autoload,sessionContinuity
 local alertSettingsFile="ciu_match_alert_settings.json"
 local alertSettings={enabled=not (previousState and previousState.matchAlerts
     and previousState.matchAlerts.enabled==false)}
@@ -737,6 +741,7 @@ local function onMatch(data)
     if assist and assist.onMatch then assist.onMatch(data) end
     if repeatWR then repeatWR.onMatch(data) end
     if fullplay then fullplay.onMatch(data) end
+    if sessionContinuity then sessionContinuity.onMatch(data) end
 end
 local function onFx(data)
     if type(data) ~= "table" then return end
@@ -900,8 +905,9 @@ local function render()
     if api.updateIdleGuard then api.updateIdleGuard() end
 end
 
-function api.unload(preserveAutoplay)
+function api.unload(preserveAutoplay,automaticDestinationJob)
     if not alive then return end
+    if sessionContinuity then sessionContinuity.unload(automaticDestinationJob) end
     cancelDrag()
     if autoload then autoload.unload(preserveAutoplay) end
     if matchSkip then
@@ -925,6 +931,7 @@ function api.unload(preserveAutoplay)
 end
 function api.setEnabled(value)
     enabled = value == true
+    if sessionContinuity then sessionContinuity.onChoice("master",enabled) end
     toggle.Text = enabled and "ON · B" or "OFF · B"
     if not enabled then
         hide()
@@ -942,6 +949,7 @@ function api.status()
         fullplay=fullplay and fullplay.status() or nil,
         matchSkip=matchSkip and matchSkip.status() or nil,
         autoload=autoload and autoload.status() or nil,
+        sessionContinuity=sessionContinuity and sessionContinuity.status() or nil,
         matchIdentityVerified=matchIdentityVerified,
         mode=mode or "1v1",modeSource=modeSource, opponent=ch and ch.Name or "unknown",
         team=localTeam,offense=offense,teamGeometry=validGeo(teamGeo),
@@ -1085,6 +1093,7 @@ function api.syncFromGame()
 end
 function api.setAuto(value)
     if assist then assist.setEnabled(value) end
+    if sessionContinuity then sessionContinuity.onChoice("assist",value==true) end
     if api.updateIdleGuard then api.updateIdleGuard() end
 end
 function api.setFullplay(value)
@@ -1094,6 +1103,7 @@ function api.setFullplay(value)
         if assist then assist.setEnabled(true) end
     end
     local ok,reason=fullplay.setEnabled(value)
+    if sessionContinuity then sessionContinuity.onChoice("fullplay",value==true and ok==true) end
     updateFullplayUI()
     if api.updateIdleGuard then api.updateIdleGuard() end
     return ok,reason
@@ -1102,6 +1112,7 @@ function api.setAutoplay(value)
     if not autoplay then return false,"Autoplay is starting" end
     if value==true and repeatWR then repeatWR.setEnabled(false);updateWRRepeatUI() end
     local ok,reason=autoplay.setEnabled(value)
+    if sessionContinuity then sessionContinuity.onChoice("autoplay",ok==true) end
     updateAutoplayUI()
     if api.updateIdleGuard then api.updateIdleGuard() end
     return ok,reason
@@ -1117,11 +1128,45 @@ end
 function api.setAutoplayMode(value)
     if not autoplay then return false,"Autoplay is starting" end
     local ok,reason=autoplay.selectMode(value)
+    if sessionContinuity then sessionContinuity.onChoice("mode",ok==true) end
     updateAutoplayUI()
     if api.updateIdleGuard then api.updateIdleGuard() end
     return ok,reason
 end
 function api.autoplayModes() return autoplay and autoplay.modes() or {} end
+function api.initializeSessionContinuity(createSession)
+    local function modeAvailable(key)
+        for _,entry in ipairs(api.autoplayModes()) do
+            if entry.key==key then return entry.available==true end
+        end
+        return false
+    end
+    sessionContinuity=createSession({entry=launchOptions,modeAvailable=modeAvailable,
+        snapshot=function()
+            local a=autoplay and autoplay.status() or {}
+            return {alive=alive,enabled=enabled,testing=testing,
+                fullAuto=fullplay and fullplay.status().enabled==true
+                    and assist and assist.status().enabled==true,
+                autoplay=a.enabled==true,selectedMode=a.selectedMode,
+                modeAvailable=modeAvailable(a.selectedMode),
+                matchServer=workspace:GetAttribute("MatchServer")==true}
+        end,
+        apply=function(fullAuto,selectedMode)
+            if not api.setAutoplayMode(selectedMode) then return false end
+            if fullAuto and not api.setFullplay(true) then return false end
+            return api.setAutoplay(true)==true
+        end,
+        stop=function() api.setFullplay(false);api.setAuto(false);api.setAutoplay(false) end})
+    if launchOptions.entryKind=="teleport" then
+        sessionContinuity.resume(launchOptions.teleportSourceJob)
+    end
+end
+function api.resumeTeleportSession(sourceJob)
+    return sessionContinuity and sessionContinuity.resume(sourceJob) or false
+end
+function api.cancelTeleportSession(reason)
+    if sessionContinuity then sessionContinuity.cancel(reason) end
+end
 function api.history() return assist and assist.history() or {} end
 local function finishTest()
     if not restoreTest then return end

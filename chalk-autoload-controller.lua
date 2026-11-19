@@ -34,7 +34,7 @@ return function(ctx,services)
     end
     local function queue()
         if not alive or not status.supported then return false end
-        if sameJob(env[QUEUE]) and env[QUEUE].queued then
+        if sameJob(env[QUEUE]) and env[QUEUE].queued and env[QUEUE].sessionProtocol==1 then
             status.queued=true;status.queueAvailable=true
             status.message="Automatic loading is queued for the next teleport."
             return true
@@ -49,12 +49,13 @@ return function(ctx,services)
             status.message="Automatic loader source is missing from this build."
             return false
         end
-        local payload="(function(...)\n"..ctx.bootstrapSource.."\nend)({automatic=true})"
+        local payload="(function(...)\n"..ctx.bootstrapSource.."\nend)({automatic=true,teleportSourceJob="
+            ..string.format("%q",runtimeGame.JobId).."})"
         for _,choice in ipairs(choices) do
             status.attempts=status.attempts+1
             local ok,result=pcall(choice.fn,payload)
             if ok and result~=false then
-                local marker=identity("queued");marker.queued=true
+                local marker=identity("queued");marker.queued=true;marker.sessionProtocol=1
                 env[QUEUE]=marker
                 status.queued=true;status.provider=choice.name
                 status.message="Automatic loading is queued for the next teleport."
@@ -88,8 +89,10 @@ return function(ctx,services)
     local connected=pcall(function()
         local me=services.player or runtimeGame:GetService("Players").LocalPlayer
         if not me or not me.OnTeleport then return end
-        connection=me.OnTeleport:Connect(function(state)
-            if not alive or status.queued or retried then return end
+        connection=me.OnTeleport:Connect(function(state,placeId)
+            if not alive then return end
+            if type(ctx.onTeleport)=="function" then pcall(ctx.onTeleport,state,placeId) end
+            if status.queued or retried then return end
             local name=tostring(state)
             if name=="Started" or name=="InProgress" or name:match("%.Started$") or name:match("%.InProgress$") then
                 retried=true;queue()
