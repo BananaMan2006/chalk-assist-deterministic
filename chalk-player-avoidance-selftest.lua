@@ -126,6 +126,66 @@ return function(Avoidance)
         assert(d.reason~="holding passing side","hysteresis overrode the bounds check")
         legal(p,d.direction)
     end)
+    test("material catch-target change starts a bounded return without the old clear-frame hold",function()
+        local old=Vector3.new(.988,0,.157).Unit
+        local previousDesired=Vector3.new(.75,0,-.66).Unit
+        local goal=Vector3.new(-.22,0,.975).Unit
+        local p=fixture({now=.05,dt=.025,desiredDirection=goal,currentDirection=old,
+            allowSprintDetour=true,sprintSpeed=27})
+        local state={active=true,heading=old,side=1,desiredHeading=previousDesired,clearSince=.04}
+        local firstDot=old:Dot(goal)
+        local d;state,d=Avoidance.update(state,p)
+        assert(d.reason=="returning to path" and state.returningToChangedGoal,
+            "new catch direction retained the previous target's passing hold")
+        assert(state.heading:Dot(goal)>firstDot and d.sprint)
+        assert(math.acos(math.clamp(state.heading:Dot(old),-1,1))<=8*p.dt+1e-6)
+        -- The next frames are still inside the old .12-second debounce. The
+        -- change exemption must survive rather than produce one turn then hold.
+        for _=1,3 do
+            local before=state.heading
+            p.now=p.now+p.dt;p.currentDirection=before
+            state,d=Avoidance.update(state,p)
+            assert(d.reason=="returning to path" and state.returningToChangedGoal)
+            assert(state.heading:Dot(goal)>before:Dot(goal))
+            assert(math.acos(math.clamp(state.heading:Dot(before),-1,1))<=8*p.dt+1e-6)
+        end
+        for _=1,20 do
+            p.now=p.now+p.dt;p.currentDirection=state.heading
+            state,d=Avoidance.update(state,p)
+            if not d.active then break end
+        end
+        assert(not d.active and state.returningToChangedGoal==nil)
+        same(d.direction,goal);same(state.desiredHeading,goal)
+    end)
+    test("changed goal still checks the bounded return heading for player collisions",function()
+        local old=Vector3.new(1,0,0)
+        local p=fixture({now=.05,desiredDirection=Vector3.new(0,0,1),currentDirection=old,
+            allowSprintDetour=true,sprintSpeed=27,
+            opponents={{position=Vector3.new(4.5,0,0),velocity=Vector3.zero}}})
+        local previous={active=true,heading=old,side=-1,desiredHeading=Vector3.new(0,0,-1),clearSince=.04}
+        local state,d=Avoidance.update(previous,p)
+        assert(d.active and not d.sprint,"changed goal bypassed current-path collision safety")
+        assert(math.acos(math.clamp(state.heading:Dot(old),-1,1))<=8*p.dt+1e-6)
+        local relative=p.opponents[1].position-p.position
+        local velocity=-d.direction*p.walkSpeed
+        local time=velocity:Dot(velocity)>.000001
+            and math.clamp(-relative:Dot(velocity)/velocity:Dot(velocity),0,.25) or 0
+        assert((relative+velocity*time).Magnitude>=3.75-1e-6,
+            "return turn was allowed to cross the collision capsule")
+        legal(p,d.direction)
+    end)
+    test("small requested-heading jitter preserves ordinary passing-side hysteresis",function()
+        local bypass=Vector3.new(-math.sin(math.rad(35)),0,math.cos(math.rad(35)))
+        local p=fixture({walkSpeed=20,currentDirection=bypass})
+        local state={active=true,side=-1,heading=bypass,desiredHeading=Vector3.new(0,0,1)}
+        for i=1,4 do
+            p.now=i*.025
+            p.desiredDirection=Vector3.new(i%2==0 and .02 or -.02,0,1).Unit
+            local d;state,d=Avoidance.update(state,p)
+            assert(d.reason=="holding passing side" and not state.returningToChangedGoal)
+            same(state.heading,bypass)
+        end
+    end)
     test("sideline bypass selects the open side and remains bounded",function()
         local p=fixture({bounds={minX=-20,maxX=2,minZ=-20,maxZ=30},
             opponents={{position=Vector3.new(0,0,5),velocity=Vector3.zero}}})

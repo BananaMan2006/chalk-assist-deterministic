@@ -1,4 +1,4 @@
-# Running Chalk Assist 5.1.3
+# Running Chalk Assist 5.1.4
 
 The public repository is [BananaMan2006/chalk-assist-deterministic](https://github.com/BananaMan2006/chalk-assist-deterministic). The ready-to-run file is `chalk-it-up-1v1.lua`.
 
@@ -10,7 +10,7 @@ Join Chalk It Up, attach your executor, and run:
 loadstring(game:HttpGet("https://raw.githubusercontent.com/BananaMan2006/chalk-assist-deterministic/main/chalk-it-up-1v1.lua"))()
 ```
 
-The executor must support HTTP requests and `loadstring`. No GitHub account or token is needed. Verify **5.1.3** in the window's release badge. Gameplay automation starts OFF after a manual load, reload or new join; turn it on deliberately.
+The executor must support HTTP requests and `loadstring`. No GitHub account or token is needed. Verify **5.1.4** in the window's release badge. Gameplay automation starts OFF after a manual load, reload or new join; turn it on deliberately.
 
 The script queues the loader for later teleports when the executor provides a supported teleport queue. For a fresh Roblox launch, configure the executor's own auto-attach and autoexec on **each computer**. Executors without a teleport queue need their autoexec mechanism on each join. Automatic loading is restricted to the supported Chalk It Up place and waits for the game's dependencies.
 
@@ -67,6 +67,8 @@ Installing the loader does not enable gameplay actions. A script cannot attach a
 Full Auto, catch assistance, autoplay, WR-pad return and auto-leave start OFF. Enabling Full Auto also enables the main assist and catch assistance. Idle protection starts only while an enabled gameplay feature needs it. Turning Full Auto off does not necessarily turn off separately enabled catch assistance; use V or F8 as appropriate.
 
 Full Auto supports **1v1 only**. The autoplay selector may list other modes, but selecting one does not enable team Full Auto. Movement uses the game's normal available movement actions; sprint reservations and collision checks can delay or reject a plan. WR catch assistance plans only a jump or jump-and-dive with sampled geometric evidence of airborne first contact; it does not substitute a grounded catch or dive alone. For a Floater, it targets the earliest robust airborne contact, using jump-and-dive when that produces an earlier useful contact. Bullets retain the downfield contact preference. If no valid airborne window exists, it reports that there is no catch plan and may continue pursuit without issuing a catch action. The current position is checked again before a dive; a delayed jump or changed ball path can cancel that action. In 5.1.1, WR and DB also cancel an unconfirmed jump request once the planned contact has expired, rather than retrying it late; requesting a jump is separate from observing takeoff. Before dispatch, both roles recheck catch geometry from the current pose with takeoff shifted to the actual dispatch time; passing the timing limit alone does not establish reachability. DB still targets the earliest reachable interception. None of these estimates guarantees the server will award the catch. The game can also catch automatically when its own contact conditions are met; the script cannot promise to prevent every native grounded catch.
+
+A large target-direction change ends the old collision-avoidance hold; turns remain bounded and checked for collisions. Small direction changes keep the existing hold to avoid jitter. This does not guarantee that a delayed or unreachable catch can be recovered.
 
 The auto-leave field accepts exact account usernames separated by commas, semicolons or whitespace; `@` is optional. Press Enter or leave the field to save. Invalid entries preserve the last valid list. Clearing the list disables matching. The game decides whether leaving counts as a forfeit. Saved mode, username and window preferences can persist, but gameplay toggles still reset OFF at startup.
 

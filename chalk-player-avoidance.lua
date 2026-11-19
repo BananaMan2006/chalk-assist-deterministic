@@ -59,6 +59,17 @@ function Avoidance.update(previous,input)
     state.now=now
     local position=input.position
     local heading=flat.Unit
+    -- A new catch/pursuit target can reverse the requested path while the old
+    -- passing side is still active. Its clear-frame debounce belongs to the
+    -- old path; start the bounded return immediately for a material change.
+    -- Keep this exemption through subsequent frames until the return finishes,
+    -- rather than reinstating the old hold after one small turn.
+    local priorDesired=state.desiredHeading
+    if state.active and vec(priorDesired) and priorDesired.Magnitude>.001
+        and priorDesired.Unit:Dot(heading)<math.cos(math.rad(45)) then
+        state.returningToChangedGoal=true
+    end
+    state.desiredHeading=heading
     local current=vec(input.currentDirection) and input.currentDirection*FLAT or ZERO
     current=current.Magnitude>.001 and current.Unit or heading
     local strength=math.min(1,flat.Magnitude)
@@ -176,7 +187,7 @@ function Avoidance.update(previous,input)
             -- A single clear frame near the capsule boundary is not an exit.
             -- Retain the checked passing heading briefly so alternating clear/
             -- threatened frames cannot reverse the turn on every heartbeat.
-            if now-state.clearSince<.12 then
+            if not state.returningToChangedGoal and now-state.clearSince<.12 then
                 local safe=evaluate(old.Unit,speed*amount)
                 local sprint=keepSprint(old.Unit)
                 if safe or sprint then
@@ -200,6 +211,7 @@ function Avoidance.update(previous,input)
                 {side=state.side,progressSpeed=measured})
         end
         state.active,state.heading=false,current
+        state.returningToChangedGoal=nil
         state.clearSince=state.clearSince or now
         if now-state.clearSince>=.35 then state.side=nil end
         return state,decision(desired,requested,false,false,"clear",{progressSpeed=measured})

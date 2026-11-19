@@ -1,12 +1,12 @@
 # Chalk Assist · deterministic edition
 
-Chalk Assist 5.1.3 is a rule-based Roblox client for Chalk It Up. It combines route and ball visualization, catch planning, nearby tackle attempts, collision-aware movement, and optional 1v1 Full Auto.
+Chalk Assist 5.1.4 is a rule-based Roblox client for Chalk It Up. It combines route and ball visualization, catch planning, nearby tackle attempts, collision-aware movement, and optional 1v1 Full Auto.
 
 This edition contains **no neural policy, training loop, model downloads, shared-learning service, or learned-action selection**. It does not improve itself by playing more games. Short-lived match observations can adjust authored rules, but no knowledge is pooled across computers.
 
 All gameplay automation starts **OFF** on every load. Loading the script displays its controls; enable the features you want explicitly.
 
-Version 5.1.3 addresses a route-timing mismatch: a stationary defender farther up the middle stem can trigger a clear alternate route family, and the runner slows only when enough time remains to reach the cut. Ordinary close coverage still permits the middle route. The tighter lateral DB following and Floater-majority route preference remain.
+Version 5.1.4 fixes stale steering when a catch target changes sharply: the old avoidance path's short hold no longer delays the bounded turn toward the new target. Collision checks and ordinary jitter prevention remain, along with the route/stamina and Floater-majority rules.
 
 The 5.1.1 correction remains in place: requesting a jump no longer counts as confirmed takeoff, and an unconfirmed request is cancelled when its planned contact window has expired. The controller must replan instead of retrying that expired jump. Both roles also recheck current-position reach with the actual dispatch time before jumping; being inside the timing allowance alone is insufficient. These checks do not guarantee a catch or win.
 
@@ -43,4 +43,4 @@ python3 -m unittest -v test_deterministic_build test_install_chalk
 python3 build-chalk-script.py
 ```
 
-The tests exercise authored offline fixtures and the actual Lua modules. They do not reproduce Roblox physics, networking or server decisions. The first observed 5.1.2 test match ended 4–2 but included three receiving incompletes. That result does not establish improvement or a win rate. Live performance of 5.1.3 is not yet established. See [evaluation scope](EVALUATION.md).
+The tests exercise authored offline fixtures and the actual Lua modules. They do not reproduce Roblox physics, networking or server decisions. Two observed 5.1.3 matches ended 4–0 and 4–1, but the latter included a WR Floater incomplete. Those results do not establish a win rate. Version 5.1.4 addresses stale steering observed during that miss; a catch improvement has not been established. See [evaluation scope](EVALUATION.md).

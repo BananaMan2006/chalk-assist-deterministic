@@ -1,4 +1,4 @@
--- Chalk-Release: 5.1.3
+-- Chalk-Release: 5.1.4
 -- Chalk-Product: deterministic
 -- Chalk It Up DB/WR ball assist using normal sprint/jump/dive controls.
 -- Cyan: replicated route (when supplied). Yellow: movement estimate.
@@ -43,7 +43,7 @@ assert(matchEvent and fxEvent and matchEvent:IsA("RemoteEvent") and fxEvent:IsA(
     "Chalk It Up Match/Fx events were not found")
 
 local api = {}
-local RELEASE_VERSION="5.1.3"
+local RELEASE_VERSION="5.1.4"
 local loadedGameId,loadedPlaceId,loadedJobId=game.GameId,game.PlaceId,game.JobId
 env.ChalkDB = api
 local alive, enabled = true, true
@@ -937,7 +937,7 @@ end
 function api.status()
     local ch = characterOf(opponent)
     local holder,isEnemy,holderRole=carrierContext()
-    return {product="deterministic",version=RELEASE_VERSION,buildId="ed8da2fbaa7e6201c88d56765d4700573e045863d7029ce76279d0b0b3646baa",policyMode="deterministic", enabled=enabled, role=role or "unknown",rawRole=rawRole or "unknown", phase=phase,
+    return {product="deterministic",version=RELEASE_VERSION,buildId="83cdb9b4ff92fd53b71e8ede4b52dfef3428242dd2eb2884a7a58785874df637",policyMode="deterministic", enabled=enabled, role=role or "unknown",rawRole=rawRole or "unknown", phase=phase,
         ui={visible=windowVisible,minimized=minimized,x=panel.Position.X.Offset,y=panel.Position.Y.Offset},
         matchAlerts={enabled=alertSettings.enabled,saveError=alertSettings.saveError},
         idleGuard=idleGuard and idleGuard.status() or nil,
@@ -2942,6 +2942,17 @@ function Avoidance.update(previous,input)
     state.now=now
     local position=input.position
     local heading=flat.Unit
+    -- A new catch/pursuit target can reverse the requested path while the old
+    -- passing side is still active. Its clear-frame debounce belongs to the
+    -- old path; start the bounded return immediately for a material change.
+    -- Keep this exemption through subsequent frames until the return finishes,
+    -- rather than reinstating the old hold after one small turn.
+    local priorDesired=state.desiredHeading
+    if state.active and vec(priorDesired) and priorDesired.Magnitude>.001
+        and priorDesired.Unit:Dot(heading)<math.cos(math.rad(45)) then
+        state.returningToChangedGoal=true
+    end
+    state.desiredHeading=heading
     local current=vec(input.currentDirection) and input.currentDirection*FLAT or ZERO
     current=current.Magnitude>.001 and current.Unit or heading
     local strength=math.min(1,flat.Magnitude)
@@ -3059,7 +3070,7 @@ function Avoidance.update(previous,input)
             -- A single clear frame near the capsule boundary is not an exit.
             -- Retain the checked passing heading briefly so alternating clear/
             -- threatened frames cannot reverse the turn on every heartbeat.
-            if now-state.clearSince<.12 then
+            if not state.returningToChangedGoal and now-state.clearSince<.12 then
                 local safe=evaluate(old.Unit,speed*amount)
                 local sprint=keepSprint(old.Unit)
                 if safe or sprint then
@@ -3083,6 +3094,7 @@ function Avoidance.update(previous,input)
                 {side=state.side,progressSpeed=measured})
         end
         state.active,state.heading=false,current
+        state.returningToChangedGoal=nil
         state.clearSince=state.clearSince or now
         if now-state.clearSince>=.35 then state.side=nil end
         return state,decision(desired,requested,false,false,"clear",{progressSpeed=measured})
@@ -7943,7 +7955,7 @@ end
 
 end)()
 
-assist = createAssist({snapshot=api.context,version=RELEASE_VERSION,buildId="ed8da2fbaa7e6201c88d56765d4700573e045863d7029ce76279d0b0b3646baa",fullplay=function(s,root,h,now,dt)
+assist = createAssist({snapshot=api.context,version=RELEASE_VERSION,buildId="83cdb9b4ff92fd53b71e8ede4b52dfef3428242dd2eb2884a7a58785874df637",fullplay=function(s,root,h,now,dt)
     if fullplay then return fullplay.navigate(s,root,h,now,dt) end
 end},Planner,createTackle,WRApproach,Motion,createCarrierMoves,PlayerAvoidance)
 assist.setEnabled(false)
@@ -7952,7 +7964,7 @@ repeatWR = createWRRepeat({snapshot=api.context,
     autoplay=function() return autoplay.status() end,
     disableAutoplay=function() return api.setAutoplay(false) end})
 repeatWR.setEnabled(false)
-fullplay = createFullplay({snapshot=api.context,version=RELEASE_VERSION,buildId="ed8da2fbaa7e6201c88d56765d4700573e045863d7029ce76279d0b0b3646baa",
+fullplay = createFullplay({snapshot=api.context,version=RELEASE_VERSION,buildId="83cdb9b4ff92fd53b71e8ede4b52dfef3428242dd2eb2884a7a58785874df637",
     assistEnabled=function() return assist.status().enabled end,
     release=function() if assist.releaseFullplay then assist.releaseFullplay() end end},FullplayPolicy)
 fullplay.setEnabled(false)
@@ -7973,7 +7985,7 @@ local GAME_ID,PLACE_ID=10770281752,116097127629859
 local MAIN_URL="https://raw.githubusercontent.com/BananaMan2006/chalk-assist-deterministic/main/chalk-it-up-1v1.lua"
 local CACHE_FILE="chalk-deterministic-cache.lua"
 local MAIN_FILE="chalk-it-up-1v1.lua"
-local MIN_RELEASE="5.1.3"
+local MIN_RELEASE="5.1.4"
 local MARKER="__ChalkDeterministicAutoBoot"
 local env=type(getgenv)=="function" and getgenv() or _G
 local boot
