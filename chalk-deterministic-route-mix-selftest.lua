@@ -1,6 +1,6 @@
 -- Supplied RouteMath source, with explicit numeric geometry and service fixtures.
 -- No Roblox physics, network outcome, GUI input, or opponent behavior is simulated.
-return function(Policy,create,routeSource)
+return function(Policy,create,routeSource,Planner)
     local report={total=0,passed=0,failed=0,results={}}
     local oldVector2,oldTypeof=Vector2,typeof
     local M,V={},{}
@@ -18,7 +18,7 @@ return function(Policy,create,routeSource)
     M.__div=function(a,b) return vec(a.X/b,a.Y/b) end
     Vector2={new=vec,zero=vec(0,0)}
     typeof=function(value) return getmetatable(value)==M and "Vector2" or oldTypeof(value) end
-    local Config={RunSpeed=20,SprintSpeed=27,Stamina=100,SprintDrain=25,HikeTime=3,PreSnapDBSpeed=12,
+    local Config={RunSpeed=20,SprintSpeed=27,Stamina=100,SprintDrain=25,StaminaRegen=18,RegenDelay=.8,HikeTime=3,PreSnapDBSpeed=12,
         MinPointGapYards=.5,SidelineMarginYards=2,RouteEdgeMargin=1,BehindLOSYards=3,
         MaxInkYards=30,MaxPoints=200,DefaultGoYards=25,SimplifyTolerance=.6,
         CornerMinAngle=45,CornerMaxAngle=135,CornerMaxPenalty=.25,
@@ -46,261 +46,180 @@ return function(Policy,create,routeSource)
         for key,item in pairs(extra or {}) do value[key]=item end
         return value
     end
-    local function choose(value) return assert(Policy.chooseScheduledRoute(value,Config,Field,RouteMath)) end
-    test("fixed five-play schedule defaults to four middle stems and one quarter stem",function()
-        local counts={middle_stem=0,quarter_stem=0}
-        for i=0,19 do
-            local c=choose(input({selectionIndex=i}))
-            assert(c.routeFamily,"family fallback at "..i..": "..tostring(c.scheduleOverride))
-            assert(c.routeFamily==(i%5==4 and "quarter_stem" or "middle_stem"))
-            assert(c.scheduleOverride==nil)
-            counts[c.routeFamily]=counts[c.routeFamily]+1
-        end
-        assert(counts.middle_stem==16 and counts.quarter_stem==4)
-    end)
-    test("ordinary center DB two yards ahead retains the four-to-one default schedule",function()
-        local counts={middle_stem=0,quarter_stem=0}
-        for i=0,19 do
-            local c=choose(input({selectionIndex=i,opponentPosition=Vector3.new(0,3,2*Field.YD),
-                opponentVelocity=Vector3.zero}))
-            assert(c.routeFamily==(i%5==4 and "quarter_stem" or "middle_stem"))
-            assert(c.scheduleOverride==nil and not c.stemBlocked)
-            counts[c.routeFamily]=counts[c.routeFamily]+1
-        end
-        assert(counts.middle_stem==16 and counts.quarter_stem==4)
-    end)
-    test("reachable middle routes use three Floaters and one Bullet with ordinary center coverage",function()
-        for _,defender in ipairs({false,Vector3.new(0,3,2*Field.YD)}) do
-            local counts={Floater=0,Bullet=0}
-            for i=0,19 do
-                local c=choose(input({selectionIndex=i,opponentPosition=defender or nil,
-                    opponentVelocity=Vector3.zero}))
-                if i%5~=4 then
-                    local expected=i%5==3 and "Bullet" or "Floater"
-                    assert(c.routeFamily=="middle_stem" and c.payload.Pass==expected)
-                    assert(c.scheduledPass==expected and c.passPreferenceOverride==nil)
-                    assert(not c.anticipatedLane and not c.stemBlocked)
-                    assert(c.finalSprintStamina>=10 and c.cutAt<=c.plan.Launch+.015)
-                    if expected=="Floater" then
-                        assert(c.stemYards>=12 and c.depth>=24,"preferred Floater cut too early or shortened the route")
-                    end
-                    counts[c.payload.Pass]=counts[c.payload.Pass]+1
-                end
+    local function choose(value) return assert(Policy.chooseScheduledRoute(value,Config,Field,RouteMath,Planner)) end
+
+    test("automatic WR keeps deep middle Floaters with at most one checked Bullet slot",function()
+        for _,cycle in ipairs({0,1,3,4,9,19}) do
+            local c=choose(input({routeCycle=cycle}))
+            assert((c.payload.Pass=="Floater" or cycle==19 and c.payload.Pass=="Bullet") and c.payload.StartX==Field.MidX)
+            assert(c.routeFamily=="middle_stem" and c.scheduledFamily=="middle_stem")
+            assert(c.stemYards>=Field.GoalZ/Field.YD*.65,"middle stem cut too early")
+            assert(c.requireAirborne and not c.requireDive and not c.preferJumpDive)
+            if c.payload.Pass=="Floater" then
+                assert(c.ballTargetZ>=Field.GoalZ+4*Field.YD)
+                assert(c.estimatedCatchZ>=Field.GoalZ+.25 and c.estimatedCatchInsideGoal)
+                assert(c.estimatedStopAt>=c.estimatedFirstTouchAt)
             end
-            assert(counts.Floater==12 and counts.Bullet==4)
+            if c.payload.Pass=="Bullet" then assert(c.rareBullet and c.cutAt<=c.plan.Launch) end
         end
     end)
-    test("middle Floater preference falls back when its final sprint cannot be funded",function()
-        local c=choose(input({selectionIndex=0,stamina=90,
-            opponentPosition=Vector3.new(0,3,2*Field.YD),opponentVelocity=Vector3.zero}))
-        assert(c.routeFamily=="middle_stem" and c.payload.Pass=="Bullet")
-        assert(c.scheduledPass=="Floater" and c.passPreferenceOverride=="preferred_pass_unreachable")
-        assert(c.finalSprintStamina>=10 and c.cutAt<=c.plan.Launch+.015)
-    end)
-    test("a deep defender waiting on the preferred Floater lane changes that route",function()
-        local before=choose(input({selectionIndex=0}))
-        assert(before.payload.Pass=="Floater")
-        local waiting=before.payload.Points[2]:Lerp(before.plan.Target,.85)
-        local after=choose(input({selectionIndex=0,
-            opponentPosition=Vector3.new(waiting.X,3,waiting.Y),opponentVelocity=Vector3.zero}))
-        assert(not after.anticipatedLane and not after.stemBlocked)
-        assert(after.side~=before.side or after.routeFamily~=before.routeFamily
-            or after.payload.Pass~=before.payload.Pass or after.payload.StartX~=before.payload.StartX,
-            "Floater preference ignored observed deep coverage")
-        assert(after.finalSprintStamina>=10 and after.cutAt<=after.plan.Launch+.015)
-    end)
-    test("actual close center jam may override the scheduled middle family",function()
-        local c=choose(input({opponentPosition=Vector3.new(0,3,.8*Field.YD),opponentVelocity=Vector3.zero}))
-        assert(c.routeFamily=="quarter_stem" and c.scheduleOverride=="observed_lane_coverage")
-    end)
-    test("a blocked longer middle stem does not discard a clear funded middle Floater",function()
-        for _,velocity in ipairs({Vector3.zero,Vector3.new(-4.96,0,-10.89),Vector3.new(2.49,0,-11.74)}) do
-            local c=choose(input({position=Vector3.new(0,3,-1.52),
-                opponentPosition=Vector3.new(0,3,8*Field.YD),opponentVelocity=velocity}))
-            assert(c.routeFamily=="middle_stem" and c.payload.Pass=="Floater" and c.scheduleOverride==nil)
-            assert(not c.stemBlocked and not c.anticipatedLane)
-            assert(c.finalSprintStamina>=10 and c.cutAt<=c.plan.Launch+.015)
+    test("both sharp-cut sides remain available without changing the middle start",function()
+        local left=choose(input({routeCycle=0}));local right=choose(input({routeCycle=1}))
+        assert(left.side==-1 and right.side==1)
+        for _,c in ipairs({left,right}) do
+            local p=c.payload.Points;local leg=p[3]-p[2]
+            assert(math.abs(p[2].X-p[1].X)<.001 and c.side*leg.X>=2*Field.YD)
+            local angle=math.deg(math.acos(leg.Y/leg.Magnitude))
+            assert(angle>=40 and angle<=115)
         end
     end)
-    test("recorded stationary eight-yard coverage retains a native-feasible middle cut",function()
-        local actual={MinX=-30.2121302485466,MaxX=67.99998158216476,MidX=18.8939256668,
-            BackZ=-44.012135207653046,EndZ=152.4120985865593,LOSZ=-19.459107249975204,
-            GoalZ=103.3060463,YD=4.9106056,TurfY=1.63686865568161}
-        local actualEnv=setmetatable({script={Parent={Config="config",Field="field"}},
-            require=function(module)
-                assert(module=="config" or module=="field")
-                return module=="config" and Config or actual
-            end},{__index=_G})
-        local actualMath=assert(load(routeSource,"recorded-field RouteMath","t",actualEnv))()
-        local p=input({LOS=actual.LOSZ,position=Vector3.new(18.893924713134766,4.636868,-21.017337799072266),
-            opponentPosition=Vector3.new(18.893842697143555,4.636789,19.832334518432617),
-            opponentVelocity=Vector3.zero,routeCycle=0})
-        local c=assert(Policy.chooseScheduledRoute(p,Config,actual,actualMath))
-        assert(c.routeFamily=="middle_stem" and c.payload.Pass=="Floater" and c.scheduleOverride==nil)
-        assert(not c.stemBlocked and not c.anticipatedLane and c.finalSprintStamina>=10)
-        assert(c.cutAt<=c.plan.Launch+.015 and c.payload.StartX==(actual.MinX+actual.MaxX)*.5)
-        assert(c.payload.Points[1].X==c.payload.Points[2].X
-            and math.abs(c.payload.Points[3].X-c.payload.Points[2].X)>=2*actual.YD)
-        -- The later observed near-endzone setup cannot fund a clear middle
-        -- Floater. Preserve a real middle cut instead of forcing that pass.
-        p.LOS=84.76696014404297
-        p.position=Vector3.new(18.892873764038086,4.636868,83.2480239868164)
-        p.opponentPosition=Vector3.new(19.189746856689453,4.636789,124.05267333984375)
-        for _,cycle in ipairs({0,4}) do
-            p.routeCycle=cycle
-            local near=assert(Policy.chooseScheduledRoute(p,Config,actual,actualMath))
-            assert(near.routeFamily=="middle_stem" and near.payload.Pass=="Bullet")
-            assert(not near.stemBlocked and not near.anticipatedLane and near.finalSprintStamina>=10)
-            assert(near.cutAt<=near.plan.Launch+.015)
+    test("post-throw stem survives native sanitation and has a funded jump witness",function()
+        local c=choose(input({position=Vector3.new(0,3,-2)}))
+        assert(c.postThrowStem and c.cutAt>c.plan.Launch)
+        assert(c.stemSprintSeconds<=2 and c.earlyStemSprintSeconds>=.4 and c.earlyStemSprintSeconds<=.6)
+        assert(math.abs(c.stemSprintSeconds-(c.earlyStemSprintSeconds+c.cutAt-c.stemSprintStart))<1e-6)
+        assert(c.estimatedContactMargin>=.6 and c.finalSprintStamina>=10)
+        assert(c.estimatedCatchAt<c.plan.Arrival and c.estimatedCatchAt>c.cutAt)
+        local cost=(c.stemSprintSeconds+c.finalSprintDuration)*Config.SprintDrain
+        assert(math.abs(c.finalSprintStamina-(100-cost+(c.estimatedStemRegeneration or 0)))<1e-5)
+        assert(math.abs(c.finalSprintDuration-(c.estimatedCatchAt-c.cutAt+.12))<1e-6)
+    end)
+    test("missing contact planner fails closed instead of restoring Bullets",function()
+        local c,why=Policy.chooseScheduledRoute(input(),Config,Field,RouteMath)
+        assert(not c and why:find("forecast",1,true))
+        local noStage={solve=Planner.solve,pose=Planner.pose}
+        c=Policy.chooseScheduledRoute(input(),Config,Field,RouteMath,noStage)
+        assert(not c or c.payload.Pass=="Floater" and not c.postThrowStem)
+    end)
+    test("low and unknown stamina mark legal deep Floater attempts as unverified",function()
+        for _,stamina in ipairs({0,10,20}) do
+            local c=Policy.chooseScheduledRoute(input({stamina=stamina}),Config,Field,RouteMath,Planner)
+            assert(c and c.payload.Pass=="Floater" and c.ballTargetZ>=Field.GoalZ+4*Field.YD)
+            assert(c.bestEffort and not c.reachable and not c.finishReachable and not c.postThrowStem)
+            assert(c.finalSprintStamina==nil and c.estimatedCatchAt==nil)
         end
+        local p=input();p.stamina=nil
+        assert(Policy.chooseScheduledRoute(p,Config,Field,RouteMath,Planner).bestEffort)
     end)
-    test("quarter starts occupy actual quarter width and never finish straight",function()
-        local starts,turns={},{}
-        for _,index in ipairs({4,9,14,19}) do
-            local c=choose(input({selectionIndex=index}))
-            assert(c.routeFamily=="quarter_stem")
-            assert(c.payload.Pass=="Floater","quarter preference introduced a Bullet start")
-            local x=c.payload.StartX
-            assert(math.abs(math.abs(x)-24.5)<1e-6)
-            assert(c.payload.Points[1].X==x and c.payload.Points[2].X==x)
-            assert(math.abs(c.payload.Points[3].X-x)>=2*Field.YD)
-            starts[x<0 and "left" or "right"]=true;turns[c.cutDirection]=true
-        end
-        assert(starts.left and starts.right,"quarter starting side never changes")
-        assert(turns.same_side and turns.opposite_side,"quarter cut direction never changes")
+    test("explicit failed lane changes side; unknown outcomes do not invent failure",function()
+        local baseline=choose(input({routeCycle=0}))
+        local failed=choose(input({routeCycle=0,recentRoutes={{success=false,result="Intercepted",side=baseline.side}}}))
+        local unknown=choose(input({routeCycle=0,recentRoutes={{result="mystery",side=baseline.side}}}))
+        assert(failed.side~=baseline.side and unknown.side==baseline.side)
     end)
-    test("an unavailable quarter Floater falls back to a funded middle Bullet cut",function()
-        local c=choose(input({selectionIndex=4,stamina=90}))
-        assert(c.routeFamily=="middle_stem" and c.payload.Pass=="Bullet")
-        assert(c.scheduleOverride=="scheduled_family_unreachable")
-        assert(c.payload.Points[1].X==c.payload.Points[2].X
-            and math.abs(c.payload.Points[3].X-c.payload.Points[2].X)>=2*Field.YD)
-        assert(c.finalSprintStamina>=10 and c.cutAt<=c.plan.Launch+.015)
+    test("stationary deep middle blocker is included in travel budget",function()
+        local c=choose(input({opponentPosition=Vector3.new(0,3,8*Field.YD),opponentVelocity=Vector3.zero}))
+        assert(c.payload.Pass=="Floater" and c.payload.StartX==Field.MidX)
+        assert(c.stemDetour and c.stemTravelDistance>c.stemYards*Field.YD)
+        assert(c.finalSprintStamina>=10)
     end)
-    test("every scheduled final sprint is funded through native arrival plus dispatch",function()
-        for _,stamina in ipairs({100,95,90,80,65,40,10,0}) do
-            for i=0,4 do
-                local c,reason=Policy.chooseScheduledRoute(input({selectionIndex=i,stamina=stamina}),Config,Field,RouteMath)
-                if c then
-                    assert(c.routeFamily)
-                    assert(c.payload.Pass~="Bullet" or c.routeFamily=="middle_stem")
-                    assert(c.slowStemSpeed<=Config.RunSpeed and c.slowStemSpeed>=Config.RunSpeed*.25)
-                    assert(c.finalSprintStamina>=10-1e-6)
-                    assert(math.abs(c.finalSprintDuration-(c.plan.Arrival-c.cutAt+.12))<1e-6)
-                    assert(stamina-c.finalSprintDuration*Config.SprintDrain>=10-1e-6)
-                    assert(c.cutAt<=c.plan.Launch+.015 and c.cutAt>0)
-                    assert(c.preferAirborne and c.preferJumpDive and not c.requireDive)
-                else assert(type(reason)=="string" and reason:find("No cut route",1,true)) end
-            end
-        end
+    test("spawn gap and world offset remain part of the forecast",function()
+        local p=input({position=Vector3.new(100,3,198),offset=Vector3.new(100,0,200)})
+        local c=choose(p)
+        assert(c.payload.StartX==Field.MidX and c.payload.Points[1].Y==0)
+        assert(c.stemTravelDistance>=c.stemYards*Field.YD+1.99)
+        assert(c.estimatedCatchZ<Field.EndZ and c.finalSprintStamina>=10)
     end)
-    test("repeated actual contests override the preferred route family",function()
-        local c=choose(input({recentRoutes={{routeFamily="middle_stem",result="Swatted",success=false},
-            {routeFamily="middle_stem",result="Intercepted",success=false}}}))
-        assert(c.routeFamily=="quarter_stem" and c.scheduleOverride=="recent_contests")
-    end)
-    test("known incompletes interceptions and swats change the failed lane then repeated failures change family",function()
-        local before=choose(input())
-        for _,result in ipairs({"Incomplete","Intercepted","Swatted"}) do
-            local failure={routeFamily="middle_stem",pass=before.payload.Pass,side=before.side,
-                result=result,success=false}
-            local once=choose(input({recentRoutes={failure}}))
-            assert(once.routeFamily=="middle_stem" and once.side~=before.side)
-            local twice=choose(input({recentRoutes={failure,failure}}))
-            assert(twice.routeFamily=="quarter_stem" and twice.scheduleOverride=="recent_contests")
-        end
-        local unknown=choose(input({recentRoutes={{routeFamily="middle_stem",pass=before.payload.Pass,
-            side=before.side,result="Unknown",success=false}}}))
-        assert(unknown.routeFamily==before.routeFamily and unknown.side==before.side and unknown.scheduleOverride==nil)
-        local notFailed=choose(input({recentRoutes={{routeFamily="middle_stem",pass=before.payload.Pass,
-            side=before.side,result="Intercepted",success=true}}}))
-        assert(notFailed.side==before.side and notFailed.scheduleOverride==nil)
-    end)
-    test("a defender waiting in the intended lane changes the route or family",function()
-        local before=choose(input())
-        local a,b=before.payload.Points[2],before.plan.Target
-        local waiting=a:Lerp(b,.65)
-        local after=choose(input({opponentPosition=Vector3.new(waiting.X,3,waiting.Y),opponentVelocity=Vector3.zero}))
-        assert(after.routeFamily and (after.side~=before.side or after.routeFamily~=before.routeFamily
-            or after.payload.StartX~=before.payload.StartX),"kept running into the observed lane")
-        assert(not after.anticipatedLane,"selected another visibly anticipated lane")
-    end)
-    test("schedule uses field coordinates consistently across translated arenas",function()
-        local a=choose(input({selectionIndex=4}))
-        local b=choose(input({selectionIndex=4,offset=Vector3.new(300,0,-200),position=Vector3.new(300,3,-200)}))
-        assert(a.routeFamily==b.routeFamily and a.cutDirection==b.cutDirection and a.payload.StartX==b.payload.StartX)
-        for i,p in ipairs(a.payload.Points) do assert((p-b.payload.Points[i]).Magnitude<1e-8) end
-    end)
-    test("setup steering moves to submitted start through normal unsprinted movement",function()
-        for _,startX in ipairs({0,-24.5,24.5}) do
-            local p=input({position=Vector3.new(10,3,0),startX=startX})
-            local c=assert(Policy.movement(p,Config,Field,RouteMath))
-            assert(c.kind=="lineup" and c.target.X==startX and not c.sprint)
-            p.phase="Hike";c=assert(Policy.movement(p,Config,Field,RouteMath))
-            assert(c.kind=="lineup" and c.target.X==startX and not c.sprint)
-        end
-    end)
-    test("live stem slows before a blocker while retaining the final sprint deadline",function()
+    test("live ball never grants route control without fresh explicit stem permission",function()
         local c=choose(input())
-        local p=input({phase="Live",elapsed=.1,routePlan=c.plan,middleStemDeep=true,slowStem=true,
-            slowStemTime=c.cutAt,routeWaypoint=2,position=Vector3.new(c.payload.StartX,3,1)})
-        local clear=assert(Policy.movement(p,Config,Field,RouteMath))
-        p.opponentPosition=Vector3.new(c.payload.StartX,3,6);p.opponentVelocity=Vector3.zero
-        local blocked=assert(Policy.movement(p,Config,Field,RouteMath))
-        assert(not blocked.sprint and blocked.moveSpeed<=clear.moveSpeed and blocked.routeDeadline==c.cutAt)
-        p.elapsed=c.cutAt+.01;p.stamina=100;p.opponentPosition=nil
-        local final=assert(Policy.movement(p,Config,Field,RouteMath))
-        assert(final.sprint and final.finalSprintCommitted and final.moveSpeed==Config.SprintSpeed)
+        local p=input({phase="Live",elapsed=c.plan.Launch+.1,routePlan=c.plan,ballActive=true,passStarted=true,
+            routeStrategy=c.routeStrategy,postThrowStem=true,slowStem=true,slowStemTime=c.cutAt,
+            stemSprintStart=c.stemSprintStart,earlyStemSprintSeconds=c.earlyStemSprintSeconds,estimatedCatchAt=c.estimatedCatchAt,middleStemDeep=true,
+            position=Vector3.new(0,3,c.stemYards*Field.YD-8),routeWaypoint=2})
+        assert(not Policy.movement(p,Config,Field,RouteMath))
+        p.allowPostThrowStem=true
+        local command=assert(Policy.movement(p,Config,Field,RouteMath))
+        assert(command.routeWaypoint==2 and not command.finalSprintCommitted and command.target.X==0)
+        p.elapsed=c.cutAt
+        assert(not Policy.movement(p,Config,Field,RouteMath))
+        p.elapsed=c.plan.Launch+.1;p.role="DB"
+        assert(not Policy.movement(p,Config,Field,RouteMath))
     end)
-    test("the three observed late stem states do not spend more deadline time slowing to seven",function()
-        local plan={Points={Vector2.new(0,0),Vector2.new(0,60),Vector2.new(48,120)},
-            Times={0,3,6},Arrival=6.258876}
-        for _,state in ipairs({{.965,12.764,6.347},{.705,8.086,6.428},{1.110,15.455,6.008}}) do
-            local p=input({phase="Live",elapsed=state[1],position=Vector3.new(0,3,state[2]),
-                opponentPosition=Vector3.new(0,3,state[2]+state[3]),opponentVelocity=Vector3.zero,
-                routePlan=plan,middleStemDeep=true,slowStem=true,slowStemTime=2.985462,routeWaypoint=2})
-            local c=assert(Policy.movement(p,Config,Field,RouteMath))
-            assert(c.moveSpeed==Config.RunSpeed and not c.sprint and c.routeWaypoint==2)
-            assert(c.routeTimingDebt and c.routeTimingReason=="observed_stem_delay")
+    test("stem sprint is scheduled and retains the forecast final reserve",function()
+        local c=choose(input());assert(c.stemSprintSeconds>0)
+        local p=input({phase="Live",elapsed=c.stemSprintStart-.2,routePlan=c.plan,
+            routeStrategy=c.routeStrategy,postThrowStem=c.postThrowStem,slowStem=true,slowStemTime=c.cutAt,
+            stemSprintStart=c.stemSprintStart,earlyStemSprintSeconds=c.earlyStemSprintSeconds,estimatedCatchAt=c.estimatedCatchAt,middleStemDeep=true,
+            estimatedStemRegeneration=c.estimatedStemRegeneration,
+            position=Vector3.new(0,3,c.stemYards*Field.YD-15),routeWaypoint=2})
+        local walking=assert(Policy.movement(p,Config,Field,RouteMath))
+        assert(not walking.sprint and walking.moveSpeed<=Config.RunSpeed)
+        p.elapsed=.1
+        local early=assert(Policy.movement(p,Config,Field,RouteMath))
+        assert(early.sprint and early.moveSpeed==Config.SprintSpeed and not early.hardCut)
+        p.elapsed=c.stemSprintStart+.01
+        local sprinting=assert(Policy.movement(p,Config,Field,RouteMath))
+        assert(sprinting.sprint and sprinting.moveSpeed==Config.SprintSpeed and not sprinting.finalSprintCommitted)
+        p.stamina=15
+        assert(not Policy.movement(p,Config,Field,RouteMath).sprint)
+    end)
+    test("hard cut is a one-time movement directive and catch position uses first touch",function()
+        local c=choose(input())
+        assert(c.estimatedFirstTouchAt<=c.estimatedCatchAt)
+        assert(c.estimatedCatchInsideGoal==(c.estimatedCatchZ>=Field.GoalZ))
+        assert(not c.estimatedStopAt or c.estimatedStopAt>=c.estimatedFirstTouchAt)
+        local p=input({phase="Live",elapsed=c.cutAt,routePlan=c.plan,routeStrategy=c.routeStrategy,
+            slowStem=true,slowStemTime=c.cutAt,middleStemDeep=true,routeWaypoint=2})
+        local cut=assert(Policy.movement(p,Config,Field,RouteMath))
+        assert(cut.hardCut and cut.finalSprintCommitted and cut.routeWaypoint==3)
+        p.finalSprintCommitted=true
+        assert(not Policy.movement(p,Config,Field,RouteMath).hardCut)
+    end)
+    test("measured stem debt permits a bounded funded burst and counts scheduled sprint",function()
+        local plan={Points={Vector2.new(0,0),Vector2.new(0,90),Vector2.new(-40,130)},
+            Times={0,4.248038177,6.49845},Arrival=6.49845}
+        local p=input({phase="Live",elapsed=2.156745195,routePlan=plan,
+            routeStrategy="deep_middle_floater",slowStem=true,slowStemTime=4.248038177,
+            stemSprintStart=3.648038177,earlyStemSprintSeconds=.6,estimatedCatchAt=6.299385834,
+            middleStemDeep=true,routeWaypoint=2,position=Vector3.new(-3.73174,3,42.65),stamina=100})
+        local recovered=assert(Policy.movement(p,Config,Field,RouteMath))
+        assert(recovered.sprint and recovered.stemRecoverySeconds>=.12 and recovered.stemRecoverySeconds<=.6)
+        assert(recovered.routeWaypoint==2 and not recovered.finalSprintCommitted and not recovered.hardCut)
+        assert(recovered.routeScheduleCapacity>46.02)
+        p.stemRecoveryUntil=recovered.stemRecoveryUntil;p.stemRecoverySpent=recovered.stemRecoverySeconds
+        p.elapsed=p.elapsed+.05
+        local held=assert(Policy.movement(p,Config,Field,RouteMath))
+        assert(held.sprint and not held.stemRecoverySeconds,"latched burst was allocated twice")
+        p.stemRecoveryUntil=0;p.stemRecoverySpent=.6
+        assert(not Policy.movement(p,Config,Field,RouteMath).sprint,"extra sprint exceeded route cap")
+        p.stemRecoverySpent=0;p.stamina=70
+        assert(not Policy.movement(p,Config,Field,RouteMath).sprint,"recovery spent the final catch reserve")
+        p.stamina=100;p.position=Vector3.new(0,3,50)
+        local clear=assert(Policy.movement(p,Config,Field,RouteMath))
+        assert(not clear.sprint and not clear.routeTimingDebt,"scheduled late sprint was ignored")
+        p.position=Vector3.new(-3.73174,3,42.65);p.ballActive=true;p.passStarted=true
+        p.allowPostThrowStem=true;p.postThrowStem=true
+        local afterThrow=assert(Policy.movement(p,Config,Field,RouteMath))
+        assert(not afterThrow.stemRecoverySeconds,"new recovery burst invented after catch handoff")
+    end)
+    test("short remaining downs use a paced side Floater with no parked first contact",function()
+        for _,yards in ipairs({1.3,.25}) do
+            local los=Field.GoalZ-yards*Field.YD
+            local c=choose(input({LOS=los,position=Vector3.new(0,3,los-2)}))
+            assert(c.shortField and c.payload.Pass=="Floater")
+            assert(math.abs(c.payload.Points[1].Y-los)<.001,"short LOS was moved backward")
+            assert(c.payload.Points[2].Y>Field.GoalZ and c.payload.Points[3].Y>=c.payload.Points[2].Y)
+            assert(c.stemRunSpeed>0 and c.stemRunSpeed<Config.RunSpeed)
+            assert(c.ballTargetZ>=Field.GoalZ+4*Field.YD and c.estimatedCatchZ>=Field.GoalZ+.25)
+            assert(c.estimatedStopAt>=c.estimatedFirstTouchAt and c.finalSprintStamina>=10)
         end
     end)
-    test("body pacing can still slow when actual remaining distance leaves spare time",function()
-        local plan={Points={Vector2.new(0,0),Vector2.new(0,30),Vector2.new(48,100)},
-            Times={0,3,6},Arrival=6}
-        local p=input({phase="Live",elapsed=.2,position=Vector3.new(0,3,20),
-            opponentPosition=Vector3.new(0,3,26),opponentVelocity=Vector3.zero,
-            routePlan=plan,middleStemDeep=true,slowStem=true,slowStemTime=3,routeWaypoint=2})
-        local c=assert(Policy.movement(p,Config,Field,RouteMath))
-        assert(c.moveSpeed<=7 and not c.sprint and not c.routeTimingDebt)
-        assert((c.target-p.position).Magnitude<=7*(3-.2-.12))
+    test("regeneration forecast is bounded to spent opening sprint and needs native constants",function()
+        local c=choose(input())
+        assert(c.estimatedStemRegeneration>=0 and c.estimatedStemRegeneration<=c.earlyStemSprintSeconds*Config.SprintDrain)
+        local stripped={};for k,v in pairs(Config) do stripped[k]=v end
+        stripped.StaminaRegen=nil;stripped.RegenDelay=nil
+        local without=Policy.chooseScheduledRoute(input(),stripped,Field,RouteMath,Planner)
+        assert(not without or without.bestEffort or without.estimatedStemRegeneration==0)
     end)
-    test("stem deception uses only reachable spare walking time and never moves into the defender",function()
-        local plan={Points={Vector2.new(0,0),Vector2.new(0,30),Vector2.new(48,100)},Times={0,3,6},Arrival=6}
-        local p=input({phase="Live",elapsed=.2,routePlan=plan,middleStemDeep=true,slowStem=true,
-            slowStemTime=3,routeWaypoint=2,routeFamily="middle_stem",routeSide=1,
-            position=Vector3.new(0,3,0),opponentPosition=Vector3.new(10,3,-5),opponentVelocity=Vector3.zero})
-        local c=assert(Policy.movement(p,Config,Field,RouteMath))
-        assert(c.stemFeint and c.target.X<0 and c.target.Z>0 and not c.sprint)
-        assert(c.routeDeadline==3 and c.moveSpeed<=Config.RunSpeed)
-        p.elapsed=2.7;c=assert(Policy.movement(p,Config,Field,RouteMath))
-        assert(not c.stemFeint,"late deception spent the catch window")
-        p.elapsed=.2;p.opponentPosition=Vector3.new(-3,3,10)
-        c=assert(Policy.movement(p,Config,Field,RouteMath));assert(not c.stemFeint,"feint ran into the blocker")
-        p.opponentPosition=Vector3.new(0,3,4)
-        c=assert(Policy.movement(p,Config,Field,RouteMath));assert(not c.stemFeint,"feint crossed the defender between endpoints")
-    end)
-    test("DB holds a small flexible live cushion without sprinting to chase an offset",function()
-        local p=input({role="DB",phase="Live",elapsed=5,position=Vector3.new(0,3,27.5),
-            opponentPosition=Vector3.new(0,3,30),opponentVelocity=Vector3.zero})
-        local c=assert(Policy.movement(p,Config,Field,RouteMath))
-        assert(c.target.Z==p.position.Z and not c.sprint)
-        p.position=Vector3.new(0,3,33);c=assert(Policy.movement(p,Config,Field,RouteMath))
-        assert(c.target.Z==33 and not c.sprint,"nearby goal-side position was needlessly erased")
-        p.position=Vector3.new(0,3,10);p.opponentVelocity=Vector3.new(0,0,27)
-        c=assert(Policy.movement(p,Config,Field,RouteMath));assert(c.sprint and c.target.Z>10)
-        p.stamina=39;c=assert(Policy.movement(p,Config,Field,RouteMath));assert(not c.sprint)
+    test("new deep stem does not use the legacy opposite-side feint",function()
+        local c=choose(input());local p=input({phase="Live",elapsed=.15,routePlan=c.plan,
+            routeStrategy=c.routeStrategy,postThrowStem=c.postThrowStem,slowStem=true,slowStemTime=c.cutAt,
+            stemSprintStart=c.stemSprintStart,estimatedCatchAt=c.estimatedCatchAt,middleStemDeep=true,
+            routeFamily="middle_stem",routeSide=c.side,opponentPosition=Vector3.new(3,3,20),routeWaypoint=2})
+        local command=assert(Policy.movement(p,Config,Field,RouteMath))
+        assert(not command.stemFeint and command.target.X==Field.MidX)
     end)
     Vector2,typeof=oldVector2,oldTypeof
-    report.fixture="Authored geometry and local native/approximate route timing. No server catch or win guarantee."
     return report
 end

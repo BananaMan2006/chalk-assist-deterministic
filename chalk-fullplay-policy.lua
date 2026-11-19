@@ -346,154 +346,271 @@ local function middleStemRoutes(input,Config,Field,RouteMath,los,stamina,opponen
     return candidates
 end
 
--- Fixed five-play schedule: four center stems, then one quarter-width stem.
--- Geometry and observed contests can override it; the ratio is a preference.
-function Policy.chooseScheduledRoute(input,Config,Field,RouteMath)
+-- Deep middle Floaters with alternating candidate sides. Observed coverage
+-- chooses among funded routes; one cycle slot may admit a checked rare Bullet.
+function Policy.chooseScheduledRoute(input,Config,Field,RouteMath,Planner)
     input=input or {}
     if not validField(Field) or type(RouteMath)~="table" or type(RouteMath.Sanitize)~="function"
         or type(RouteMath.Plan)~="function" or input.mode=="Team" then
-        return nil,"Scheduled routes require a valid 1v1 field and native route math"
+        return nil,"Deep middle routes require a valid 1v1 field and native route math"
     end
-    local yd,width=Field.YD,Field.MaxX-Field.MinX
+    if type(Planner)~="table" or type(Planner.solve)~="function" or type(Planner.pose)~="function" then
+        return nil,"Airborne route forecast is unavailable"
+    end
+    local yd=Field.YD
     local mid=(Field.MinX+Field.MaxX)*.5
     local offset=offsetOf(input)
-    local los=clamp(finite(input.LOS) and input.LOS or Field.LOSZ,Field.BackZ+1,Field.GoalZ-yd)
+    local los=clamp(finite(input.LOS) and input.LOS or Field.LOSZ,Field.BackZ+1,Field.GoalZ-.05)
     local stamina=finite(input.stamina) and math.max(0,input.stamina) or 0
     local run,sprint=math.max(1,Config.RunSpeed),math.max(1,Config.SprintSpeed)
     local drain=math.max(.01,Config.SprintDrain or 25)
     local reserve,dispatch=10,.12
+    if sprint<=run then return nil,"Invalid native sprint speeds" end
     local index=finite(input.routeCycle) and math.floor(input.routeCycle)%20
         or finite(input.selectionIndex) and math.max(0,math.floor(input.selectionIndex)) or 0
-    local desired=index%5==4 and "quarter_stem" or "middle_stem"
-    -- Three of the four middle starts prefer a Floater; the fourth preserves
-    -- a Bullet variation. This only selects among already reachable routes.
-    local middlePass=index%5==3 and "Bullet" or "Floater"
+    local preferredSide=index%2==0 and -1 or 1
     local opponent=projectedOpponent(input,Config,.2)
+    local failures={[-1]=0,[1]=0}
     local history=type(input.recentRoutes)=="table" and input.recentRoutes or {}
-    local recentFailure={middle_stem=0,quarter_stem=0}
-    local failedLanes={}
     for i=#history,math.max(1,#history-3),-1 do
         local item=history[i]
-        if type(item)=="table" and recentFailure[item.routeFamily]~=nil and item.success==false
-            and (item.result=="Swatted" or item.result=="Intercepted" or item.result=="Incomplete") then
-            recentFailure[item.routeFamily]=recentFailure[item.routeFamily]+1
-            if (item.side==-1 or item.side==1)
-                and (item.pass=="Floater" or item.pass=="Bullet") then
-                local key=item.routeFamily..":"..item.pass..":"..item.side
-                failedLanes[key]=(failedLanes[key] or 0)+1
-            end
+        if type(item)=="table" and item.success==false and (item.side==-1 or item.side==1)
+            and (item.result=="Incomplete" or item.result=="Intercepted" or item.result=="Swatted") then
+            failures[item.side]=failures[item.side]+1
         end
     end
     local edge=math.max(1,Config.RouteEdgeMargin or 1)
-    local startMargin=math.max(0,Config.SidelineMarginYards or 2)*yd
     local goalDepth=(Field.GoalZ-los)/yd
-    local depths,seen={},{ }
-    for _,depth in ipairs({goalDepth+1,goalDepth-1,24,20,16}) do
-        depth=math.min(depth,(Field.EndZ-edge-los)/yd)
-        local key=math.floor(depth*100+.5)
-        if depth>=12 and not seen[key] then depths[#depths+1]=depth;seen[key]=true end
+    local shortField=goalDepth<=6
+    local maximumStem=shortField and math.min(goalDepth+4,(Field.EndZ-edge-los)/yd-1) or goalDepth-.5
+    local stems,seen={},{}
+    local function addStem(n)
+        n=clamp(n,1,math.max(1,maximumStem))
+        local key=math.floor(n*100+.5)
+        if n>=math.max(1,goalDepth*.5) and not seen[key] then
+            stems[#stems+1]=n;seen[key]=true
+        end
     end
-    local pool={middle_stem={},quarter_stem={}}
-    for _,family in ipairs({"middle_stem","quarter_stem"}) do
-        local starts=family=="middle_stem" and {mid}
-            or {Field.MinX+width*.25,Field.MinX+width*.75}
-        -- Bullet variations keep the middle stem and final cut. A quarter
-        -- start is available only when its Floater is natively feasible.
-        local passes=family=="middle_stem" and {"Floater","Bullet"} or {"Floater"}
-        for _,startX in ipairs(starts) do
-            if startX>=Field.MinX+startMargin and startX<=Field.MaxX-startMargin then
-                for _,side in ipairs({-1,1}) do
-                    local endX=side<0 and Field.MinX+edge or Field.MaxX-edge
-                    for _,depth in ipairs(depths) do
-                        for _,stemYards in ipairs({2,4,6,8,10,12,14,16,18,20}) do
-                            if stemYards<depth-2 and math.abs(endX-startX)>=2*yd then
-                                local raw={Vector2.new(startX,los),Vector2.new(startX,los+stemYards*yd),
-                                    Vector2.new(endX,los+depth*yd)}
-                                local points=RouteMath.Sanitize(raw,startX,los)
-                                if #points==3 and (points[1]-raw[1]).Magnitude<.01
-                                    and (points[2]-raw[2]).Magnitude<.01 and (points[3]-raw[3]).Magnitude<.05 then
-                                    for _,pass in ipairs(passes) do
-                                        local plan=RouteMath.Plan(points,pass)
-                                        local finishDistance=(plan.Target-points[2]).Magnitude
-                                        -- Reach the catch area close to arrival. Charge stamina
-                                        -- through arrival + dispatch, never assume regeneration.
-                                        local sprintDuration=finishDistance/sprint+dispatch
-                                        local cutAt=plan.Arrival-finishDistance/sprint
-                                        local stemSpeed=cutAt>0 and stemYards*yd/cutAt or INF
-                                        local remaining=stamina-sprintDuration*drain
-                                        -- The real Throw event hands control to catch assist.
-                                        -- Complete the stem before that handoff, not after it.
-                                        if cutAt>=.15 and cutAt<=plan.Launch+.015 and stemSpeed>=run*.25
-                                            and stemSpeed<=run and remaining>=reserve then
-                                            local endpoint=worldPoint(plan.Target,offset,input.position and input.position.Y or 3)
-                                            local cut=worldPoint(points[2],offset,endpoint.Y)
-                                            local separation=opponent and flatDistance(endpoint,opponent) or 0
-                                            local reach=opponent and (Config.SprintSpeed*(plan.Arrival+.1)
-                                                +(Config.HikeTime or 3)*(Config.PreSnapDBSpeed or 12)) or 0
-                                            local margin=opponent and separation-reach or 0
-                                            local waiting=false
-                                            local stemBlocked=false
-                                            if opponent then
-                                                local segment=(endpoint-cut)*FLAT
-                                                local along=((opponent-cut)*FLAT):Dot(segment)/math.max(.001,segment:Dot(segment))
-                                                local nearest=cut+segment*clamp(along,0,1)
-                                                waiting=along>=.2 and along<=1.15
-                                                    and flatDistance(nearest,opponent)<3*yd
-                                                    and boundedVelocity(input.opponentVelocity,sprint).Magnitude<run*.6
-                                                local localZ=opponent.Z-offset.Z
-                                                -- Occupying the projected center stem is ordinary DB
-                                                -- coverage, not proof of a jam. Override the family
-                                                -- only for an observed close body obstruction; normal
-                                                -- spacing is handled by pacing and live avoidance.
-                                                local observed=vec(input.opponentPosition) and input.opponentPosition or opponent
-                                                stemBlocked=vec(input.position) and flatDistance(observed,input.position)<1.4*yd
-                                                    and math.abs(opponent.X-offset.X-startX)<1.4*yd
-                                                    and localZ>los and localZ<points[2].Y+yd
-                                                -- A slow defender already deep on the stem is
-                                                -- different from ordinary nearby lineup coverage.
-                                                -- Require enough walking time to go around that
-                                                -- body from the actual observed starting position.
-                                                if not stemBlocked and vec(input.position)
-                                                    and localZ-los>=4*yd and localZ<points[2].Y+yd
-                                                    and math.abs(opponent.X-offset.X-startX)<1.4*yd
-                                                    and boundedVelocity(input.opponentVelocity,sprint).Magnitude<=run*.65 then
-                                                    local detour=INF
-                                                    for _,around in ipairs({-1,1}) do
-                                                        local x=opponent.X+around*1.6*yd
-                                                        if x>=Field.MinX+offset.X+edge and x<=Field.MaxX+offset.X-edge then
-                                                            local via=Vector3.new(x,cut.Y,opponent.Z)
-                                                            detour=math.min(detour,flatDistance(input.position,via)+flatDistance(via,cut))
-                                                        end
+    if shortField then
+        -- A remaining short down can cut within the endzone instead of
+        -- timing out on an impossible one-yard pre-goal opening burst.
+        for _,beyond in ipairs({4,3,2,1}) do addStem(goalDepth+beyond) end
+    else
+        for _,back in ipairs({1,3,5,7,9,11}) do addStem(goalDepth-back) end
+    end
+    addStem(goalDepth*.7);addStem(goalDepth*.55)
+    table.sort(stems,function(a,b)return a>b end)
+    local gravity=finite(input.gravity) and input.gravity>0 and input.gravity or 196.2
+    local jumpHeight=finite(Config.JumpHeight) and Config.JumpHeight or 6
+    local turf=finite(Field.TurfY) and Field.TurfY or 0
+    local rootY=vec(input.position) and input.position.Y or turf+3
+    local start=Vector3.new(mid+offset.X,rootY,los+offset.Z)
+    local observedStart=vec(input.position) and input.position or start
+    local forecastCount=0
+    local preferredDeep,deepestFeasible,bestEffort
+    for _,stemYards in ipairs(stems) do
+        local best,bestClear,bestInside,bestInsideClear
+        for _,side in ipairs({preferredSide,-preferredSide}) do
+            local sideDone=false
+            for _,beyond in ipairs(shortField and {5,4,3,2,1} or {1,2,3,4,5,6}) do
+                if sideDone then break end
+                for _,widthFraction in ipairs({1,.8,.6,.4}) do
+                    if sideDone then break end
+                    local endX=mid+side*((Field.MaxX-Field.MinX)*.5-edge)*widthFraction
+                    local endZ=clamp(los+(goalDepth+beyond)*yd,los+yd,Field.EndZ-edge)
+                    local raw={Vector2.new(mid,los),Vector2.new(mid,los+stemYards*yd),Vector2.new(endX,endZ)}
+                    local points=RouteMath.Sanitize(raw,mid,los)
+                    -- Native ink/lead sanitation may pull the last point inward.
+                    -- The actual center stem and a sharp legal cut must survive.
+                    if #points==3 and (points[1]-raw[1]).Magnitude<.01 and (points[2]-raw[2]).Magnitude<.01 then
+                        local outgoing=points[3]-points[2]
+                        local lateral=side*outgoing.X
+                        local angle=outgoing.Magnitude>.01 and math.deg(math.acos(clamp(outgoing.Y/outgoing.Magnitude,-1,1))) or 0
+                        if lateral>=2*yd and angle>=40 and angle<=115 and (not shortField or outgoing.Y>=0) then
+                            local plan=RouteMath.Plan(points,"Floater")
+                            local cut=worldPoint(points[2],offset,rootY)
+                            if plan.Target.Y>=Field.GoalZ+4*yd then
+                                local effortScore=stemYards+(side==preferredSide and .2 or 0)-failures[side]*2
+                                if not bestEffort or effortScore>bestEffort.score then
+                                    local shape=side<0 and "middle_stem_left" or "middle_stem_right"
+                                    local depth=(points[3].Y-los)/yd
+                                    local family,signature=routeKeys("Floater",shape,depth,side)
+                                    bestEffort={payload={Points=points,StartX=mid,Pass="Floater"},plan=plan,
+                                        side=side,depth=depth,shape=shape,family=family,signature=signature,
+                                        routeFamily="middle_stem",scheduledFamily="middle_stem",scheduledPass="Floater",
+                                        routeStrategy="deep_middle_floater",middleStemDeep=true,stemYards=stemYards,
+                                        cutAngle=angle,ballTargetZ=plan.Target.Y,shortField=shortField,score=effortScore,
+                                        bestEffort=true,reachable=false,finishReachable=false,
+                                        bestEffortReason="No funded airborne contact forecast; legal deep Floater only",
+                                        postThrowStem=false,slowStem=true,slowStemTime=plan.Launch,cutAt=plan.Launch,
+                                        stemSprintStart=plan.Launch,earlyStemSprintSeconds=0,stemSprintSeconds=0,
+                                        stemRunSpeed=run,slowStemSpeed=run,requireAirborne=true,preferAirborne=true,
+                                        requireDive=false,preferJumpDive=false,finishMode="unverified_airborne_attempt"}
+                                end
+                            end
+                            local distance=flatDistance(observedStart,cut)
+                            local detourDistance=distance
+                            local bodyOnStem=false
+                            if opponent then
+                                local axis=(cut-observedStart)*FLAT
+                                local along=axis.Magnitude>.01 and ((opponent-observedStart)*FLAT):Dot(axis.Unit) or -1
+                                local lateralBody=axis.Magnitude>.01 and ((opponent-observedStart)*FLAT-axis.Unit*along).Magnitude or INF
+                                if along>0 and along<axis.Magnitude and lateralBody<1.4*yd then
+                                    local aroundDistance=INF
+                                    for _,around in ipairs({-1,1}) do
+                                        local x=opponent.X+around*1.6*yd
+                                        if x>=Field.MinX+offset.X+edge and x<=Field.MaxX+offset.X-edge then
+                                            local via=Vector3.new(x,rootY,opponent.Z)
+                                            aroundDistance=math.min(aroundDistance,flatDistance(observedStart,via)+flatDistance(via,cut))
+                                        end
+                                    end
+                                    if aroundDistance<INF then detourDistance=math.max(distance,aroundDistance);bodyOnStem=true end
+                                end
+                            end
+                            for _,stemSprint in ipairs({.4,.6,.8,1,1.2,1.4,1.6,1.8,2}) do
+                                local cutAt=(detourDistance-(sprint-run)*stemSprint)/run+.15+(shortField and .1 or 0)
+                                if shortField then cutAt=math.max(1.5,cutAt) end
+                                local earlySprint=math.min(.6,stemSprint)
+                                local lateSprint=stemSprint-earlySprint
+                                local lateStart=cutAt-lateSprint
+                                local stemRun=shortField and clamp((detourDistance-sprint*stemSprint)
+                                    /math.max(.01,cutAt-.15-stemSprint),run*.2,run) or run
+                                local at=cutAt
+                                -- Credit only recovery of this opening burst,
+                                -- after the native delay plus an off-input margin.
+                                -- Catch handoff rechecks actual current stamina.
+                                local regenRate=finite(Config.StaminaRegen) and math.max(0,Config.StaminaRegen) or 0
+                                local regenDelay=finite(Config.RegenDelay) and math.max(0,Config.RegenDelay)+.2 or INF
+                                local regenerated=math.min(earlySprint*drain,
+                                    math.max(0,lateStart-earlySprint-regenDelay)*regenRate)
+                                local afterStem=stamina-stemSprint*drain+regenerated
+                                if cutAt>=stemSprint+.15 and at<plan.Arrival-.12 and afterStem>reserve then
+                                    local endpoint=worldPoint(plan.Target,offset,turf+Config.CatchHeight)
+                                    local arc={P0=Vector3.new(mid+offset.X,turf+Config.ReleaseHeight,
+                                        los-Config.QBBackYards*yd+offset.Z),P1=endpoint,Flight=plan.Flight,Apex=plan.Apex}
+                                    local available=plan.Arrival-at
+                                    local optimistic=false
+                                    for sample=0,32 do
+                                        local u=.75+.25*sample/32
+                                        local contactAt=plan.Launch+plan.Flight*u
+                                        local ball=arc.P0:Lerp(arc.P1,u)+Vector3.new(0,4*plan.Apex*u*(1-u),0)
+                                        local maxHeight=rootY+jumpHeight+(Config.HandUpOffset or 3.5)+(Config.CatchRadius or 3.75)
+                                        local reach=(Config.CatchRadius or 3.75)+(Config.HandOffset or .5)+.2
+                                        if ball.Y<=maxHeight and contactAt>cutAt+.12
+                                            and flatDistance(cut,ball)-reach<=sprint*(contactAt-cutAt-.12)
+                                            and afterStem-(contactAt-cutAt+.24)*drain>=reserve then
+                                            optimistic=true;break
+                                        end
+                                    end
+                                    -- Cheap optimistic rejection only; admission still requires
+                                    -- the full jump-only robust contact planner below.
+                                    if optimistic and plan.Target.Y>=Field.GoalZ+4*yd
+                                        and flatDistance(cut,endpoint)<=sprint*available+(Config.CatchRadius or 3.75)+2 then
+                                        forecastCount=forecastCount+1
+                                        local snap={now=at,launchAt=plan.Launch,role="WR",passType="Floater",
+                                            config=Config,arc=arc,position=cut,velocity=Vector3.new(0,0,run),
+                                            lookDirection=Vector3.new(0,0,1),steeringDirection=Vector3.new(0,0,1),
+                                            grounded=true,jumpSpeed=math.sqrt(2*gravity*jumpHeight),gravity=gravity,
+                                            walkSpeed=sprint,runSpeed=run,sprintSeconds=math.max(0,(afterStem-reserve)/drain),
+                                            groundRootY=rootY,turfY=turf,diveTurfY=turf,canJump=true,canDive=false,
+                                            diveDistance=0,chase=true,allowHold=false,margin=.6,requireAirborne=true,
+                                            requireEndzoneCatch=true,wrDiveGoalZ=Field.GoalZ+offset.Z,
+                                            preferAirborne=true,preferJumpDive=false,continuousSprint=true,reactionDelay=.12,
+                                            maxHorizon=math.min(3.5,plan.Arrival-at+.4),
+                                            bounds={minX=Field.MinX+offset.X+.5,maxX=Field.MaxX+offset.X-.5,
+                                                minZ=Field.BackZ+offset.Z+.5,maxZ=Field.EndZ+offset.Z-.5}}
+                                        local contact
+                                        if cutAt>plan.Launch then
+                                            -- Use the same gate as live catch control. This also
+                                            -- prevents advertising a post-throw stem which the
+                                            -- handoff owner would immediately reject.
+                                            -- The live stage describes only the late burst.
+                                            -- Do not omit an opening burst still in progress
+                                            -- on an unusually short native launch clock.
+                                            if type(Planner.forecastStem)=="function" and plan.Launch+.1>=earlySprint then
+                                                local handoffAt=plan.Launch+.1
+                                                local priorSprint=clamp(handoffAt,0,earlySprint)+clamp(handoffAt-lateStart,0,lateSprint)
+                                                local travelled=stemRun*math.max(0,handoffAt-.12)+(sprint-stemRun)*priorSprint
+                                                local progress=clamp(travelled/math.max(.001,detourDistance),0,1)
+                                                local incoming=(cut-observedStart)*FLAT
+                                                incoming=incoming.Magnitude>.001 and incoming.Unit or Vector3.new(0,0,1)
+                                                local handoff={}
+                                                for k,v in pairs(snap) do handoff[k]=v end
+                                                handoff.now=handoffAt
+                                                handoff.position=observedStart:Lerp(cut,progress)
+                                                handoff.velocity=incoming*((handoffAt<earlySprint or handoffAt>=lateStart) and sprint or stemRun)
+                                                handoff.lookDirection,handoff.steeringDirection=incoming,incoming
+                                                local checked=Planner.forecastStem(handoff,{point=cut,untilAt=cutAt,
+                                                    sprintStartAt=lateStart,reserve=reserve,sprintDrain=drain,stemRunSpeed=stemRun},
+                                                    stamina-priorSprint*drain+math.min(regenerated,
+                                                        math.max(0,math.min(handoffAt,lateStart)-earlySprint-regenDelay)*regenRate))
+                                                if checked then contact,snap=checked.plan,checked.projected else contact=nil end
+                                            end
+                                        else contact=Planner.solve(snap) end
+                                        if contact and contact.kind=="jump" and finite(contact.contactAt)
+                                            and contact.airborneFinish=="jump"
+                                            and finite(contact.firstTouchAt) and finite(contact.stopAt)
+                                            and contact.stopAt>=contact.firstTouchAt then
+                                            local finalSeconds=contact.contactAt-cutAt+dispatch
+                                            local remaining=afterStem-finalSeconds*drain
+                                            if remaining>=reserve then
+                                                local pose,airborne=Planner.pose(snap,contact,contact.contactAt)
+                                                if pose and airborne then
+                                                    -- The first overlap is the catch opportunity;
+                                                    -- a later robust-window center can cross the
+                                                    -- goal after an earlier catch outside it.
+                                                    local firstAt=finite(contact.firstTouchAt) and contact.firstTouchAt or contact.contactAt
+                                                    local firstPose=Planner.pose(snap,contact,firstAt)
+                                                    local catchPoint=firstPose and firstPose.Position or pose.Position
+                                                    local separation=opponent and flatDistance(catchPoint,opponent) or 0
+                                                    local defenderReach=sprint*(contact.contactAt+.1)
+                                                        +(Config.HikeTime or 3)*(Config.PreSnapDBSpeed or 12)
+                                                    local margin=opponent and separation-defenderReach or 0
+                                                    local waiting=false
+                                                    if opponent then
+                                                        local leg=(catchPoint-cut)*FLAT
+                                                        local u=((opponent-cut)*FLAT):Dot(leg)/math.max(.001,leg:Dot(leg))
+                                                        waiting=u>=.15 and u<=1.1 and flatDistance(cut+leg*clamp(u,0,1),opponent)<2*yd
+                                                            and boundedVelocity(input.opponentVelocity,sprint).Magnitude<run*.6
                                                     end
-                                                    stemBlocked=detour>run*math.max(0,cutAt-dispatch)
+                                                    local shape=side<0 and "middle_stem_left" or "middle_stem_right"
+                                                    local depth=(points[3].Y-los)/yd
+                                                    local family,signature=routeKeys("Floater",shape,depth,side)
+                                                    local insideGoal=catchPoint.Z>=Field.GoalZ+offset.Z
+                                                    local score=clamp(margin/yd,-30,20)*.5+remaining*.04-stemSprint
+                                                        +math.min(angle,90)*.08+(insideGoal and 12 or 0)
+                                                        +(side==preferredSide and .3 or 0)-failures[side]*12-(waiting and 15 or 0)
+                                                    local c={payload={Points=points,StartX=mid,Pass="Floater"},plan=plan,
+                                                        side=side,depth=depth,shape=shape,family=family,signature=signature,
+                                                        routeFamily="middle_stem",cutDirection=side<0 and "left" or "right",
+                                                        scheduledFamily="middle_stem",scheduledPass="Floater",score=score,
+                                                        reachable=true,finishReachable=true,middleStemDeep=true,slowStem=true,
+                                                        slowStemTime=cutAt,slowStemSpeed=run,stemYards=stemYards,
+                                                        cutAt=cutAt,startSprintAt=cutAt,cutCount=1,lastCutAt=cutAt,
+                                                        stemSprintSeconds=stemSprint,stemSprintStart=lateStart,
+                                                        earlyStemSprintSeconds=earlySprint,shortField=shortField,stemRunSpeed=stemRun,
+                                                        estimatedStemRegeneration=regenerated,ballTargetZ=plan.Target.Y,
+                                                        stemTravelDistance=detourDistance,postThrowStem=cutAt>plan.Launch,
+                                                        estimatedCatchAt=contact.contactAt,estimatedCatchZ=catchPoint.Z-offset.Z,
+                                                        estimatedFirstTouchAt=firstAt,estimatedStopAt=contact.stopAt,
+                                                        estimatedCatchStamina=remaining,estimatedContactMargin=contact.margin,
+                                                        finalSprint=true,finalSprintDuration=finalSeconds,finalSprintReserve=reserve,
+                                                        finalSprintStamina=remaining,finishDistance=flatDistance(cut,catchPoint),
+                                                        cutAngle=angle,estimatedCatchInsideGoal=insideGoal,
+                                                        estimatedSeparation=separation,defenderEnvelopeMargin=margin,
+                                                        anticipatedLane=waiting,stemBlocked=false,stemDetour=bodyOnStem,
+                                                        requireDive=false,preferAirborne=true,preferJumpDive=false,requireAirborne=true,
+                                                        finishMode="airborne_required",routeStrategy="deep_middle_floater",
+                                                        forecastCount=forecastCount,runTime=contact.contactAt,
+                                                        _contactSnapshot=snap,_staminaAtCut=afterStem}
+                                                    if not best or c.score>best.score then best=c end
+                                                    if not waiting and (not bestClear or c.score>bestClear.score) then bestClear=c end
+                                                    if insideGoal and (not bestInside or c.score>bestInside.score) then bestInside=c end
+                                                    if insideGoal and not waiting and (not bestInsideClear or c.score>bestInsideClear.score) then bestInsideClear=c end
+                                                    if not waiting and insideGoal and angle>=60 then sideDone=true end
+                                                    break
                                                 end
                                             end
-                                            local turn=side*(startX-mid)>0 and "same_side" or "opposite_side"
-                                            if family=="middle_stem" then turn=side<0 and "left" or "right" end
-                                            local shape=family.."_"..turn
-                                            local routeKey,signature=routeKeys(pass,shape,depth,side)
-                                            local preferredSide=(math.floor(index/5)%2==0) and -1 or 1
-                                            local preferredTurn=(math.floor(index/10)%2==0) and "opposite_side" or "same_side"
-                                            local score=math.min(depth,goalDepth+2)*.65+clamp(margin/yd,-30,20)*.35
-                                                +(pass=="Floater" and .4 or 0)+(side==preferredSide and .4 or 0)
-                                                +(turn==preferredTurn and .6 or 0)-(waiting and 12 or 0)
-                                                -(stemBlocked and 6 or 0)-recentFailure[family]*8
-                                                -(failedLanes[family..":"..pass..":"..side] or 0)*12
-                                            local candidate={payload={Points=points,StartX=startX,Pass=pass},plan=plan,
-                                                side=side,depth=depth,shape=shape,family=routeKey,signature=signature,
-                                                routeFamily=family,cutDirection=turn,scheduledFamily=desired,
-                                                score=score,reachable=true,finishReachable=true,
-                                                middleStemDeep=true,slowStem=true,slowStemTime=cutAt,slowStemSpeed=stemSpeed,
-                                                stemYards=stemYards,cutAt=cutAt,startSprintAt=cutAt,cutCount=1,lastCutAt=cutAt,
-                                                finalSprint=true,finalSprintDuration=sprintDuration,finalSprintReserve=reserve,
-                                                finalSprintStamina=remaining,finishDistance=finishDistance,
-                                                estimatedCatchAt=plan.Arrival,estimatedCatchZ=plan.Target.Y,
-                                                estimatedCatchStamina=remaining,estimatedSeparation=separation,
-                                                defenderEnvelopeMargin=margin,runTime=cutAt+finishDistance/sprint,
-                                                anticipatedLane=waiting,stemBlocked=stemBlocked,
-                                                requireDive=false,preferAirborne=true,preferJumpDive=true,
-                                                finishMode="airborne_required",requireAirborne=true,routeStrategy="scheduled_stem_cut"}
-                                            pool[family][#pool[family]+1]=candidate
                                         end
                                     end
                                 end
@@ -503,66 +620,59 @@ function Policy.chooseScheduledRoute(input,Config,Field,RouteMath)
                 end
             end
         end
-    end
-    local function bestOf(family)
-        local best
-        for _,candidate in ipairs(pool[family]) do
-            if not best or candidate.score>best.score then best=candidate end
-        end
-        if family=="middle_stem" and best then
-            local preferred,preferredReachable,clearAlternative
-            for _,candidate in ipairs(pool[family]) do
-                if not candidate.anticipatedLane and not candidate.stemBlocked
-                    and (not clearAlternative or candidate.score>clearAlternative.score) then
-                    clearAlternative=candidate
-                end
-                if candidate.payload.Pass==middlePass then
-                    preferredReachable=true
-                    -- A pass preference never excuses a known body obstruction
-                    -- or a defender already waiting in its final running lane.
-                    if not candidate.anticipatedLane and not candidate.stemBlocked
-                        and (not preferred or candidate.score>preferred.score) then
-                        preferred=candidate
+        -- Compare at most two yards of depth below the first funded candidate
+        -- so a meaningfully sharper turn can beat a slightly deeper slant.
+        -- Every Floater witness already requires an endzone first contact.
+        local c=bestInsideClear or bestClear or bestInside or best
+        if c and not preferredDeep then preferredDeep,deepestFeasible=c,stemYards
+        elseif c and stemYards>=deepestFeasible-2 and
+            (c.cutAngle>=preferredDeep.cutAngle+5 and not (c.anticipatedLane and not preferredDeep.anticipatedLane)
+                or preferredDeep.anticipatedLane and not c.anticipatedLane) then preferredDeep=c end
+        c=preferredDeep and (shortField or preferredDeep.cutAngle>=60 or stemYards<=deepestFeasible-2
+            or stemYards==stems[#stems]) and preferredDeep or nil
+        if c then
+            c.forecastCount=forecastCount
+            -- A rare variation can only reuse the same deep, sharp middle
+            -- route and establish its own funded airborne endzone witness.
+            -- An unreachable Floater never turns into a Bullet fallback.
+            if index%20==19 and c.cutAngle>=60 then
+                local bullet=RouteMath.Plan(c.payload.Points,"Bullet")
+                local trial={}
+                for k,v in pairs(c._contactSnapshot) do trial[k]=v end
+                trial.now=c.cutAt;trial.launchAt=bullet.Launch;trial.passType="Bullet"
+                trial.arc={P0=trial.arc.P0,P1=worldPoint(bullet.Target,offset,turf+Config.CatchHeight),
+                    Flight=bullet.Flight,Apex=bullet.Apex}
+                trial.reactionDelay=.12;trial.canDive=false;trial.requireDive=false
+                trial.requireEndzoneCatch=false
+                trial.maxHorizon=math.min(3.5,bullet.Arrival-c.cutAt+.4)
+                -- The direct forecast starts at the cut. An earlier Bullet
+                -- launch would require a separate validated pre-cut handoff.
+                local witness=c.cutAt<=bullet.Launch and Planner.solve(trial) or nil
+                if witness and witness.kind=="jump" and witness.airborneFinish=="jump"
+                    and finite(witness.firstTouchAt) and finite(witness.stopAt) and witness.stopAt>=witness.firstTouchAt then
+                    local pose,air=Planner.pose(trial,witness,witness.contactAt)
+                    local firstAt=finite(witness.firstTouchAt) and witness.firstTouchAt or witness.contactAt
+                    local firstPose=Planner.pose(trial,witness,firstAt)
+                    local duration=witness.contactAt-c.cutAt+.12
+                    local remaining=c._staminaAtCut-duration*drain
+                    if pose and air and firstPose and firstPose.Position.Z>=Field.GoalZ+offset.Z and remaining>=reserve then
+                        c.payload.Pass,c.plan="Bullet",bullet
+                        c.family,c.signature=routeKeys("Bullet",c.shape,c.depth,c.side)
+                        c.scheduledPass="Bullet";c.rareBullet=true;c.postThrowStem=c.cutAt>bullet.Launch
+                        c.estimatedCatchAt=witness.contactAt;c.estimatedCatchZ=firstPose.Position.Z-offset.Z
+                        c.estimatedFirstTouchAt=firstAt;c.estimatedStopAt=witness.stopAt
+                        c.estimatedContactMargin=witness.margin;c.estimatedCatchStamina=remaining
+                        c.finalSprintDuration,c.finalSprintStamina=duration,remaining
+                        c.estimatedCatchInsideGoal=true
                     end
                 end
             end
-            if preferred then best=preferred
-            elseif clearAlternative then best=clearAlternative end
-            best.scheduledPass=middlePass
-            if not preferred then
-                best.passPreferenceOverride=preferredReachable and "observed_lane_coverage"
-                    or "preferred_pass_unreachable"
-            end
+            c._contactSnapshot,c._staminaAtCut=nil,nil
+            return c
         end
-        if family=="quarter_stem" and best then
-            local turn=math.floor(index/10)%2==0 and "opposite_side" or "same_side"
-            local alternate
-            for _,candidate in ipairs(pool[family]) do
-                if candidate.cutDirection==turn and candidate.defenderEnvelopeMargin>=best.defenderEnvelopeMargin-yd
-                    and not candidate.anticipatedLane and not candidate.stemBlocked
-                    and (not alternate or candidate.score>alternate.score) then alternate=candidate end
-            end
-            if alternate then best=alternate end
-        end
-        return best
     end
-    local chosen,other=bestOf(desired),bestOf(desired=="middle_stem" and "quarter_stem" or "middle_stem")
-    local override
-    if not chosen then chosen=other;override="scheduled_family_unreachable"
-    elseif other and (recentFailure[desired]>=2 or chosen.anticipatedLane or chosen.stemBlocked)
-        and (other.score>chosen.score+1
-            or (recentFailure[desired]>=2 or chosen.stemBlocked) and not other.anticipatedLane and not other.stemBlocked) then
-        chosen=other;override=recentFailure[desired]>=2 and "recent_contests" or "observed_lane_coverage"
-    end
-    -- A blocked longer middle stem does not invalidate the clear, funded
-    -- middle candidate already selected. Keep that requested family rather
-    -- than replacing it solely to chase a deeper quarter route.
-    if chosen then
-        chosen.scheduleOverride=override
-        return chosen
-    end
-    return nil,"No cut route meets the observed native timing and final sprint reserve"
-
+    if bestEffort then bestEffort.forecastCount=forecastCount;return bestEffort end
+    return nil,"No deep middle Floater has a funded airborne catch forecast"
 end
 
 -- input: LOS (field coordinates), world position/opponentPosition, offset,
@@ -1016,9 +1126,13 @@ end
 -- Movement is a target request only. Caller owns input, smoothing, actual speed,
 -- collision handling, and arbitration with the catch/tackle controllers.
 function Policy.movement(input,Config,Field,RouteMath)
+    local flightStem=type(input)=="table" and input.allowPostThrowStem==true
+        and input.role=="WR" and input.routeStrategy=="deep_middle_floater"
+        and input.postThrowStem==true and finite(input.elapsed) and finite(input.slowStemTime)
+        and input.elapsed<input.slowStemTime and input.finalSprintCommitted~=true
     if type(input)~="table" or not vec(input.position) or not validField(Field)
-        or input.mode=="Team" or input.ballActive
-        or input.phase=="Live" and input.passStarted==true then return nil end
+        or input.mode=="Team" or (input.ballActive or input.phase=="Live" and input.passStarted==true)
+            and not flightStem then return nil end
     local position=input.position
     local offset=offsetOf(input)
     local yd=Field.YD
@@ -1096,7 +1210,8 @@ function Policy.movement(input,Config,Field,RouteMath)
             -- walking to a missed stem waypoint spends the catch window.
             local finalSprint=slowStem and (input.finalSprintCommitted==true
                 or input.elapsed>=input.slowStemTime)
-            if slowStem and not finalSprint and index==2 and finite(plan.Arrival) then
+            if slowStem and not finalSprint and index==2 and finite(plan.Arrival)
+                and input.routeStrategy~="deep_middle_floater" then
                 local remaining=input.slowStemTime-input.elapsed
                 local stem=worldPoint(plan.Points[2],offset,position.Y)
                 local origin=worldPoint(plan.Points[1],offset,position.Y)
@@ -1139,8 +1254,49 @@ function Policy.movement(input,Config,Field,RouteMath)
                 local minimum=math.max(2,run*.2)
                 local remaining=deadline-input.elapsed
                 local speed=clamp(distance/math.max(.05,remaining+.05),minimum,sprintSpeed)
+                local scheduleCapacity,recoveryUntil,recoverySeconds
                 if slowStem and not finalSprint then
                     speed=math.min(run,speed)
+                    if input.routeStrategy=="deep_middle_floater" then
+                        -- A short opening burst, normal running, then any
+                        -- separately funded late burst. All later sprint is
+                        -- reserved before spending the current burst.
+                        local stamina=finite(input.stamina) and math.max(0,input.stamina) or 0
+                        local finish=finite(input.estimatedCatchAt) and input.estimatedCatchAt or plan.Arrival
+                        local early=finite(input.earlyStemSprintSeconds) and input.earlyStemSprintSeconds or 0
+                        local late=finite(input.stemSprintStart) and input.stemSprintStart or deadline
+                        local stemRun=finite(input.stemRunSpeed) and clamp(input.stemRunSpeed,run*.2,run) or run
+                        local remainingBurst=math.max(0,early-input.elapsed)+math.max(0,deadline-math.max(input.elapsed,late))
+                        scheduleCapacity=stemRun*math.max(0,remaining)+(sprintSpeed-stemRun)*remainingBurst
+                        local finalSeconds=math.max(0,finish-math.max(input.elapsed,deadline))+.12
+                        local drain=Config.SprintDrain or 25
+                        local required=(remainingBurst+finalSeconds)*drain+10
+                        local openingCredit=0
+                        if input.elapsed<early and finite(input.estimatedStemRegeneration) then
+                            openingCredit=clamp(input.estimatedStemRegeneration,0,early*drain)
+                        end
+                        local existingUntil=finite(input.stemRecoveryUntil) and input.stemRecoveryUntil or 0
+                        local spent=finite(input.stemRecoverySpent) and clamp(input.stemRecoverySpent,0,.6) or 0
+                        local recoveryActive=existingUntil>input.elapsed
+                        local extraRemaining=recoveryActive and math.min(existingUntil,late)-input.elapsed or 0
+                        local debt=distance+.15-scheduleCapacity
+                        -- Correct only observed schedule debt; a bounded burst
+                        -- never advances the cut or bypasses player avoidance.
+                        if not recoveryActive and input.elapsed>=early and input.elapsed<late-.12
+                            and not input.ballActive and not input.passStarted
+                            and debt>.75 and sprintSpeed>stemRun and spent<.6 then
+                            local duration=math.min(.6-spent,late-input.elapsed,(debt+.15)/(sprintSpeed-stemRun)+.12)
+                            if duration>=.12 and stamina>=(remainingBurst+duration+finalSeconds)*drain+10 then
+                                recoveryUntil=input.elapsed+duration;recoverySeconds=duration
+                                recoveryActive=true;extraRemaining=duration
+                            end
+                        end
+                        if (input.elapsed<early or input.elapsed>=late or recoveryActive)
+                            and stamina+openingCredit>=required+math.max(0,extraRemaining)*drain
+                            then speed=sprintSpeed
+                        else speed=stemRun end
+                        scheduleCapacity=scheduleCapacity+(sprintSpeed-stemRun)*math.max(0,extraRemaining)
+                    end
                     -- Slowing before a body is only affordable with real spare
                     -- time. A jam never pauses the native throw clock; retain
                     -- normal avoidance without spending an already missed stem.
@@ -1158,7 +1314,7 @@ function Policy.movement(input,Config,Field,RouteMath)
                     end
                 end
                 local feint=false
-                if slowStem and not finalSprint and input.routeFamily and opponent
+                if slowStem and not finalSprint and input.routeStrategy~="deep_middle_floater" and input.routeFamily and opponent
                     and (input.routeSide==-1 or input.routeSide==1) and remaining>.5
                     and input.elapsed<input.slowStemTime*.5 and flatDistance(position,opponent)<5*yd then
                     -- A small running feint uses spare walking time, never the
@@ -1194,9 +1350,14 @@ function Policy.movement(input,Config,Field,RouteMath)
                 request.moveScale=speed/(sprint and sprintSpeed or run)
                 request.routeDeadline=deadline
                 request.finalSprintCommitted=finalSprint
+                request.hardCut=input.routeStrategy=="deep_middle_floater" and finalSprint
+                    and input.finalSprintCommitted~=true
                 request.stemFeint=feint
+                request.stemRecoveryUntil=recoveryUntil
+                request.stemRecoverySeconds=recoverySeconds
+                request.routeScheduleCapacity=scheduleCapacity
                 request.routeTimingDebt=slowStem and not finalSprint
-                    and distance>run*math.max(0,remaining-.12)
+                    and distance+.15>(scheduleCapacity or run*math.max(0,remaining-.12))
                 if request.routeTimingDebt then request.routeTimingReason="observed_stem_delay" end
                 return request
             end

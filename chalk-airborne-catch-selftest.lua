@@ -13,6 +13,7 @@ return function(Planner,source)
             velocity=Vector3.zero,lookDirection=Vector3.new(0,0,1),grounded=true,
             jumpSpeed=math.sqrt(2*196.2*6),gravity=196.2,walkSpeed=27,runSpeed=20,sprintSeconds=4,
             groundRootY=3,turfY=0,diveDistance=14.7,canJump=true,canDive=true,maxHorizon=2.2,
+            wrDiveGoalZ=-100,
             margin=.4,preferAirborne=true,requireAirborne=true,preferJumpDive=true,chase=true,allowHold=false,
             config={CatchRadius=3.75,DiveCatchRadius=2.5,WaistDrop=1,HandOffset=.5,
                 HandUpOffset=3.5,DiveReach=2.4,Moves={Dive={Time=.35,Tip=.5,Ground=.75,GetUp=.35}}}}
@@ -64,6 +65,86 @@ return function(Planner,source)
         p.approachTarget=p.diveAt and Planner.pose(s,p,p.diveAt-.000001).Position or p.rootTarget
         return fresh
     end
+    test("WR dive starts inside the endzone rather than merely finishing there",function()
+        local s=diveFixture();local old=assert(Planner.solve(s))
+        local origin=Planner.pose(s,old,old.diveAt).Position
+        assert(old.rootTarget.Z>origin.Z+.2,"Fixture needs contact beyond dive origin")
+        s.wrDiveGoalZ=origin.Z+.1
+        assert(old.rootTarget.Z>s.wrDiveGoalZ)
+        for _,timingEnvelope in ipairs({true,false}) do
+            s.actionTimingEnvelope=timingEnvelope
+            local p=Planner.solve(s)
+            assert(not p or not p.diveAt or Planner.pose(s,p,p.diveAt).Position.Z>=s.wrDiveGoalZ,
+                "A catch beyond goal must not authorize a pre-goal dive")
+        end
+        local actual=advanceToJump(s,old,0)
+        assert(not Planner.validateJump(actual,old),"Stale pre-goal dive must not survive jump validation")
+    end)
+    test("inside-endzone airborne dives remain available and world translation preserves the boundary",function()
+        local s=diveFixture();local p=assert(Planner.solve(s));local fresh=dispatch(s,p)
+        fresh.wrDiveGoalZ=fresh.position.Z
+        assert(Planner.validateAirborneDive(fresh,p),"Goal-line equality is inside")
+        local offset=Vector3.new(50,0,-200)
+        fresh.position=fresh.position+offset;fresh.wrDiveGoalZ=fresh.wrDiveGoalZ+offset.Z
+        fresh.arc={P0=s.arc.P0+offset,P1=s.arc.P1+offset,Flight=s.arc.Flight,Apex=s.arc.Apex}
+        local q={}for k,v in pairs(p)do q[k]=v end
+        q.rootTarget=p.rootTarget+offset;q.contactPosition=p.contactPosition+offset
+        assert(Planner.validateAirborneDive(fresh,q))
+    end)
+    test("missing or nonfinite WR endzone forbids dives while preserving ordinary jump catches",function()
+        for _,value in ipairs({false,0/0,math.huge}) do
+            local s=diveFixture();s.wrDiveGoalZ=value
+            local p=Planner.solve(s)
+            assert(not p or not p.diveAt)
+            s=fixture();s.wrDiveGoalZ=value;s.canDive=false
+            local jump=assert(Planner.solve(s));assert(jump.jumpAt and not jump.diveAt)
+        end
+        local s=diveFixture();local p=assert(Planner.solve(s));local actual=dispatch(s,p)
+        actual.wrDiveGoalZ=nil
+        assert(not Planner.validateAirborneDive(actual,p))
+    end)
+    test("actual airborne dive origin must remain inside both goal and provided field bounds",function()
+        local s=diveFixture();local p=assert(Planner.solve(s));local actual=dispatch(s,p)
+        actual.wrDiveGoalZ=actual.position.Z+.001
+        assert(not Planner.validateAirborneDive(actual,p),"Fresh position short of goal cannot use old plan")
+        actual.wrDiveGoalZ=-100
+        actual.bounds={minX=actual.position.X+.001,maxX=100,minZ=-100,maxZ=100}
+        assert(not Planner.validateAirborneDive(actual,p),"Out-of-bounds origin cannot dive into an in-bounds contact")
+    end)
+    test("scheduled dive delays cannot carry a backward-moving WR outside the endzone",function()
+        local s=diveFixture()
+        local old=assert(Planner.solve(s));assert(old.diveAt)
+        local function mirror(v)return Vector3.new(v.X,v.Y,-v.Z)end
+        old.direction=mirror(old.direction);old.rootTarget=mirror(old.rootTarget)
+        old.contactPosition=mirror(old.contactPosition);old._timingFirstTouch=nil
+        s.arc={P0=Vector3.new(0,6,30),P1=Vector3.new(30,3.5,-20),Flight=.9,Apex=0}
+        s.lookDirection=Vector3.new(0,0,-1)
+        assert(old.direction.Z<0 and Planner.airborneFinish(s,old)=="jumpDive")
+        local origin=Planner.pose(s,old,old.diveAt).Position
+        s.wrDiveGoalZ=origin.Z-.05
+        local delayed={}for k,v in pairs(old)do delayed[k]=v end
+        delayed._diveDelay=old._diveDelay+.02;delayed.diveAt=old.diveAt+.02
+        assert(Planner.pose(s,delayed,delayed.diveAt).Position.Z<s.wrDiveGoalZ,
+            "Fixture must cross the boundary under delayed backward movement")
+        local p=Planner.solve(s)
+        if p and p.diveAt then
+            for ji=0,2 do for di=0,2 do
+                local q={}for k,v in pairs(p)do q[k]=v end
+                if q._jumpDelay then q._jumpDelay=p._jumpDelay+.0175*ji;q.jumpAt=s.now+q._jumpDelay end
+                q._diveDelay=p._diveDelay+.01*di;q.diveAt=s.now+q._diveDelay
+                assert(Planner.pose(s,q,q.diveAt).Position.Z>=s.wrDiveGoalZ)
+            end end
+        end
+    end)
+    test("WR dive boundary does not change DB earliest interception or dive validation",function()
+        local s=diveFixture();s.role="DB";s.requireAirborne=false;s.preferAirborne=false
+        local first=assert(Planner.solve(s));s.wrDiveGoalZ=10000
+        local after=assert(Planner.solve(s))
+        assert(first.kind==after.kind and first.contactAt==after.contactAt and first.diveAt==after.diveAt)
+        s=diveFixture();local wr=assert(Planner.solve(s));local actual=dispatch(s,wr)
+        actual.role="DB";actual.wrDiveGoalZ=nil
+        assert(Planner.validateAirborneDive(actual,wr))
+    end)
     local function lateFloater()
         local s=fixture();s.now=102.3420808;s.launchAt=100;s.passType="Floater"
         s.position=Vector3.new(-18.8274899,3,54.8122864)
@@ -73,6 +154,177 @@ return function(Planner,source)
         s.sprintSeconds=1.08;s.reactionDelay=0;s.preferJumpDive=false
         return s
     end
+    local function minimumContactZ(s,p)
+        local touch=Planner.firstTouch(s,p)
+        local z=math.huge
+        for _,at in ipairs({touch.at,p.contactAt-.012,p.contactAt,p.contactAt+.012}) do
+            z=math.min(z,Planner.pose(s,p,at).Position.Z)
+        end
+        return z
+    end
+    local function continuousFloater()
+        local s=fixture();s.passType="Floater";s.now=100.4;s.maxHorizon=3.5;s.canDive=false
+        s.arc={P0=Vector3.new(0,6,-30),P1=Vector3.new(20,3.5,45),Flight=3.1,Apex=42}
+        s.velocity=Vector3.new(10,0,25);s.requireEndzoneCatch=true;s.wrDiveGoalZ=20
+        return s
+    end
+    test("grounded WR Floater paces a continuous airborne contact instead of stopping in midair",function()
+        local s=continuousFloater();local p=assert(Planner.solve(s))
+        assert(p.kind=="jump" and p.continuousCatch and not p.diveAt)
+        assert(p.movementScale>=.45 and p.movementScale<.9 and p.stopAt>=p.contactAt+.012)
+        assert(p.firstTouchAt<p.stopAt and minimumContactZ(s,p)>=s.wrDiveGoalZ+.25)
+        local before=Planner.pose(s,p,p.contactAt-.03).Position
+        local after=Planner.pose(s,p,p.contactAt+.03).Position
+        assert(((after-before)*Vector3.new(1,0,1)):Dot(p.direction)>.3,
+            "Contact must preserve forward motion, not a parked root")
+        for _,late in ipairs({0,.0175,.035}) do
+            local q={}for key,value in pairs(p)do q[key]=value end
+            q._jumpDelay=p._jumpDelay+late;q.jumpAt=p.jumpAt+late
+            assert(Planner.airborneFinish(s,q)=="jump")
+            for _,delta in ipairs({-.012,0,.012}) do
+                local at=p.contactAt+delta;local cf,air=Planner.pose(s,q,at)
+                local a,b,r=Planner.capsule(s,cf,air)
+                assert(r-Planner.segmentDistance(Planner.ballAt(s.arc,at-s.launchAt),a,b)>=s.margin-1e-7)
+            end
+        end
+    end)
+    test("fresh continuous jump validation keeps scaled movement and rejects a displaced actual root",function()
+        local s=continuousFloater();local p=assert(Planner.solve(s))
+        local actual=advanceToJump(s,p,.015)
+        assert(Planner.validateJump(actual,p))
+        local scale,speed=p.movementScale,p._speed
+        assert(actual.walkSpeed==27 and speed==27*scale,"Pacing must scale native input, not native speed")
+        actual.position=actual.position+Vector3.new(10,0,0)
+        assert(not Planner.validateJump(actual,p),"Continuous motion cannot hide an actual position error")
+        assert(p.movementScale==scale and p._speed==speed,"Fresh validation must not mutate the original trajectory")
+        actual=advanceToJump(s,p,0);p.movementScale=1.1
+        assert(not Planner.validateJump(actual,p),"Continuous catch cannot extrapolate above native input")
+        p.movementScale=.44
+        assert(not Planner.validateJump(actual,p),"Continuous catch cannot silently turn into creeping")
+    end)
+    test("continuous Floater pacing leaves DB Bullet and airborne-start action models unchanged",function()
+        local s=continuousFloater();s.role="DB";s.requireAirborne=false;s.preferAirborne=false
+        local db=assert(Planner.solve(s));assert(not db.continuousCatch and db.movementScale==nil)
+        s=fixture();s.passType="Bullet"
+        local bullet=assert(Planner.solve(s));assert(not bullet.continuousCatch and bullet.movementScale==nil)
+        s=continuousFloater();local p=assert(Planner.solve(s));local at=p.jumpAt+.08
+        local cf,air,vy=Planner.pose(s,p,at)
+        s.now=at;s.position=cf.Position;s.velocity=p.direction*p._speed+Vector3.new(0,vy,0)
+        s.grounded=false;s.canJump=false
+        local airborne=Planner.solve(s)
+        assert(air and (not airborne or not airborne.continuousCatch))
+    end)
+    test("fresh continuous jump rejects a small sideline shift despite valid ball overlap",function()
+        local s=continuousFloater();local p=assert(Planner.solve(s))
+        local last=Planner.pose(s,p,p.contactAt+.012).Position
+        s.bounds={minX=-100,maxX=last.X+.005,minZ=-100,maxZ=200}
+        assert(Planner.airborneFinish(s,p)=="jump","Original moving contact must remain in bounds")
+        local actual=advanceToJump(s,p,0);actual.position=actual.position+Vector3.new(.02,0,0)
+        local bounds=actual.bounds;actual.bounds=nil
+        assert(Planner.validateJump(actual,p),"Shift must retain geometric overlap before checking the sideline")
+        actual.bounds=bounds
+        local valid,why=Planner.validateJump(actual,p)
+        assert(not valid and why=="Continuous airborne contact leaves field bounds",
+            "Fresh position cannot use an in-bounds stale forecast to cross the sideline")
+    end)
+    test("continuous catch preserves explicit zero small and sufficient movement limits",function()
+        for _,cap in ipairs({0,1}) do
+            local s=continuousFloater();s.maxMoveDistance=cap
+            assert(not Planner.solve(s),"Pacing must not overwrite a restricted movement distance")
+            s.maxMoveDistance=nil;s.range=cap
+            assert(not Planner.solve(s),"Continuous movement must retain an explicit range restriction")
+        end
+        local s=continuousFloater();s.maxMoveDistance=100;s.range=100
+        local p=assert(Planner.solve(s));assert(p.continuousCatch and p._aimDistance<=100)
+        local actual=advanceToJump(s,p,0);actual.maxMoveDistance=0
+        local valid,why=Planner.validateJump(actual,p)
+        assert(not valid and why=="Continuous catch exceeds movement limit")
+    end)
+    test("endzone Floater rejects a pre-goal first touch despite later in-zone central contact",function()
+        local s=fixture();s.canDive=false;s.passType="Floater";s.now=100.5;s.maxHorizon=3.5
+        s.arc={P0=Vector3.new(0,6,-30),P1=Vector3.new(30,3.5,65),Flight=3.1,Apex=42}
+        local old=assert(Planner.solve(s));local first=Planner.firstTouch(s,old)
+        local firstZ=Planner.pose(s,old,first.at).Position.Z
+        local centralZ=Planner.pose(s,old,old.contactAt).Position.Z
+        assert(centralZ>firstZ+.01,"Fixture must separate first touch from central contact")
+        s.wrDiveGoalZ=(firstZ+centralZ)/2-.25;s.requireEndzoneCatch=true
+        assert(centralZ>=s.wrDiveGoalZ+.25 and firstZ<s.wrDiveGoalZ+.25)
+        assert(not Planner.airborneFinish(s,old),"Central contact cannot hide an earlier pre-goal catch")
+        local nextPlan=Planner.solve(s)
+        assert(not nextPlan or minimumContactZ(s,nextPlan)>=s.wrDiveGoalZ+.25)
+    end)
+    test("honest in-zone Floater keeps its jump witness and all contact-window samples",function()
+        local s=lateFloater();s.canDive=false;local old=assert(Planner.solve(s))
+        s.wrDiveGoalZ=minimumContactZ(s,old)-.75;s.requireEndzoneCatch=true
+        local p=assert(Planner.solve(s));assert(p.jumpAt and not p.diveAt)
+        assert(Planner.airborneFinish(s,p)=="jump")
+        assert(minimumContactZ(s,p)>=s.wrDiveGoalZ+.25)
+        assert(Planner.validateJump(advanceToJump(s,p,0),p))
+    end)
+    local function shallowDiveWitness()
+        local s=diveFixture();local p=assert(Planner.solve(s))
+        -- Rotate an existing valid 3-D catch, preserving all physical margins,
+        -- so a delayed dive changes forward progress near the goal boundary.
+        local angle=math.atan2(p.direction.Z,p.direction.X)-math.asin(.01)
+        local function rotate(v)
+            return Vector3.new(v.X*math.cos(angle)+v.Z*math.sin(angle),v.Y,
+                -v.X*math.sin(angle)+v.Z*math.cos(angle))
+        end
+        s.arc={P0=rotate(s.arc.P0),P1=rotate(s.arc.P1),Flight=s.arc.Flight,Apex=s.arc.Apex}
+        s.lookDirection=rotate(s.lookDirection);s.passType="Floater"
+        p.direction=rotate(p.direction);p.rootTarget=rotate(p.rootTarget)
+        p.contactPosition=rotate(p.contactPosition);p._timingFirstTouch=nil
+        assert(Planner.airborneFinish(s,p)=="jumpDive")
+        return s,p
+    end
+    test("a delayed dive variant cannot move a nominal endzone catch back outside",function()
+        local s,p=shallowDiveWitness();local q={}for k,v in pairs(p)do q[k]=v end
+        q.diveAt=p.diveAt+.02;q._diveDelay=p._diveDelay+.02;q._diveDistance=nil
+        local nominal,delayed=minimumContactZ(s,p),minimumContactZ(s,q)
+        assert(nominal>delayed+.001 and Planner.airborneFinish(s,q)=="jumpDive")
+        s.wrDiveGoalZ=(nominal+delayed)/2-.25;s.requireEndzoneCatch=true
+        assert(Planner.canDiveFrom(s,Planner.pose(s,p,p.diveAt).Position))
+        assert(Planner.airborneFinish(s,p)=="jumpDive")
+        assert(not Planner.airborneFinish(s,q),"Delayed physical contact crossed the reserved boundary")
+        local selected=Planner.solve(s)
+        if selected then
+            for ji=0,selected.jumpAt and 2 or 0 do for di=0,selected.diveAt and 2 or 0 do
+                local v={}for k,value in pairs(selected)do v[k]=value end
+                if v.jumpAt then v.jumpAt=selected.jumpAt+.0175*ji;v._jumpDelay=selected._jumpDelay+.0175*ji end
+                if v.diveAt then v.diveAt=selected.diveAt+.01*di;v._diveDelay=selected._diveDelay+.01*di;v._diveDistance=nil end
+                assert(minimumContactZ(s,v)>=s.wrDiveGoalZ+.25)
+            end end
+        end
+    end)
+    test("fresh jump validation rejects the old pre-goal Floater witness",function()
+        local s=lateFloater();s.canDive=false;local p=assert(Planner.solve(s))
+        local actual=advanceToJump(s,p,0)
+        assert(Planner.validateJump(actual,p))
+        actual.wrDiveGoalZ=p.rootTarget.Z;actual.requireEndzoneCatch=true
+        assert(not Planner.validateJump(actual,p))
+    end)
+    test("fresh airborne dive needs in-zone contact in addition to an in-zone dive start",function()
+        local s,p=shallowDiveWitness();local actual=dispatch(s,p)
+        actual.wrDiveGoalZ=actual.position.Z-.001
+        assert(Planner.canDiveFrom(actual,actual.position) and Planner.validateAirborneDive(actual,p))
+        actual.requireEndzoneCatch=true
+        assert(not Planner.validateAirborneDive(actual,p),"Legal dive origin cannot authorize a short catch")
+        actual.wrDiveGoalZ=-100
+        assert(Planner.validateAirborneDive(actual,p),"An honest in-zone dive contact must remain available")
+    end)
+    test("required endzone catch fails closed on missing or invalid goal without changing Bullet or DB",function()
+        local s=lateFloater();s.canDive=false;local p=assert(Planner.solve(s))
+        for _,goal in ipairs({false,0/0,math.huge}) do
+            s.wrDiveGoalZ=goal;s.requireEndzoneCatch=true
+            assert(not Planner.airborneFinish(s,p) and not Planner.solve(s))
+        end
+        s.wrDiveGoalZ=nil
+        assert(not Planner.airborneFinish(s,p) and not Planner.solve(s))
+        s.requireEndzoneCatch=false;s.passType="Bullet"
+        assert(Planner.airborneFinish(s,p)=="jump" and Planner.solve(s))
+        s.role="DB";s.requireEndzoneCatch=true
+        assert(Planner.airborneFinish(s,p)=="jump")
+    end)
     test("earliest Floater reserves real jump dispatch slack instead of a submillisecond frontier",function()
         local s=lateFloater();s.actionTimingEnvelope=false
         local fragile=assert(Planner.solve(s))
@@ -90,13 +342,53 @@ return function(Planner,source)
                 "Moving receiver lost the planned jump reserve")
         end
     end)
-    test("own DB jumps also reserve dispatch time while keeping their geometric margin",function()
+    test("DB jumps keep contact margin through a 60 ms takeoff delay and fresh movement",function()
         local s=lateFloater();s.role="DB";s.requireAirborne=false;s.preferAirborne=false;s.canDive=false
         local p=assert(Planner.solve(s))
-        assert(p.jumpAt and p.jumpTimingBudget==.035 and p.margin>=s.margin)
-        for _,late in ipairs({0,.016,.035}) do
-            assert(Planner.validateJump(advanceToJump(s,p,late),p))
+        assert(p.jumpAt and p.jumpTimingBudget==.060 and p.margin>=s.margin)
+        for _,late in ipairs({0,.016,.035,.046721,.060}) do
+            local delayed={}for key,value in pairs(p)do delayed[key]=value end
+            delayed._jumpDelay=p._jumpDelay+late;delayed.jumpAt=p.jumpAt+late
+            for _,delta in ipairs({-.012,0,.012})do
+                local at=p.contactAt+delta
+                local cf,air=Planner.pose(s,delayed,at)
+                local a,b,r=Planner.capsule(s,cf,air)
+                assert(r-Planner.segmentDistance(Planner.ballAt(s.arc,at-s.launchAt),a,b)>=s.margin-1e-7,
+                    "The advertised DB delay lost the actual contact-volume margin")
+            end
+            local fresh=advanceToJump(s,p,late)
+            assert((fresh.position-s.position).Magnitude>.1,"Fixture must advance the receiver, not just the clock")
+            assert(Planner.validateJump(fresh,p),"Fresh DB dispatch must retain the funded delayed contact")
         end
+    end)
+    test("larger DB takeoff reserve leaves WR jump and dive timing budgets unchanged",function()
+        local wr=diveFixture();local p=assert(Planner.solve(wr))
+        assert(p.jumpAt and p.diveAt and p.jumpTimingBudget==.035 and p.diveTimingBudget==.020)
+        local delayed={}for key,value in pairs(p)do delayed[key]=value end
+        delayed._jumpDelay=p._jumpDelay+.035;delayed.jumpAt=p.jumpAt+.035
+        delayed._diveDelay=p._diveDelay+.020;delayed.diveAt=p.diveAt+.020;delayed._diveDistance=nil
+        assert(Planner.airborneFinish(wr,delayed)=="jumpDive")
+        assert(Planner.validateJump(advanceToJump(wr,p,.035),p))
+    end)
+    test("DB chooses a later valid contact when 35 ms reserve would miss an overhead ball",function()
+        local s=fixture();s.role="DB";s.requireAirborne=false;s.preferAirborne=false;s.canDive=false
+        s.walkSpeed=0;s.runSpeed=0;s.velocity=Vector3.zero;s.reactionDelay=0
+        s.launchAt=99.8;s.maxHorizon=.65
+        s.arc={P0=Vector3.new(0,13,0),P1=Vector3.new(0,13,0),Flight=1000,Apex=0}
+        local p=assert(Planner.solve(s));assert(p.jumpAt==s.now and p.jumpTimingBudget==.060)
+        -- Solve the rising root-height threshold directly. The earliest
+        -- contact sample must still have radius-minus-distance >= .4.
+        local rise=13-s.config.CatchRadius+s.margin-s.groundRootY-s.config.HandUpOffset
+        local ascent=(s.jumpSpeed-math.sqrt(s.jumpSpeed*s.jumpSpeed-2*s.gravity*rise))/s.gravity
+        assert(p.contactAt>=p.jumpAt+.060+ascent+.012-1e-7)
+        local oldFrontier={}for key,value in pairs(p)do oldFrontier[key]=value end
+        oldFrontier.contactAt=p.jumpAt+.035+ascent+.012
+        local actual={}for key,value in pairs(s)do actual[key]=value end
+        actual.now=p.jumpAt+.046721
+        assert(not Planner.validateJump(actual,oldFrontier),"35 ms frontier must reproduce the missed overhead contact")
+        assert(Planner.validateJump(actual,p),"New contact must survive the same observed delay")
+        actual.now=p.jumpAt+.060
+        assert(Planner.validateJump(actual,p),"The advertised full reserve must remain geometrically valid")
     end)
     test("jump dive witnesses survive separate action delays and preserve takeoff time",function()
         local s=diveFixture();local p=assert(Planner.solve(s))
@@ -220,7 +512,9 @@ return function(Planner,source)
     local staleGuard=assert(source:match("(    local function cancelStaleAction.-)    local walls"))
     local actionSection=assert(source:match("(        local actionNow=workspace:GetServerTimeNow%(%).-)        message=plan.reachable==false"))
     local dispatchFixture=assert(loadstring([[
-        return function(input,clocks,role)
+        return function(realPlanner)
+        return function(input,clocks,role,options)
+            options=options or {}
             local result={jumps=0,dives=0,cancels=0,finished=false}
             local plan=input
             local now=100
@@ -236,7 +530,7 @@ return function(Planner,source)
                 return clocks[clockIndex]
             end}
             local s={role=role}
-            local root={Position=Vector3.new(0,5,0),AssemblyLinearVelocity=Vector3.zero}
+            local root={Position=options.position or Vector3.new(0,5,0),AssemblyLinearVelocity=Vector3.zero}
             local h={FloorMaterial="Air",PlatformStand=false}
             function h:Move()end
             function h:ChangeState()result.jumps=result.jumps+1 end
@@ -246,13 +540,21 @@ return function(Planner,source)
             local function motionState()return {grounded=true,diveModeMatchesMotion=true}end
             local function log()end
             local function xyz()return {}end
-            local function snapshot()return {}end
+            local function snapshot()
+                local goal=options.goalZ
+                if goal==nil and not options.missingGoal then goal=-100 end
+                return {role=role,wrDiveGoalZ=goal,position=root.Position,bounds=options.bounds}
+            end
             local function solveActual()return nil end
             local function divePermitted()return true end
             local function releaseSprint()end
             local function nativeDive()result.dives=result.dives+1;h.PlatformStand=true end
             local function cancel()result.cancels=result.cancels+1;plan=nil;jumpRequest=nil end
-            local Planner={validateAirborneDive=function()return true end,
+            local Planner={validateAirborneDive=function()
+                    if options.validationPosition then root.Position=options.validationPosition end
+                    return true
+                end,
+                canDiveFrom=realPlanner.canDiveFrom,
                 validateJump=function()return true end,
                 pose=function()return {Position=root.Position}end}
     ]]..staleGuard..[[
@@ -264,7 +566,8 @@ return function(Planner,source)
             result.nextSolve=nextSolve;result.jumpRequested=h.Jump==true
             return result
         end
-    ]]))()
+        end
+    ]]))()(Planner)
     test("slow planning cancels overdue jump and dive before inputs for both roles",function()
         for _,role in ipairs({"WR","DB"})do
             for _,kind in ipairs({"jump","dive"})do
@@ -297,6 +600,23 @@ return function(Planner,source)
         local dive=dispatchFixture({kind="dive",diveAt=100.02,contactAt=100.5,
             direction=Vector3.new(1,0,0)},{100.03},"DB")
         assert(dive.finished and dive.cancels==0 and dive.dives==1)
+    end)
+    test("live WR dive dispatch uses actual origin instead of stale plan or in-goal contact",function()
+        local function plan()
+            return {kind="dive",diveAt=100.02,contactAt=100.5,airborneFinish="jumpDive",
+                direction=Vector3.new(0,0,1),rootTarget=Vector3.new(0,5,10)}
+        end
+        for _,options in ipairs({{goalZ=.001},{missingGoal=true},
+            {goalZ=0,validationPosition=Vector3.new(0,5,-.001)},
+            {goalZ=0,bounds={minX=.001,maxX=10,minZ=0,maxZ=20}}}) do
+            local r=dispatchFixture(plan(),{100.03},"WR",options)
+            assert(r.cancels==1 and r.dives==0 and not r.finished,
+                "A permitted stale plan bypassed the final actual-origin gate")
+        end
+        local inside=dispatchFixture(plan(),{100.03},"WR",{goalZ=0})
+        assert(inside.dives==1 and inside.cancels==0 and inside.finished)
+        local db=dispatchFixture(plan(),{100.03},"DB",{goalZ=1000})
+        assert(db.dives==1 and db.cancels==0 and db.finished)
     end)
     local confirmation=assert(source:match('        h.Jump=jumpRequest~=nil\n(        if jumpRequest then.-)        if h.PlatformStand and not dived then'))
     local pendingFixture=assert(loadstring([[

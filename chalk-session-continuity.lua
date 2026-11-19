@@ -112,8 +112,18 @@ return function(ctx,services)
             ownedMatch=false;completed=false;revoke("Unrelated destination");return
         end
         local name=tostring(state):match("([^%.]+)$")
-        if name=="Failed" or name=="Cancelled" then revoke("Teleport did not complete")
-        elseif name=="Started" or name=="InProgress" then api.refresh() end
+        if name=="Failed" or name=="Cancelled" then
+            ownedMatch=false;completed=false;revoke("Teleport did not complete")
+        elseif name=="Started" or name=="InProgress" then
+            -- An owned match can be aborted before any round or MatchOver.
+            -- Only its explicit same-place teleport may create this return
+            -- lease; the destination must still prove it is a lobby.
+            if ownedMatch and not outbound and placeId==runtime.PlaceId then
+                local s=snapshot()
+                if eligible(s) and s.matchServer==true then arm("lobby") end
+            end
+            api.refresh()
+        end
     end
     function api.resume(sourceJob)
         if not alive or not automatic or not untouched or status.resumed

@@ -8,6 +8,7 @@ return function(ctx,Policy,services)
     local Config=services.Config or require(rs.Shared.Config)
     local Field=services.Field or require(rs.Shared.Field)
     local RouteMath=services.RouteMath or require(rs.Shared.RouteMath)
+    local Planner=ctx.Planner or services.Planner
     local board=services.board or require(player.PlayerScripts.Game.RouteBoard)
     local submit=services.submit or function(payload) rs.Remotes.Submit:FireServer(payload) end
     local uis=services.uis or game:GetService("UserInputService")
@@ -39,6 +40,8 @@ return function(ctx,Policy,services)
     local roundKey,submitted,nextSubmit,submitTries=nil,false,0,0
     local laneSide,priorTarget,lastPhase,lastKind,lastSample=nil,nil,nil,nil,0
     local finalSprintCommitted=false
+    local hardCutIssued=false
+    local stemRecoveryUntil,stemRecoverySpent=0,0
     local observedSnapAt
     local message,errorMessage,saveError="Full auto off",nil,nil
     local navigationError
@@ -97,10 +100,17 @@ return function(ctx,Policy,services)
             "observedDefenderDepthYards","underneathDepthLimit","carryReserve","carryMoveReady","estimatedCatchStamina",
             "pacedSlant","slantWalkUntil","slantSprintDuration","routeFamily","cutDirection",
             "scheduledFamily","scheduleOverride","scheduledPass","passPreferenceOverride",
-            "anticipatedLane","stemBlocked","preferAirborne","preferJumpDive","requireAirborne"}) do
+            "anticipatedLane","stemBlocked","preferAirborne","preferJumpDive","requireAirborne",
+            "bestEffort","bestEffortReason","reachable"}) do
             local v=value[key]
             if type(v)=="boolean" or type(v)=="string" and #v<=512
                 or type(v)=="number" and v==v and math.abs(v)<math.huge then out[key]=v end
+        end
+        for _,key in ipairs({"estimatedCatchAt","estimatedCatchZ","estimatedFirstTouchAt","estimatedStopAt","estimatedContactMargin","stemSprintSeconds","stemSprintStart",
+            "earlyStemSprintSeconds","stemRunSpeed","estimatedStemRegeneration","ballTargetZ","shortField",
+            "stemTravelDistance","postThrowStem","stemDetour","forecastCount","cutAngle","estimatedCatchInsideGoal","rareBullet"}) do
+            local v=value[key]
+            if type(v)=="boolean" or type(v)=="number" and v==v and math.abs(v)<math.huge then out[key]=v end
         end
         return out
     end
@@ -198,6 +208,8 @@ return function(ctx,Policy,services)
         memoryOpponent,memoryOpponentId,memorySavedAt=nil,nil,nil
         lastLateBendTrialTrigger=nil
         finalSprintCommitted=false
+        hardCutIssued=false
+        stemRecoveryUntil,stemRecoverySpent=0,0
         selected,routePlan,routeSource,planPass=nil,nil,nil,nil
         submitted=false;roundKey=nil;submitTries=0;nextSubmit=0;observedSnapAt=nil
         routeWaypoint=2;lastLoggedWaypoint=nil
@@ -325,6 +337,13 @@ return function(ctx,Policy,services)
             lastLateBendTrialTrigger=lastLateBendTrialTrigger,defenseProfile=defenseProfile(),
             middleStemDeep=choice and choice.middleStemDeep==true,
             slowStem=choice and choice.slowStem==true,slowStemTime=choice and choice.slowStemTime,
+            routeStrategy=choice and choice.routeStrategy,postThrowStem=choice and choice.postThrowStem==true,
+            stemSprintStart=choice and choice.stemSprintStart,estimatedCatchAt=choice and choice.estimatedCatchAt,
+            earlyStemSprintSeconds=choice and choice.earlyStemSprintSeconds,
+            stemRunSpeed=choice and choice.stemRunSpeed,
+            estimatedStemRegeneration=choice and choice.estimatedStemRegeneration,
+            stemRecoveryUntil=stemRecoveryUntil,stemRecoverySpent=stemRecoverySpent,
+            allowPostThrowStem=s.allowPostThrowStem==true,gravity=world.Gravity,
             pacedSlant=choice and choice.pacedSlant==true,slantWalkUntil=choice and choice.slantWalkUntil,
             passType=s.passType,startX=selected and selected.payload.StartX,
             routeFamily=choice and choice.routeFamily,routeSide=choice and choice.side,
@@ -334,6 +353,8 @@ return function(ctx,Policy,services)
         local pending=activeRoute and activeRoute.roundKey==key and activeRoute or nil
         roundKey=key;submitted=pending~=nil;nextSubmit=0;submitTries=0;observedSnapAt=nil
         observationStarted=world:GetServerTimeNow()
+        hardCutIssued=false
+        stemRecoveryUntil,stemRecoverySpent=0,0
         activeRoute=pending
         if not pending then finalSprintCommitted=false end
         if not activeDefense or activeDefense.roundKey~=key then activeDefense=nil end
@@ -363,7 +384,8 @@ return function(ctx,Policy,services)
         if key~=roundKey then resetRound(key) end
         if submitted then
             local choice=selected or activeRoute
-            message=choice and choice.adaptiveUnderneath and "Full auto · Underneath: defender deep"
+            message=choice and choice.bestEffort and "Full auto · Floater best effort (no funded catch forecast)"
+                or choice and choice.adaptiveUnderneath and "Full auto · Underneath: defender deep"
                 or "Full auto · route submitted"
             return
         end
@@ -391,7 +413,9 @@ return function(ctx,Policy,services)
         -- Equipped/owned releases remain available to the native manual menu;
         -- do not silently add their cost, motion or timing to this forecast.
         input.release=nil
-        local chosen,reason=Policy.chooseScheduledRoute(input,Config,Field,RouteMath)
+        local solveStarted=os.clock()
+        local chosen,reason=Policy.chooseScheduledRoute(input,Config,Field,RouteMath,Planner)
+        local solveMs=(os.clock()-solveStarted)*1000
         if not chosen then
             local failure=tostring(reason or "No feasible cut route")
             if errorMessage~=failure then
@@ -413,6 +437,7 @@ return function(ctx,Policy,services)
             scheduleOverride=chosen.scheduleOverride,anticipatedLane=chosen.anticipatedLane,stemBlocked=chosen.stemBlocked,
             scheduledPass=chosen.scheduledPass,passPreferenceOverride=chosen.passPreferenceOverride,
             preferAirborne=chosen.preferAirborne,preferJumpDive=chosen.preferJumpDive,requireAirborne=true,
+            bestEffort=chosen.bestEffort,bestEffortReason=chosen.bestEffortReason,reachable=chosen.reachable,
             roundKey=roundKey,time=now,arrival=chosen.plan.Arrival,cutCount=chosen.cutCount,lastCutAt=chosen.lastCutAt,
             experimentalAttempt=chosen.experimentalAttempt,trialTrigger=chosen.trialTrigger,
             experimentalClearanceGap=chosen.experimentalClearanceGap,middleStemDeep=chosen.middleStemDeep,
@@ -430,6 +455,16 @@ return function(ctx,Policy,services)
             adaptiveUnderneath=chosen.adaptiveUnderneath,observedDefenderDepthYards=chosen.observedDefenderDepthYards,
             underneathDepthLimit=chosen.underneathDepthLimit,carryReserve=chosen.carryReserve,carryMoveReady=chosen.carryMoveReady,
             estimatedCatchStamina=chosen.estimatedCatchStamina,
+            estimatedCatchAt=chosen.estimatedCatchAt,estimatedContactMargin=chosen.estimatedContactMargin,
+            estimatedCatchZ=chosen.estimatedCatchZ,estimatedFirstTouchAt=chosen.estimatedFirstTouchAt,
+            estimatedStopAt=chosen.estimatedStopAt,
+            stemSprintSeconds=chosen.stemSprintSeconds,stemSprintStart=chosen.stemSprintStart,
+            earlyStemSprintSeconds=chosen.earlyStemSprintSeconds,
+            stemRunSpeed=chosen.stemRunSpeed,estimatedStemRegeneration=chosen.estimatedStemRegeneration,
+            ballTargetZ=chosen.ballTargetZ,shortField=chosen.shortField,
+            stemTravelDistance=chosen.stemTravelDistance,postThrowStem=chosen.postThrowStem,
+            stemDetour=chosen.stemDetour,forecastCount=chosen.forecastCount,
+            cutAngle=chosen.cutAngle,estimatedCatchInsideGoal=chosen.estimatedCatchInsideGoal,rareBullet=chosen.rareBullet,
             pacedSlant=chosen.pacedSlant,slantWalkUntil=chosen.slantWalkUntil,slantSprintDuration=chosen.slantSprintDuration,
             sidelineFallback=chosen.sidelineFallback,sidelineFallbackReason=chosen.sidelineFallbackReason,
             diveWitnessElapsed=chosen.diveWitnessElapsed,diveWitnessX=chosen.diveWitnessX,
@@ -446,11 +481,20 @@ return function(ctx,Policy,services)
         -- Same close operation used when the normal route menu finishes.
         local closed,closeError=pcall(board.Close)
         errorMessage=not closed and tostring(closeError) or nil
-        message=chosen.adaptiveUnderneath and "Full auto · Underneath: defender deep"
+        message=chosen.bestEffort and "Full auto · Floater best effort (no funded catch forecast)"
+            or chosen.adaptiveUnderneath and "Full auto · Underneath: defender deep"
             or "Full auto · "..chosen.payload.Pass.." route submitted"
         log("routeRequested",{pass=chosen.payload.Pass,startX=chosen.payload.StartX,
             points=#chosen.payload.Points,arrival=chosen.plan.Arrival,launch=chosen.plan.Launch,
             estimatedSeparation=chosen.estimatedSeparation,estimateOnly=true,
+            bestEffort=chosen.bestEffort,bestEffortReason=chosen.bestEffortReason,reachable=chosen.reachable,
+            cutAngle=chosen.cutAngle,estimatedCatchInsideGoal=chosen.estimatedCatchInsideGoal,
+            postThrowStem=chosen.postThrowStem,forecastCount=chosen.forecastCount,solveMs=solveMs,
+            earlyStemSprintSeconds=chosen.earlyStemSprintSeconds,stemSprintSeconds=chosen.stemSprintSeconds,
+            stemSprintStart=chosen.stemSprintStart,
+            stemRunSpeed=chosen.stemRunSpeed,estimatedStemRegeneration=chosen.estimatedStemRegeneration,
+            ballTargetZ=chosen.ballTargetZ,shortField=chosen.shortField,
+            estimatedFirstTouchAt=chosen.estimatedFirstTouchAt,estimatedStopAt=chosen.estimatedStopAt,
             shape=chosen.shape,depth=chosen.depth,family=chosen.family,signature=chosen.signature,
             adaptationPenalty=chosen.adaptationPenalty,recentFailureCount=chosen.recentFailureCount,
             repeatPenalty=chosen.repeatPenalty,mixBonus=chosen.mixBonus,baseScore=chosen.baseScore,
@@ -520,6 +564,13 @@ return function(ctx,Policy,services)
         if not choice then return nil end
         if choice.routeWaypoint then routeWaypoint=choice.routeWaypoint end
         if choice.finalSprintCommitted==true then finalSprintCommitted=true end
+        if finite(choice.stemRecoveryUntil) and finite(choice.stemRecoverySeconds) then
+            stemRecoveryUntil=choice.stemRecoveryUntil
+            stemRecoverySpent=math.min(.6,stemRecoverySpent+choice.stemRecoverySeconds)
+        end
+        local hardCut=choice.finalSprintCommitted==true and input.routeStrategy=="deep_middle_floater"
+            and not hardCutIssued
+        if hardCut then hardCutIssued=true end
         laneSide,priorTarget=choice.laneSide,choice.target
         local delta=(choice.target-root.Position)*Vector3.new(1,0,1)
         local distance=delta.Magnitude
@@ -537,8 +588,10 @@ return function(ctx,Policy,services)
             end
         end
         local routeChoice=selected or activeRoute
-        message=choice.kind=="route" and routeChoice and routeChoice.adaptiveUnderneath
-            and "Full auto · Underneath: defender deep" or "Full auto · "..choice.kind
+        message=choice.kind=="route" and routeChoice and routeChoice.bestEffort
+            and "Full auto · Floater best effort (no funded catch forecast)"
+            or choice.kind=="route" and routeChoice and routeChoice.adaptiveUnderneath
+                and "Full auto · Underneath: defender deep" or "Full auto · "..choice.kind
         local sampleInterval=.2
         if lastKind~=choice.kind or choice.routeWaypoint~=lastLoggedWaypoint or now-lastSample>=sampleInterval then
             lastKind,lastSample=choice.kind,now
@@ -558,9 +611,12 @@ return function(ctx,Policy,services)
                 defenseAttemptShadeYards=input.defenseProfile.deepAttemptShadeYards,
                 defenseSamples=input.defenseProfile.samples,routeMoveSpeed=choice.moveSpeed,
                 routeDeadline=choice.routeDeadline,finalSprintCommitted=finalSprintCommitted,
+                routeScheduleCapacity=choice.routeScheduleCapacity,stemRecoveryUntil=stemRecoveryUntil,
+                stemRecoverySpent=stemRecoverySpent,
                 routeTimingDebt=choice.routeTimingDebt,routeTimingReason=choice.routeTimingReason})
         end
         return {direction=direction,sprint=moving and choice.sprint==true,message=message,
+            hardCut=hardCut,
             preserveDepth=choice.kind=="shadow"}
     end
     function api.navigate(s,root,h,now,dt)
@@ -729,7 +785,25 @@ return function(ctx,Policy,services)
         end
         local point=routePlan and type(routePlan.Points)=="table" and routePlan.Points[routeWaypoint]
         if typeof(point)~="Vector2" or not finite(point.X) or not finite(point.Y) then point=nil end
+        local stage
+        local cut=routePlan and routePlan.Points and routePlan.Points[2]
+        if choice.routeStrategy=="deep_middle_floater" and choice.postThrowStem==true
+            and not finalSprintCommitted and finite(observedSnapAt) and finite(choice.cutAt)
+            and finite(choice.stemSprintStart) and finite(choice.estimatedCatchAt)
+            and typeof(cut)=="Vector2" and world:GetServerTimeNow()<observedSnapAt+choice.cutAt then
+            stage={point=cut,untilAt=observedSnapAt+choice.cutAt,
+                sprintStartAt=observedSnapAt+choice.stemSprintStart,
+                contactAt=observedSnapAt+choice.estimatedCatchAt,reserve=10,
+                sprintDrain=Config.SprintDrain or 25,finalSprintSeconds=choice.finalSprintDuration,
+                plannedStemSprintSeconds=choice.stemSprintSeconds}
+            stage.stemRunSpeed=choice.stemRunSpeed
+            if stemRecoveryUntil>world:GetServerTimeNow()-observedSnapAt then
+                stage.recoveryUntilAt=observedSnapAt+stemRecoveryUntil
+            end
+        end
         return {deepFinish=choice.middleStemDeep==true,side=choice.side,waypoint=point,goalZ=Field.GoalZ,endZ=Field.EndZ,
+            routeStrategy=choice.routeStrategy,
+            postThrowStem=stage,
             pass=selected and selected.payload.Pass or activeRoute.pass,
             requireAirborne=true,requireDive=choice.requireDive==true,preferAirborne=true,
             preferJumpDive=choice.preferJumpDive==true,

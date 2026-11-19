@@ -53,6 +53,47 @@ return function(createSession,coreSource)
         eq(c.api.resume("match"),true);eq(c.s.fullAuto,true);eq(c.s.autoplay,true)
         eq(c.api.status().ownedMatch,false)
     end)
+    test("owned match aborted before any round continues only into the lobby",function()
+        local a=fixture();a:enable();a:found()
+        local b=fixture(a.shared,"empty-match","teleport",true)
+        assert(b.api.resume("origin"));eq(a.shared.value,false)
+        b.api.onTeleport("Enum.TeleportState.Started",b.game.PlaceId)
+        eq(b.api.status().destination,"lobby")
+        local nonce,expires=a.shared.value.nonce,a.shared.value.expiresAt
+        a.shared.time=a.shared.time+1
+        b.api.onTeleport("Enum.TeleportState.InProgress",b.game.PlaceId)
+        eq(a.shared.value.nonce,nonce);eq(a.shared.value.expiresAt,expires)
+        local c=fixture(a.shared,"returned-lobby","teleport",false)
+        assert(c.api.resume("empty-match"));eq(c.s.fullAuto,true);eq(c.s.autoplay,true)
+        eq(c.api.status().ownedMatch,false)
+    end)
+    test("aborted-match return does not treat another match as a lobby",function()
+        local a=fixture();a:enable();a:found()
+        local b=fixture(a.shared,"empty-match","teleport",true);assert(b.api.resume("origin"))
+        b.api.onTeleport("Started",b.game.PlaceId)
+        local c=fixture(a.shared,"unrelated-match","teleport",true)
+        eq(c.api.resume("empty-match"),false);eq(c.applies,0)
+    end)
+    test("aborted return needs known ownership destination and current ON choices",function()
+        for _,kind in ipairs({"unowned","unknown-place","other-place","not-match","off","F8","failed","testing"}) do
+            local a=fixture();a:enable();a:found()
+            local b=fixture(a.shared,"empty-match","teleport",true)
+            if kind~="unowned" then assert(b.api.resume("origin"))
+            else b:enable();a.shared.value=false end
+            local destination=b.game.PlaceId
+            if kind=="unknown-place" then destination=nil
+            elseif kind=="other-place" then destination=999
+            elseif kind=="not-match" then b.s.matchServer=false
+            elseif kind=="off" then b.s.autoplay=false;b.api.onChoice("autoplay",false)
+            elseif kind=="F8" then b.api.unload()
+            elseif kind=="failed" then b.api.onTeleport("Failed",destination)
+            elseif kind=="testing" then b.s.testing=true end
+            b.api.onTeleport("Started",destination)
+            eq(b.api.status().armed,false)
+            local c=fixture(a.shared,"returned-lobby","teleport",false)
+            eq(c.api.resume("empty-match"),false);eq(c.applies,0)
+        end
+    end)
     test("unowned or mode-mismatched Found never arms",function()
         local a=fixture();a:enable()
         a.api.onQueue({Status="Found",Mode="1v1"},{enabled=true,owned=false,queuedMode="1v1"})

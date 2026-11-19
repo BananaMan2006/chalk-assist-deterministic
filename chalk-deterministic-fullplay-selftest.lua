@@ -1,6 +1,6 @@
 -- Supplied RouteMath source, with explicit numeric geometry and service fixtures.
 -- No Roblox physics, network outcome, GUI input, or opponent behavior is simulated.
-return function(Policy,create,routeSource)
+return function(Policy,create,routeSource,Planner)
     local report={total=0,passed=0,failed=0,results={}}
     local oldVector2,oldTypeof=Vector2,typeof
     local M,V={},{}
@@ -18,7 +18,7 @@ return function(Policy,create,routeSource)
     M.__div=function(a,b) return vec(a.X/b,a.Y/b) end
     Vector2={new=vec,zero=vec(0,0)}
     typeof=function(value) return getmetatable(value)==M and "Vector2" or oldTypeof(value) end
-    local Config={RunSpeed=20,SprintSpeed=27,Stamina=100,SprintDrain=25,HikeTime=3,PreSnapDBSpeed=12,
+    local Config={RunSpeed=20,SprintSpeed=27,Stamina=100,SprintDrain=25,StaminaRegen=18,RegenDelay=.8,HikeTime=3,PreSnapDBSpeed=12,
         MinPointGapYards=.5,SidelineMarginYards=2,RouteEdgeMargin=1,BehindLOSYards=3,
         MaxInkYards=30,MaxPoints=200,DefaultGoYards=25,SimplifyTolerance=.6,
         CornerMinAngle=45,CornerMaxAngle=135,CornerMaxPenalty=.25,
@@ -69,7 +69,7 @@ return function(Policy,create,routeSource)
         end,JSONDecode=function(_,value) return copy(value) end}
         local function forbidden() error("model/network/RNG service must never be invoked") end
         f.services={player=f.player,world={GetServerTimeNow=function() return f.time end},rs={},jobId="authored-server",
-            Config=Config,Field=Field,RouteMath=RouteMath,http=http,guiService=f.gui,
+            Config=Config,Field=Field,RouteMath=RouteMath,Planner=Planner,http=http,guiService=f.gui,
             uis={GetFocusedTextBox=function() return f.focused end},runService={Heartbeat=heartbeat},
             players={GetPlayerFromCharacter=function() return {UserId=f.accountId} end},
             board={IsOpen=function() return f.boardOpen end,Close=function() f.boardOpen=false end},
@@ -353,7 +353,8 @@ return function(Policy,create,routeSource)
             assert(#initial.sessionHistory.recentSelections==0)
             f.api.setEnabled(true);f:settle()
             local state=f.api.status()
-            assert(state.activeRoute.scheduledFamily==(i%5==4 and "quarter_stem" or "middle_stem"))
+            assert(state.activeRoute.scheduledFamily=="middle_stem")
+            assert(state.activeRoute.pass=="Floater" or i==19 and state.activeRoute.pass=="Bullet")
             assert(state.routeCycle==(i+1)%20)
             saved=f.writes[#f.writes].value
             assert(saved.routeCycle==(i+1)%20 and saved.lastRequestedEnabled and saved.autoResume==false)
@@ -363,11 +364,43 @@ return function(Policy,create,routeSource)
             end
         end
     end)
-    test("unreachable cut request never submits a straight route or advances the schedule",function()
+    test("catchIntent before navigation preserves exactly one hard cut and absolute stem timing",function()
+        local f=harness();f.api.setEnabled(true);f:settle()
+        local selected=assert(f.api.status().activeRoute)
+        f.snapshot.phase="Live";f.snapshot.snapAt=f.time;f.api.onMatch({Phase="Hike"})
+        local start=f.time
+        local intent=assert(f.api.catchIntent());local stage=assert(intent.postThrowStem)
+        assert(intent.routeStrategy=="deep_middle_floater" and intent.pass==selected.pass)
+        assert(math.abs(stage.untilAt-start-selected.cutAt)<1e-6)
+        assert(math.abs(stage.sprintStartAt-start-selected.stemSprintStart)<1e-6)
+        assert(stage.reserve==10 and stage.plannedStemSprintSeconds==selected.stemSprintSeconds)
+        f.time=start+selected.cutAt+.001
+        intent=f.api.catchIntent()
+        assert(intent.continuousSprint and not intent.postThrowStem)
+        assert(f:navigate().hardCut,"catchIntent consumed the hard-cut command")
+        assert(not f:navigate().hardCut,"same route issued the hard cut twice")
+        f:newRound(2)
+        local nextRoute=assert(f.api.status().activeRoute)
+        f.snapshot.phase="Live";f.snapshot.snapAt=f.time;f.api.onMatch({Phase="Hike"})
+        f.time=f.time+nextRoute.cutAt+.001;f.api.catchIntent()
+        assert(f:navigate().hardCut,"new round did not reset hard-cut state")
+    end)
+    test("unfunded legal Floater is explicitly best effort instead of native default Bullet",function()
         local f=harness();f.attrs.Stamina=0;f.api.setEnabled(true);f:settle()
         local state=f.api.status()
-        assert(#f.submits==0 and state.error and state.routeCycle==0 and not state.submitted)
-        assert(#state.sessionHistory.recentSelections==0)
+        assert(#f.submits==1 and f.submits[1].Pass=="Floater" and state.submitted and state.routeCycle==1)
+        assert(state.activeRoute.bestEffort and state.activeRoute.reachable==false)
+        assert(state.activeRoute.estimatedCatchAt==nil and state.activeRoute.finalSprintStamina==nil)
+        assert(state.message:find("best effort",1,true) and not f.api.catchIntent().postThrowStem)
+    end)
+    test("near-goal next down submits an airborne Floater before native default timeout",function()
+        local f=harness();local los=Field.GoalZ-1.3*Field.YD
+        f.snapshot.LOS=los;f.root.Position=Vector3.new(Field.MidX,3,los-2)
+        f.api.setEnabled(true);f:settle()
+        assert(#f.submits==1 and f.submits[1].Pass=="Floater" and not f.boardOpen)
+        local selected=assert(f.api.status().activeRoute)
+        assert(selected.shortField and selected.estimatedCatchInsideGoal)
+        assert(selected.estimatedStopAt>=selected.estimatedFirstTouchAt)
     end)
     test("corrupt route cycle defaults to zero and never enables automatic play",function()
         for _,value in ipairs({-1,20,21,1.5,"4",math.huge}) do

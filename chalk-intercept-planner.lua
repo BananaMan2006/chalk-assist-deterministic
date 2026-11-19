@@ -14,6 +14,16 @@ local function vec(v)
     return typeof(v) == "Vector3" and finite(v.X) and finite(v.Y) and finite(v.Z)
 end
 local function clamp(v, a, b) return math.max(a, math.min(b, v)) end
+local function inBounds(s,p)
+    local b=s.bounds
+    if type(b)~="table" then return true end
+    return (not finite(b.minX) or p.X>=b.minX) and (not finite(b.maxX) or p.X<=b.maxX)
+        and (not finite(b.minZ) or p.Z>=b.minZ) and (not finite(b.maxZ) or p.Z<=b.maxZ)
+end
+local function explicitMoveCap(s)
+    local cap=finite(s.maxMoveDistance) and math.max(0,s.maxMoveDistance) or INF
+    return finite(s.range) and math.min(cap,math.max(0,s.range)) or cap
+end
 local function smooth(t) return (1-math.cos(math.pi*clamp(t, 0, 1)))*0.5 end
 local function flatUnit(v, fallback)
     local f = v*FLAT
@@ -170,6 +180,10 @@ local function makePlan(s,kind,direction,target,jumpDelay,diveDelay,horizon)
 end
 
 local function contact(s,p,t,requiredMargin,timingMargin)
+    if p._diveDelay then
+        local origin=normalPose(s,p,p._diveDelay)
+        if not Planner.canDiveFrom(s,origin.Position) then return nil,-INF end
+    end
     local minMargin, maxDistance = INF,0
     local halfWindow = timingMargin or s.timingMargin or 0.012
     -- Requiring nearby samples reduces one-frame edge-of-capsule triggers.
@@ -299,6 +313,8 @@ function Planner.airborneFinish(s,p,touch)
     if not p or not finite(p.contactAt) then return nil,"Missing contact witness" end
     touch=touch or Planner.firstTouch(s,p)
     if touch.uncertain then return nil,touch.reason end
+    local requireGoal=s.role=="WR" and s.requireEndzoneCatch==true
+    if requireGoal and not finite(s.wrDiveGoalZ) then return nil,"WR endzone catch boundary unavailable" end
     local diving=p.diveAt~=nil
     if diving and touch.at<p.diveAt+0.03 then return nil,"Contact precedes the dive" end
     local window=p.timingMargin or s.timingMargin or 0.012
@@ -306,6 +322,12 @@ function Planner.airborneFinish(s,p,touch)
         or (s.groundRootY or s.turfY+3)
     for _,at in ipairs({touch.at,p.contactAt-window,p.contactAt,p.contactAt+window}) do
         local cf,airborne=Planner.pose(s,p,at)
+        if p.continuousCatch and not inBounds(s,cf.Position) then
+            return nil,"Continuous airborne contact leaves field bounds"
+        end
+        if requireGoal and cf.Position.Z<s.wrDiveGoalZ+.25 then
+            return nil,"Floater first contact must be inside the end zone"
+        end
         if not airborne or cf.Position.Y<=floor+0.15 then
             return nil,"Contact reaches the landing or recovery pose"
         end
@@ -319,6 +341,9 @@ function Planner.validateAirborneDive(s,p)
     if not validSnapshot(s) or not p or not p.diveAt or s.grounded
         or s.reachAirborne==false or not finite(p.contactAt) or p.contactAt<=s.now then
         return false,"No current airborne dive window"
+    end
+    if not Planner.canDiveFrom(s,s.position) then
+        return false,"WR dive must start inside the end zone"
     end
     local actual={}
     for key,value in pairs(p) do actual[key]=value end
@@ -349,6 +374,20 @@ function Planner.validateJump(s,p)
     local target=p.approachTarget or p.rootTarget
     if not vec(target) or not vec(p.direction) then return false,"Jump movement target unavailable" end
     actual._aimDistance=math.max(0,((target-s.position)*FLAT):Dot(p.direction))
+    if p.continuousCatch then
+        if not finite(p.movementScale) or p.movementScale<.45 or p.movementScale>1 then
+            return false,"Invalid continuous catch movement"
+        end
+        actual._speed=actual._speed*p.movementScale
+        actual._runSpeed=actual._runSpeed*p.movementScale
+        -- Rebase from the actual root without inventing an instantaneous
+        -- airborne stop at the old target. Keep the current native speed and
+        -- remaining stamina, scaled by the same input the controller sends.
+        actual._aimDistance=travel(p.contactAt-s.now+.08,actual._speed,
+            actual._runSpeed,actual._sprintSeconds)
+        if actual._aimDistance>explicitMoveCap(s) then return false,"Continuous catch exceeds movement limit" end
+        actual.stopAt=p.contactAt+.08
+    end
     if p.diveAt then
         actual._diveDelay=p.diveAt-s.now
         actual._diveDistance=nil
@@ -356,7 +395,7 @@ function Planner.validateJump(s,p)
     end
     local witness=contact(s,actual,p.contactAt-s.now,p.requiredMargin,p.timingMargin)
     if not witness then return false,"Jump no longer reaches the planned ball contact" end
-    if s.role=="WR" and s.requireAirborne then
+    if s.role=="WR" and (s.requireAirborne or s.requireEndzoneCatch or p.continuousCatch) then
         local finish,reason=Planner.airborneFinish(s,witness)
         if not finish then return false,reason or "Jump no longer has airborne first contact" end
     end
@@ -366,16 +405,21 @@ end
 -- Contact-time sampling does not cover late action dispatch. In recent native
 -- traces requests arrived up to 16 ms after their deadline and takeoff was
 -- observed up to 18 ms after the request (including observation latency).
--- Reserve 35 ms for a scheduled jump and 20 ms for a dive, without weakening
+-- Reserve 35 ms for a WR jump, 60 ms for a normal DB jump, and 20 ms for a dive.
+-- A recorded DB request preceded estimated takeoff by about47 ms after body
+-- displacement; this budget preserves geometric margin, not the server result.
+-- Only after normal DB search fails, the explicitly risky search may use the
+-- previous 35 ms reserve. It remains an opportunistic attempt, not 60 ms robust.
+-- Keep the independent fresh-position checks without weakening
 -- the geometric margin used again at dispatch. These bounded samples are not
 -- a guarantee against longer stalls or unknown server catch arbitration.
-local function scheduledContact(s,p,t,margin,window)
+local function scheduledContact(s,p,t,margin,window,relaxed)
     local base,miss=contact(s,p,t,margin,window)
     if not base or s.actionTimingEnvelope==false or not (p._jumpDelay or p._diveDelay) then return base,miss end
-    local jumpBudget,diveBudget=p._jumpDelay and 0.035 or 0,p._diveDelay and 0.020 or 0
+    local jumpBudget,diveBudget=p._jumpDelay and (s.role=="DB" and not relaxed and 0.060 or 0.035) or 0,p._diveDelay and 0.020 or 0
     local minimumMargin=base.margin
     local sharedUntil
-    if s.role=="WR" and s.requireAirborne then
+    if s.role=="WR" and (s.requireAirborne or s.requireEndzoneCatch) then
         if not Planner.airborneFinish(s,base,{at=base.contactAt}) then return nil,-0.01 end
         local first=Planner.firstTouch(s,base)
         if not Planner.airborneFinish(s,base,first) then return nil,-0.01 end
@@ -476,11 +520,12 @@ local function defenderDeadline(s,horizon)
     end
     return earliest,known
 end
-local function inBounds(s,p)
-    local b=s.bounds
-    if type(b)~="table" then return true end
-    return (not finite(b.minX) or p.X>=b.minX) and (not finite(b.maxX) or p.X<=b.maxX)
-        and (not finite(b.minZ) or p.Z>=b.minZ) and (not finite(b.maxZ) or p.Z<=b.maxZ)
+-- Apply to the root at dive START, not the later ball-contact position.
+-- Unknown WR field geometry fails closed; DB interception is unaffected.
+function Planner.canDiveFrom(s,position)
+    if s.role~="WR" then return true end
+    return finite(s.wrDiveGoalZ) and vec(position)
+        and position.Z>=s.wrDiveGoalZ and inBounds(s,position)
 end
 function Planner.solve(s)
     if not validSnapshot(s) then return nil,"Invalid interception snapshot" end
@@ -505,7 +550,7 @@ function Planner.solve(s)
         +math.max(cfg(s,"CatchRadius",3.75),cfg(s,"DiveCatchRadius",2.5))
         +math.max(0,-(s.margin or 0.3))
     local wr=s.role=="WR"
-    local requireAirborne=wr and s.requireAirborne==true
+    local requireAirborne=wr and (s.requireAirborne==true or s.requireEndzoneCatch==true)
     local preferAirborne=wr and (s.preferAirborne==true or requireAirborne)
     local earliestAirborne=preferAirborne and s.passType=="Floater"
     local preferJumpDive=preferAirborne and s.preferJumpDive~=false
@@ -547,6 +592,30 @@ function Planner.solve(s)
         end
     end
     local function consider(p,t)
+        if s.role=="WR" and s.passType=="Floater" and s.grounded and not p.diveAt
+            and (p.kind=="jump" or p.kind=="move") and t>p._reaction+.06 then
+            -- A moving receiver cannot stop instantly while airborne. Pace
+            -- the approach before takeoff and keep ordinary input through the
+            -- contact window, then validate that trajectory normally below.
+            local drift=(s.velocity or ZERO)*FLAT*math.min(t,p._reaction)
+            local delta=(Planner.ballAt(s.arc,s.now+t-s.launchAt)-s.position-drift)*FLAT
+            local capacity=travel(t-p._reaction,p._speed,p._runSpeed,p._sprintSeconds)
+            if capacity>0 then
+                local scale=math.min(1,delta.Magnitude/capacity)
+                if scale<.45 then
+                    -- Do not replace a moving approach with near-zero input.
+                    -- A root already stationary at its target can still jump.
+                    if ((s.velocity or ZERO)*FLAT).Magnitude>.5 or delta.Magnitude>.05 then return end
+                else
+                    local extent=travel(t+.08-p._reaction,p._speed*scale,p._runSpeed*scale,p._sprintSeconds)
+                    if extent>explicitMoveCap(s) then return end
+                    p.direction=flatUnit(delta,p.direction)
+                    p._speed=p._speed*scale;p._runSpeed=p._runSpeed*scale
+                    p._aimDistance=extent
+                    p.stopAt=s.now+t+.08;p.movementScale=scale;p.continuousCatch=true
+                end
+            end
+        end
         -- The explicit finish exception still needs normal contact and known
         -- coverage. Contested options retain the ordinary action/time ranking.
         if uprightFinish and not p.diveAt and (relaxed or not defenderKnown) then return end
@@ -557,7 +626,7 @@ function Planner.solve(s)
             and s.now+t+(s.contestBuffer or 0.08)>=defenderAt
             and best.contactAt-(s.now+t)<=0.06 then return end
         local candidate,missMargin=scheduledContact(s,p,t,relaxed and 0.05 or nil,
-            relaxed and 0.004 or nil)
+            relaxed and 0.004 or nil,relaxed)
         if not candidate then
             if s.role=="DB" and s.allowLastResort~=false then
                 rememberNearMiss(t,missMargin,dbNearMisses)
@@ -865,6 +934,9 @@ function Planner.solve(s)
         best.robust=false
         best.requiredMargin,best.timingMargin=0.05,0.004
         best.riskReason="Only a narrow native contact window remains"
+        if s.role=="DB" and best.jumpAt and best.jumpTimingBudget==0.035 then
+            best.riskReason="Narrow contact; 35 ms takeoff reserve instead of normal 60 ms"
+        end
         best.searchRefinement="Bounded last-resort native contact search"
     end
     if best and requireDive and best.diveAt then best.diveReason="Planned sideline dive finish" end
@@ -909,6 +981,7 @@ function Planner.timeArrival(s,p)
     paced.movementScale, paced.timedArrival=scale,true
     if not contact(s,paced,p.contactAt-s.now) then return nil end
     local touch=Planner.firstTouch(s,paced)
+    if s.requireEndzoneCatch and not Planner.airborneFinish(s,paced,touch) then return nil end
     if not inBounds(s,touch.root) or touch.at>touchAt+0.015
         or p.effectiveProgress and touch.progress<p.effectiveProgress-0.5
         or p.scoringCatch and finite(s.preferGoalZ) and touch.root.Z<s.preferGoalZ
@@ -933,7 +1006,9 @@ function Planner.pursuit(s)
         local elapsed=s.now+t-s.launchAt
         if elapsed>0.12 then
             local target=Planner.ballAt(s.arc,elapsed)
-            if target.Y>=s.turfY+0.05 then
+            local endzone=s.role=="WR" and s.requireEndzoneCatch==true
+            if target.Y>=s.turfY+0.05 and (not endzone
+                or finite(s.wrDiveGoalZ) and target.Z>=s.wrDiveGoalZ+.25) then
                 local direction=flatUnit(target-s.position,s.lookDirection)
                 local p=makePlan(s,"pursue",direction,target,nil,nil,horizon)
                 local cf,airborne=Planner.pose(s,p,s.now+t)
@@ -954,5 +1029,81 @@ function Planner.pursuit(s)
         end
     end
     return best,best and "Best-effort pursuit only" or "No future ball position above turf"
+end
+-- A deep middle route can reach its cut after native launch. Keep that stage
+-- only while observed motion/stamina still fund a jump-only catch afterward.
+-- This predicts our path, not an opponent's future actions or server outcome.
+-- Union of the scheduled late sprint and an already-active recovery burst.
+-- Recovery may end before the late burst starts; never charge or predict the
+-- intervening walk as sprint. Times are absolute server times.
+function Planner.stemSprintSeconds(now,untilAt,lateStart,recoveryUntil)
+    if not finite(now) or not finite(untilAt) or not finite(lateStart)
+        or recoveryUntil~=nil and not finite(recoveryUntil) then return nil end
+    local duration=math.max(0,untilAt-now)
+    local late=clamp(untilAt-math.max(now,lateStart),0,duration)
+    local recovery=recoveryUntil and math.max(0,math.min(untilAt,lateStart,recoveryUntil)-now) or 0
+    return math.min(duration,late+recovery)
+end
+function Planner.forecastStem(s,stage,stamina)
+    if not validSnapshot(s) or s.role~="WR" or not s.grounded or s.canJump~=true
+        or type(stage)~="table" or not vec(stage.point) or not finite(stage.untilAt)
+        or not finite(stage.sprintStartAt) or not finite(stamina)
+        or not finite(stage.sprintDrain) or stage.sprintDrain<=0
+        or not finite(stage.reserve) or stage.reserve<0 then return nil,"Invalid middle-stem state" end
+    local remaining=stage.untilAt-s.now
+    if remaining<=.04 or remaining>2 or stage.untilAt>=s.launchAt+s.arc.Flight-.12
+        or not inBounds(s,stage.point) then return nil,"Middle-stem deadline reached" end
+    local delta=(stage.point-s.position)*FLAT
+    local distance=delta.Magnitude
+    local sprint=Planner.stemSprintSeconds(s.now,stage.untilAt,stage.sprintStartAt,stage.recoveryUntilAt)
+    if sprint==nil or stage.stemRunSpeed~=nil and (not finite(stage.stemRunSpeed) or stage.stemRunSpeed<=0) then
+        return nil,"Invalid middle-stem movement budget"
+    end
+    local stemRun=math.min(s.runSpeed or s.walkSpeed,stage.stemRunSpeed or INF)
+    local normal=remaining-sprint
+    local capacity=normal*math.max(0,stemRun)+sprint*math.max(0,s.walkSpeed)
+    if distance<.15 or capacity<distance+.15 then return nil,"Middle stem is behind schedule" end
+    local after=stamina-sprint*stage.sprintDrain
+    local available=math.max(0,(after-stage.reserve)/stage.sprintDrain-.12)
+    if available<=0 then return nil,"Final sprint reserve unavailable" end
+    local direction=delta.Unit
+    -- Reject an ordinary standing contact during this extension. Catch control
+    -- must get ownership now if the ball is approaching the current stem.
+    for i=1,math.ceil(remaining/.04) do
+        local dt=math.min(remaining,i*.04)
+        local fast=Planner.stemSprintSeconds(s.now,s.now+dt,stage.sprintStartAt,stage.recoveryUntilAt)
+        local progress=((dt-fast)*stemRun+fast*s.walkSpeed)*distance/capacity
+        local point=s.position+direction*math.min(distance,progress)
+        local elapsed=s.now+dt-s.launchAt
+        if elapsed>.12 then
+            local ball=Planner.ballAt(s.arc,elapsed)
+            local a,b,r=Planner.capsule(s,CFrame.lookAt(point,point+direction),false)
+            if Planner.segmentDistance(ball,a,b)<=r+.5 then return nil,"Ball requires catching control now" end
+        end
+    end
+    local projected={}
+    for k,v in pairs(s) do projected[k]=v end
+    projected.now=stage.untilAt
+    projected.position=Vector3.new(stage.point.X,s.position.Y,stage.point.Z)
+    projected.velocity=direction*math.max(0,stemRun)
+    projected.lookDirection,projected.steeringDirection=direction,direction
+    projected.sprintSeconds=available
+    projected.canDive=false
+    projected.requireDive=false
+    projected.requireAirborne,projected.preferAirborne=true,true
+    projected.allowHold,projected.allowLastResort=false,false
+    projected.continuousApproach,projected.continuousSprint=false,true
+    projected.opponent,projected.opponents,projected.defenderDeadline=nil,nil,nil
+    -- The controller issues one sudden directional input at this handoff.
+    -- Retain .12 seconds for input/physical response; later corrections smooth.
+    projected.reactionDelay=.12
+    local witness,why=Planner.solve(projected)
+    if not witness or witness.reachable==false or witness.diveAt
+        or witness.airborneFinish~="jump" or not finite(witness.contactAt)
+        or witness.contactAt-stage.untilAt+.12>available then
+        return nil,why or "No funded jump catch after middle stem"
+    end
+    return {plan=witness,projected=projected,remaining=remaining,
+        staminaAtCut=after,staminaAfterCatch=after-(witness.contactAt-stage.untilAt+.12)*stage.sprintDrain}
 end
 return Planner

@@ -1,16 +1,16 @@
 # Chalk Assist · deterministic edition
 
-Chalk Assist 5.1.7 is a rule-based Roblox client for Chalk It Up. It combines route and ball visualization, catch planning, nearby tackle attempts, collision-aware movement, and optional 1v1 Full Auto.
+Chalk Assist 5.1.9 is a rule-based Roblox client for Chalk It Up. It combines route and ball visualization, catch planning, nearby tackle attempts, collision-aware movement, and optional 1v1 Full Auto.
 
 This edition contains **no neural policy, training loop, model downloads, shared-learning service, or learned-action selection**. It does not improve itself by playing more games. Short-lived match observations can adjust authored rules, but no knowledge is pooled across computers.
 
 Fresh launches and manual loads start gameplay automation **OFF**. An explicitly enabled Autoplay session can continue through its own match and return teleports, carrying the current Full Auto choice. Turning it off or unloading revokes continuation; saved settings alone never enable gameplay.
 
-Version 5.1.7 adds that session continuation. It uses a short-lived, single-use local teleport record, not a saved ON preference. Unsupported or unverified transitions remain OFF.
+Version 5.1.9 makes automatic WR routes **Floater-first**, using a deep middle stem followed by a sharp left or right cut. Floater targets sit deep in the end zone, and the predicted first catch must already be inside it. The selected depth must fit the native route, available stamina and a projected jump catch. A short early sprint is followed by normal running, with any later burst charged against the final catch budget. The cut issues one sudden directional input; subsequent corrections remain smooth. Upright receiving Floaters use a checked continuous approach through contact, avoiding a modeled midair stop followed by a corrective reversal. A middle stem can continue briefly after launch only while current movement and stamina still support the catch; otherwise catch control takes over immediately. A bounded recovery burst can compensate for measured delay only when the remaining catch sprint is still funded. Short-field routes keep moving at a measured pace instead of arriving and waiting. If no funded route exists but legal deep geometry is available, an explicitly marked best-effort Floater prevents an implicit default Bullet; no catch witness is invented. This forecast does not predict an opponent's future choices.
 
-Version 5.1.6 accounts for ordinary action-dispatch delay when choosing a jump contact, rather than refining to a geometric boundary that can fail at the next input frame. The fresh-position checks remain. Local diagnostic records also distinguish explicit jam/block notices from an unexplained speed reduction.
+WR dives must start **inside the end zone**. Planning, delayed-action samples and the final observed-position check enforce that boundary. A catch beyond the goal does not permit a dive that starts before it. The old carrier dive across the goal line has been removed. Upright jumps and DB interception/tackle actions remain available.
 
-Version 5.1.5 retains clear, funded middle-then-cut Floaters instead of replacing them with a deeper quarter route. Bullet alternatives also keep a middle stem and cut. Known failed lanes influence subsequent authored choices. Defensive recovery now detects diagonal separation while preserving stamina. Receiving favors an upright jump on Bullets that still need a run after the catch, and a confirmed carrier can attempt a checked native dive across a nearby goal line.
+Session continuation from 5.1.7 and the bounded action-dispatch timing checks from 5.1.6 remain in place. Local diagnostics distinguish explicit jam/block notices from an unexplained speed reduction.
 
 The 5.1.1 correction remains in place: requesting a jump no longer counts as confirmed takeoff, and an unconfirmed request is cancelled when its planned contact window has expired. The controller must replan instead of retrying that expired jump. Both roles also recheck current-position reach with the actual dispatch time before jumping; being inside the timing allowance alone is insufficient. These checks do not guarantee a catch or win.
 
@@ -26,8 +26,8 @@ The repository is public; no GitHub token is required. Automatic loading on late
 
 ## Behavior
 
-- **Catch assist:** estimates reachable contacts along the observed ball flight, uses native movement and catch geometry. WR plans require a jump or jump-and-dive with sampled geometric evidence of airborne first contact. Floaters target the earliest robust airborne contact; bullets retain the downfield preference. If none is reachable, the controller can pursue without inventing a catch plan.
-- **Full Auto:** chooses authored routes and defensive positioning in supported **1v1** play. It considers available stamina, opponent position, reachable timing and obstacles. Route alternatives follow deterministic rules, not random sampling or learning.
+- **Catch assist:** estimates reachable contacts along the observed ball flight, uses native movement and catch geometry. WR plans require a jump or jump-and-dive with sampled geometric evidence of airborne first contact. WR Floaters target the earliest robust airborne contact inside the end zone; DB still targets the earliest reachable interception. Bullets retain the downfield preference. If none is reachable, the controller can pursue without inventing a catch plan.
+- **Full Auto:** chooses authored routes and defensive positioning in supported **1v1** play. Automatic receiving normally chooses Floaters with a deep middle stem and a sharp side cut. A Bullet is eligible on at most one step of the 20-route cycle and must pass its own reach checks. It considers available stamina, opponent position, reachable timing and obstacles. Route alternatives follow deterministic rules, not random sampling or learning.
 - **Tackles and carrying:** attempts available native actions near a genuine threat, with range, clearance, stamina and cooldown checks.
 - **Optional helpers:** autoplay with a mode selector, return to the nearest WR pad, saved auto-leave username lists, and match-alert settings.
 - **Window controls:** drag, minimize, Right Shift to hide/show, and F8 to unload.

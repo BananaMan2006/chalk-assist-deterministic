@@ -10,7 +10,7 @@ SUITES = (
     "planner", "approach", "tackle", "risky", "mode", "motion",
     "autoplay", "wr-repeat", "idle-guard", "fullplay-steering",
     "carrier-moves", "pending-sprint", "match-skip", "match-skip-identity",
-    "autoload", "session", "avoidance", "avoidance-controller",
+    "autoload", "session", "avoidance", "avoidance-controller", "postthrow-stem",
 )
 
 HERE = Path(__file__).resolve().parent
@@ -81,6 +81,8 @@ def main(argv=None):
                 result = load(HERE / 'chalk-mode-selftest.lua')((HERE / 'chalk-overlay-core.lua').read_text())
             elif suite == 'fullplay-steering':
                 result = load(HERE / 'chalk-fullplay-steering-selftest.lua')((HERE / 'chalk-intercept-controller.lua').read_text())
+            elif suite == 'postthrow-stem':
+                result = load(HERE / 'chalk-postthrow-stem-selftest.lua')(planner, (HERE / 'chalk-intercept-controller.lua').read_text())
             elif suite == 'motion':
                 result = load(HERE / 'chalk-character-motion-selftest.lua')(load(HERE / 'chalk-character-motion.lua'))
             elif suite == 'pending-sprint':

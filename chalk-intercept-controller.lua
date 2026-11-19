@@ -24,6 +24,9 @@ return function(ctx, Planner, createTackle, WRApproach, Motion, createCarrierMov
     local lastWRSkipReason
     local lastPauseReason
     local wrDefenderDeadline
+    local stemFinished,stemForecast,nextStemCheck,stemLastSpeed,stemLastSprint=false,nil,0,nil,nil
+    local stemLastRun,stemLastStage
+    local stemWasActive=false
     local trackedMotionRoot,trackedAirborne=nil,false
     local trackedSprintRoot,sprintTracking
     local message, lastError = "Auto OFF", nil
@@ -298,12 +301,14 @@ return function(ctx, Planner, createTackle, WRApproach, Motion, createCarrierMov
                 finishGoal=goal+(s.offset and s.offset.Z or 0)
             end
         end
+        local directCut=s.catchIntent and s.catchIntent.routeStrategy=="deep_middle_floater"
         return {now=now, arc=s.arc, launchAt=s.launchAt,role=s.role,
-            continuousApproach=s.role=="WR" and s.catchIntent and s.catchIntent.deepFinish==true
+            continuousApproach=not directCut and s.role=="WR" and s.catchIntent and s.catchIntent.deepFinish==true
                 and s.catchIntent.continuousSprint~=true,
-            continuousSprint=s.role=="WR" and s.catchIntent and s.catchIntent.continuousSprint==true,
+            continuousSprint=s.role=="WR" and (directCut or s.catchIntent and s.catchIntent.continuousSprint==true),
             preferAirborne=s.role=="WR",
             requireAirborne=s.role=="WR",
+            requireEndzoneCatch=s.role=="WR" and (s.passType or s.catchIntent and s.catchIntent.pass)=="Floater",
             -- Keep an upright aerial catch when the pass still needs a run
             -- after possession. Floater selection still races for its earliest
             -- robust airborne contact; a meaningful contested advantage may
@@ -316,6 +321,7 @@ return function(ctx, Planner, createTackle, WRApproach, Motion, createCarrierMov
                 and s.catchIntent.requireDive==true,
             sprintReserve=budget.reserve,
             preferGoalZ=finishGoal,
+            wrDiveGoalZ=s.geo and s.geo.GoalZ or (Field.GoalZ and Field.GoalZ+(s.offset and s.offset.Z or 0)),
             defenderDeadline=s.role=="WR" and wrDefenderDeadline or nil,
             opponent=opponentSnapshot,opponents=opponentSnapshots,bounds=bounds,
             position=root.Position, velocity=root.AssemblyLinearVelocity,
@@ -509,10 +515,98 @@ return function(ctx, Planner, createTackle, WRApproach, Motion, createCarrierMov
             if ownsSprint or me:GetAttribute("SprintOn")==true then Moves.HoldSprint(false) end
             ownsSprint=false
         end
+        if directive.hardCut==true and s.role=="WR" and not h.PlatformStand
+            and motionState(s,root,h).grounded and not jumped and not jumpRequest and not dived
+            and not avoid.active then
+            log("wrHardCut",{phase="route",position=xyz(root.Position),
+                fromDirection=xyz(steering),direction=xyz(flat)})
+            steering=nil
+        end
         h:Move(strength>0.001 and (avoid.active and flat
             or smoothDirection(flat,root,h,dt,directive.preserveDepth==true)*strength) or Vector3.zero,false)
         return true,avoid.active and (avoid.blocked and "Blocked · saving sprint and moving clear"
             or "Moving around opponent") or directive.message or "Automatic play"
+    end
+    local function updatePostThrowStem(s,root,h,now,dt)
+        if stemFinished then return false end
+        local function finishStem(reason)
+            if stemWasActive and s.role=="WR" and not h.PlatformStand
+                and not plan and not jumped and not jumpRequest and not dived and motionState(s,root,h).grounded then
+                -- One sharp handoff command; later corrections still smooth.
+                -- Avoidance state is deliberately retained and has priority.
+                log("wrHardCut",{phase="postThrow",position=xyz(root.Position),
+                    fromDirection=xyz(steering),reason=reason})
+                steering=nil
+            end
+            stemFinished=true;stemForecast=nil;nextSolve=0;stemWasActive=false
+        end
+        local requested=s.role=="WR" and s.catchIntent and s.catchIntent.postThrowStem
+        if type(requested)~="table" or plan or jumped or jumpRequest or dived or h.PlatformStand then
+            finishStem("Stem ended or an action owns movement");return false
+        end
+        local stage={}
+        for k,v in pairs(requested) do stage[k]=v end
+        if typeof(stage.point)~="Vector2" then finishStem("Invalid stem point");return false end
+        local offset=s.offset or Vector3.zero
+        stage.point=Vector3.new(stage.point.X+offset.X,root.Position.Y,stage.point.Y+offset.Z)
+        local fresh=snapshot(s,root,h,now)
+        local stamina=tonumber(me:GetAttribute("Stamina"))
+        local function finite(v) return type(v)=="number" and v==v and math.abs(v)<math.huge end
+        local remaining=finite(stage.untilAt) and stage.untilAt-now or -1
+        local valid=fresh.grounded and fresh.canJump==true and finite(stamina)
+            and finite(stage.sprintStartAt) and finite(stage.sprintDrain) and stage.sprintDrain>0
+            and finite(stage.reserve) and stage.reserve>=0 and remaining>.04 and remaining<=2
+        valid=valid and (stage.stemRunSpeed==nil or finite(stage.stemRunSpeed) and stage.stemRunSpeed>0)
+            and (stage.recoveryUntilAt==nil or finite(stage.recoveryUntilAt))
+        local fast=valid and Planner.stemSprintSeconds(now,stage.untilAt,stage.sprintStartAt,stage.recoveryUntilAt) or 0
+        local stemRun=valid and math.min(fresh.runSpeed,stage.stemRunSpeed or math.huge) or 0
+        local distance=((stage.point-root.Position)*Vector3.new(1,0,1)).Magnitude
+        local capacity=valid and (remaining-fast)*stemRun+fast*fresh.walkSpeed or 0
+        local needed=valid and stemForecast and (stemForecast.plan.contactAt-stage.untilAt+.24)*stage.sprintDrain or 0
+        if not valid or distance~=distance or capacity<distance+.15
+            or stamina-fast*stage.sprintDrain-needed<stage.reserve then
+            finishStem("Current middle-stem movement or sprint budget changed")
+            log("wrStemRelease",{reason="Current middle-stem movement or sprint budget changed",position=xyz(root.Position),
+                remaining=remaining,distance=distance,capacity=capacity,stamina=stamina,
+                grounded=fresh.grounded,canJump=fresh.canJump,lateSprintSeconds=fast,
+                finalSprintCost=needed,reserve=stage.reserve,walkSpeed=fresh.walkSpeed,runSpeed=fresh.runSpeed})
+            return false
+        end
+        local signature=string.format("%.6f/%.6f/%.6f/%.6f/%.6f/%.6f/%.6f/%.6f",
+            stage.point.X,stage.point.Z,stage.untilAt,stage.sprintStartAt,stage.reserve,stage.sprintDrain,
+            stemRun,stage.recoveryUntilAt or 0)
+        local check=now>=nextStemCheck or fresh.walkSpeed~=stemLastSpeed or fresh.runSpeed~=stemLastRun
+            or fresh.sprintPending~=stemLastSprint or signature~=stemLastStage
+        local reason
+        if check then
+            stemForecast,reason=Planner.forecastStem(fresh,stage,stamina)
+            nextStemCheck=now+.10
+            stemLastSpeed,stemLastSprint=fresh.walkSpeed,fresh.sprintPending
+            stemLastRun,stemLastStage=fresh.runSpeed,signature
+        end
+        local current=workspace:GetServerTimeNow()
+        if not stemForecast or current>=stage.untilAt-.04 or not fresh.grounded then
+            log("wrStemRelease",{reason=reason or "Cut deadline reached",position=xyz(root.Position),
+                cutAt=stage.untilAt,remaining=stage.untilAt-current})
+            finishStem(reason or "Cut deadline reached")
+            -- Final catch steering issues one sudden directional input.
+            return false
+        end
+        local state={}
+        for k,v in pairs(s) do state[k]=v end
+        state.allowPostThrowStem=true
+        local active,note=updateFullplay(state,root,h,current,dt)
+        if not active then
+            finishStem("Middle route no longer owns movement")
+            log("wrStemRelease",{reason="Middle route no longer owns movement",position=xyz(root.Position)})
+            return false
+        end
+        stemWasActive=true
+        if check then log("wrPostThrowStem",{position=xyz(root.Position),cutAt=stage.untilAt,
+            contactAt=stemForecast.plan.contactAt,staminaAfterCatch=stemForecast.staminaAfterCatch,
+            sprint=me:GetAttribute("SprintOn")==true}) end
+        message=note or "WR · deep middle stem before sharp cut"
+        return true
     end
     local function updateWRReturn(s,root,h,now,dt)
         if not wrReturn then return false end
@@ -614,6 +708,9 @@ return function(ctx, Planner, createTackle, WRApproach, Motion, createCarrierMov
             wrDefenderDeadline=nil
             trackedMotionRoot,trackedAirborne=nil,false
             throwKey, nextSolve = s.launchAt, 0
+            stemFinished,stemForecast,nextStemCheck,stemLastSpeed,stemLastSprint=false,nil,0,nil,nil
+            stemLastRun,stemLastStage=nil,nil
+            stemWasActive=false
             wrFakeUsed=false;lastWRSkipReason=nil
             throwRole=s.role
             if claimedKey~=s.launchAt then claimedKey=nil end
@@ -630,6 +727,7 @@ return function(ctx, Planner, createTackle, WRApproach, Motion, createCarrierMov
         if not root then cancel(); message="Waiting for character"; return end
         local currentLocomotion=locomotionState(root,h,now,sprintBudget(s).seconds)
         local motion=motionState(s,root,h)
+        if updatePostThrowStem(s,root,h,now,dt) then return end
         h.Jump=jumpRequest~=nil
         if jumpRequest then
             local rise=root.Position.Y-jumpRequest.y
@@ -801,10 +899,11 @@ return function(ctx, Planner, createTackle, WRApproach, Motion, createCarrierMov
                     plan.approachTarget=approach.Position
                 else plan.approachTarget=plan.rootTarget end
                 local distance=((plan.approachTarget-root.Position)*Vector3.new(1,0,1)).Magnitude
-                if distance>2.5 then atTarget,parkedPosition=false,nil end
+                if distance>2.5 or plan.continuousCatch then atTarget,parkedPosition=false,nil end
                 log("plan", {action=plan.kind, contactAt=plan.contactAt,
                     jumpAt=plan.jumpAt, diveAt=plan.diveAt,
                     jumpTimingBudget=plan.jumpTimingBudget,diveTimingBudget=plan.diveTimingBudget,
+                    continuousCatch=plan.continuousCatch,movementScale=plan.movementScale,stopAt=plan.stopAt,
                     margin=plan.margin,reachable=plan.reachable,role=s.role,
                     uprightFinishOverride=plan.uprightFinishOverride,
                     uprightFinishReason=plan.uprightFinishReason,
@@ -817,6 +916,7 @@ return function(ctx, Planner, createTackle, WRApproach, Motion, createCarrierMov
                     motionReason=lastSnapshot.motionReason,
                     airborneFinish=plan.airborneFinish,airborneRequired=plan.airborneRequired,
                     earliestAirborne=plan.earliestAirborne,passType=lastSnapshot.passType,
+                    requireEndzoneCatch=lastSnapshot.requireEndzoneCatch,wrDiveGoalZ=lastSnapshot.wrDiveGoalZ,
                     solveMs=solveMs,
                     velocity=xyz(lastSnapshot.velocity),currentSpeed=h.WalkSpeed,
                     lookDirection=xyz(lastSnapshot.lookDirection),steeringDirection=xyz(lastSnapshot.steeringDirection),
@@ -836,7 +936,8 @@ return function(ctx, Planner, createTackle, WRApproach, Motion, createCarrierMov
                     defenderAt=plan.defenderAt,
                     defenderDeadline=wrDefenderDeadline,observedDefenderAt=plan.observedDefenderAt,
                     contact=xyz(plan.contactPosition), direction=xyz(plan.direction)})
-                if WRApproach and s.role=="WR" and not lastSnapshot.continuousSprint and not lastSnapshot.requireDive
+                if WRApproach and s.role=="WR" and not plan.continuousCatch
+                    and not lastSnapshot.continuousSprint and not lastSnapshot.requireDive
                     and not wrFakeUsed and not jumpRequest then
                     local fake,whyFake=WRApproach.choose(Planner,lastSnapshot,plan)
                     if fake then
@@ -857,7 +958,7 @@ return function(ctx, Planner, createTackle, WRApproach, Motion, createCarrierMov
         end
         if wrFake and updateWRFake(s,root,h,now,dt) then return end
         if not plan then return end
-        if not plan.timedArrival and lastSnapshot and lastSnapshot.continuousApproach then
+        if not plan.timedArrival and not plan.continuousCatch and lastSnapshot and lastSnapshot.continuousApproach then
             local paced=Planner.timeArrival(lastSnapshot,plan)
             if paced then
                 plan=paced
@@ -867,7 +968,7 @@ return function(ctx, Planner, createTackle, WRApproach, Motion, createCarrierMov
             end
         end
         if not atTarget and plan.reachable~=false and not plan.diveAt and not jumped
-            and not plan.timedArrival and motion.grounded and reachAirborne~=false then
+            and not plan.timedArrival and not plan.continuousCatch and motion.grounded and reachAirborne~=false then
             local distance=((plan.approachTarget-root.Position)*Vector3.new(1,0,1)).Magnitude
             if distance<3 or now>=plan.stopAt then
                 local stationary,still=stationaryPlan(s,root,h,now)
@@ -900,7 +1001,9 @@ return function(ctx, Planner, createTackle, WRApproach, Motion, createCarrierMov
         if plan.kind~="hold" and not dived and not h.PlatformStand then
             controlledHumanoid = h
             local delta=(plan.approachTarget-root.Position)*Vector3.new(1,0,1)
-            if plan.diveAt then
+            if plan.diveAt or plan.continuousCatch then
+                -- A continuous catch crosses its target with native momentum.
+                -- Never replace that checked trajectory with a parked plan.
                 -- A dive approach is a launch point, not a stationary catch.
                 -- Airborne momentum must never replace it with a parked plan.
                 atTarget,parkedPosition=false,nil
@@ -911,7 +1014,8 @@ return function(ctx, Planner, createTackle, WRApproach, Motion, createCarrierMov
             elseif delta.Magnitude>2.5 then atTarget,parkedPosition=false,nil end
             local moving=not atTarget and (plan.kind=="pursue" or plan.diveAt~=nil or now<plan.stopAt)
             if moving then
-                local desired=(plan.diveAt or plan.timedArrival) and delta:Dot(plan.direction)<=0 and plan.direction
+                local desired=plan.continuousCatch and plan.direction
+                    or (plan.diveAt or plan.timedArrival) and delta:Dot(plan.direction)<=0 and plan.direction
                     or (delta.Magnitude>0.1 and delta.Unit or plan.direction)
                 local actionAt=math.min(plan.jumpAt or math.huge,plan.diveAt or math.huge,plan.contactAt or math.huge)
                 local avoid=avoidPlayers(s,root,h,now,dt,desired*(plan.movementScale or 1),sprintBudget(s).canSprint,
@@ -1007,12 +1111,20 @@ return function(ctx, Planner, createTackle, WRApproach, Motion, createCarrierMov
             end
             local dispatchAt=workspace:GetServerTimeNow()
             if cancelStaleAction(dispatchAt) then h.Jump=false;return end
+            local diveSnapshot=snapshot(s,root,h,dispatchAt)
+            if not Planner.canDiveFrom(diveSnapshot,root.Position) then
+                log("diveAvoided",{role=s.role,reason="WR dive must start inside the end zone",
+                    position=xyz(root.Position)})
+                cancel();nextSolve=dispatchAt
+                message="WR · staying upright outside the end zone"
+                return
+            end
             if divePermitted() and Moves.Upright()
                 and dispatchAt-lastDive>=Config.Moves.Dive.Cooldown then
                 -- The native move reads MoveDirection before falling back to facing.
                 h:Move(plan.direction,false)
                 local expectedDive=Planner.pose(lastSnapshot,plan,dispatchAt)
-                log("diveAttempt",{role=s.role,position=xyz(root.Position),
+                log("diveAttempt",{role=s.role,position=xyz(root.Position),wrDiveGoalZ=diveSnapshot.wrDiveGoalZ,
                     expected=xyz(expectedDive.Position),velocity=xyz(root.AssemblyLinearVelocity),
                     diveIn=plan.diveAt-dispatchAt,dispatchAt=dispatchAt,frameAt=now,scheduledAt=plan.diveAt,
                     airborne=h.FloorMaterial==Enum.Material.Air})
@@ -1021,7 +1133,7 @@ return function(ctx, Planner, createTackle, WRApproach, Motion, createCarrierMov
                     dived, lastDive = true, dispatchAt
                     releaseSprint()
                     counters.dives=counters.dives+1
-                    log("dive", {position=xyz(root.Position),delay=dispatchAt-plan.diveAt,
+                    log("dive", {position=xyz(root.Position),role=s.role,wrDiveGoalZ=diveSnapshot.wrDiveGoalZ,delay=dispatchAt-plan.diveAt,
                         dispatchAt=dispatchAt,scheduledAt=plan.diveAt,
                         direction=xyz(plan.direction)})
                 else
@@ -1115,25 +1227,6 @@ return function(ctx, Planner, createTackle, WRApproach, Motion, createCarrierMov
     if createCarrierMoves then
         carrierAssist=createCarrierMoves({Config=Config,Field=Field,Moves=Moves,player=me,
             nativeJuke=namedUpvalue(Moves.SetPhase,"juke"),
-            canDive=function(h,now)
-                return h.FloorMaterial~=Enum.Material.Air and not h.PlatformStand
-                    and divePermitted() and Moves.Upright()
-                    and now-lastDive>=Config.Moves.Dive.Cooldown
-            end,
-            dive=function(h,direction,now,kind)
-                if h.FloorMaterial==Enum.Material.Air or h.PlatformStand
-                    or not divePermitted() or not Moves.Upright()
-                    or now-lastDive<Config.Moves.Dive.Cooldown then return false end
-                ownInput();controlledHumanoid=h;h:Move(direction,false)
-                nativeDive()
-                local success=h.PlatformStand
-                if success then
-                    lastDive=now;counters.dives=counters.dives+1
-                    releaseSprint()
-                end
-                log(kind or "carrierFinishDive",{started=success,direction=xyz(direction)})
-                return success
-            end,
             log=log,clippedDistance=clippedDistance})
     end
     local bindName="ChalkDB_Interception"

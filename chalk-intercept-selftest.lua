@@ -28,6 +28,8 @@ return function(Planner)
             lookDirection=Vector3.new(1,0,0),grounded=true,
             jumpSpeed=math.sqrt(2*196.2*6),gravity=196.2,walkSpeed=0,
             groundRootY=3,turfY=0,config=config,diveDistance=9,
+            -- These isolated geometry fixtures are inside an authored endzone.
+            wrDiveGoalZ=-100,
             canJump=false,canDive=false,maxHorizon=0.65,margin=0.3}
     end
     local function posePlan(s,jumpDelay,diveDelay)
@@ -538,7 +540,7 @@ return function(Planner)
             jumpSpeed=math.sqrt(2*196.2*6),gravity=196.2,walkSpeed=27,runSpeed=20,sprintSeconds=3.04,
             groundRootY=3,turfY=0,diveTurfY=0,config=config,diveDistance=14.732,
             canJump=true,canDive=true,reactionDelay=0,margin=.4,continuousSprint=true,
-            requireDive=true,preferGoalZ=103.306,
+            requireDive=true,preferGoalZ=103.306,wrDiveGoalZ=-100,
             bounds={minX=-48.606,maxX=48.606,minZ=-43.512,maxZ=151.912},
             opponent={position=Vector3.new(1000,3,1000),velocity=Vector3.zero,grounded=true,
                 jumpSpeed=math.sqrt(2*196.2*6),gravity=196.2,walkSpeed=27,runSpeed=20,

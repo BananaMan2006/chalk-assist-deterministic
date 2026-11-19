@@ -30,12 +30,13 @@ def main():
     load('chalk-offline-roblox-shim.lua')
     policy = load('chalk-fullplay-policy.lua')
     controller = load('chalk-fullplay-controller.lua')
+    planner = load('chalk-intercept-planner.lua')
     route_source = args.route_math.read_text() if args.route_math else (HERE / 'chalk-deterministic-route-fixture.lua').read_text()
     pure = (HERE / 'chalk-fullplay-selftest.lua').read_text()
     suites = {
         'defensive-cuts': plain(load('chalk-defensive-cut-selftest.lua')(policy)),
-        'scheduled-route-mix': plain(load('chalk-deterministic-route-mix-selftest.lua')(policy, controller, route_source)),
-        'deterministic-isolation': plain(load('chalk-deterministic-fullplay-selftest.lua')(policy, controller, route_source)),
+        'scheduled-route-mix': plain(load('chalk-deterministic-route-mix-selftest.lua')(policy, controller, route_source, planner)),
+        'deterministic-isolation': plain(load('chalk-deterministic-fullplay-selftest.lua')(policy, controller, route_source, planner)),
     }
     if args.route_math:
         suites['retained-policy'] = plain(lua.execute(pure, name='retained-policy-fixture')(

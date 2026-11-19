@@ -1,6 +1,54 @@
-# Evaluation scope · 5.1.7
+# Evaluation scope · 5.1.9
 
 This release continues the authored, deterministic controller. Its checks establish local rule behavior and packaging properties. **They do not demonstrate a live win rate, a winning streak, perfect catching, or improvement through training.** The release has no training system or shared model.
+
+## 5.1.9 scope
+
+WR Floater plans now require airborne first contact at least 0.25 studs inside the goal line, including delayed-action samples and fresh jump/dive validation. Automatic Floater ball targets are at least four yards into the end zone. In the inspected normal field/configuration, the selected full-field route has an actual target 4.326 yards beyond goal and its unconstrained earliest forecast already touches 2.145 yards inside: the correction changes the flight, not merely a preference among catch plans. This is configuration-specific sampled/analytic evidence, not a guarantee about every opponent or future game update.
+
+A measured startup/avoidance delay can advance a bounded recovery burst before the throw. It is capped at 0.6 seconds per route and must preserve the cost of all remaining scheduled sprint, projected catch travel and the ten-stamina reserve. Normal-running regeneration credit in route selection is limited to the opening sprint's own cost and uses the inspected rate with an added delay margin; live movement always checks actual stamina. Active recovery and late sprint intervals are unioned without treating the walking gap as sprint.
+
+Short-field routes can continue moving at a slower pace before a sudden cut, avoiding planned parking. A native-configuration LOS matrix covering 25, 20, 15, 10, 6, 3, 1 and 0.25 yards to goal produced funded Floaters. When no funded route exists but legal deep geometry is available, a separately labeled best-effort Floater prevents the old implicit default Bullet; it carries no invented contact witness. Unknown geometry still fails closed.
+
+Normal DB jump planning now samples up to 60 ms of action delay instead of 35 ms; WR retains 35 ms and dive delay remains 20 ms. If no normal DB plan exists, the explicitly labeled last-resort search retains a shorter 35 ms reserve and narrow contact criteria; that risky attempt is not claimed to survive 60 ms. A private replay of the conceded DB Floater showed a late plan's margin rising from 0.311 to 0.526 at the observed estimated 46.72 ms takeoff delay. The jump deadline did not move earlier, and this does not prove it fixes prior body displacement or server catch arbitration.
+
+## Limited 5.1.9 corrected-build observation
+
+The first three fully observed corrected-build matches each ended **4–0**. All six WR Floaters had native Catch followed by our Touchdown, with no receiving incomplete, interception or breakup in this bounded sample. Defense recorded six interceptions and one allowed catch followed by a tackle; the next down was intercepted. No runtime error was recorded. These are three observed matches, not a measured long-run win rate or a guarantee against incompletes.
+
+The first match's second receiving play directly exercised the continuous approach: the final planned movement scale was 0.933802, and observed native planar speed was about 25.213 studs per second, consistent with 27 × that scale. Movement continued in the same direction through the observed jump samples without the earlier stop/reversal sequence. Across the first two matches, all four successful receiving first local contacts were airborne and inside the end zone; two used continuous approach and two used jump plus dive. Successes using other catch plans are not separately credited to pacing.
+
+The allowed defensive Floater had an on-time jump request, observed takeoff and a local airborne contact claim, but the native result awarded the receiver's catch. The subsequent tackle prevented a touchdown. This is a separate unresolved contest/claim outcome, not evidence that an input was late or that local geometry guarantees server possession.
+
+The inspected postthrow middle-stem continuations still failed the live capacity guard and yielded to catching. Thus these results validate actual receiving and the paced airborne correction, but do not establish reliable execution of the full planned twenty-yard middle stem under startup delay or avoidance. A proposed extra recovery burst was held back when its current catch-stamina check failed.
+
+Local validation: 485 rule checks, 52 deterministic route/controller checks, 56 airborne checks and 15 build/install checks passed. These offline checks do not reproduce native physics or server arbitration.
+
+## 5.1.9 initial live build (before the continuous-catch correction)
+
+Two full matches ended 4–2 and 4–0, but receiving remained poor: three catches from nine Floaters, with six incompletes. All three catches had an airborne local contact observed inside the end zone, followed by native Catch and Touchdown results. Defense recorded five native interceptions, four Bullets and one Floater. Thirteen jump requests had observed takeoff, five dives were observed, and no runtime error was recorded. These wins do not establish reliable receiving.
+
+The first missed Floater exposed an execution mismatch: the planned upright jump stopped horizontal motion before contact, but observed airborne momentum continued after zero movement input. Corrective plans assumed a rapid reversal while actual steering remained gradual. Near the predicted contact, the root was about 4.88 studs left and 2.85 studs ahead of the ball; the sampled native capsule missed by 2.74 studs. The revised grounded WR Floater forecast uses a bounded analog movement scale and continues through the contact window, with the existing action-delay, field-boundary, airborne and first-contact checks. The controller does not park or reverse that continuous witness at its target. The separate corrected-build observations above cover its initial live validation.
+
+The initial test also returned from an owned match before any round began without preserving Autoplay. The revised handoff can arm a lobby-only ticket on an explicit same-place teleport from an owned match while automation remains enabled. It does not infer a match result; OFF, manual launch, unknown destinations and failed teleport remain excluded.
+
+## Limited 5.1.8 local test (unpublished intermediate build)
+
+Sixteen plays were accounted for: WR recorded six catches, two incompletes and one interception; DB recorded five interceptions, one swat and one allowed catch. Native finals were 2–0 Forfeit, 3–0 Forfeit, 4–2, and 1–0 Forfeit. Only 4–2 explicitly reaches the target score; the forfeits do not establish four-point wins. All fourteen jump requests had observed confirmation, with no runtime errors. Solve time was median 5.18 ms, 95th percentile 22.29 ms, maximum 35.00 ms.
+
+Seven of eight selected deep-middle routes immediately lost their postthrow stem. The first had 23.56 studs left to travel but only 20.09 studs of scheduled movement before the cut, despite 100 stamina. Native sprint startup lag and lateral avoidance caused the shortfall; no explicit local jam was recorded on that play. The one continued stem produced an abrupt native movement input, but that pass was incomplete. A short-field unavailable route was followed by an unselected native Bullet, motivating the explicit short-field/fallback handling above. These findings prevented treating the intermediate build as a successful endzone-only release.
+
+## 5.1.8 scope
+
+Automatic receiving favors Floaters with a deep middle stem and sharp side cut. At most one step of the 20-route cycle may choose a Bullet, and only after the same route/airborne-reach checks. An infeasible Floater never triggers a Bullet fallback. This is a deterministic eligibility limit, not random sampling or a promised realized ratio. The route selector uses the interception planner to fund a jump-only catch, including limited stem sprint and final-sprint reserve. Native route sanitation may move the drawn endpoint; the led ball target is evaluated separately. Deep stems sometimes finish after native launch, so catching now permits a bounded middle-run stage only while fresh observed motion and stamina still support a future airborne catch. Cached geometry never bypasses current movement/resource checks, and losing the stage hands control to catching for the remainder of that throw.
+
+WR dive permission is based on the root's position at dive start, not the ball-contact position. Every sampled action-delay variant and the fresh dispatch check must start in bounds and at or beyond the actual goal line. Missing goal geometry rejects WR dives. The previous carrier goal-crossing dive is removed. DB catch/tackle dives retain their existing behavior.
+
+The sharp-cut change alters actual movement commands: a grounded WR transitioning from its middle stem can reset the retained steering heading once. This uses the existing immediate first-input path, while later corrections remain smoothed and active collision avoidance retains priority. The corresponding forecast reserves 0.12 seconds for input/physical response. It is not a proof of native velocity response under every collision or frame delay.
+
+A private replay using the inspected native configuration and route math admits an 18-yard middle stem with a 58.51-degree route cut, a 0.6-second early sprint plus 0.6 seconds of late stem sprint, and about 15.72 predicted stamina remaining. The ball target is in the end zone, but sampled first contact occurs approximately 0.79 yards short during an upright jump; this is not labeled an in-zone catch. An authored stationary blocker replay admits a 17.5-yard variant. These are offline forecasts, not live outcomes.
+
+Offline tests are authored geometry and mocked lifecycle checks, not evidence of a native catch or improved win rate. Live verification for this release is recorded separately below when observed. The older results remain historical, including losses and incompletes.
 
 ## 5.1.7 scope
 

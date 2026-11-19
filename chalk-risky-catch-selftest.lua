@@ -20,6 +20,9 @@ return function(Planner)
     local function snapshot(index)
         local r=records[index]
         return {now=r.now,launchAt=launch,arc=arc,role="WR",chase=true,
+            -- Authored permissive boundary isolates the historical timing
+            -- geometry; it is not a claim about that match's native goal line.
+            wrDiveGoalZ=-100,
             position=r.position,velocity=r.velocity,lookDirection=V(1,0,0),
             grounded=true,jumpSpeed=48.52215950860912,gravity=196.2,
             walkSpeed=27,runSpeed=20,sprintSeconds=(r.stamina-2)/25,
@@ -112,7 +115,7 @@ return function(Planner)
             minZ=-43.512135207653046,maxZ=151.9120985865593}
         return s
     end
-    test("recorded DB 3875 takes a bounded narrow interception before pursuit",function()
+    test("recorded DB 3875 keeps an explicitly risky 35 ms interception after normal 60 ms search fails",function()
         local s=recordedDB()
         s.allowLastResort=false
         assert(not Planner.solve(s),"Recorded snapshot must fail normal robustness")
@@ -121,6 +124,10 @@ return function(Planner)
         assert(p and p.reachable and p.risk=="last-resort" and p.robust==false,reason)
         assert(p.kind=="jumpDive","Recorded chance requires the native jump-dive capsule")
         assert(p.requiredMargin==.05 and p.timingMargin==.004,"Wrong last-chance criteria")
+        assert(p.jumpTimingBudget==.035 and p.diveTimingBudget==.020,
+            "The last-resort attempt must expose its shorter execution reserve")
+        assert(p.riskReason:find("35 ms",1,true) and p.riskReason:find("60 ms",1,true),
+            "The risk description must not imply normal DB timing robustness")
         assert(p.jumpAt>=s.now and p.diveAt-p.jumpAt>=.06,"Actions must remain executable")
         assert(p.contactAt<=1794863876.674539,"Chronological DB search must not delay the known witness")
         benchmark.margin=measuredMargin(s,p,.004)
@@ -130,6 +137,20 @@ return function(Planner)
         assert(s.margin==.4 and s.timingMargin==.012,"Caller robustness must not be mutated")
         assert(config.CatchRadius==3.75 and config.DiveCatchRadius==2.5,
             "Native catch geometry must not be enlarged")
+        for _,delay in ipairs({.035,.046721,.060}) do
+            local delayed={}for key,value in pairs(p)do delayed[key]=value end
+            delayed.jumpAt=p.jumpAt+delay;delayed._jumpDelay=p._jumpDelay+delay
+            delayed.diveAt=p.diveAt+.020;delayed._diveDelay=p._diveDelay+.020
+            delayed._diveDistance=nil
+            local actualMargin=measuredMargin(s,delayed,.004)
+            if delay==.035 then
+                assert(actualMargin>=.05,"The claimed shorter execution reserve must have real overlap")
+            elseif delay==.046721 then
+                assert(actualMargin<.05,"This fixture must expose why the attempt is risky after a longer takeoff")
+            else
+                assert(actualMargin<0,"A 60 ms takeoff must reproduce the actual capsule miss")
+            end
+        end
         benchmark.contactAt,benchmark.jumpAt,benchmark.diveAt=p.contactAt,p.jumpAt,p.diveAt
         benchmarks.recordedDB3875=benchmark
     end)
@@ -143,6 +164,7 @@ return function(Planner)
     end)
     local function recordedWR9478()
         return {now=1795039479.435339,launchAt=1795039478.073213,role="WR",chase=true,
+            wrDiveGoalZ=-100, -- Authored boundary isolates this historical timing regression.
             arc={P0=V(18.893924713134766,7.636868476867676,-53.83334732055664),
                 P1=V(-29.212129592895508,5.136868476867676,123.6769027709961),Flight=3.1,Apex=42},
             position=V(-2.1225719451904297,4.636868000030518,68.60313415527344),
@@ -253,6 +275,16 @@ return function(Planner)
         local p,reason=Planner.solve(s)
         assert(p and not p.risk and not p.diveAt,reason)
         assert(p.margin>=.4,"A normal DB catch must retain normal robustness")
+    end)
+    test("available normal DB jump retains its 60 ms reserve instead of taking a risky earlier contact",function()
+        local s=stationary(13);s.role="DB";s.canJump=true
+        s.allowLastResort=false
+        local normal=assert(Planner.solve(s));assert(normal.jumpAt and normal.jumpTimingBudget==.060)
+        s.allowLastResort=true
+        local same=assert(Planner.solve(s))
+        assert(not same.risk and same.jumpTimingBudget==.060 and same.margin>=.4)
+        assert(same.contactAt==normal.contactAt and same.jumpAt==normal.jumpAt,
+            "Enabling last resort must not displace an available normal witness")
     end)
     test("unreachable distant ball stays unreachable",function()
         local s=stationary(5)
