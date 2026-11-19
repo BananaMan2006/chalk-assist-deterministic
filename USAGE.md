@@ -1,4 +1,4 @@
-# Running Chalk Assist 5.1.5
+# Running Chalk Assist 5.1.6
 
 The public repository is [BananaMan2006/chalk-assist-deterministic](https://github.com/BananaMan2006/chalk-assist-deterministic). The ready-to-run file is `chalk-it-up-1v1.lua`.
 
@@ -10,7 +10,7 @@ Join Chalk It Up, attach your executor, and run:
 loadstring(game:HttpGet("https://raw.githubusercontent.com/BananaMan2006/chalk-assist-deterministic/main/chalk-it-up-1v1.lua"))()
 ```
 
-The executor must support HTTP requests and `loadstring`. No GitHub account or token is needed. Verify **5.1.5** in the window's release badge. Gameplay automation starts OFF after a manual load, reload or new join; turn it on deliberately.
+The executor must support HTTP requests and `loadstring`. No GitHub account or token is needed. Verify **5.1.6** in the window's release badge. Gameplay automation starts OFF after a manual load, reload or new join; turn it on deliberately.
 
 The script queues the loader for later teleports when the executor provides a supported teleport queue. For a fresh Roblox launch, configure the executor's own auto-attach and autoexec on **each computer**. Executors without a teleport queue need their autoexec mechanism on each join. Automatic loading is restricted to the supported Chalk It Up place and waits for the game's dependencies.
 
@@ -71,6 +71,8 @@ Full Auto supports **1v1 only**. The autoplay selector may list other modes, but
 Full Auto retains a clear, funded middle Floater when a longer middle candidate is blocked; a quarter start is used only with a feasible Floater. Bullet alternatives use the middle stem and cut. Known receiving incompletes, interceptions and breakups discourage the failed pass/side. The defender can use a bounded sprint burst when a fast receiver opens a diagonal gap, retaining the existing 85-start / 70-stop stamina limits for ordinary recovery. A Bullet targeted short of the goal prefers a robust upright jump; a meaningful contested timing advantage can still justify a dive. Floater catches retain the earliest robust airborne preference.
 
 After confirmed possession, a grounded carrier may dive across a nearby goal only when the predicted native dive path crosses it inside the field before the estimated opponent threat. Jukes, spins and trucks still require their own close-threat, native availability, stamina and path checks; spare stamina or an opponent simply standing behind the runner does not force a move.
+
+Catch planning samples ordinary action-delay variation before accepting a scheduled jump. It keeps the current-position checks immediately before dispatch, so a delayed frame or changed position can still cancel an action. The earliest contact means the earliest sampled contact that meets those planning checks, not an exact server guarantee.
 
 A large target-direction change ends the old collision-avoidance hold; turns remain bounded and checked for collisions. Small direction changes keep the existing hold to avoid jitter. This does not guarantee that a delayed or unreachable catch can be recovered.
 

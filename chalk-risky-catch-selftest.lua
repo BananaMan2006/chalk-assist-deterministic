@@ -58,8 +58,9 @@ return function(Planner)
         return p,reason,{seconds=elapsed,poseCalls=calls}
     end
     for index=1,2 do
-        test("actual replan "..index.." has only a narrow native jump-dive chance",function()
+        test("actual replan "..index.." ideal narrow contact does not survive execution delay",function()
             local s=snapshot(index)
+            s.actionTimingEnvelope=false
             s.allowLastResort=false
             local normal=Planner.solve(s)
             assert(not normal,"Recorded replan must fail normal robustness")
@@ -73,6 +74,13 @@ return function(Planner)
             assert(narrow>=.05,"No native capsule overlap at +/-4ms")
             assert(normalMargin<.4,"Fixture must exercise a non-robust contact")
             assert(s.margin==.4 and s.timingMargin==.012,"Solve must not mutate caller criteria")
+            local delayed={}for key,value in pairs(p)do delayed[key]=value end
+            delayed.jumpAt=p.jumpAt+.035;delayed._jumpDelay=p._jumpDelay+.035
+            delayed._diveDistance=nil
+            assert(delayed.diveAt-delayed.jumpAt<.06 or measuredMargin(s,delayed,.004)<.05,
+                "Fixture must demonstrate a real delayed-action failure")
+            s.actionTimingEnvelope=nil
+            assert(not Planner.solve(s),"A fragile ideal overlap must not be called executable")
             benchmark.margin,benchmark.normalMargin=narrow,normalMargin
             benchmark.contactAt,benchmark.jumpAt,benchmark.diveAt=p.contactAt,p.jumpAt,p.diveAt
             benchmarks[index]=benchmark

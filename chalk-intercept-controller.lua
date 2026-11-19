@@ -804,6 +804,7 @@ return function(ctx, Planner, createTackle, WRApproach, Motion, createCarrierMov
                 if distance>2.5 then atTarget,parkedPosition=false,nil end
                 log("plan", {action=plan.kind, contactAt=plan.contactAt,
                     jumpAt=plan.jumpAt, diveAt=plan.diveAt,
+                    jumpTimingBudget=plan.jumpTimingBudget,diveTimingBudget=plan.diveTimingBudget,
                     margin=plan.margin,reachable=plan.reachable,role=s.role,
                     uprightFinishOverride=plan.uprightFinishOverride,
                     uprightFinishReason=plan.uprightFinishReason,
@@ -942,7 +943,12 @@ return function(ctx, Planner, createTackle, WRApproach, Motion, createCarrierMov
                 actual.position,actual.velocity=root.Position,root.AssemblyLinearVelocity
                 local valid,why=Planner.validateJump(actual,plan)
                 if not valid then
-                    log("replan",{role=s.role,reason=why,action="jump"})
+                    log("replan",{role=s.role,reason=why,action="jump",
+                        checkedAt=actual.now,scheduledJump=plan.jumpAt,contactAt=plan.contactAt,
+                        position=xyz(actual.position),velocity=xyz(actual.velocity),
+                        speed=actual.walkSpeed,canJump=actual.canJump,
+                        grounded=actual.grounded,reachAirborne=actual.reachAirborne,
+                        jumpTimingBudget=plan.jumpTimingBudget,diveTimingBudget=plan.diveTimingBudget})
                     cancel();h.Jump=false;nextSolve=workspace:GetServerTimeNow()+0.045
                     message="Jump contact changed · recalculating"
                     return

@@ -236,8 +236,10 @@ end
 
 -- Find the first native capsule overlap along the whole proposed approach.
 -- A later intended catch must not be credited with yards after an earlier touch.
-function Planner.firstTouch(s,p)
-    local first=math.max(s.now,s.launchAt+0.1201)
+function Planner.firstTouch(s,p,checkedThrough)
+    -- The optional lower bound is used only after an identical shared prefix
+    -- has already been checked. It never skips an unexamined approach.
+    local first=math.max(s.now,s.launchAt+0.1201,checkedThrough or -INF)
     local last=p.contactAt
     local function overlap(at)
         local cf,airborne=Planner.pose(s,p,at)
@@ -361,6 +363,60 @@ function Planner.validateJump(s,p)
     return true,"Observed jump contact remains reachable"
 end
 
+-- Contact-time sampling does not cover late action dispatch. In recent native
+-- traces requests arrived up to 16 ms after their deadline and takeoff was
+-- observed up to 18 ms after the request (including observation latency).
+-- Reserve 35 ms for a scheduled jump and 20 ms for a dive, without weakening
+-- the geometric margin used again at dispatch. These bounded samples are not
+-- a guarantee against longer stalls or unknown server catch arbitration.
+local function scheduledContact(s,p,t,margin,window)
+    local base,miss=contact(s,p,t,margin,window)
+    if not base or s.actionTimingEnvelope==false or not (p._jumpDelay or p._diveDelay) then return base,miss end
+    local jumpBudget,diveBudget=p._jumpDelay and 0.035 or 0,p._diveDelay and 0.020 or 0
+    local minimumMargin=base.margin
+    local sharedUntil
+    if s.role=="WR" and s.requireAirborne then
+        if not Planner.airborneFinish(s,base,{at=base.contactAt}) then return nil,-0.01 end
+        local first=Planner.firstTouch(s,base)
+        if not Planner.airborneFinish(s,base,first) then return nil,-0.01 end
+        base._timingFirstTouch=first
+        -- All delayed variants have exactly the same pose before the first
+        -- nominal action. Check this often-long Floater prefix only once.
+        sharedUntil=math.min(p.jumpAt or INF,p.diveAt or INF)
+    end
+    for ji=0,(p._jumpDelay and 2 or 0) do
+        for di=0,(p._diveDelay and 2 or 0) do
+            if ji~=0 or di~=0 then
+                local actual={}
+                for key,value in pairs(p) do actual[key]=value end
+                if p._jumpDelay then
+                    actual._jumpDelay=p._jumpDelay+jumpBudget*ji/2
+                    actual.jumpAt=s.now+actual._jumpDelay
+                end
+                if p._diveDelay then
+                    actual._diveDelay=p._diveDelay+diveBudget*di/2
+                    actual.diveAt=s.now+actual._diveDelay
+                    actual._diveDistance=nil
+                    -- The fresh jump validator needs this takeoff interval;
+                    -- do not select a plan it must reject after ordinary jitter.
+                    if actual._jumpDelay and actual._diveDelay-actual._jumpDelay<0.06 then return nil,-0.01 end
+                end
+                local witness,delayedMargin=contact(s,actual,t,margin,window)
+                if not witness then return nil,delayedMargin end
+                if sharedUntil then
+                    if not Planner.airborneFinish(s,witness,{at=witness.contactAt}) then return nil,-0.01 end
+                    local touch=Planner.firstTouch(s,witness,sharedUntil)
+                    if not Planner.airborneFinish(s,witness,touch) then return nil,-0.01 end
+                end
+                minimumMargin=math.min(minimumMargin,witness.margin)
+            end
+        end
+    end
+    base.margin=minimumMargin
+    base.jumpTimingBudget,base.diveTimingBudget=jumpBudget,diveBudget
+    return base
+end
+
 local function oneDefenderDeadline(s,horizon,source)
     if type(source)~="table" or not vec(source.position) then return nil,false end
     local o={}
@@ -387,6 +443,9 @@ local function oneDefenderDeadline(s,horizon,source)
     o.timeStep=0.04
     o.margin=-0.5 -- possible reach envelope, not a promise of a clean catch
     o.timingMargin=0
+    -- An opponent's possible reach remains optimistic. Our own execution
+    -- budget must not make an unknown defender look artificially slower.
+    o.actionTimingEnvelope=false
     o.allowHold=true
     o.allowLastResort=false -- already widened; keep opponent forecasts bounded
     o.opponent=nil
@@ -497,7 +556,7 @@ function Planner.solve(s)
             and best.safety=="contested" and defenderAt
             and s.now+t+(s.contestBuffer or 0.08)>=defenderAt
             and best.contactAt-(s.now+t)<=0.06 then return end
-        local candidate,missMargin=contact(s,p,t,relaxed and 0.05 or nil,
+        local candidate,missMargin=scheduledContact(s,p,t,relaxed and 0.05 or nil,
             relaxed and 0.004 or nil)
         if not candidate then
             if s.role=="DB" and s.allowLastResort~=false then
@@ -524,7 +583,7 @@ function Planner.solve(s)
             -- This avoids spending first-contact work on impossible aerial plans.
             local nominalAir=preferAirborne and Planner.airborneFinish(s,candidate,{at=candidate.contactAt}) or nil
             if requireAirborne and not nominalAir then return end
-            local aerialTouch=preferAirborne and Planner.firstTouch(s,candidate) or nil
+            local aerialTouch=preferAirborne and (candidate._timingFirstTouch or Planner.firstTouch(s,candidate)) or nil
             local aerialFinish=preferAirborne and Planner.airborneFinish(s,candidate,aerialTouch) or nil
             if requireAirborne and not aerialFinish then return end
             if preferAirborne then

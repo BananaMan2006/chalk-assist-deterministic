@@ -1,6 +1,22 @@
-# Evaluation scope · 5.1.5
+# Evaluation scope · 5.1.6
 
 This release continues the authored, deterministic controller. Its checks establish local rule behavior and packaging properties. **They do not demonstrate a live win rate, a winning streak, perfect catching, or improvement through training.** The release has no training system or shared model.
+
+## 5.1.6 scope
+
+Contact-time robustness alone did not cover late action dispatch. A recorded Floater plan had a worst sampled margin of about 0.401 studs against the required 0.4; an otherwise ideal jump just 0.6 ms late fell below that threshold and was cancelled. Planning now checks a bounded action-delay envelope without reducing the required contact margin or bypassing fresh-position validation. The observations motivating the budget include up to roughly 16 ms of request delay and 18 ms until observed takeoff; the latter includes observation latency. A sampled envelope does not cover arbitrarily long stalls or prove continuous collision safety.
+
+Local diagnostic records distinguish explicit client-relative jam/block notices from an inferred slowdown. These records retain only the local state and event type, not the original packet body or player identities.
+
+## Limited 5.1.6 observation
+
+One fully observed match ended **4–0** across six throws. Both WR Floaters (one quarter start, one middle stem) produced native catches followed by our touchdowns. The latter also included an observed carrier finish dive before the native touchdown. Defense recorded three breakups and one opponent Floater incomplete; that incomplete is not counted as an interception. All five catch-jump requests had observed takeoff, with no fresh-jump rejection, late input request or runtime error. Fifty native solves had median 8.7 ms, 95th percentile 31.4 ms and maximum 32.4 ms. No jam/block notice occurred. This is one clean match, not evidence of a long-run win rate or immunity to slowdown/steering failures.
+
+## Limited 5.1.5 observation
+
+The first observed match ended **3–4** across twelve throws. Seven WR passes included six Floaters: one had confirmed takeoff, an airborne dive, a native Catch and our touchdown; five were incomplete. The Bullet was caught and then tackled. Defense allowed two catches, broke up one pass and intercepted two. Full Auto enabled eight milliseconds after the first PreSnap, so opening setup coverage was partial. All receiving routes were submitted by Full Auto.
+
+Two Floater failures involved fresh-jump geometry rejection after stable movement; another lacked enough remaining jump-to-dive time at dispatch. Two began with the native 0.45 speed factor near another body, but no explicit jam/block notice was then recorded, so the cause was not established. One allowed DB catch also involved jump validation; the other involved prethrow separation and turning delay. Five catch jumps had observed takeoff, four airborne dives were observed, and one carrier jump was observed. No finish dive was attempted. No runtime errors or late input requests were recorded. The loss and individual failures remain part of the evaluation; the successful Floater alone does not establish reliability.
 
 ## 5.1.5 scope
 

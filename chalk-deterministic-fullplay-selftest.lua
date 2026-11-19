@@ -55,6 +55,7 @@ return function(Policy,create,routeSource)
         f.opponent={Name="authored-opponent",FindFirstChild=function(_,key) return key=="HumanoidRootPart" and f.opponentRoot or nil end}
         f.player={Character=f.character,GetAttribute=function(_,key) return f.attrs[key] end}
         f.humanoid={WalkSpeed=20,PlatformStand=false}
+        f.character.FindFirstChildOfClass=function(_,key) return key=="Humanoid" and f.humanoid or nil end
         f.snapshot={enabled=true,mode="1v1",phase="PreSnap",role="WR",LOS=15,offset=Vector3.zero,
             opponent=f.opponent,preSnapEnds=15,roundKey="authored-round-1"}
         f.gui={MenuIsOpen=false}
@@ -126,6 +127,36 @@ return function(Policy,create,routeSource)
         assert(event.kind=="result" and event.phase=="Lobby" and event.matchOver==true)
         assert(event.you==nil and event.them==nil and event.toWin==nil)
         assert(event.won==nil and event.winner==nil and event.version=="unversioned")
+    end)
+    test("native contact notices log only local observations without enabling control or copying packet identities",function()
+        local f=harness();f.snapshot.phase="Live";f.humanoid.WalkSpeed=9;f.attrs.Stamina=88
+        local start=#f.events
+        for _,kind in ipairs({"Jammed","Blocked","JamHit","JamWhiff"}) do
+            f.api.onFx({Type=kind,Player=f.player,Victim=f.opponent,Name="do-not-record",Dir=Vector3.new(9,0,8),
+                arbitrary={token="do-not-record"}})
+            local e=f.events[#f.events]
+            assert(e.kind=="nativeContactFx" and e.eventType==kind and e.role=="WR" and e.phase=="Live")
+            assert(e.isLocalVictim==(kind=="Jammed" or kind=="Blocked"))
+            assert(e.speed==9 and e.stamina==88 and e.position.x==f.root.Position.X)
+            assert(e.Player==nil and e.Victim==nil and e.Name==nil and e.Dir==nil and e.arbitrary==nil)
+        end
+        assert(#f.events==start+4 and #f.writes==0 and #f.submits==0 and #f.listeners==1)
+        assert(not f.api.status().enabled and f.humanoid.WalkSpeed==9 and f.attrs.Stamina==88)
+    end)
+    test("native contact diagnostics filter unknown types and bound repeated notifications",function()
+        local f=harness();local start=#f.events
+        for _,packet in ipairs({false,{}, {Type="Jam"},{Type="jammed"},{Type="Unknown"}}) do f.api.onFx(packet) end
+        assert(#f.events==start)
+        for _=1,40 do f.api.onFx({Type="Jammed"}) end
+        assert(#f.events==start+1)
+        f.time=.05;f.api.onFx({Type="Jammed"});assert(#f.events==start+1)
+        f.time=.101;f.api.onFx({Type="Jammed"});assert(#f.events==start+2)
+        f.snapshot.testing=true;f.time=1;f.api.onFx({Type="Blocked"});assert(#f.events==start+2)
+        f.snapshot.testing=false;f.character=nil;f.player.Character=nil
+        f.humanoid.WalkSpeed=0/0;f.attrs.Stamina=0/0;f.api.onFx({Type="Blocked"})
+        local e=f.events[#f.events]
+        assert(e.eventType=="Blocked" and e.position==nil and e.speed==nil and e.stamina==nil)
+        f.api.unload();local count=#f.events;f.time=2;f.api.onFx({Type="Jammed"});assert(#f.events==count)
     end)
     test("old enabled settings and model histories cannot enable or seed this product",function()
         local previous={enabled=true,learning={enabled=true,sharedEnabled=true},routeMemory={

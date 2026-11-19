@@ -17,6 +17,14 @@ return function(Planner,source)
             config={CatchRadius=3.75,DiveCatchRadius=2.5,WaistDrop=1,HandOffset=.5,
                 HandUpOffset=3.5,DiveReach=2.4,Moves={Dive={Time=.35,Tip=.5,Ground=.75,GetUp=.35}}}}
     end
+    local function diveFixture()
+        local s=fixture()
+        -- This longer lateral finish needs a robust airborne dive even with
+        -- separate jump and dive dispatch jitter. The shorter fixture now
+        -- correctly prefers its less timing-sensitive jump-only witness.
+        s.arc.P1=Vector3.new(30,3.5,20)
+        return s
+    end
     local function dispatch(s,p)
         local cf,air,vy=Planner.pose(s,p,p.diveAt-.000001)
         local fresh={}for k,v in pairs(s)do fresh[k]=v end
@@ -27,9 +35,9 @@ return function(Planner,source)
         return fresh
     end
     test("WR times jump and dive for airborne first contact, not early prone arrival",function()
-        local s=fixture();local p,why=Planner.solve(s)
+        local s=diveFixture();local p,why=Planner.solve(s)
         assert(p and p.kind=="jumpDive" and p.airborneFinish=="jumpDive",why)
-        assert(p.jumpAt>s.now+.4 and p.diveAt>p.jumpAt+.06)
+        assert(p.jumpAt>s.now+.05 and p.diveAt>p.jumpAt+.095)
         assert(p.firstTouchAt>=p.diveAt+.03 and p.margin>=s.margin and not p.risk)
         local cf,air=Planner.pose(s,p,p.firstTouchAt)
         assert(air and cf.Position.Y>s.turfY+.75)
@@ -46,6 +54,89 @@ return function(Planner,source)
         assert(p and p.airborneFinish=="jump" and not p.diveAt and p.jumpAt,why)
         assert(p.margin>=s.margin and not p.risk)
     end)
+    local function advanceToJump(s,p,late)
+        local fresh={}for key,value in pairs(s)do fresh[key]=value end
+        fresh.now=p.jumpAt+late
+        local cf=Planner.pose(s,p,fresh.now)
+        fresh.position=Vector3.new(cf.Position.X,s.groundRootY,cf.Position.Z)
+        fresh.velocity=p.direction*s.walkSpeed
+        fresh.grounded=true;fresh.canJump=true;fresh.reactionDelay=0
+        p.approachTarget=p.diveAt and Planner.pose(s,p,p.diveAt-.000001).Position or p.rootTarget
+        return fresh
+    end
+    local function lateFloater()
+        local s=fixture();s.now=102.3420808;s.launchAt=100;s.passType="Floater"
+        s.position=Vector3.new(-18.8274899,3,54.8122864)
+        s.velocity=Vector3.new(-15.1739159,0,22.3327656)
+        s.arc={P0=Vector3.new(18.8939247,6,-53.8333473),
+            P1=Vector3.new(-29.2121296,3.5,74.3265305),Flight=3.1,Apex=42}
+        s.sprintSeconds=1.08;s.reactionDelay=0;s.preferJumpDive=false
+        return s
+    end
+    test("earliest Floater reserves real jump dispatch slack instead of a submillisecond frontier",function()
+        local s=lateFloater();s.actionTimingEnvelope=false
+        local fragile=assert(Planner.solve(s))
+        assert(fragile.kind=="jump" and fragile.margin>=s.margin)
+        assert(Planner.validateJump(advanceToJump(s,fragile,0),fragile))
+        assert(not Planner.validateJump(advanceToJump(s,fragile,.0006),fragile),
+            "Fixture must reproduce the old near-zero action slack")
+        s.actionTimingEnvelope=nil
+        local robust=assert(Planner.solve(s))
+        assert(robust.jumpAt<fragile.jumpAt-.03)
+        assert(robust.contactAt>=fragile.contactAt and robust.contactAt<fragile.contactAt+.01)
+        assert(robust.jumpTimingBudget==.035 and robust.margin>=s.margin)
+        for _,late in ipairs({0,.0006,.008,.016,.025,.035}) do
+            assert(Planner.validateJump(advanceToJump(s,robust,late),robust),
+                "Moving receiver lost the planned jump reserve")
+        end
+    end)
+    test("own DB jumps also reserve dispatch time while keeping their geometric margin",function()
+        local s=lateFloater();s.role="DB";s.requireAirborne=false;s.preferAirborne=false;s.canDive=false
+        local p=assert(Planner.solve(s))
+        assert(p.jumpAt and p.jumpTimingBudget==.035 and p.margin>=s.margin)
+        for _,late in ipairs({0,.016,.035}) do
+            assert(Planner.validateJump(advanceToJump(s,p,late),p))
+        end
+    end)
+    test("jump dive witnesses survive separate action delays and preserve takeoff time",function()
+        local s=diveFixture();local p=assert(Planner.solve(s))
+        assert(p.diveAt and p.jumpTimingBudget==.035 and p.diveTimingBudget==.020)
+        assert(p.diveAt-p.jumpAt>=.095)
+        for ji=0,2 do for di=0,2 do
+            local q={}for key,value in pairs(p)do q[key]=value end
+            q._jumpDelay=p._jumpDelay+ji*.0175;q.jumpAt=s.now+q._jumpDelay
+            q._diveDelay=p._diveDelay+di*.010;q.diveAt=s.now+q._diveDelay;q._diveDistance=nil
+            assert(q.diveAt-q.jumpAt>=.06)
+            assert(Planner.airborneFinish(s,q)=="jumpDive")
+            for _,delta in ipairs({-.012,0,.012})do
+                local at=q.contactAt+delta;local cf,air=Planner.pose(s,q,at)
+                local a,b,r=Planner.capsule(s,cf,air)
+                assert(r-Planner.segmentDistance(Planner.ballAt(s.arc,at-s.launchAt),a,b)>=s.margin-1e-7)
+            end
+        end end
+        assert(Planner.validateJump(advanceToJump(s,p,.035),p))
+        local compressed={}for key,value in pairs(p)do compressed[key]=value end
+        compressed.diveAt=compressed.jumpAt+.06
+        local valid,why=Planner.validateJump(advanceToJump(s,compressed,.0006),compressed)
+        assert(not valid and why=="Insufficient takeoff time before dive")
+    end)
+    test("already airborne dive reserves dive dispatch time without inventing a new jump",function()
+        local original=diveFixture();local jumpDive=assert(Planner.solve(original))
+        local s=dispatch(original,jumpDive);s.now=s.now-.04
+        local cf,air,vy=Planner.pose(original,jumpDive,s.now)
+        s.position=cf.Position;s.velocity=jumpDive.direction*27+Vector3.new(0,vy,0)
+        s.grounded=false;s.canJump=false;s.reactionDelay=0;s.canDive=true
+        local p=assert(Planner.solve(s))
+        assert(air and p.diveAt and not p.jumpAt and p.jumpTimingBudget==0 and p.diveTimingBudget==.020)
+        assert(p.margin>=s.margin)
+    end)
+    test("opponent possible reach is not delayed by the own action timing reserve",function()
+        local s=lateFloater();s.opponent={position=Vector3.new(-27,3,70),velocity=Vector3.zero,
+            grounded=true,walkSpeed=27,runSpeed=20,sprintSeconds=4,canJump=true,canDive=true}
+        s.actionTimingEnvelope=false;local old=assert(Planner.solve(s))
+        s.actionTimingEnvelope=nil;local new=assert(Planner.solve(s))
+        assert(old.defenderAt and new.defenderAt==old.defenderAt)
+    end)
     test("already grounded overlap has no deliberate catch plan and reports that limitation",function()
         local s=fixture();s.launchAt=s.now-.2
         s.arc={P0=Vector3.new(0,4,0),P1=Vector3.new(0,4,0),Flight=100,Apex=0}
@@ -60,18 +151,18 @@ return function(Planner,source)
         assert(Planner.airborneFinish(s,p,{at=100.8})==nil)
     end)
     test("later airborne pose cannot hide contact before the dive",function()
-        local s=fixture();local p=assert(Planner.solve(s))
+        local s=diveFixture();local p=assert(Planner.solve(s))
         local finish,why=Planner.airborneFinish(s,p,{at=p.diveAt-.001})
         assert(finish==nil and why=="Contact precedes the dive")
     end)
     test("dispatch check uses observed current position and rejects changed trajectory",function()
-        local s=fixture();local p=assert(Planner.solve(s));local fresh=dispatch(s,p)
+        local s=diveFixture();local p=assert(Planner.solve(s));local fresh=dispatch(s,p)
         assert(Planner.validateAirborneDive(fresh,p))
         fresh.position=fresh.position+Vector3.new(40,0,0)
         assert(not Planner.validateAirborneDive(fresh,p))
     end)
     test("dispatch check refuses grounded or shortened native-air reach",function()
-        local s=fixture();local p=assert(Planner.solve(s));local fresh=dispatch(s,p)
+        local s=diveFixture();local p=assert(Planner.solve(s));local fresh=dispatch(s,p)
         fresh.grounded=true;assert(not Planner.validateAirborneDive(fresh,p))
         fresh.grounded=false;fresh.reachAirborne=false
         assert(not Planner.validateAirborneDive(fresh,p))
@@ -100,7 +191,7 @@ return function(Planner,source)
         assert(current.Position.Y>s.turfY+.75)
     end)
     test("late dispatch is rejected instead of chasing a missed airborne contact",function()
-        local s=fixture();local p=assert(Planner.solve(s));local fresh=dispatch(s,p)
+        local s=diveFixture();local p=assert(Planner.solve(s));local fresh=dispatch(s,p)
         fresh.now=p.contactAt+.02
         assert(not Planner.validateAirborneDive(fresh,p))
     end)
@@ -315,7 +406,7 @@ return function(Planner,source)
         assert(not Planner.validateJump(actual,p))
     end)
     test("jump check preserves future dive time and refuses compressed takeoff interval",function()
-        local s=fixture();local p=assert(Planner.solve(s))
+        local s=diveFixture();local p=assert(Planner.solve(s))
         p.approachTarget=Planner.pose(s,p,p.diveAt-.000001).Position
         local cf=Planner.pose(s,p,p.jumpAt-.000001)
         local actual={}for key,value in pairs(s)do actual[key]=value end

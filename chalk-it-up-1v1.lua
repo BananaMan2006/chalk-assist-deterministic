@@ -1,4 +1,4 @@
--- Chalk-Release: 5.1.5
+-- Chalk-Release: 5.1.6
 -- Chalk-Product: deterministic
 -- Chalk It Up DB/WR ball assist using normal sprint/jump/dive controls.
 -- Cyan: replicated route (when supplied). Yellow: movement estimate.
@@ -43,7 +43,7 @@ assert(matchEvent and fxEvent and matchEvent:IsA("RemoteEvent") and fxEvent:IsA(
     "Chalk It Up Match/Fx events were not found")
 
 local api = {}
-local RELEASE_VERSION="5.1.5"
+local RELEASE_VERSION="5.1.6"
 local loadedGameId,loadedPlaceId,loadedJobId=game.GameId,game.PlaceId,game.JobId
 env.ChalkDB = api
 local alive, enabled = true, true
@@ -937,7 +937,7 @@ end
 function api.status()
     local ch = characterOf(opponent)
     local holder,isEnemy,holderRole=carrierContext()
-    return {product="deterministic",version=RELEASE_VERSION,buildId="1f76e41d1108f8df1ffec7309f79115cda466d5c8e0467023cbc6731215c59c0",policyMode="deterministic", enabled=enabled, role=role or "unknown",rawRole=rawRole or "unknown", phase=phase,
+    return {product="deterministic",version=RELEASE_VERSION,buildId="4ae6b62d21d368cd4f6165e4685b0aa0e6e3daf4526f091b7fa63419ec90794c",policyMode="deterministic", enabled=enabled, role=role or "unknown",rawRole=rawRole or "unknown", phase=phase,
         ui={visible=windowVisible,minimized=minimized,x=panel.Position.X.Offset,y=panel.Position.Y.Offset},
         matchAlerts={enabled=alertSettings.enabled,saveError=alertSettings.saveError},
         idleGuard=idleGuard and idleGuard.status() or nil,
@@ -1453,8 +1453,10 @@ end
 
 -- Find the first native capsule overlap along the whole proposed approach.
 -- A later intended catch must not be credited with yards after an earlier touch.
-function Planner.firstTouch(s,p)
-    local first=math.max(s.now,s.launchAt+0.1201)
+function Planner.firstTouch(s,p,checkedThrough)
+    -- The optional lower bound is used only after an identical shared prefix
+    -- has already been checked. It never skips an unexamined approach.
+    local first=math.max(s.now,s.launchAt+0.1201,checkedThrough or -INF)
     local last=p.contactAt
     local function overlap(at)
         local cf,airborne=Planner.pose(s,p,at)
@@ -1578,6 +1580,60 @@ function Planner.validateJump(s,p)
     return true,"Observed jump contact remains reachable"
 end
 
+-- Contact-time sampling does not cover late action dispatch. In recent native
+-- traces requests arrived up to 16 ms after their deadline and takeoff was
+-- observed up to 18 ms after the request (including observation latency).
+-- Reserve 35 ms for a scheduled jump and 20 ms for a dive, without weakening
+-- the geometric margin used again at dispatch. These bounded samples are not
+-- a guarantee against longer stalls or unknown server catch arbitration.
+local function scheduledContact(s,p,t,margin,window)
+    local base,miss=contact(s,p,t,margin,window)
+    if not base or s.actionTimingEnvelope==false or not (p._jumpDelay or p._diveDelay) then return base,miss end
+    local jumpBudget,diveBudget=p._jumpDelay and 0.035 or 0,p._diveDelay and 0.020 or 0
+    local minimumMargin=base.margin
+    local sharedUntil
+    if s.role=="WR" and s.requireAirborne then
+        if not Planner.airborneFinish(s,base,{at=base.contactAt}) then return nil,-0.01 end
+        local first=Planner.firstTouch(s,base)
+        if not Planner.airborneFinish(s,base,first) then return nil,-0.01 end
+        base._timingFirstTouch=first
+        -- All delayed variants have exactly the same pose before the first
+        -- nominal action. Check this often-long Floater prefix only once.
+        sharedUntil=math.min(p.jumpAt or INF,p.diveAt or INF)
+    end
+    for ji=0,(p._jumpDelay and 2 or 0) do
+        for di=0,(p._diveDelay and 2 or 0) do
+            if ji~=0 or di~=0 then
+                local actual={}
+                for key,value in pairs(p) do actual[key]=value end
+                if p._jumpDelay then
+                    actual._jumpDelay=p._jumpDelay+jumpBudget*ji/2
+                    actual.jumpAt=s.now+actual._jumpDelay
+                end
+                if p._diveDelay then
+                    actual._diveDelay=p._diveDelay+diveBudget*di/2
+                    actual.diveAt=s.now+actual._diveDelay
+                    actual._diveDistance=nil
+                    -- The fresh jump validator needs this takeoff interval;
+                    -- do not select a plan it must reject after ordinary jitter.
+                    if actual._jumpDelay and actual._diveDelay-actual._jumpDelay<0.06 then return nil,-0.01 end
+                end
+                local witness,delayedMargin=contact(s,actual,t,margin,window)
+                if not witness then return nil,delayedMargin end
+                if sharedUntil then
+                    if not Planner.airborneFinish(s,witness,{at=witness.contactAt}) then return nil,-0.01 end
+                    local touch=Planner.firstTouch(s,witness,sharedUntil)
+                    if not Planner.airborneFinish(s,witness,touch) then return nil,-0.01 end
+                end
+                minimumMargin=math.min(minimumMargin,witness.margin)
+            end
+        end
+    end
+    base.margin=minimumMargin
+    base.jumpTimingBudget,base.diveTimingBudget=jumpBudget,diveBudget
+    return base
+end
+
 local function oneDefenderDeadline(s,horizon,source)
     if type(source)~="table" or not vec(source.position) then return nil,false end
     local o={}
@@ -1604,6 +1660,9 @@ local function oneDefenderDeadline(s,horizon,source)
     o.timeStep=0.04
     o.margin=-0.5 -- possible reach envelope, not a promise of a clean catch
     o.timingMargin=0
+    -- An opponent's possible reach remains optimistic. Our own execution
+    -- budget must not make an unknown defender look artificially slower.
+    o.actionTimingEnvelope=false
     o.allowHold=true
     o.allowLastResort=false -- already widened; keep opponent forecasts bounded
     o.opponent=nil
@@ -1714,7 +1773,7 @@ function Planner.solve(s)
             and best.safety=="contested" and defenderAt
             and s.now+t+(s.contestBuffer or 0.08)>=defenderAt
             and best.contactAt-(s.now+t)<=0.06 then return end
-        local candidate,missMargin=contact(s,p,t,relaxed and 0.05 or nil,
+        local candidate,missMargin=scheduledContact(s,p,t,relaxed and 0.05 or nil,
             relaxed and 0.004 or nil)
         if not candidate then
             if s.role=="DB" and s.allowLastResort~=false then
@@ -1741,7 +1800,7 @@ function Planner.solve(s)
             -- This avoids spending first-contact work on impossible aerial plans.
             local nominalAir=preferAirborne and Planner.airborneFinish(s,candidate,{at=candidate.contactAt}) or nil
             if requireAirborne and not nominalAir then return end
-            local aerialTouch=preferAirborne and Planner.firstTouch(s,candidate) or nil
+            local aerialTouch=preferAirborne and (candidate._timingFirstTouch or Planner.firstTouch(s,candidate)) or nil
             local aerialFinish=preferAirborne and Planner.airborneFinish(s,candidate,aerialTouch) or nil
             if requireAirborne and not aerialFinish then return end
             if preferAirborne then
@@ -4399,6 +4458,7 @@ return function(ctx, Planner, createTackle, WRApproach, Motion, createCarrierMov
                 if distance>2.5 then atTarget,parkedPosition=false,nil end
                 log("plan", {action=plan.kind, contactAt=plan.contactAt,
                     jumpAt=plan.jumpAt, diveAt=plan.diveAt,
+                    jumpTimingBudget=plan.jumpTimingBudget,diveTimingBudget=plan.diveTimingBudget,
                     margin=plan.margin,reachable=plan.reachable,role=s.role,
                     uprightFinishOverride=plan.uprightFinishOverride,
                     uprightFinishReason=plan.uprightFinishReason,
@@ -4537,7 +4597,12 @@ return function(ctx, Planner, createTackle, WRApproach, Motion, createCarrierMov
                 actual.position,actual.velocity=root.Position,root.AssemblyLinearVelocity
                 local valid,why=Planner.validateJump(actual,plan)
                 if not valid then
-                    log("replan",{role=s.role,reason=why,action="jump"})
+                    log("replan",{role=s.role,reason=why,action="jump",
+                        checkedAt=actual.now,scheduledJump=plan.jumpAt,contactAt=plan.contactAt,
+                        position=xyz(actual.position),velocity=xyz(actual.velocity),
+                        speed=actual.walkSpeed,canJump=actual.canJump,
+                        grounded=actual.grounded,reachAirborne=actual.reachAirborne,
+                        jumpTimingBudget=plan.jumpTimingBudget,diveTimingBudget=plan.diveTimingBudget})
                     cancel();h.Jump=false;nextSolve=workspace:GetServerTimeNow()+0.045
                     message="Jump contact changed · recalculating"
                     return
@@ -6959,6 +7024,7 @@ return function(ctx,Policy,services)
     local lastLateBendTrialTrigger
     local observationStarted
     local counters={routeRequests=0,rounds=0,pointsWon=0,pointsLost=0}
+    local contactFxTimes={}
     local api={}
     local function log(kind,data)
         if type(append)~="function" then return end
@@ -7563,7 +7629,34 @@ return function(ctx,Policy,services)
         end
     end
     function api.onFx(data)
-        if not alive or type(data)~="table" or (data.Type~="BallResult" and data.Type~="Throw") then return end
+        if not alive or type(data)~="table" then return end
+        local eventType=data.Type
+        if eventType=="Jammed" or eventType=="Blocked" or eventType=="JamHit" or eventType=="JamWhiff" then
+            local s=ctx.snapshot()
+            local now=world:GetServerTimeNow()
+            if s.testing or not finite(now) then return end
+            local last=contactFxTimes[eventType]
+            if last and now>=last and now-last<.1 then return end
+            contactFxTimes[eventType]=now
+            local character=player.Character
+            local root=rootOf(character)
+            local h=character and character:FindFirstChildOfClass("Humanoid")
+            local point=root and root.Position
+            local speed=h and h.WalkSpeed
+            local stamina=tonumber(player:GetAttribute("Stamina"))
+            -- These are recipient-local native notifications. Jammed/Blocked
+            -- concern this client; JamHit/Whiff do not identify a local victim.
+            -- Never copy packet fields, actors, identities or native payloads.
+            local roles={WR=true,DB=true,QB=true,TWR=true,TDB=true,TQB=true,RUSH=true,D=true}
+            local phases={Lobby=true,PreSnap=true,Pick=true,Hike=true,Live=true,RAC=true,Run=true,Result=true}
+            log("nativeContactFx",{eventType=eventType,isLocalVictim=eventType=="Jammed" or eventType=="Blocked",
+                role=roles[s.role] and s.role or nil,phase=phases[s.phase] and s.phase or nil,
+                position=typeof(point)=="Vector3" and finite(point.X) and finite(point.Y) and finite(point.Z)
+                    and coordinates(point) or nil,
+                speed=finite(speed) and speed or nil,stamina=finite(stamina) and stamina or nil})
+            return
+        end
+        if eventType~="BallResult" and eventType~="Throw" then return end
         local s=ctx.snapshot();syncOpponent(s)
         if data.Type=="Throw" then observeDefenseThrow(s,data);return end
         if defenseContext(s) then
@@ -8071,7 +8164,7 @@ end
 
 end)()
 
-assist = createAssist({snapshot=api.context,version=RELEASE_VERSION,buildId="1f76e41d1108f8df1ffec7309f79115cda466d5c8e0467023cbc6731215c59c0",fullplay=function(s,root,h,now,dt)
+assist = createAssist({snapshot=api.context,version=RELEASE_VERSION,buildId="4ae6b62d21d368cd4f6165e4685b0aa0e6e3daf4526f091b7fa63419ec90794c",fullplay=function(s,root,h,now,dt)
     if fullplay then return fullplay.navigate(s,root,h,now,dt) end
 end},Planner,createTackle,WRApproach,Motion,createCarrierMoves,PlayerAvoidance)
 assist.setEnabled(false)
@@ -8080,7 +8173,7 @@ repeatWR = createWRRepeat({snapshot=api.context,
     autoplay=function() return autoplay.status() end,
     disableAutoplay=function() return api.setAutoplay(false) end})
 repeatWR.setEnabled(false)
-fullplay = createFullplay({snapshot=api.context,version=RELEASE_VERSION,buildId="1f76e41d1108f8df1ffec7309f79115cda466d5c8e0467023cbc6731215c59c0",
+fullplay = createFullplay({snapshot=api.context,version=RELEASE_VERSION,buildId="4ae6b62d21d368cd4f6165e4685b0aa0e6e3daf4526f091b7fa63419ec90794c",
     assistEnabled=function() return assist.status().enabled end,
     release=function() if assist.releaseFullplay then assist.releaseFullplay() end end},FullplayPolicy)
 fullplay.setEnabled(false)
@@ -8101,7 +8194,7 @@ local GAME_ID,PLACE_ID=10770281752,116097127629859
 local MAIN_URL="https://raw.githubusercontent.com/BananaMan2006/chalk-assist-deterministic/main/chalk-it-up-1v1.lua"
 local CACHE_FILE="chalk-deterministic-cache.lua"
 local MAIN_FILE="chalk-it-up-1v1.lua"
-local MIN_RELEASE="5.1.5"
+local MIN_RELEASE="5.1.6"
 local MARKER="__ChalkDeterministicAutoBoot"
 local env=type(getgenv)=="function" and getgenv() or _G
 local boot

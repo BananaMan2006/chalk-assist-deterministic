@@ -49,6 +49,7 @@ return function(ctx,Policy,services)
     local lastLateBendTrialTrigger
     local observationStarted
     local counters={routeRequests=0,rounds=0,pointsWon=0,pointsLost=0}
+    local contactFxTimes={}
     local api={}
     local function log(kind,data)
         if type(append)~="function" then return end
@@ -653,7 +654,34 @@ return function(ctx,Policy,services)
         end
     end
     function api.onFx(data)
-        if not alive or type(data)~="table" or (data.Type~="BallResult" and data.Type~="Throw") then return end
+        if not alive or type(data)~="table" then return end
+        local eventType=data.Type
+        if eventType=="Jammed" or eventType=="Blocked" or eventType=="JamHit" or eventType=="JamWhiff" then
+            local s=ctx.snapshot()
+            local now=world:GetServerTimeNow()
+            if s.testing or not finite(now) then return end
+            local last=contactFxTimes[eventType]
+            if last and now>=last and now-last<.1 then return end
+            contactFxTimes[eventType]=now
+            local character=player.Character
+            local root=rootOf(character)
+            local h=character and character:FindFirstChildOfClass("Humanoid")
+            local point=root and root.Position
+            local speed=h and h.WalkSpeed
+            local stamina=tonumber(player:GetAttribute("Stamina"))
+            -- These are recipient-local native notifications. Jammed/Blocked
+            -- concern this client; JamHit/Whiff do not identify a local victim.
+            -- Never copy packet fields, actors, identities or native payloads.
+            local roles={WR=true,DB=true,QB=true,TWR=true,TDB=true,TQB=true,RUSH=true,D=true}
+            local phases={Lobby=true,PreSnap=true,Pick=true,Hike=true,Live=true,RAC=true,Run=true,Result=true}
+            log("nativeContactFx",{eventType=eventType,isLocalVictim=eventType=="Jammed" or eventType=="Blocked",
+                role=roles[s.role] and s.role or nil,phase=phases[s.phase] and s.phase or nil,
+                position=typeof(point)=="Vector3" and finite(point.X) and finite(point.Y) and finite(point.Z)
+                    and coordinates(point) or nil,
+                speed=finite(speed) and speed or nil,stamina=finite(stamina) and stamina or nil})
+            return
+        end
+        if eventType~="BallResult" and eventType~="Throw" then return end
         local s=ctx.snapshot();syncOpponent(s)
         if data.Type=="Throw" then observeDefenseThrow(s,data);return end
         if defenseContext(s) then

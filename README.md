@@ -1,10 +1,12 @@
 # Chalk Assist · deterministic edition
 
-Chalk Assist 5.1.5 is a rule-based Roblox client for Chalk It Up. It combines route and ball visualization, catch planning, nearby tackle attempts, collision-aware movement, and optional 1v1 Full Auto.
+Chalk Assist 5.1.6 is a rule-based Roblox client for Chalk It Up. It combines route and ball visualization, catch planning, nearby tackle attempts, collision-aware movement, and optional 1v1 Full Auto.
 
 This edition contains **no neural policy, training loop, model downloads, shared-learning service, or learned-action selection**. It does not improve itself by playing more games. Short-lived match observations can adjust authored rules, but no knowledge is pooled across computers.
 
 All gameplay automation starts **OFF** on every load. Loading the script displays its controls; enable the features you want explicitly.
+
+Version 5.1.6 accounts for ordinary action-dispatch delay when choosing a jump contact, rather than refining to a geometric boundary that can fail at the next input frame. The fresh-position checks remain. Local diagnostic records also distinguish explicit jam/block notices from an unexplained speed reduction.
 
 Version 5.1.5 retains clear, funded middle-then-cut Floaters instead of replacing them with a deeper quarter route. Bullet alternatives also keep a middle stem and cut. Known failed lanes influence subsequent authored choices. Defensive recovery now detects diagonal separation while preserving stamina. Receiving favors an upright jump on Bullets that still need a run after the catch, and a confirmed carrier can attempt a checked native dive across a nearby goal line.
 
@@ -43,4 +45,4 @@ python3 -m unittest -v test_deterministic_build test_install_chalk
 python3 build-chalk-script.py
 ```
 
-The tests exercise authored offline fixtures and the actual Lua modules. They do not reproduce Roblox physics, networking or server decisions. Two observed 5.1.3 matches ended 4–0 and 4–1, but the latter included a WR Floater incomplete. Those results do not establish a win rate. Version 5.1.4 subsequently had a 3–1 forfeit with unknown winner and a 4–2 completed win, including three receiving failures in the latter. Version 5.1.5 still needs live verification. See [evaluation scope](EVALUATION.md).
+The tests exercise authored offline fixtures and the actual Lua modules. They do not reproduce Roblox physics, networking or server decisions. Two observed 5.1.3 matches ended 4–0 and 4–1, but the latter included a WR Floater incomplete. Those results do not establish a win rate. Version 5.1.4 subsequently had a 3–1 forfeit with unknown winner and a 4–2 completed win, including three receiving failures in the latter. The first 5.1.5 test lost 3–4, including one Floater catch→touchdown and five Floater incompletes. The first 5.1.6 test finished 4–0 with both WR Floaters caught for touchdowns and no fresh-jump rejection. This is one match, not a reliability or win-rate estimate. See [evaluation scope](EVALUATION.md).
