@@ -304,7 +304,12 @@ return function(ctx, Planner, createTackle, WRApproach, Motion, createCarrierMov
             continuousSprint=s.role=="WR" and s.catchIntent and s.catchIntent.continuousSprint==true,
             preferAirborne=s.role=="WR",
             requireAirborne=s.role=="WR",
-            preferJumpDive=s.role=="WR",
+            -- Keep an upright aerial catch when the pass still needs a run
+            -- after possession. Floater selection still races for its earliest
+            -- robust airborne contact; a meaningful contested advantage may
+            -- still justify diving on a Bullet.
+            preferJumpDive=s.role=="WR" and finishGoal~=nil
+                and s.arc.P1.Z>=finishGoal,
             passType=s.passType or (s.catchIntent and s.catchIntent.pass),
             requireDive=s.role=="WR" and s.catchIntent and s.catchIntent.requireDive==true,
             allowUprightFinish=s.playBudget~=nil and finishGoal~=nil
@@ -1104,6 +1109,25 @@ return function(ctx, Planner, createTackle, WRApproach, Motion, createCarrierMov
     if createCarrierMoves then
         carrierAssist=createCarrierMoves({Config=Config,Field=Field,Moves=Moves,player=me,
             nativeJuke=namedUpvalue(Moves.SetPhase,"juke"),
+            canDive=function(h,now)
+                return h.FloorMaterial~=Enum.Material.Air and not h.PlatformStand
+                    and divePermitted() and Moves.Upright()
+                    and now-lastDive>=Config.Moves.Dive.Cooldown
+            end,
+            dive=function(h,direction,now,kind)
+                if h.FloorMaterial==Enum.Material.Air or h.PlatformStand
+                    or not divePermitted() or not Moves.Upright()
+                    or now-lastDive<Config.Moves.Dive.Cooldown then return false end
+                ownInput();controlledHumanoid=h;h:Move(direction,false)
+                nativeDive()
+                local success=h.PlatformStand
+                if success then
+                    lastDive=now;counters.dives=counters.dives+1
+                    releaseSprint()
+                end
+                log(kind or "carrierFinishDive",{started=success,direction=xyz(direction)})
+                return success
+            end,
             log=log,clippedDistance=clippedDistance})
     end
     local bindName="ChalkDB_Interception"

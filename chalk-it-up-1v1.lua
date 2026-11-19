@@ -1,4 +1,4 @@
--- Chalk-Release: 5.1.4
+-- Chalk-Release: 5.1.5
 -- Chalk-Product: deterministic
 -- Chalk It Up DB/WR ball assist using normal sprint/jump/dive controls.
 -- Cyan: replicated route (when supplied). Yellow: movement estimate.
@@ -43,7 +43,7 @@ assert(matchEvent and fxEvent and matchEvent:IsA("RemoteEvent") and fxEvent:IsA(
     "Chalk It Up Match/Fx events were not found")
 
 local api = {}
-local RELEASE_VERSION="5.1.4"
+local RELEASE_VERSION="5.1.5"
 local loadedGameId,loadedPlaceId,loadedJobId=game.GameId,game.PlaceId,game.JobId
 env.ChalkDB = api
 local alive, enabled = true, true
@@ -937,7 +937,7 @@ end
 function api.status()
     local ch = characterOf(opponent)
     local holder,isEnemy,holderRole=carrierContext()
-    return {product="deterministic",version=RELEASE_VERSION,buildId="83cdb9b4ff92fd53b71e8ede4b52dfef3428242dd2eb2884a7a58785874df637",policyMode="deterministic", enabled=enabled, role=role or "unknown",rawRole=rawRole or "unknown", phase=phase,
+    return {product="deterministic",version=RELEASE_VERSION,buildId="1f76e41d1108f8df1ffec7309f79115cda466d5c8e0467023cbc6731215c59c0",policyMode="deterministic", enabled=enabled, role=role or "unknown",rawRole=rawRole or "unknown", phase=phase,
         ui={visible=windowVisible,minimized=minimized,x=panel.Position.X.Offset,y=panel.Position.Y.Offset},
         matchAlerts={enabled=alertSettings.enabled,saveError=alertSettings.saveError},
         idleGuard=idleGuard and idleGuard.status() or nil,
@@ -3181,6 +3181,7 @@ return function(runtime)
     local alive,active,nextAttempt=true,nil,0
     local attempts,observedBursts,lastOutcome,lastError=0,0,nil,nil
     local pendingJump,observedJumps=nil,0
+    local observedFinishDives=0
     local function finite(n) return type(n)=="number" and n==n and math.abs(n)<math.huge end
     local function vector(v)
         return typeof(v)=="Vector3" and finite(v.X) and finite(v.Y) and finite(v.Z)
@@ -3218,6 +3219,66 @@ return function(runtime)
     end
     local function room(p,b)
         return math.min(p.X-b.minX,b.maxX-p.X,p.Z-b.minZ,b.maxZ-p.Z)
+    end
+    -- A finish is a ground dive across the actual goal line, not a generic
+    -- carry burst. The native DivePath's horizontal travel is d*(2f-f*f).
+    -- The opponent envelope allows an immediate native dive in any direction;
+    -- a positive margin is an estimate, never proof that the server will score.
+    local function finishDive(input)
+        if type(input)~="table" or input.role~="WR" or input.phase~="RAC"
+            or input.mode~=nil and input.mode~="1v1" or input.carrierIsMe~=true
+            or input.upright~=true or input.grounded~=true or input.healthy~=true
+            or input.canDive~=true or input.enemyCarrier==true or input.ballActive
+            or input.testing or input.enabled==false or not finite(input.now)
+            or input.now<(input.nextAttempt or 0) or not vector(input.position)
+            or not vector(input.velocity) or not vector(input.opponentPosition)
+            or not vector(input.opponentVelocity) then return nil end
+        local dive=Config.Moves and Config.Moves.Dive
+        if type(dive)~="table" or not finite(dive.Yards) or dive.Yards<=0
+            or not finite(dive.Time) or dive.Time<=0 or not finite(dive.Cooldown)
+            or dive.Cooldown<=0 or not finite(dive.Cost) or dive.Cost<0
+            or not finite(Field.YD) or Field.YD<=0 or not finite(Config.SprintSpeed)
+            or Config.SprintSpeed<=0 or not finite(input.stamina)
+            or input.stamina<dive.Cost then return nil end
+        local b=bounds(input)
+        local offset=vector(input.offset) and input.offset or Vector3.zero
+        local goal=input.geo and input.geo.GoalZ or Field.GoalZ and Field.GoalZ+offset.Z
+        if not b or not finite(goal) or goal<=b.minZ or goal>=b.maxZ
+            or input.position.Z>=goal or flat(input.velocity).Magnitude>Config.SprintSpeed*1.5
+            or math.abs(input.velocity.Y)>4 then return nil end
+        local direction=Vector3.new(0,0,1)
+        local distance=dive.Yards*Field.YD
+        local pad=math.max(1.5,Field.YD*.4)
+        local need=goal+.25-input.position.Z
+        if need<=0 or need>distance or room(input.position,b)<pad then return nil end
+        if type(input.clipDistance)~="function" then return nil end
+        local ok,clipped=pcall(input.clipDistance,input.position,direction,distance)
+        if not ok or not finite(clipped) or clipped<distance-.01 then return nil end
+        local endpoint=input.position+direction*distance
+        if room(endpoint,b)<pad then return nil end
+        local crossing=dive.Time*(1-math.sqrt(math.max(0,1-need/distance)))
+        local tackle=Config.Tackle or {}
+        local grab=tackle.GrabRange or 3.5
+        local slack=math.min(tackle.GrabSlack or 2,2)
+        if not finite(grab) or not finite(slack) or grab<=0 or slack<0 then return nil end
+        if not finite(dive.Reach) or not finite(dive.Range) or dive.Reach<=0 or dive.Range<=0 then return nil end
+        local reach=math.max(grab+slack,math.sqrt(dive.Reach*dive.Reach+dive.Range*dive.Range))+.5
+        local opponentSpeed=math.max(Config.SprintSpeed,2*distance/dive.Time,
+            flat(input.opponentVelocity).Magnitude)
+        -- Cover movement between samples with a Lipschitz distance bound.
+        local betweenSamples=(2*distance/dive.Time+opponentSpeed)*crossing/24
+        local clearance=math.huge
+        for step=0,12 do
+            local elapsed=crossing*step/12
+            local f=math.min(1,elapsed/dive.Time)
+            local own=input.position+direction*distance*(2*f-f*f)
+            local margin=flat(input.opponentPosition-own).Magnitude-reach-opponentSpeed*elapsed-betweenSamples
+            clearance=math.min(clearance,margin)
+            if margin<=.25 then return nil end
+        end
+        return {action="finishDive",direction=direction,endpoint=endpoint,duration=dive.Time,
+            cooldown=dive.Cooldown,crossingSeconds=crossing,goalDistance=goal-input.position.Z,
+            minClearance=clearance,distance=flat(input.opponentPosition-input.position).Magnitude}
     end
     local function decide(input,extended)
         if type(input)~="table" or input.role~="WR" or input.phase~="RAC"
@@ -3382,7 +3443,7 @@ return function(runtime)
             and player and player.Character and s.carrier==player.Character
             and s.enemyCarrier~=true and root and h and h.Health>0 and not h.PlatformStand
     end
-    local api={decide=decide,cancel=cancel,candidates=function(input)
+    local api={decide=decide,finishDive=finishDive,cancel=cancel,candidates=function(input)
         local _,candidates=decide(input,true);return candidates or {}
     end}
     local function update(s,root,h,now)
@@ -3421,7 +3482,7 @@ return function(runtime)
         -- Native DivePath sets PlatformStand while DB/RAC dive tackles remain
         -- active. A moving diver is a threat; only ignore a downed defender
         -- who is effectively stationary. Closing/path checks still apply.
-        if otherHum.PlatformStand and flat(otherRoot.AssemblyLinearVelocity).Magnitude<6 then return false end
+        local opponentDown=otherHum.PlatformStand and flat(otherRoot.AssemblyLinearVelocity).Magnitude<6
         local staminaBefore=tonumber(player:GetAttribute("Stamina"))
         local gravity=workspace.Gravity
         local jumpSpeed=h.UseJumpPower and h.JumpPower
@@ -3437,6 +3498,28 @@ return function(runtime)
             gravity=gravity,jumpSpeed=jumpSpeed,canJump=canJump,
             stamina=staminaBefore,geo=s.geo,offset=s.offset,
             clipDistance=runtime.clippedDistance}
+        if type(runtime.canDive)=="function" and type(runtime.dive)=="function" then
+            local allowed,canDive=pcall(runtime.canDive,h,now)
+            observation.canDive=allowed and canDive==true
+            local finish=finishDive(observation)
+            if finish then
+                attempts=attempts+1
+                nextAttempt=now+finish.cooldown+.1
+                local ok,started=pcall(runtime.dive,h,finish.direction,now,"carrierFinishDive")
+                local observed=ok and started==true and h.PlatformStand==true
+                lastOutcome=not ok and "error" or observed and "diveObserved" or "unconfirmed"
+                lastError=not ok and tostring(started) or nil
+                if observed then observedFinishDives=observedFinishDives+1 end
+                log("carrierMove",{action="finishDive",outcome=lastOutcome,error=lastError,
+                    position=xyz(root.Position),direction=xyz(finish.direction),distance=finish.distance,
+                    goalDistance=finish.goalDistance,crossingSeconds=finish.crossingSeconds,
+                    minClearance=finish.minClearance,staminaBefore=staminaBefore,
+                    staminaAfter=tonumber(player:GetAttribute("Stamina")),
+                    staminaAfterImmediate=true,estimateOnly=true})
+                return observed,observed and "Full auto · dive across goal" or nil
+            end
+        end
+        if opponentDown then return false end
         local choice,candidates=decide(observation,true)
         local native={juke=nativeJuke,spin=nativeSpin,truck=nativeTruck}
         if choice and type(native[choice.action])~="function" then choice=nil end
@@ -3496,10 +3579,12 @@ return function(runtime)
         return taken,message
     end
     function api.status()
-        return {available=type(nativeJuke)=="function" or type(nativeSpin)=="function" or type(nativeTruck)=="function",
-            availableMoves={juke=type(nativeJuke)=="function",spin=type(nativeSpin)=="function",truck=type(nativeTruck)=="function"},
+        return {available=type(nativeJuke)=="function" or type(nativeSpin)=="function" or type(nativeTruck)=="function"
+                or type(runtime.canDive)=="function" and type(runtime.dive)=="function",
+            availableMoves={juke=type(nativeJuke)=="function",spin=type(nativeSpin)=="function",truck=type(nativeTruck)=="function",
+                finishDive=type(runtime.canDive)=="function" and type(runtime.dive)=="function"},
             active=active~=nil,attempts=attempts,
-            observedBursts=observedBursts,observedJumps=observedJumps,jumpPending=pendingJump~=nil,
+            observedBursts=observedBursts,observedJumps=observedJumps,observedFinishDives=observedFinishDives,jumpPending=pendingJump~=nil,
             lastOutcome=lastOutcome,error=lastError,nextAttempt=nextAttempt}
     end
     function api.unload() alive=false;cancel() end
@@ -3814,7 +3899,12 @@ return function(ctx, Planner, createTackle, WRApproach, Motion, createCarrierMov
             continuousSprint=s.role=="WR" and s.catchIntent and s.catchIntent.continuousSprint==true,
             preferAirborne=s.role=="WR",
             requireAirborne=s.role=="WR",
-            preferJumpDive=s.role=="WR",
+            -- Keep an upright aerial catch when the pass still needs a run
+            -- after possession. Floater selection still races for its earliest
+            -- robust airborne contact; a meaningful contested advantage may
+            -- still justify diving on a Bullet.
+            preferJumpDive=s.role=="WR" and finishGoal~=nil
+                and s.arc.P1.Z>=finishGoal,
             passType=s.passType or (s.catchIntent and s.catchIntent.pass),
             requireDive=s.role=="WR" and s.catchIntent and s.catchIntent.requireDive==true,
             allowUprightFinish=s.playBudget~=nil and finishGoal~=nil
@@ -4614,6 +4704,25 @@ return function(ctx, Planner, createTackle, WRApproach, Motion, createCarrierMov
     if createCarrierMoves then
         carrierAssist=createCarrierMoves({Config=Config,Field=Field,Moves=Moves,player=me,
             nativeJuke=namedUpvalue(Moves.SetPhase,"juke"),
+            canDive=function(h,now)
+                return h.FloorMaterial~=Enum.Material.Air and not h.PlatformStand
+                    and divePermitted() and Moves.Upright()
+                    and now-lastDive>=Config.Moves.Dive.Cooldown
+            end,
+            dive=function(h,direction,now,kind)
+                if h.FloorMaterial==Enum.Material.Air or h.PlatformStand
+                    or not divePermitted() or not Moves.Upright()
+                    or now-lastDive<Config.Moves.Dive.Cooldown then return false end
+                ownInput();controlledHumanoid=h;h:Move(direction,false)
+                nativeDive()
+                local success=h.PlatformStand
+                if success then
+                    lastDive=now;counters.dives=counters.dives+1
+                    releaseSprint()
+                end
+                log(kind or "carrierFinishDive",{started=success,direction=xyz(direction)})
+                return success
+            end,
             log=log,clippedDistance=clippedDistance})
     end
     local bindName="ChalkDB_Interception"
@@ -5811,7 +5920,7 @@ function Policy.chooseScheduledRoute(input,Config,Field,RouteMath)
         if type(item)=="table" and recentFailure[item.routeFamily]~=nil and item.success==false
             and (item.result=="Swatted" or item.result=="Intercepted" or item.result=="Incomplete") then
             recentFailure[item.routeFamily]=recentFailure[item.routeFamily]+1
-            if item.result=="Incomplete" and (item.side==-1 or item.side==1)
+            if (item.side==-1 or item.side==1)
                 and (item.pass=="Floater" or item.pass=="Bullet") then
                 local key=item.routeFamily..":"..item.pass..":"..item.side
                 failedLanes[key]=(failedLanes[key] or 0)+1
@@ -5831,6 +5940,9 @@ function Policy.chooseScheduledRoute(input,Config,Field,RouteMath)
     for _,family in ipairs({"middle_stem","quarter_stem"}) do
         local starts=family=="middle_stem" and {mid}
             or {Field.MinX+width*.25,Field.MinX+width*.75}
+        -- Bullet variations keep the middle stem and final cut. A quarter
+        -- start is available only when its Floater is natively feasible.
+        local passes=family=="middle_stem" and {"Floater","Bullet"} or {"Floater"}
         for _,startX in ipairs(starts) do
             if startX>=Field.MinX+startMargin and startX<=Field.MaxX-startMargin then
                 for _,side in ipairs({-1,1}) do
@@ -5843,7 +5955,7 @@ function Policy.chooseScheduledRoute(input,Config,Field,RouteMath)
                                 local points=RouteMath.Sanitize(raw,startX,los)
                                 if #points==3 and (points[1]-raw[1]).Magnitude<.01
                                     and (points[2]-raw[2]).Magnitude<.01 and (points[3]-raw[3]).Magnitude<.05 then
-                                    for _,pass in ipairs({"Floater","Bullet"}) do
+                                    for _,pass in ipairs(passes) do
                                         local plan=RouteMath.Plan(points,pass)
                                         local finishDistance=(plan.Target-points[2]).Magnitude
                                         -- Reach the catch area close to arrival. Charge stamina
@@ -5985,18 +6097,9 @@ function Policy.chooseScheduledRoute(input,Config,Field,RouteMath)
             or (recentFailure[desired]>=2 or chosen.stemBlocked) and not other.anticipatedLane and not other.stemBlocked) then
         chosen=other;override=recentFailure[desired]>=2 and "recent_contests" or "observed_lane_coverage"
     end
-    if chosen and other and chosen.routeFamily=="middle_stem" and other.routeFamily=="quarter_stem"
-        and not other.anticipatedLane and not other.stemBlocked and other.depth>chosen.depth+2
-        and other.defenderEnvelopeMargin>=chosen.defenderEnvelopeMargin then
-        -- Do not preserve a Floater preference by cutting a much deeper route
-        -- short when its original middle stem is occupied. A clear, funded
-        -- quarter start preserves more of the intended downfield route.
-        for _,candidate in ipairs(pool.middle_stem) do
-            if candidate.stemBlocked and candidate.depth>=other.depth-2 then
-                chosen=other;override="observed_lane_coverage";break
-            end
-        end
-    end
+    -- A blocked longer middle stem does not invalidate the clear, funded
+    -- middle candidate already selected. Keep that requested family rather
+    -- than replacing it solely to chase a deeper quarter route.
     if chosen then
         chosen.scheduleOverride=override
         return chosen
@@ -6772,13 +6875,26 @@ function Policy.movement(input,Config,Field,RouteMath)
             and observedDepth < -2*yd
             and (input.sprintOn==true and velocity.Z>Config.RunSpeed*.5
                 or velocity.Z>Config.RunSpeed+2 and forecastGap>3*yd)
+        -- A diagonal sprint can open real separation without either axis
+        -- reaching the older emergency thresholds. Use observed relative
+        -- velocity and a short range forecast, not a desired spacing offset.
+        local separation=(observed-position)*FLAT
+        local range=separation.Magnitude
+        local away=range>.01 and separation/range or Vector3.zero
+        local rangeOpening=(velocity-selfVelocity):Dot(away)
+        local forecastRange=range+math.max(0,rangeOpening)*.35
+        local separationRecovery=vec(input.velocity) and finite(input.elapsed) and input.elapsed>=.4
+            and observedDepth<0 and velocity.Z>2 and velocity.Magnitude>Config.RunSpeed+2
+            and (input.sprintOn==true and range>yd and velocity:Dot(away)>Config.RunSpeed*.5
+                or input.sprintOn~=true and range>1.25*yd and rangeOpening>2 and forecastRange>2*yd)
         local retreatingSafe=velocity.Z < -2
         -- Allow a brief trail or a modest lead without restoring fixed spacing.
         -- Use observed positions so projection does not erase that free band.
         -- Walk routine recovery; save sprint for real separation or a goal-line
         -- threat, retaining a lateral buffer instead of copying every cut.
         local needsSprint=phase=="Live" and not retreatingSafe
-            and (urgent or forwardThreat or lateralThreat or lateralCutRecovery or downfieldRecovery or deepRunRecovery)
+            and (urgent or forwardThreat or lateralThreat or lateralCutRecovery or downfieldRecovery or deepRunRecovery
+                or separationRecovery)
         local stamina=finite(input.stamina) and math.max(0,input.stamina) or 0
         local startAt,stopAt=urgent and 75 or 85,urgent and 60 or 70
         local sprint=needsSprint and (input.sprintOn==true and stamina>stopAt
@@ -7955,7 +8071,7 @@ end
 
 end)()
 
-assist = createAssist({snapshot=api.context,version=RELEASE_VERSION,buildId="83cdb9b4ff92fd53b71e8ede4b52dfef3428242dd2eb2884a7a58785874df637",fullplay=function(s,root,h,now,dt)
+assist = createAssist({snapshot=api.context,version=RELEASE_VERSION,buildId="1f76e41d1108f8df1ffec7309f79115cda466d5c8e0467023cbc6731215c59c0",fullplay=function(s,root,h,now,dt)
     if fullplay then return fullplay.navigate(s,root,h,now,dt) end
 end},Planner,createTackle,WRApproach,Motion,createCarrierMoves,PlayerAvoidance)
 assist.setEnabled(false)
@@ -7964,7 +8080,7 @@ repeatWR = createWRRepeat({snapshot=api.context,
     autoplay=function() return autoplay.status() end,
     disableAutoplay=function() return api.setAutoplay(false) end})
 repeatWR.setEnabled(false)
-fullplay = createFullplay({snapshot=api.context,version=RELEASE_VERSION,buildId="83cdb9b4ff92fd53b71e8ede4b52dfef3428242dd2eb2884a7a58785874df637",
+fullplay = createFullplay({snapshot=api.context,version=RELEASE_VERSION,buildId="1f76e41d1108f8df1ffec7309f79115cda466d5c8e0467023cbc6731215c59c0",
     assistEnabled=function() return assist.status().enabled end,
     release=function() if assist.releaseFullplay then assist.releaseFullplay() end end},FullplayPolicy)
 fullplay.setEnabled(false)
@@ -7985,7 +8101,7 @@ local GAME_ID,PLACE_ID=10770281752,116097127629859
 local MAIN_URL="https://raw.githubusercontent.com/BananaMan2006/chalk-assist-deterministic/main/chalk-it-up-1v1.lua"
 local CACHE_FILE="chalk-deterministic-cache.lua"
 local MAIN_FILE="chalk-it-up-1v1.lua"
-local MIN_RELEASE="5.1.4"
+local MIN_RELEASE="5.1.5"
 local MARKER="__ChalkDeterministicAutoBoot"
 local env=type(getgenv)=="function" and getgenv() or _G
 local boot

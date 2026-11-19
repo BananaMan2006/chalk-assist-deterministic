@@ -113,13 +113,45 @@ return function(Policy,create,routeSource)
         local c=choose(input({opponentPosition=Vector3.new(0,3,.8*Field.YD),opponentVelocity=Vector3.zero}))
         assert(c.routeFamily=="quarter_stem" and c.scheduleOverride=="observed_lane_coverage")
     end)
-    test("a slow defender deep on a tight middle stem selects a clear alternative",function()
+    test("a blocked longer middle stem does not discard a clear funded middle Floater",function()
         for _,velocity in ipairs({Vector3.zero,Vector3.new(-4.96,0,-10.89),Vector3.new(2.49,0,-11.74)}) do
             local c=choose(input({position=Vector3.new(0,3,-1.52),
                 opponentPosition=Vector3.new(0,3,8*Field.YD),opponentVelocity=velocity}))
-            assert(c.routeFamily=="quarter_stem" and c.scheduleOverride=="observed_lane_coverage")
+            assert(c.routeFamily=="middle_stem" and c.payload.Pass=="Floater" and c.scheduleOverride==nil)
             assert(not c.stemBlocked and not c.anticipatedLane)
             assert(c.finalSprintStamina>=10 and c.cutAt<=c.plan.Launch+.015)
+        end
+    end)
+    test("recorded stationary eight-yard coverage retains a native-feasible middle cut",function()
+        local actual={MinX=-30.2121302485466,MaxX=67.99998158216476,MidX=18.8939256668,
+            BackZ=-44.012135207653046,EndZ=152.4120985865593,LOSZ=-19.459107249975204,
+            GoalZ=103.3060463,YD=4.9106056,TurfY=1.63686865568161}
+        local actualEnv=setmetatable({script={Parent={Config="config",Field="field"}},
+            require=function(module)
+                assert(module=="config" or module=="field")
+                return module=="config" and Config or actual
+            end},{__index=_G})
+        local actualMath=assert(load(routeSource,"recorded-field RouteMath","t",actualEnv))()
+        local p=input({LOS=actual.LOSZ,position=Vector3.new(18.893924713134766,4.636868,-21.017337799072266),
+            opponentPosition=Vector3.new(18.893842697143555,4.636789,19.832334518432617),
+            opponentVelocity=Vector3.zero,routeCycle=0})
+        local c=assert(Policy.chooseScheduledRoute(p,Config,actual,actualMath))
+        assert(c.routeFamily=="middle_stem" and c.payload.Pass=="Floater" and c.scheduleOverride==nil)
+        assert(not c.stemBlocked and not c.anticipatedLane and c.finalSprintStamina>=10)
+        assert(c.cutAt<=c.plan.Launch+.015 and c.payload.StartX==(actual.MinX+actual.MaxX)*.5)
+        assert(c.payload.Points[1].X==c.payload.Points[2].X
+            and math.abs(c.payload.Points[3].X-c.payload.Points[2].X)>=2*actual.YD)
+        -- The later observed near-endzone setup cannot fund a clear middle
+        -- Floater. Preserve a real middle cut instead of forcing that pass.
+        p.LOS=84.76696014404297
+        p.position=Vector3.new(18.892873764038086,4.636868,83.2480239868164)
+        p.opponentPosition=Vector3.new(19.189746856689453,4.636789,124.05267333984375)
+        for _,cycle in ipairs({0,4}) do
+            p.routeCycle=cycle
+            local near=assert(Policy.chooseScheduledRoute(p,Config,actual,actualMath))
+            assert(near.routeFamily=="middle_stem" and near.payload.Pass=="Bullet")
+            assert(not near.stemBlocked and not near.anticipatedLane and near.finalSprintStamina>=10)
+            assert(near.cutAt<=near.plan.Launch+.015)
         end
     end)
     test("quarter starts occupy actual quarter width and never finish straight",function()
@@ -127,6 +159,7 @@ return function(Policy,create,routeSource)
         for _,index in ipairs({4,9,14,19}) do
             local c=choose(input({selectionIndex=index}))
             assert(c.routeFamily=="quarter_stem")
+            assert(c.payload.Pass=="Floater","quarter preference introduced a Bullet start")
             local x=c.payload.StartX
             assert(math.abs(math.abs(x)-24.5)<1e-6)
             assert(c.payload.Points[1].X==x and c.payload.Points[2].X==x)
@@ -136,12 +169,21 @@ return function(Policy,create,routeSource)
         assert(starts.left and starts.right,"quarter starting side never changes")
         assert(turns.same_side and turns.opposite_side,"quarter cut direction never changes")
     end)
+    test("an unavailable quarter Floater falls back to a funded middle Bullet cut",function()
+        local c=choose(input({selectionIndex=4,stamina=90}))
+        assert(c.routeFamily=="middle_stem" and c.payload.Pass=="Bullet")
+        assert(c.scheduleOverride=="scheduled_family_unreachable")
+        assert(c.payload.Points[1].X==c.payload.Points[2].X
+            and math.abs(c.payload.Points[3].X-c.payload.Points[2].X)>=2*Field.YD)
+        assert(c.finalSprintStamina>=10 and c.cutAt<=c.plan.Launch+.015)
+    end)
     test("every scheduled final sprint is funded through native arrival plus dispatch",function()
         for _,stamina in ipairs({100,95,90,80,65,40,10,0}) do
             for i=0,4 do
                 local c,reason=Policy.chooseScheduledRoute(input({selectionIndex=i,stamina=stamina}),Config,Field,RouteMath)
                 if c then
                     assert(c.routeFamily)
+                    assert(c.payload.Pass~="Bullet" or c.routeFamily=="middle_stem")
                     assert(c.slowStemSpeed<=Config.RunSpeed and c.slowStemSpeed>=Config.RunSpeed*.25)
                     assert(c.finalSprintStamina>=10-1e-6)
                     assert(math.abs(c.finalSprintDuration-(c.plan.Arrival-c.cutAt+.12))<1e-6)
@@ -157,17 +199,22 @@ return function(Policy,create,routeSource)
             {routeFamily="middle_stem",result="Intercepted",success=false}}}))
         assert(c.routeFamily=="quarter_stem" and c.scheduleOverride=="recent_contests")
     end)
-    test("explicit incompletes change the failed lane then repeated failures change family",function()
+    test("known incompletes interceptions and swats change the failed lane then repeated failures change family",function()
         local before=choose(input())
-        local failure={routeFamily="middle_stem",pass=before.payload.Pass,side=before.side,
-            result="Incomplete",success=false}
-        local once=choose(input({recentRoutes={failure}}))
-        assert(once.routeFamily=="middle_stem" and once.side~=before.side)
-        local twice=choose(input({recentRoutes={failure,failure}}))
-        assert(twice.routeFamily=="quarter_stem" and twice.scheduleOverride=="recent_contests")
+        for _,result in ipairs({"Incomplete","Intercepted","Swatted"}) do
+            local failure={routeFamily="middle_stem",pass=before.payload.Pass,side=before.side,
+                result=result,success=false}
+            local once=choose(input({recentRoutes={failure}}))
+            assert(once.routeFamily=="middle_stem" and once.side~=before.side)
+            local twice=choose(input({recentRoutes={failure,failure}}))
+            assert(twice.routeFamily=="quarter_stem" and twice.scheduleOverride=="recent_contests")
+        end
         local unknown=choose(input({recentRoutes={{routeFamily="middle_stem",pass=before.payload.Pass,
             side=before.side,result="Unknown",success=false}}}))
         assert(unknown.routeFamily==before.routeFamily and unknown.side==before.side and unknown.scheduleOverride==nil)
+        local notFailed=choose(input({recentRoutes={{routeFamily="middle_stem",pass=before.payload.Pass,
+            side=before.side,result="Intercepted",success=true}}}))
+        assert(notFailed.side==before.side and notFailed.scheduleOverride==nil)
     end)
     test("a defender waiting in the intended lane changes the route or family",function()
         local before=choose(input())

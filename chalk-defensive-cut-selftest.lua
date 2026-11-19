@@ -21,6 +21,69 @@ return function(Policy)
         return p
     end
     local function move(p) return assert(Policy.movement(p,Config,Field,{})) end
+    local function openingRun(extra)
+        -- Observed before a Bullet: neither lateral speed nor trailing depth
+        -- crossed the previous per-axis recovery gates, despite opening range.
+        local p=input({position=Vector3.new(16.0177268982,3,25.2981948853),
+            velocity=Vector3.new(-7.9868826866,0,18.3312606812),
+            opponentPosition=Vector3.new(11.6258020401,3,32.5192794800),
+            opponentVelocity=Vector3.new(-5.4518866539,0,26.2624912262),elapsed=2.5338449478})
+        for k,v in pairs(extra or {}) do p[k]=v end
+        return p
+    end
+    test("recorded opening diagonal sprint gets a burst before the old three-yard forecast gate",function()
+        local p=openingRun();local c=move(p)
+        local gap=(p.opponentPosition-p.position).Magnitude
+        assert(gap>1.25*Field.YD and gap<2*Field.YD)
+        assert(math.abs(p.opponentVelocity.X)<Config.RunSpeed+2)
+        assert(p.position.Z-p.opponentPosition.Z>-2*Field.YD)
+        assert(c.sprint,"opening diagonal sprint remained at walking speed")
+        assert(c.target.Z>p.position.Z,"burst did not preserve forward tracking")
+    end)
+    test("nearby opening coverage and walking matched or retreating runs do not start a range burst",function()
+        local nearby=openingRun({position=Vector3.new(16.420358658,3,8.325592995),
+            velocity=Vector3.new(3.713122606,0,19.652296066),
+            opponentPosition=Vector3.new(12.438441277,3,9.279882431),
+            opponentVelocity=Vector3.new(4.502198219,0,26.622373581),elapsed=1.714122057})
+        assert(not move(nearby).sprint,"a close receiver caused body-press sprinting")
+        for _,v in ipairs({Vector3.zero,Vector3.new(-4,0,19),Vector3.new(-5,0,-26)}) do
+            assert(not move(openingRun({opponentVelocity=v})).sprint)
+        end
+        local p=openingRun();p.velocity=p.opponentVelocity
+        assert(not move(p).sprint,"matching speed without opening range caused a new burst")
+        p=openingRun({velocity=false})
+        assert(not move(p).sprint,"unknown local velocity was treated as measured separation")
+        p=openingRun({phase="PreSnap"});assert(not move(p).sprint)
+        p.phase="Hike";assert(not move(p).sprint)
+    end)
+    test("range recovery retains85-start70-stop and does not stop merely because speed matches",function()
+        local p=openingRun()
+        for _,stamina in ipairs({0,40,70,84.9}) do p.stamina=stamina;assert(not move(p).sprint) end
+        p.stamina=85;assert(move(p).sprint)
+        p.sprintOn=true;p.velocity=p.opponentVelocity
+        p.stamina=70.1;assert(move(p).sprint,"matched sprint speed caused immediate on-off chatter")
+        p.stamina=70;assert(not move(p).sprint,"range recovery spent the reserved stamina")
+        p.stamina=100;p.position=p.opponentPosition-Vector3.new(0,0,.9*Field.YD)
+        assert(not move(p).sprint,"range recovery chased a fixed offset inside the release band")
+    end)
+    test("range recovery releases when the receiver slows or runs back toward the defender",function()
+        local p=openingRun({sprintOn=true})
+        p.opponentVelocity=Vector3.new(0,0,20);assert(not move(p).sprint)
+        p.opponentVelocity=Vector3.new(26,0,3);assert(not move(p).sprint)
+        p.opponentVelocity=Vector3.new(0,0,-27);assert(not move(p).sprint)
+    end)
+    test("range recovery is symmetric and unchanged by translated field coordinates",function()
+        local p=openingRun();local a=move(p);local mirror=table.clone(p)
+        mirror.position=Vector3.new(2*Field.MidX-p.position.X,3,p.position.Z)
+        mirror.opponentPosition=Vector3.new(2*Field.MidX-p.opponentPosition.X,3,p.opponentPosition.Z)
+        mirror.velocity=Vector3.new(-p.velocity.X,0,p.velocity.Z)
+        mirror.opponentVelocity=Vector3.new(-p.opponentVelocity.X,0,p.opponentVelocity.Z)
+        local b=move(mirror);assert(a.sprint and b.sprint)
+        assert(math.abs(a.target.X+b.target.X-2*Field.MidX)<1e-6)
+        local offset=Vector3.new(200,0,-300)
+        p.offset=offset;p.position=p.position+offset;p.opponentPosition=p.opponentPosition+offset
+        local c=move(p);assert(c.sprint and (c.target-a.target-offset).Magnitude<1e-6)
+    end)
     test("recorded outward cut starts lateral follow before the old1.5-yard gate",function()
         local early=input({position=Vector3.new(48.050617218,3,72.211868286),
             opponentPosition=Vector3.new(45.089633941,3,78.445381165),

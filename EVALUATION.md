@@ -1,6 +1,12 @@
-# Evaluation scope · 5.1.4
+# Evaluation scope · 5.1.5
 
 This release continues the authored, deterministic controller. Its checks establish local rule behavior and packaging properties. **They do not demonstrate a live win rate, a winning streak, perfect catching, or improvement through training.** The release has no training system or shared model.
+
+## 5.1.5 scope
+
+The route selector no longer replaces a clear, funded middle Floater merely because a different, longer middle candidate is blocked. Quarter starts are Floater-only; Bullet alternatives retain a middle stem and cut. Known interceptions and breakups join incompletes in failed-lane penalties. A DB recovery rule uses measured opening separation to recognize diagonal sprinting before the older per-axis emergency thresholds; ordinary bursts retain 85-start / 70-stop stamina limits.
+
+Receiving can prefer an upright jump for a Bullet targeted short of the goal. A native finish-dive attempt after confirmed possession requires a nearby goal crossing, field/collision clearance and an estimated opponent reach check. Neither change guarantees avoiding a tackle. The existing earliest robust airborne Floater objective and current-position jump/dive revalidation remain.
 
 ## 5.1.4 scope
 
@@ -11,6 +17,10 @@ A materially changed movement target ends the previous avoidance path's brief ho
 The first observed match ended with a native Forfeit at a 3–1 score, with a four-point target; it is not counted as a completed four-point win, and the logged forfeit fields did not establish a winner. Five passes were thrown: three WR Bullet catches (two followed by touchdowns, one by a tackle), one DB Bullet interception and one opponent Bullet catch followed by a touchdown. The last receiving touchdown followed a route-unavailable result without a submitted Full Auto route, so it is not attributed to automatic route selection. No WR Floater occurred.
 
 All five requested jumps had observed takeoff, and two dives had observed airborne dispatch. No late action or runtime error was recorded. On the conceded touchdown, the defender had fallen behind before the throw; a subsequent local catch claim was not accepted as a native catch for our player. The server rejection reason is unknown. This remains a limitation under investigation, not proof that catch timing is correct.
+
+A second fully observed 5.1.4 match ended **4–2**, with ten throws. WR outcomes were two catches (one followed by a tackle, one by a touchdown), two interceptions and one breakup. DB outcomes were two interceptions and three breakups. All five receiving routes were quarter Bullets; four had overridden the nominal middle preference. The two interceptions involved repeated position-drift replans and loss of a valid jump window; the breakup followed a jump and a local catch claim that was not awarded. Eight requested jumps had observed takeoff, five airborne dives were observed, and no late input or runtime error was recorded. No WR Floater occurred. This result motivated the route-selection correction, but does not establish improvement.
+
+The catch forecast currently assumes immediate approach steering, whereas actual turns are bounded. An isolated turn-aware replay invalidated one early witness and found a later one; this prototype is not part of 5.1.5 and is not a live catch result. Native catch/tackle adjudication can also disagree with local geometric estimates. These remain known limitations.
 
 ## Limited 5.1.3 observations
 

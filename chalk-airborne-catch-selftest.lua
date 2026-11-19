@@ -40,6 +40,12 @@ return function(Planner,source)
         local p,why=Planner.solve(s)
         assert(p and p.airborneFinish=="jump" and not p.diveAt and p.jumpAt,why)
     end)
+    test("receiving with distance to carry prefers a robust upright jump over an optional dive",function()
+        local s=fixture();s.passType="Bullet";s.preferJumpDive=false
+        local p,why=Planner.solve(s)
+        assert(p and p.airborneFinish=="jump" and not p.diveAt and p.jumpAt,why)
+        assert(p.margin>=s.margin and not p.risk)
+    end)
     test("already grounded overlap has no deliberate catch plan and reports that limitation",function()
         local s=fixture();s.launchAt=s.now-.2
         s.arc={P0=Vector3.new(0,4,0),P1=Vector3.new(0,4,0),Flight=100,Apex=0}

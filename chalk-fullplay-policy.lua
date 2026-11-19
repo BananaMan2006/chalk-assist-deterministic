@@ -377,7 +377,7 @@ function Policy.chooseScheduledRoute(input,Config,Field,RouteMath)
         if type(item)=="table" and recentFailure[item.routeFamily]~=nil and item.success==false
             and (item.result=="Swatted" or item.result=="Intercepted" or item.result=="Incomplete") then
             recentFailure[item.routeFamily]=recentFailure[item.routeFamily]+1
-            if item.result=="Incomplete" and (item.side==-1 or item.side==1)
+            if (item.side==-1 or item.side==1)
                 and (item.pass=="Floater" or item.pass=="Bullet") then
                 local key=item.routeFamily..":"..item.pass..":"..item.side
                 failedLanes[key]=(failedLanes[key] or 0)+1
@@ -397,6 +397,9 @@ function Policy.chooseScheduledRoute(input,Config,Field,RouteMath)
     for _,family in ipairs({"middle_stem","quarter_stem"}) do
         local starts=family=="middle_stem" and {mid}
             or {Field.MinX+width*.25,Field.MinX+width*.75}
+        -- Bullet variations keep the middle stem and final cut. A quarter
+        -- start is available only when its Floater is natively feasible.
+        local passes=family=="middle_stem" and {"Floater","Bullet"} or {"Floater"}
         for _,startX in ipairs(starts) do
             if startX>=Field.MinX+startMargin and startX<=Field.MaxX-startMargin then
                 for _,side in ipairs({-1,1}) do
@@ -409,7 +412,7 @@ function Policy.chooseScheduledRoute(input,Config,Field,RouteMath)
                                 local points=RouteMath.Sanitize(raw,startX,los)
                                 if #points==3 and (points[1]-raw[1]).Magnitude<.01
                                     and (points[2]-raw[2]).Magnitude<.01 and (points[3]-raw[3]).Magnitude<.05 then
-                                    for _,pass in ipairs({"Floater","Bullet"}) do
+                                    for _,pass in ipairs(passes) do
                                         local plan=RouteMath.Plan(points,pass)
                                         local finishDistance=(plan.Target-points[2]).Magnitude
                                         -- Reach the catch area close to arrival. Charge stamina
@@ -551,18 +554,9 @@ function Policy.chooseScheduledRoute(input,Config,Field,RouteMath)
             or (recentFailure[desired]>=2 or chosen.stemBlocked) and not other.anticipatedLane and not other.stemBlocked) then
         chosen=other;override=recentFailure[desired]>=2 and "recent_contests" or "observed_lane_coverage"
     end
-    if chosen and other and chosen.routeFamily=="middle_stem" and other.routeFamily=="quarter_stem"
-        and not other.anticipatedLane and not other.stemBlocked and other.depth>chosen.depth+2
-        and other.defenderEnvelopeMargin>=chosen.defenderEnvelopeMargin then
-        -- Do not preserve a Floater preference by cutting a much deeper route
-        -- short when its original middle stem is occupied. A clear, funded
-        -- quarter start preserves more of the intended downfield route.
-        for _,candidate in ipairs(pool.middle_stem) do
-            if candidate.stemBlocked and candidate.depth>=other.depth-2 then
-                chosen=other;override="observed_lane_coverage";break
-            end
-        end
-    end
+    -- A blocked longer middle stem does not invalidate the clear, funded
+    -- middle candidate already selected. Keep that requested family rather
+    -- than replacing it solely to chase a deeper quarter route.
     if chosen then
         chosen.scheduleOverride=override
         return chosen
@@ -1338,13 +1332,26 @@ function Policy.movement(input,Config,Field,RouteMath)
             and observedDepth < -2*yd
             and (input.sprintOn==true and velocity.Z>Config.RunSpeed*.5
                 or velocity.Z>Config.RunSpeed+2 and forecastGap>3*yd)
+        -- A diagonal sprint can open real separation without either axis
+        -- reaching the older emergency thresholds. Use observed relative
+        -- velocity and a short range forecast, not a desired spacing offset.
+        local separation=(observed-position)*FLAT
+        local range=separation.Magnitude
+        local away=range>.01 and separation/range or Vector3.zero
+        local rangeOpening=(velocity-selfVelocity):Dot(away)
+        local forecastRange=range+math.max(0,rangeOpening)*.35
+        local separationRecovery=vec(input.velocity) and finite(input.elapsed) and input.elapsed>=.4
+            and observedDepth<0 and velocity.Z>2 and velocity.Magnitude>Config.RunSpeed+2
+            and (input.sprintOn==true and range>yd and velocity:Dot(away)>Config.RunSpeed*.5
+                or input.sprintOn~=true and range>1.25*yd and rangeOpening>2 and forecastRange>2*yd)
         local retreatingSafe=velocity.Z < -2
         -- Allow a brief trail or a modest lead without restoring fixed spacing.
         -- Use observed positions so projection does not erase that free band.
         -- Walk routine recovery; save sprint for real separation or a goal-line
         -- threat, retaining a lateral buffer instead of copying every cut.
         local needsSprint=phase=="Live" and not retreatingSafe
-            and (urgent or forwardThreat or lateralThreat or lateralCutRecovery or downfieldRecovery or deepRunRecovery)
+            and (urgent or forwardThreat or lateralThreat or lateralCutRecovery or downfieldRecovery or deepRunRecovery
+                or separationRecovery)
         local stamina=finite(input.stamina) and math.max(0,input.stamina) or 0
         local startAt,stopAt=urgent and 75 or 85,urgent and 60 or 70
         local sprint=needsSprint and (input.sprintOn==true and stamina>stopAt

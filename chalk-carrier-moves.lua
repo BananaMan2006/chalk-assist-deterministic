@@ -7,6 +7,7 @@ return function(runtime)
     local alive,active,nextAttempt=true,nil,0
     local attempts,observedBursts,lastOutcome,lastError=0,0,nil,nil
     local pendingJump,observedJumps=nil,0
+    local observedFinishDives=0
     local function finite(n) return type(n)=="number" and n==n and math.abs(n)<math.huge end
     local function vector(v)
         return typeof(v)=="Vector3" and finite(v.X) and finite(v.Y) and finite(v.Z)
@@ -44,6 +45,66 @@ return function(runtime)
     end
     local function room(p,b)
         return math.min(p.X-b.minX,b.maxX-p.X,p.Z-b.minZ,b.maxZ-p.Z)
+    end
+    -- A finish is a ground dive across the actual goal line, not a generic
+    -- carry burst. The native DivePath's horizontal travel is d*(2f-f*f).
+    -- The opponent envelope allows an immediate native dive in any direction;
+    -- a positive margin is an estimate, never proof that the server will score.
+    local function finishDive(input)
+        if type(input)~="table" or input.role~="WR" or input.phase~="RAC"
+            or input.mode~=nil and input.mode~="1v1" or input.carrierIsMe~=true
+            or input.upright~=true or input.grounded~=true or input.healthy~=true
+            or input.canDive~=true or input.enemyCarrier==true or input.ballActive
+            or input.testing or input.enabled==false or not finite(input.now)
+            or input.now<(input.nextAttempt or 0) or not vector(input.position)
+            or not vector(input.velocity) or not vector(input.opponentPosition)
+            or not vector(input.opponentVelocity) then return nil end
+        local dive=Config.Moves and Config.Moves.Dive
+        if type(dive)~="table" or not finite(dive.Yards) or dive.Yards<=0
+            or not finite(dive.Time) or dive.Time<=0 or not finite(dive.Cooldown)
+            or dive.Cooldown<=0 or not finite(dive.Cost) or dive.Cost<0
+            or not finite(Field.YD) or Field.YD<=0 or not finite(Config.SprintSpeed)
+            or Config.SprintSpeed<=0 or not finite(input.stamina)
+            or input.stamina<dive.Cost then return nil end
+        local b=bounds(input)
+        local offset=vector(input.offset) and input.offset or Vector3.zero
+        local goal=input.geo and input.geo.GoalZ or Field.GoalZ and Field.GoalZ+offset.Z
+        if not b or not finite(goal) or goal<=b.minZ or goal>=b.maxZ
+            or input.position.Z>=goal or flat(input.velocity).Magnitude>Config.SprintSpeed*1.5
+            or math.abs(input.velocity.Y)>4 then return nil end
+        local direction=Vector3.new(0,0,1)
+        local distance=dive.Yards*Field.YD
+        local pad=math.max(1.5,Field.YD*.4)
+        local need=goal+.25-input.position.Z
+        if need<=0 or need>distance or room(input.position,b)<pad then return nil end
+        if type(input.clipDistance)~="function" then return nil end
+        local ok,clipped=pcall(input.clipDistance,input.position,direction,distance)
+        if not ok or not finite(clipped) or clipped<distance-.01 then return nil end
+        local endpoint=input.position+direction*distance
+        if room(endpoint,b)<pad then return nil end
+        local crossing=dive.Time*(1-math.sqrt(math.max(0,1-need/distance)))
+        local tackle=Config.Tackle or {}
+        local grab=tackle.GrabRange or 3.5
+        local slack=math.min(tackle.GrabSlack or 2,2)
+        if not finite(grab) or not finite(slack) or grab<=0 or slack<0 then return nil end
+        if not finite(dive.Reach) or not finite(dive.Range) or dive.Reach<=0 or dive.Range<=0 then return nil end
+        local reach=math.max(grab+slack,math.sqrt(dive.Reach*dive.Reach+dive.Range*dive.Range))+.5
+        local opponentSpeed=math.max(Config.SprintSpeed,2*distance/dive.Time,
+            flat(input.opponentVelocity).Magnitude)
+        -- Cover movement between samples with a Lipschitz distance bound.
+        local betweenSamples=(2*distance/dive.Time+opponentSpeed)*crossing/24
+        local clearance=math.huge
+        for step=0,12 do
+            local elapsed=crossing*step/12
+            local f=math.min(1,elapsed/dive.Time)
+            local own=input.position+direction*distance*(2*f-f*f)
+            local margin=flat(input.opponentPosition-own).Magnitude-reach-opponentSpeed*elapsed-betweenSamples
+            clearance=math.min(clearance,margin)
+            if margin<=.25 then return nil end
+        end
+        return {action="finishDive",direction=direction,endpoint=endpoint,duration=dive.Time,
+            cooldown=dive.Cooldown,crossingSeconds=crossing,goalDistance=goal-input.position.Z,
+            minClearance=clearance,distance=flat(input.opponentPosition-input.position).Magnitude}
     end
     local function decide(input,extended)
         if type(input)~="table" or input.role~="WR" or input.phase~="RAC"
@@ -208,7 +269,7 @@ return function(runtime)
             and player and player.Character and s.carrier==player.Character
             and s.enemyCarrier~=true and root and h and h.Health>0 and not h.PlatformStand
     end
-    local api={decide=decide,cancel=cancel,candidates=function(input)
+    local api={decide=decide,finishDive=finishDive,cancel=cancel,candidates=function(input)
         local _,candidates=decide(input,true);return candidates or {}
     end}
     local function update(s,root,h,now)
@@ -247,7 +308,7 @@ return function(runtime)
         -- Native DivePath sets PlatformStand while DB/RAC dive tackles remain
         -- active. A moving diver is a threat; only ignore a downed defender
         -- who is effectively stationary. Closing/path checks still apply.
-        if otherHum.PlatformStand and flat(otherRoot.AssemblyLinearVelocity).Magnitude<6 then return false end
+        local opponentDown=otherHum.PlatformStand and flat(otherRoot.AssemblyLinearVelocity).Magnitude<6
         local staminaBefore=tonumber(player:GetAttribute("Stamina"))
         local gravity=workspace.Gravity
         local jumpSpeed=h.UseJumpPower and h.JumpPower
@@ -263,6 +324,28 @@ return function(runtime)
             gravity=gravity,jumpSpeed=jumpSpeed,canJump=canJump,
             stamina=staminaBefore,geo=s.geo,offset=s.offset,
             clipDistance=runtime.clippedDistance}
+        if type(runtime.canDive)=="function" and type(runtime.dive)=="function" then
+            local allowed,canDive=pcall(runtime.canDive,h,now)
+            observation.canDive=allowed and canDive==true
+            local finish=finishDive(observation)
+            if finish then
+                attempts=attempts+1
+                nextAttempt=now+finish.cooldown+.1
+                local ok,started=pcall(runtime.dive,h,finish.direction,now,"carrierFinishDive")
+                local observed=ok and started==true and h.PlatformStand==true
+                lastOutcome=not ok and "error" or observed and "diveObserved" or "unconfirmed"
+                lastError=not ok and tostring(started) or nil
+                if observed then observedFinishDives=observedFinishDives+1 end
+                log("carrierMove",{action="finishDive",outcome=lastOutcome,error=lastError,
+                    position=xyz(root.Position),direction=xyz(finish.direction),distance=finish.distance,
+                    goalDistance=finish.goalDistance,crossingSeconds=finish.crossingSeconds,
+                    minClearance=finish.minClearance,staminaBefore=staminaBefore,
+                    staminaAfter=tonumber(player:GetAttribute("Stamina")),
+                    staminaAfterImmediate=true,estimateOnly=true})
+                return observed,observed and "Full auto · dive across goal" or nil
+            end
+        end
+        if opponentDown then return false end
         local choice,candidates=decide(observation,true)
         local native={juke=nativeJuke,spin=nativeSpin,truck=nativeTruck}
         if choice and type(native[choice.action])~="function" then choice=nil end
@@ -322,10 +405,12 @@ return function(runtime)
         return taken,message
     end
     function api.status()
-        return {available=type(nativeJuke)=="function" or type(nativeSpin)=="function" or type(nativeTruck)=="function",
-            availableMoves={juke=type(nativeJuke)=="function",spin=type(nativeSpin)=="function",truck=type(nativeTruck)=="function"},
+        return {available=type(nativeJuke)=="function" or type(nativeSpin)=="function" or type(nativeTruck)=="function"
+                or type(runtime.canDive)=="function" and type(runtime.dive)=="function",
+            availableMoves={juke=type(nativeJuke)=="function",spin=type(nativeSpin)=="function",truck=type(nativeTruck)=="function",
+                finishDive=type(runtime.canDive)=="function" and type(runtime.dive)=="function"},
             active=active~=nil,attempts=attempts,
-            observedBursts=observedBursts,observedJumps=observedJumps,jumpPending=pendingJump~=nil,
+            observedBursts=observedBursts,observedJumps=observedJumps,observedFinishDives=observedFinishDives,jumpPending=pendingJump~=nil,
             lastOutcome=lastOutcome,error=lastError,nextAttempt=nextAttempt}
     end
     function api.unload() alive=false;cancel() end

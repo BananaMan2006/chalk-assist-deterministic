@@ -5,7 +5,8 @@ return function(create)
     local report={total=0,passed=0,failed=0,results={}}
     local Config={SprintSpeed=27,Moves={Juke={Cost=20,Cooldown=.9,Speed=42,Time=.18},
         Spin={Cost=25,Cooldown=1.6,Forward=24,Side=18,Time=.45},
-        Truck={Cost=45,Cooldown=2.5,Lunge=22,LungeTime=.22,LiveRange=10}},
+        Truck={Cost=45,Cooldown=2.5,Lunge=22,LungeTime=.22,LiveRange=10},
+        Dive={Cost=0,Cooldown=1.6,Yards=3,Time=.35,Reach=5,Range=3.5}},
         Tackle={GrabRange=3.5,GrabSlack=2}}
     local Field={MinX=-30,MaxX=30,BackZ=0,EndZ=140,GoalZ=120,YD=3}
     local function test(name,body)
@@ -303,6 +304,104 @@ return function(create)
         math.random=random;assert(ok,err)
     end)
     report.fixture="Native Juke numeric configuration with explicit positions; no server acceptance, collision physics, or tackle outcome simulation."
+    local function finishInput(extra)
+        local p=input({position=Vector3.new(0,3,117),opponentPosition=Vector3.new(0,3,100),
+            opponentVelocity=Vector3.new(0,0,27),canDive=true,
+            clipDistance=function(_,_,distance) return distance end})
+        for k,v in pairs(extra or {}) do p[k]=v end
+        return p
+    end
+    test("finish dive crosses real goal with native eased travel and zero native stamina cost",function()
+        local c=assert(policy.finishDive(finishInput({stamina=0})))
+        assert(c.action=="finishDive" and c.endpoint.Z==126 and c.goalDistance==3)
+        local f=c.crossingSeconds/Config.Moves.Dive.Time
+        assert(math.abs(117+9*(2*f-f*f)-120.25)<1e-8 and c.minClearance>.25)
+        assert(c.duration==.35 and c.cooldown==1.6)
+    end)
+    test("finish dive needs actual confirmed upright grounded WR RAC and native availability",function()
+        for _,change in ipairs({{carrierIsMe=false},{role="DB"},{phase="Live"},{mode="Team"},
+            {upright=false},{grounded=false},{healthy=false},{canDive=false},{enemyCarrier=true},
+            {ballActive=true},{testing=true},{enabled=false},{nextAttempt=10.01},
+            {velocity=Vector3.new(0,5,20)}}) do
+            assert(not policy.finishDive(finishInput(change)))
+        end
+        local p=finishInput();p.opponentPosition=nil;assert(not policy.finishDive(p))
+        p=finishInput();p.opponentVelocity=nil;assert(not policy.finishDive(p))
+    end)
+    test("finish dive never fires far from goal already across it or outside safe field",function()
+        for _,pos in ipairs({Vector3.new(0,3,110),Vector3.new(0,3,120),
+            Vector3.new(0,3,121),Vector3.new(29,3,117)}) do
+            assert(not policy.finishDive(finishInput({position=pos})))
+        end
+        local p=finishInput({geo={MinX=-30,MaxX=30,BackZ=0,EndZ=125,GoalZ=120}})
+        assert(not policy.finishDive(p),"full dive endpoint would leave field")
+    end)
+    test("finish dive rejects blocked or unknown path and a plausible immediate tackler",function()
+        for _,clip in ipairs({function() return 8.9 end,function() error("blocked fixture") end}) do
+            assert(not policy.finishDive(finishInput({clipDistance=clip})))
+        end
+        local p=finishInput();p.clipDistance=nil;assert(not policy.finishDive(p))
+        assert(not policy.finishDive(finishInput({opponentPosition=Vector3.new(0,3,112)})))
+        assert(not policy.finishDive(finishInput({opponentPosition=Vector3.new(0,3,124)})))
+        assert(not policy.finishDive(finishInput({opponentVelocity=Vector3.new(0,0,500)})))
+    end)
+    test("finish dive is repeatable and translated geometry keeps the same crossing",function()
+        local original=assert(policy.finishDive(finishInput()))
+        for i=1,8 do assert(policy.finishDive(finishInput()).crossingSeconds==original.crossingSeconds) end
+        local offset=Vector3.new(100,0,-200);local p=finishInput()
+        p.position=p.position+offset;p.opponentPosition=p.opponentPosition+offset;p.offset=offset
+        local shifted=assert(policy.finishDive(p))
+        assert(shifted.crossingSeconds==original.crossingSeconds)
+        p.offset=nil;p.geo={MinX=70,MaxX=130,BackZ=-200,EndZ=-60,GoalZ=-80}
+        assert(policy.finishDive(p).crossingSeconds==original.crossingSeconds)
+    end)
+    local function finishHarness(behavior)
+        local h=harness("unavailable")
+        h.root.Position=Vector3.new(0,3,117);h.enemyRoot.Position=Vector3.new(0,3,100)
+        h.enemyRoot.AssemblyLinearVelocity=Vector3.new(0,0,27)
+        h.runtime.canDive=function(humanoid,now)
+            assert(humanoid==h.humanoid and now>=10);return behavior~="denied"
+        end
+        h.runtime.dive=function(humanoid,direction,now,kind)
+            assert(humanoid==h.humanoid and direction.Z==1 and kind=="carrierFinishDive")
+            h.calls[#h.calls+1]="finishDive"
+            if behavior=="error" then error("fixture dive failure") end
+            if behavior~="unconfirmed" then h.humanoid.PlatformStand=true end
+            return behavior~="falseReturn"
+        end
+        h.api=create(h.runtime)
+        return h
+    end
+    test("finish dive uses supplied native wrapper and observed PlatformStand without Burst",function()
+        local h=finishHarness();h.stamina=0
+        local pos,vel=h.root.Position,h.root.AssemblyLinearVelocity
+        assert(h:update() and h.calls[1]=="finishDive" and not h.root.burst)
+        assert(h.api.status().observedFinishDives==1 and h.api.status().observedBursts==0)
+        assert(h.logs[#h.logs].data.action=="finishDive" and h.logs[#h.logs].data.estimateOnly)
+        assert(h.root.Position==pos and h.root.AssemblyLinearVelocity==vel and not h.humanoid.Jump)
+        assert(not h:update(10.1) and #h.calls==1)
+    end)
+    test("finish dive rejects native denial and never counts unobserved or failed start",function()
+        for _,behavior in ipairs({"denied","unconfirmed","falseReturn","error"}) do
+            local h=finishHarness(behavior)
+            assert(not h:update() and h.api.status().observedFinishDives==0,behavior)
+            assert(#h.calls==(behavior=="denied" and 0 or 1),behavior)
+            h.humanoid.PlatformStand=false
+            assert(not h:update(10.2) and #h.calls==(behavior=="denied" and 0 or 1),behavior)
+        end
+    end)
+    test("finish dive shares context gates and can finish past a stationary downed defender",function()
+        local h=finishHarness();h.enemyHum.PlatformStand=true;h.enemyRoot.AssemblyLinearVelocity=Vector3.zero
+        assert(h:update() and h.api.status().observedFinishDives==1)
+        for _,gate in ipairs({"air","lostPossession","cooldown","upright"}) do
+            h=finishHarness()
+            if gate=="air" then h.humanoid.FloorMaterial=Enum.Material.Air
+            elseif gate=="lostPossession" then h.snapshot.carrier=nil
+            elseif gate=="upright" then h.upright=false
+            else h.runtime.canDive=function()return false end end
+            assert(not h:update() and #h.calls==0,gate)
+        end
+    end)
     if offlineStateEnum then Enum.HumanoidStateType=nil end
     return report
 end
