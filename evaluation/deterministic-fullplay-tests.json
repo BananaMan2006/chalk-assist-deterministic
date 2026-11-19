@@ -8,196 +8,212 @@
     "defensive-cuts": {
       "results": [
         {
-          "passed": true,
-          "name": "recorded outward cut starts lateral follow before the old1.5-yard gate"
+          "name": "recorded outward cut starts lateral follow before the old1.5-yard gate",
+          "passed": true
         },
         {
-          "passed": true,
-          "name": "mirrored and translated cuts receive symmetric coverage"
+          "name": "mirrored and translated cuts receive symmetric coverage",
+          "passed": true
         },
         {
-          "passed": true,
-          "name": "lateral recovery retains85-start70-stop stamina hysteresis"
+          "name": "lateral recovery retains85-start70-stop stamina hysteresis",
+          "passed": true
         },
         {
-          "passed": true,
-          "name": "inward slow idle and safely retreating motion do not cause new side bursts"
+          "name": "inward slow idle and safely retreating motion do not cause new side bursts",
+          "passed": true
         },
         {
-          "passed": true,
-          "name": "closing the lateral gap releases the burst rather than maintaining a fixed offset"
+          "name": "closing the lateral gap releases the burst rather than maintaining a fixed offset",
+          "passed": true
         },
         {
-          "passed": true,
-          "name": "routine alignment follows directly behind with only a small open-field shade"
+          "name": "routine alignment follows directly behind with only a small open-field shade",
+          "passed": true
         },
         {
-          "passed": true,
-          "name": "lineup retains non-crowding unsprinted behavior"
+          "name": "lineup retains non-crowding unsprinted behavior",
+          "passed": true
         }
       ],
-      "passed": 7,
       "failed": 0,
+      "passed": 7,
       "total": 7
     },
     "scheduled-route-mix": {
-      "failed": 0,
-      "fixture": "Authored geometry and local native/approximate route timing. No server catch or win guarantee.",
-      "passed": 15,
       "results": [
         {
-          "passed": true,
-          "name": "fixed five-play schedule defaults to four middle stems and one quarter stem"
+          "name": "fixed five-play schedule defaults to four middle stems and one quarter stem",
+          "passed": true
         },
         {
-          "passed": true,
-          "name": "ordinary center DB two yards ahead retains the four-to-one default schedule"
+          "name": "ordinary center DB two yards ahead retains the four-to-one default schedule",
+          "passed": true
         },
         {
-          "passed": true,
-          "name": "reachable middle routes use three Floaters and one Bullet with ordinary center coverage"
+          "name": "reachable middle routes use three Floaters and one Bullet with ordinary center coverage",
+          "passed": true
         },
         {
-          "passed": true,
-          "name": "middle Floater preference falls back when its final sprint cannot be funded"
+          "name": "middle Floater preference falls back when its final sprint cannot be funded",
+          "passed": true
         },
         {
-          "passed": true,
-          "name": "a deep defender waiting on the preferred Floater lane changes that route"
+          "name": "a deep defender waiting on the preferred Floater lane changes that route",
+          "passed": true
         },
         {
-          "passed": true,
-          "name": "actual close center jam may override the scheduled middle family"
+          "name": "actual close center jam may override the scheduled middle family",
+          "passed": true
         },
         {
-          "passed": true,
-          "name": "quarter starts occupy actual quarter width and never finish straight"
+          "name": "a slow defender deep on a tight middle stem selects a clear alternative",
+          "passed": true
         },
         {
-          "passed": true,
-          "name": "every scheduled final sprint is funded through native arrival plus dispatch"
+          "name": "quarter starts occupy actual quarter width and never finish straight",
+          "passed": true
         },
         {
-          "passed": true,
-          "name": "repeated actual contests override the preferred route family"
+          "name": "every scheduled final sprint is funded through native arrival plus dispatch",
+          "passed": true
         },
         {
-          "passed": true,
-          "name": "a defender waiting in the intended lane changes the route or family"
+          "name": "repeated actual contests override the preferred route family",
+          "passed": true
         },
         {
-          "passed": true,
-          "name": "schedule uses field coordinates consistently across translated arenas"
+          "name": "explicit incompletes change the failed lane then repeated failures change family",
+          "passed": true
         },
         {
-          "passed": true,
-          "name": "setup steering moves to submitted start through normal unsprinted movement"
+          "name": "a defender waiting in the intended lane changes the route or family",
+          "passed": true
         },
         {
-          "passed": true,
-          "name": "live stem slows before a blocker while retaining the final sprint deadline"
+          "name": "schedule uses field coordinates consistently across translated arenas",
+          "passed": true
         },
         {
-          "passed": true,
-          "name": "stem deception uses only reachable spare walking time and never moves into the defender"
+          "name": "setup steering moves to submitted start through normal unsprinted movement",
+          "passed": true
         },
         {
-          "passed": true,
-          "name": "DB holds a small flexible live cushion without sprinting to chase an offset"
+          "name": "live stem slows before a blocker while retaining the final sprint deadline",
+          "passed": true
+        },
+        {
+          "name": "the three observed late stem states do not spend more deadline time slowing to seven",
+          "passed": true
+        },
+        {
+          "name": "body pacing can still slow when actual remaining distance leaves spare time",
+          "passed": true
+        },
+        {
+          "name": "stem deception uses only reachable spare walking time and never moves into the defender",
+          "passed": true
+        },
+        {
+          "name": "DB holds a small flexible live cushion without sprinting to chase an offset",
+          "passed": true
         }
       ],
-      "total": 15
+      "failed": 0,
+      "passed": 19,
+      "fixture": "Authored geometry and local native/approximate route timing. No server catch or win guarantee.",
+      "total": 19
     },
     "deterministic-isolation": {
-      "failed": 0,
-      "fixture": "Authored offline services and geometry; locally supplied RouteMath is not copied or published. No server outcome claim.",
-      "passed": 21,
       "results": [
         {
-          "passed": true,
-          "name": "logs carry injected release identity and exact native final scores"
+          "name": "logs carry injected release identity and exact native final scores",
+          "passed": true
         },
         {
-          "passed": true,
-          "name": "terminal lobby packet preserves unknown scores without inferring a winner"
+          "name": "terminal lobby packet preserves unknown scores without inferring a winner",
+          "passed": true
         },
         {
-          "passed": true,
-          "name": "old enabled settings and model histories cannot enable or seed this product"
+          "name": "old enabled settings and model histories cannot enable or seed this product",
+          "passed": true
         },
         {
-          "passed": true,
-          "name": "explicit enable writes only isolated non-resuming settings"
+          "name": "explicit enable writes only isolated non-resuming settings",
+          "passed": true
         },
         {
-          "passed": true,
-          "name": "actual route selection is repeatable without model or RNG calls"
+          "name": "actual route selection is repeatable without model or RNG calls",
+          "passed": true
         },
         {
-          "passed": true,
-          "name": "legacy learned policy overrides cannot replace deterministic choices"
+          "name": "legacy learned policy overrides cannot replace deterministic choices",
+          "passed": true
         },
         {
-          "passed": true,
-          "name": "route session observations are bounded and never persisted"
+          "name": "route session observations are bounded and never persisted",
+          "passed": true
         },
         {
-          "passed": true,
-          "name": "lobby clears session outcomes even when the old opponent remains in context"
+          "name": "lobby clears session outcomes even when the old opponent remains in context",
+          "passed": true
         },
         {
-          "passed": true,
-          "name": "unknown catch ownership does not fabricate a successful route"
+          "name": "unknown catch ownership does not fabricate a successful route",
+          "passed": true
         },
         {
-          "passed": true,
-          "name": "known opponent catches count as failed route outcomes"
+          "name": "known opponent catches count as failed route outcomes",
+          "passed": true
         },
         {
-          "passed": true,
-          "name": "pause and 1v1-only gates prevent setup or movement without changing native speed"
+          "name": "pause and 1v1-only gates prevent setup or movement without changing native speed",
+          "passed": true
         },
         {
-          "passed": true,
-          "name": "normal movement keeps native speed and stamina reserves"
+          "name": "normal movement keeps native speed and stamina reserves",
+          "passed": true
         },
         {
-          "passed": true,
-          "name": "failed submissions do not create successful or selected session history"
+          "name": "failed submissions do not create successful or selected session history",
+          "passed": true
         },
         {
-          "passed": true,
-          "name": "observed defensive outcomes update fixed rules once within this session"
+          "name": "observed defensive outcomes update fixed rules once within this session",
+          "passed": true
         },
         {
-          "passed": true,
-          "name": "ambiguous or missing defensive throw information cannot alter session rules"
+          "name": "ambiguous or missing defensive throw information cannot alter session rules",
+          "passed": true
         },
         {
-          "passed": true,
-          "name": "settings write failure is visible and does not call legacy storage"
+          "name": "settings write failure is visible and does not call legacy storage",
+          "passed": true
         },
         {
-          "passed": true,
-          "name": "selected starting X is submitted and steering distinguishes request from observed placement"
+          "name": "selected starting X is submitted and steering distinguishes request from observed placement",
+          "passed": true
         },
         {
-          "passed": true,
-          "name": "fixed route cycle persists across sessions while Full Auto still starts off"
+          "name": "fixed route cycle persists across sessions while Full Auto still starts off",
+          "passed": true
         },
         {
-          "passed": true,
-          "name": "unreachable cut request never submits a straight route or advances the schedule"
+          "name": "unreachable cut request never submits a straight route or advances the schedule",
+          "passed": true
         },
         {
-          "passed": true,
-          "name": "corrupt route cycle defaults to zero and never enables automatic play"
+          "name": "corrupt route cycle defaults to zero and never enables automatic play",
+          "passed": true
         },
         {
-          "passed": true,
-          "name": "unload stops callbacks and releases control"
+          "name": "unload stops callbacks and releases control",
+          "passed": true
         }
       ],
+      "failed": 0,
+      "passed": 21,
+      "fixture": "Authored offline services and geometry; locally supplied RouteMath is not copied or published. No server outcome claim.",
       "total": 21
     }
   }
