@@ -665,6 +665,71 @@ return function(Policy,create,routeSource,Planner)
             assert(not f.api.status().sessionHistory.campingCounterUsed)
         end,{pass="Bullet",rareCampingBullet=true})
     end)
+    test("first setup uses a conservative budget and retains the original observed HUD value",function()
+        local f=harness();f.api.setEnabled(true);f:settle()
+        local row
+        for _,e in ipairs(f.events) do if e.kind=="routeRequested" then row=e end end
+        assert(row and row.setupStamina==100 and row.planningStamina==75 and row.stamina==75)
+        assert(row.empiricalSetupAllowance and row.setupAllowanceFraction==.25)
+        assert(row.observedStartStamina==nil and f.attrs.Stamina==100,"planning mutated native stamina")
+    end)
+    test("early live stamina only lowers this match budget and late refills cannot raise it",function()
+        local f=harness();f.api.setEnabled(true);f:settle()
+        f.snapshot.phase="Live";f.snapshot.snapAt=f.time-.05;f.attrs.Stamina=70
+        f:navigate();assert(f.api.status().observedStartStamina==70)
+        f.time=f.time+.05;f.attrs.Stamina=100;f:navigate()
+        assert(f.api.status().observedStartStamina==70,"same-round refill raised observed start")
+        f:newRound(2)
+        local row
+        for _,e in ipairs(f.events) do if e.kind=="routeRequested" then row=e end end
+        assert(row and row.planningStamina==70 and row.observedStartStamina==70)
+        f.snapshot.phase="Live";f.snapshot.snapAt=f.time-.05;f.attrs.Stamina=60;f:navigate()
+        assert(f.api.status().observedStartStamina==60)
+        f.snapshot.mode="Team";f:tick();assert(f.api.status().observedStartStamina==nil)
+        f.snapshot.mode="1v1";f.snapshot.phase="Live";f.snapshot.snapAt=f.time-.05
+        f.attrs.Stamina=75;f:navigate();assert(f.api.status().observedStartStamina==75)
+        f.snapshot.phase="Lobby";f:tick();assert(f.api.status().observedStartStamina==nil)
+    end)
+    test("late or invalid stamina samples cannot seed a live-start budget",function()
+        local f=harness();f.api.setEnabled(true);f:settle();f.snapshot.phase="Live"
+        f.snapshot.snapAt=f.time-1;f.attrs.Stamina=5;f:navigate()
+        assert(f.api.status().observedStartStamina==nil)
+        f.snapshot.snapAt=f.time-.05;f.attrs.Stamina=0/0;f:navigate()
+        assert(f.api.status().observedStartStamina==nil)
+        f.snapshot.testing=true;f.attrs.Stamina=5;f:tick(.01);f:navigate()
+        assert(f.api.status().observedStartStamina==nil,"testing snapshot seeded a real match budget")
+        f.snapshot.testing=false;f.attrs.Stamina=0;f:navigate();assert(f.api.status().observedStartStamina==0)
+        f.accountId=456;assert(f.api.status().observedStartStamina==nil,"new opponent retained old match budget")
+    end)
+    test("recovery allocations are free until bounded native sprint intervals are observed",function()
+        local old=Policy.movement
+        local allocate,seen=true,{}
+        Policy.movement=function(input)
+            seen[#seen+1]=input.stemRecoverySpent
+            local out={kind="route",target=Vector3.new(0,3,80),sprint=true}
+            if allocate then out.stemRecoveryUntil=input.elapsed+.4;out.stemRecoverySeconds=.4;allocate=false end
+            return out
+        end
+        local ok,err=pcall(function()
+            local f=harness();f.api.setEnabled(true);f:settle();f.snapshot.phase="Live";f.snapshot.snapAt=1;f.time=2
+            f:navigate();assert(f.api.status().stemRecoverySpent==0,"allocation consumed actual-spend cap")
+            f.time=2.05;f:navigate();assert(seen[#seen]==0,"denied sprint consumed cap")
+            f.attrs.SprintOn=true;f.humanoid.WalkSpeed=20;f.time=2.10;f:navigate()
+            assert(f.api.status().stemRecoverySpent==0,"pending native20 speed counted as sprint")
+            f.humanoid.WalkSpeed=27;f.time=2.15;f:navigate()
+            f.time=2.20;f:navigate()
+            assert(math.abs(f.api.status().stemRecoverySpent-.05)<1e-8)
+            f.root.AssemblyLinearVelocity=Vector3.zero;f.time=2.25;f:navigate()
+            assert(math.abs(f.api.status().stemRecoverySpent-.10)<1e-8,"blocked native sprint escaped spending")
+            f.time=2.55;f:navigate()
+            assert(math.abs(f.api.status().stemRecoverySpent-.20)<1e-8,"long interval was not bounded and charged")
+            allocate=true;f.attrs.SprintOn=false;f.humanoid.WalkSpeed=20;f.time=2.60;f:navigate()
+            assert(math.abs(f.api.status().stemRecoverySpent-.20)<1e-8,"new allocation was double charged")
+            f.snapshot.phase="Result";f:tick();f.snapshot.phase="PreSnap";f:tick()
+            assert(f.api.status().stemRecoverySpent==0,"new round retained prior expenditure")
+        end)
+        Policy.movement=old;assert(ok,err)
+    end)
     Vector2,typeof=oldVector2,oldTypeof
     report.fixture="Authored offline services and geometry; locally supplied RouteMath is not copied or published. No server outcome claim."
     return report

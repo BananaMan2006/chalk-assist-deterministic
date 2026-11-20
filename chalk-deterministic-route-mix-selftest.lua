@@ -397,6 +397,48 @@ return function(Policy,create,routeSource,Planner)
         local command=assert(Policy.movement(p,Config,Field,RouteMath))
         assert(not command.stemFeint and command.target.X==Field.MidX)
     end)
+    test("setup stamina budgets preserve lower actual values and reject invalid observations",function()
+        assert(Policy.setupStaminaBudget(100,Config)==75)
+        assert(Policy.setupStaminaBudget(75,Config)==75)
+        assert(Policy.setupStaminaBudget(100,Config,60)==60)
+        assert(Policy.setupStaminaBudget(30,Config,60)==30)
+        assert(Policy.setupStaminaBudget(0,Config)==0 and Policy.setupStaminaBudget(0/0,Config)==0)
+        assert(Policy.setupStaminaBudget(100,Config,math.huge)==75)
+        assert(Policy.setupStaminaBudget(100,Config,-1)==75)
+        assert(Policy.setupStaminaBudget(200,{Stamina=200})==150,"allowance assumed fixed native maximum")
+    end)
+    test("reduced setup stamina funds an executable opening and only bounded rest regeneration",function()
+        local c=choose(input({stamina=75}))
+        assert(c.reachable and not c.bestEffort and c.estimatedCatchStamina>=10)
+        local deficit=Config.Stamina-75
+        local opening=c.earlyStemSprintSeconds*Config.SprintDrain
+        local rest=math.max(0,c.stemSprintStart-c.earlyStemSprintSeconds-Config.RegenDelay-.2)
+        assert(c.estimatedStemRegeneration<=deficit+opening+1e-8)
+        assert(c.estimatedStemRegeneration<=rest*Config.StaminaRegen+1e-8)
+        assert(75>=opening+10,"future regeneration funded an unaffordable opening")
+        local p=input({phase="Live",elapsed=.1,position=Vector3.new(0,3,0),stamina=75,currentWalkSpeed=20,
+            routePlan=c.plan,routeStrategy=c.routeStrategy,slowStem=true,slowStemTime=c.cutAt,
+            earlyStemSprintSeconds=c.earlyStemSprintSeconds,stemSprintStart=c.stemSprintStart,
+            estimatedStemRegeneration=c.estimatedStemRegeneration,estimatedCatchAt=c.estimatedCatchAt,
+            finalSprintReserve=c.finalSprintReserve,middleStemDeep=true,routeWaypoint=2})
+        assert(Policy.movement(p,Config,Field,RouteMath).sprint,"funded opening was suppressed at actual75")
+        p.stamina=0
+        assert(not Policy.movement(p,Config,Field,RouteMath).sprint,"future refill spent unavailable opening stamina")
+    end)
+    test("missing or disabled regeneration cannot fund a low-budget route",function()
+        local oldRate,oldDelay=Config.StaminaRegen,Config.RegenDelay
+        for _,value in ipairs({0,-1,0/0}) do
+            Config.StaminaRegen=value
+            local c=choose(input({stamina=75}))
+            assert(not c.estimatedStemRegeneration or c.estimatedStemRegeneration==0)
+        end
+        Config.StaminaRegen=oldRate;Config.RegenDelay=nil
+        local c=choose(input({stamina=75}))
+        assert(not c.estimatedStemRegeneration or c.estimatedStemRegeneration==0)
+        Config.RegenDelay=oldDelay
+        local low=choose(input({stamina=0}))
+        assert(low.bestEffort or not low.reachable,"regeneration invented an executable zero-stamina opening")
+    end)
     Vector2,typeof=oldVector2,oldTypeof
     return report
 end

@@ -23,6 +23,22 @@ local function projectedOpponent(input,Config,seconds)
     return input.opponentPosition+boundedVelocity(input.opponentVelocity,Config.SprintSpeed)*math.min(seconds,.25)
 end
 local function worldPoint(p,offset,y) return Vector3.new(p.X+offset.X,y,p.Y+offset.Z) end
+-- Live-start samples can be lower than the setup HUD. This empirical setup
+-- allowance is conservative planning, not an asserted hidden server cost.
+-- Current/observed lower stamina always wins; refill never raises this cap.
+function Policy.setupStaminaBudget(current,Config,observedStart)
+    local maximum=finite(Config.Stamina) and math.max(0,Config.Stamina) or 0
+    local budget=math.min(finite(current) and math.max(0,current) or 0,maximum*.75)
+    if finite(observedStart) and observedStart>=0 then budget=math.min(budget,observedStart) end
+    return budget
+end
+local function stemRegeneration(stamina,openingCost,rest,Config)
+    local maximum=finite(Config.Stamina) and math.max(0,Config.Stamina) or 0
+    local rate=finite(Config.StaminaRegen) and math.max(0,Config.StaminaRegen) or 0
+    local delay=finite(Config.RegenDelay) and math.max(0,Config.RegenDelay)+.2 or INF
+    local capacity=math.max(0,maximum-stamina)+math.max(0,openingCost)
+    return math.min(capacity,math.max(0,rest-delay)*rate)
+end
 local function validField(Field)
     return type(Field)=="table" and finite(Field.MinX) and finite(Field.MaxX)
         and finite(Field.BackZ) and finite(Field.EndZ) and finite(Field.GoalZ)
@@ -421,13 +437,12 @@ local function campingBullet(input,Config,Field,RouteMath,Planner,base)
                                     local early=math.min(.9,total)
                                     local cutAt=(flatDistance(input.position,cut)-(sprint-run)*total)/run+.15
                                     local late=cutAt-(total-early)
-                                    local regenRate=finite(Config.StaminaRegen) and math.max(0,Config.StaminaRegen) or 0
-                                    local regenDelay=finite(Config.RegenDelay) and Config.RegenDelay+.2 or INF
-                                    local regen=math.min(early*drain,math.max(0,late-early-regenDelay)*regenRate)
+                                    local regen=stemRegeneration(input.stamina,early*drain,late-early,Config)
                                     local stamina=input.stamina-total*drain+regen
                                     -- A direct pre-cut forecast is sufficient only when the
                                     -- whole stem precedes the actual Bullet launch.
-                                    if cutAt>=total+.15 and cutAt<=plan.Launch and stamina>reserve then
+                                    if input.stamina>=early*drain+reserve
+                                        and cutAt>=total+.15 and cutAt<=plan.Launch and stamina>reserve then
                                         local snap={now=cutAt,launchAt=plan.Launch,role="WR",passType="Bullet",config=Config,
                                             arc={P0=Vector3.new(mid+offset.X,turf+Config.ReleaseHeight,los-Config.QBBackYards*yd+offset.Z),
                                                 P1=worldPoint(plan.Target,offset,turf+Config.CatchHeight),Flight=plan.Flight,Apex=plan.Apex},
@@ -639,15 +654,17 @@ function Policy.chooseScheduledRoute(input,Config,Field,RouteMath,Planner)
                                 local stemRun=shortField and clamp((detourDistance-sprint*stemSprint)
                                     /math.max(.01,cutAt-.15-stemSprint),run*.2,run) or run
                                 local at=cutAt
-                                -- Credit only recovery of this opening burst,
-                                -- after the native delay plus an off-input margin.
+                                -- Recovery can refill an observed initial deficit
+                                -- as well as this opening burst, after the native
+                                -- delay plus an off-input margin and up to capacity.
                                 -- Catch handoff rechecks actual current stamina.
                                 local regenRate=finite(Config.StaminaRegen) and math.max(0,Config.StaminaRegen) or 0
                                 local regenDelay=finite(Config.RegenDelay) and math.max(0,Config.RegenDelay)+.2 or INF
-                                local regenerated=math.min(earlySprint*drain,
-                                    math.max(0,lateStart-earlySprint-regenDelay)*regenRate)
+                                local regenerated=stemRegeneration(stamina,earlySprint*drain,
+                                    lateStart-earlySprint,Config)
                                 local afterStem=stamina-stemSprint*drain+regenerated
-                                if cutAt>=stemSprint+.15 and at<plan.Arrival-.12 and afterStem>reserve then
+                                if stamina>=earlySprint*drain+reserve
+                                    and cutAt>=stemSprint+.15 and at<plan.Arrival-.12 and afterStem>reserve then
                                     local endpoint=worldPoint(plan.Target,offset,turf+Config.CatchHeight)
                                     local arc={P0=Vector3.new(mid+offset.X,turf+Config.ReleaseHeight,
                                         los-Config.QBBackYards*yd+offset.Z),P1=endpoint,Flight=plan.Flight,Apex=plan.Apex}
@@ -1419,7 +1436,9 @@ function Policy.movement(input,Config,Field,RouteMath)
                         local required=(remainingBurst+finalSeconds)*drain+routeReserve
                         local openingCredit=0
                         if input.elapsed<early and finite(input.estimatedStemRegeneration) then
-                            openingCredit=clamp(input.estimatedStemRegeneration,0,early*drain)
+                            local maximum=finite(Config.Stamina) and math.max(0,Config.Stamina) or 0
+                            local capacity=math.max(0,maximum-stamina)+math.max(0,early-input.elapsed)*drain
+                            openingCredit=clamp(input.estimatedStemRegeneration,0,capacity)
                         end
                         local existingUntil=finite(input.stemRecoveryUntil) and input.stemRecoveryUntil or 0
                         local spent=finite(input.stemRecoverySpent) and clamp(input.stemRecoverySpent,0,.6) or 0
@@ -1447,6 +1466,7 @@ function Policy.movement(input,Config,Field,RouteMath)
                         end
                         if (input.elapsed<early or input.elapsed>=late or recoveryActive)
                             and stamina+openingCredit>=required+math.max(0,extraRemaining)*drain
+                            and (input.elapsed>=early or stamina>=math.max(0,early-input.elapsed)*drain+routeReserve)
                             then speed=sprintSpeed
                         else speed=stemRun end
                         scheduleCapacity=scheduleCapacity+(sprintSpeed-stemRun)*math.max(0,extraRemaining)

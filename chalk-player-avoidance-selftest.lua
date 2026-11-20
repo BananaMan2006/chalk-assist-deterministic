@@ -628,14 +628,17 @@ return function(Avoidance)
         local state,d=Avoidance.update(nil,p)
         assert(d.active and d.sprint and state.side==1)
         local angle=math.acos(math.clamp(d.direction.Unit:Dot(p.desiredDirection),-1,1))
-        assert(math.abs(angle-math.rad(15))<1e-6,
-            "did not choose the smallest safe faster bypass")
+        assert(angle<=math.rad(25)+1e-6,
+            "safe sprint bypass added an unnecessarily wide turn")
+        local narrower=Vector3.new(math.sin(angle-math.rad(5)),0,math.cos(angle-math.rad(5)))
+        assert(projectedGap(p.opponents[1].position,Vector3.zero,narrower,27)<4.25,
+            "a smaller tested angle also preserved the sprint contact band")
         for _,speed in ipairs({20,27}) do
-            assert(projectedGap(p.opponents[1].position,Vector3.zero,d.direction,speed)>=3.75-1e-6)
+            assert(projectedGap(p.opponents[1].position,Vector3.zero,d.direction,speed)>=4.25-1e-6)
         end
         p.allowSprintDetour=false
         local _,walking=Avoidance.update(nil,p)
-        assert(not walking.sprint and d.direction.Z*27>walking.direction.Z*27+6,
+        assert(not walking.sprint and d.direction.Z*27>walking.direction.Z*27+5,
             "wider sprint path did not improve progress over walking")
         assert(math.abs(math.acos(walking.direction.Unit.Z)-math.rad(5))<1e-6,
             "opt-out changed the original shortest walking path")
@@ -678,15 +681,75 @@ return function(Avoidance)
                     "ranking skipped the bounded same-side turn")
                 if d.sprint then
                     for _,speed in ipairs({20,27}) do
-                        assert(projectedGap(observed.position,observed.velocity,d.direction,speed)>=3.75-1e-6,
+                        assert(projectedGap(observed.position,observed.velocity,d.direction,speed)>=4.25-1e-6,
                             "ranked sprint bypass failed actual-heading clearance")
                     end
                 end
                 p.now=p.now+p.dt;p.currentDirection=state.heading
             end
-            assert(d.sprint and math.abs(math.acos(math.clamp(d.direction.Unit:Dot(heading),-1,1))-math.rad(20))<1e-6)
+            assert(d.sprint and math.acos(math.clamp(d.direction.Unit:Dot(heading),-1,1))<=math.rad(30)+1e-6,
+                "recorded bracket used an unnecessarily wide sprint bypass")
             assert(d.direction:Dot(heading)*27>20,
                 "recorded bracket failed to retain better forward progress")
+        end
+    end)
+    test("sprint forecast preserves its own near-contact gate across mirrored moving bypasses",function()
+        -- Exact, constant-velocity geometry, not a native physics/catch replay.
+        -- The old 3.75 forecast admitted the 4.25 band, then toggled sprint off
+        -- for 22 frames despite a safe same-side route around the moving body.
+        for _,mirror in ipairs({-1,1}) do
+            local other={position=Vector3.new(mirror*6,0,2),velocity=Vector3.new(0,0,25)}
+            local p=fixture({dt=1/60,position=Vector3.new(mirror*10,0,0),walkSpeed=27,
+                currentDirection=Vector3.new(-mirror*.2,0,math.sqrt(.96)),
+                allowSprintDetour=true,sprintSpeed=27,opponents={other},
+                targetPosition=Vector3.new(0,0,80),arriveBy=3,
+                bounds={minX=-50,maxX=50,minZ=-20,maxZ=100}})
+            local state,side,walkFrames=nil,nil,0
+            for _=1,120 do
+                p.desiredDirection=(p.targetPosition-p.position).Unit
+                local previousHeading=state and state.active and state.heading or p.currentDirection
+                local d;state,d=Avoidance.update(state,p)
+                if d.active then
+                    local angle=math.acos(math.clamp(previousHeading.Unit:Dot(state.heading.Unit),-1,1))
+                    assert(angle<=8*p.dt+1e-6,"near-contact forecast skipped the bounded turn")
+                end
+                if d.side then
+                    side=side or d.side;assert(side==d.side,"near-contact forecast flipped passing side")
+                end
+                if d.sprint then
+                    for _,speed in ipairs({p.walkSpeed,27}) do
+                        assert(projectedGap(other.position-p.position,other.velocity,d.direction,speed)>=4.25-1e-6,
+                            "approved sprint enters the same band that releases sprint next frame")
+                    end
+                else walkFrames=walkFrames+1 end
+                legal(p,d.direction)
+                p.position=p.position+d.direction*p.walkSpeed*p.dt
+                other.position=other.position+other.velocity*p.dt
+                if d.direction.Magnitude>.001 then p.currentDirection=d.direction.Unit end
+                p.walkSpeed=d.sprint and 27 or 20;p.now=p.now+p.dt
+                assert((p.position-other.position).Magnitude>=4.25-1e-6,
+                    "safe sprint forecast drifted into the forced-release band")
+                assert(math.abs(p.position.X-mirror*10)<.8,
+                    "near-contact forecast spent the deadline on a wide lateral detour")
+            end
+            assert(walkFrames<=1 and p.position.Z>53.5,
+                "near-contact bypass repeatedly toggled sprint or lost avoidable forward progress")
+        end
+    end)
+    test("near-contact sprint anticipation remains an explicit opt-in",function()
+        -- A clear walking forecast may pass through the sprint-only band.
+        -- Ordinary movement and a funded-but-not-requested sprint keep the
+        -- exact original direction; neither gets a wider avoidance radius.
+        for _,options in ipairs({
+            {allowSprintDetour=false,requestedSprint=true},
+            {allowSprintDetour=true,requestedSprint=false},
+        }) do
+            local p=fixture({walkSpeed=20,sprintSpeed=27,
+                allowSprintDetour=options.allowSprintDetour,requestedSprint=options.requestedSprint,
+                opponents={{position=Vector3.new(4,0,2),velocity=Vector3.new(0,0,20)}}})
+            local _,d=Avoidance.update(nil,p)
+            assert(not d.active and not d.changed and d.sprint==options.requestedSprint)
+            same(d.direction,p.desiredDirection)
         end
     end)
     return report

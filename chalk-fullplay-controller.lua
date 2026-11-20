@@ -42,6 +42,8 @@ return function(ctx,Policy,services)
     local finalSprintCommitted=false
     local hardCutIssued=false
     local stemRecoveryUntil,stemRecoverySpent=0,0
+    local recoveryObservedAt,recoveryObservedSprint
+    local observedStartStamina,staminaObservedRound
     local observedSnapAt
     local message,errorMessage,saveError="Full auto off",nil,nil
     local navigationError
@@ -132,6 +134,42 @@ return function(ctx,Policy,services)
     end
     local function finite(value)
         return type(value)=="number" and value==value and math.abs(value)<math.huge
+    end
+    local function observeStartStamina(s)
+        if s.mode and s.mode~="1v1" then
+            observedStartStamina,staminaObservedRound=nil,nil
+            return
+        end
+        if not enabled or s.testing or s.role~="WR" or s.phase~="Live" or s.arc or not finite(s.snapAt) then return end
+        local elapsed=world:GetServerTimeNow()-s.snapAt
+        local key=tostring(s.roundKey or s.preSnapEnds or s.snapAt)
+        if key==staminaObservedRound or elapsed<0 or elapsed>.25 then return end
+        local value=tonumber(player:GetAttribute("Stamina"))
+        if not finite(value) or value<0 or not finite(Config.Stamina) or value>Config.Stamina then return end
+        staminaObservedRound=key
+        observedStartStamina=observedStartStamina and math.min(observedStartStamina,value) or value
+        log("startStamina",{observed=value,elapsed=elapsed,matchMinimum=observedStartStamina,
+            planningBudget=Policy.setupStaminaBudget(value,Config,observedStartStamina),
+            setupAllowanceFraction=.25,empiricalAllowance=true})
+    end
+    local function accountStemRecovery(input)
+        local at=input.elapsed
+        local confirmed=input.role=="WR" and input.phase=="Live" and not input.ballActive
+            and not input.passStarted and input.sprintOn==true
+            and finite(input.currentWalkSpeed) and input.currentWalkSpeed>Config.RunSpeed+.05
+        if finite(at) and finite(recoveryObservedAt) and confirmed and recoveryObservedSprint
+            and at>recoveryObservedAt then
+            local last=math.min(at,stemRecoveryUntil,
+                finite(input.stemSprintStart) and input.stemSprintStart or stemRecoveryUntil)
+            local spent=math.min(.1,math.max(0,last-recoveryObservedAt))
+            stemRecoverySpent=math.min(.6,stemRecoverySpent+spent)
+        end
+        -- An allocated burst is an outstanding request, not observed spending.
+        -- Walking/denied requests cannot consume the cap. Long observations
+        -- contribute at most100ms rather than erasing every low-FPS interval.
+        recoveryObservedAt=finite(at) and at or nil
+        recoveryObservedSprint=confirmed and finite(at) and at<stemRecoveryUntil
+        input.stemRecoverySpent=stemRecoverySpent
     end
     local function defenseDescriptor(value)
         if type(value)~="table" or (value.pass~="Bullet" and value.pass~="Floater")
@@ -235,6 +273,8 @@ return function(ctx,Policy,services)
         finalSprintCommitted=false
         hardCutIssued=false
         stemRecoveryUntil,stemRecoverySpent=0,0
+        recoveryObservedAt,recoveryObservedSprint=nil,nil
+        observedStartStamina,staminaObservedRound=nil,nil
         selected,routePlan,routeSource,planPass=nil,nil,nil,nil
         submitted=false;roundKey=nil;submitTries=0;nextSubmit=0;observedSnapAt=nil
         routeWaypoint=2;lastLoggedWaypoint=nil
@@ -454,6 +494,8 @@ return function(ctx,Policy,services)
         observationStarted=world:GetServerTimeNow()
         hardCutIssued=false
         stemRecoveryUntil,stemRecoverySpent=0,0
+        recoveryObservedAt,recoveryObservedSprint=nil,nil
+        staminaObservedRound=nil
         activeRoute=pending
         if not pending then finalSprintCommitted=false end
         if not activeDefense or activeDefense.roundKey~=key then activeDefense=nil end
@@ -465,6 +507,7 @@ return function(ctx,Policy,services)
     local function setup()
         local s=ctx.snapshot()
         syncOpponent(s)
+        observeStartStamina(s)
         if (s.phase=="RAC" or s.phase=="Run") and s.carrier==player.Character and s.carrier~=nil then
             ownPossessionObserved=true
         end
@@ -512,6 +555,8 @@ return function(ctx,Policy,services)
         if not root then message="Full auto · waiting for character";return end
         submitTries=submitTries+1;nextSubmit=now+1
         local input=inputFor(s,root)
+        local setupStamina=input.stamina
+        input.stamina=Policy.setupStaminaBudget(setupStamina,Config,observedStartStamina)
         -- These automatic candidates are forecast without a release prefix.
         -- Equipped/owned releases remain available to the native manual menu;
         -- do not silently add their cost, motion or timing to this forecast.
@@ -646,7 +691,9 @@ return function(ctx,Policy,services)
             bestDefenderEnvelopeMargin=chosen.bestDefenderEnvelopeMargin,
             position=coordinates(input.position),opponentPosition=coordinates(input.opponentPosition),
             opponentVelocity=coordinates(input.opponentVelocity),offset=coordinates(input.offset),
-            LOS=input.LOS,stamina=input.stamina})
+            LOS=input.LOS,stamina=input.stamina,setupStamina=setupStamina,
+            planningStamina=input.stamina,observedStartStamina=observedStartStamina,
+            setupAllowanceFraction=.25,empiricalSetupAllowance=true})
     end
     local accumulator=0
     local connection=run.Heartbeat:Connect(function(dt)
@@ -660,6 +707,7 @@ return function(ctx,Policy,services)
         if pauseReason(s) or not root or not h or h.PlatformStand then return nil end
         if s.role=="WR" and (s.phase=="PreSnap" or s.phase=="Hike") and (tonumber(h.WalkSpeed) or 0)<=0 then return nil end
         if finite(s.snapAt) then observedSnapAt=s.snapAt end
+        observeStartStamina(s)
         if s.route and #s.route>=2 and (routeSource~=s.route or planPass~=s.passType) then
             if routeSource~=nil then routeWaypoint=2 end
             routePlan=RouteMath.Plan(s.route,s.passType or selected and selected.payload.Pass or "Bullet")
@@ -667,6 +715,7 @@ return function(ctx,Policy,services)
         end
         local input=inputFor(s,root);input.dt=dt
         input.currentWalkSpeed=tonumber(h.WalkSpeed)
+        accountStemRecovery(input)
         if input.role=="WR" and input.carrierIsMe
             and (input.phase=="RAC" or input.phase=="Run") and lastKind~="carry" then
             -- Catch steering may finish far from the pre-throw route target.
@@ -681,7 +730,9 @@ return function(ctx,Policy,services)
         if choice.finalSprintCommitted==true then finalSprintCommitted=true end
         if finite(choice.stemRecoveryUntil) and finite(choice.stemRecoverySeconds) then
             stemRecoveryUntil=choice.stemRecoveryUntil
-            stemRecoverySpent=math.min(.6,stemRecoverySpent+choice.stemRecoverySeconds)
+            recoveryObservedAt=input.elapsed
+            recoveryObservedSprint=input.sprintOn==true and finite(input.currentWalkSpeed)
+                and input.currentWalkSpeed>Config.RunSpeed+.05
         end
         local hardCut=choice.finalSprintCommitted==true
             and (input.routeStrategy=="deep_middle_floater" or input.routeStrategy=="deep_middle_bullet")
@@ -899,6 +950,8 @@ return function(ctx,Policy,services)
             sessionHistory=sessionRecord(),
             defenseProfile=defenseProfile(),activeDefense=defenseDescriptor(activeDefense),
             finalSprintCommitted=finalSprintCommitted,
+            observedStartStamina=observedStartStamina,setupAllowanceFraction=.25,
+            stemRecoverySpent=stemRecoverySpent,stemRecoveryUntil=stemRecoveryUntil,
             routeWaypoint=routeWaypoint,routeRoundKey=roundIdentity(ctx.snapshot()),
             activeRoute=descriptor(activeRoute)}
     end

@@ -157,6 +157,7 @@ end
         f.context.opponent={FindFirstChild=function() return other end,
             FindFirstChildOfClass=function() return {Health=100} end}
         f.api=factory(f)
+        local previousHeading=held
         for _=1,2 do
             f.api.catch(f.context)
             local input=f.helperCalls[#f.helperCalls].input
@@ -164,7 +165,15 @@ end
             equal(input.targetPosition,nil);equal(input.arriveBy,nil)
             equal(input.walkSpeed,20);equal(f.h.WalkSpeed,20)
             equal(f.sprinting,true,"safe pending request was cancelled")
-            assert((f.moves[#f.moves]-held).Magnitude<1e-6,"safe held path unexpectedly changed")
+            local output=f.moves[#f.moves]
+            assert(output:Dot(previousHeading)>=math.cos(8/60)-1e-8,"checked turn exceeded its bound")
+            for _,speed in ipairs({20,27}) do
+                local relative=other.Position-f.root.Position
+                local relativeVelocity=other.AssemblyLinearVelocity-output*speed
+                local at=math.max(0,math.min(.25,-relative:Dot(relativeVelocity)/relativeVelocity:Dot(relativeVelocity)))
+                assert((relative+relativeVelocity*at).Magnitude>=4.25-1e-8,"pending sprint weakened touching clearance")
+            end
+            previousHeading=output.Unit
             f.now=f.now+1/60
         end
         equal(#f.sprintCalls,0,"pending request chattered off and on")

@@ -83,6 +83,12 @@ function Avoidance.update(previous,input)
         and sprintSpeed~=nil and sprintSpeed>=run
     local lookupSpeed=sprintEligible and math.max(speed,sprintSpeed) or speed
     local radius=clamp(finite(input.clearance) and input.clearance or 3.75,2,6)
+    -- Sprint already stops inside this near-contact band. Forecasting only
+    -- the smaller collision capsule can approve a heading that immediately
+    -- enters the band and turns sprint off on the following frame. Anticipate
+    -- the same boundary, without widening ordinary walking avoidance.
+    local sprintClearance=radius+.5
+    local threatRadius=sprintEligible and sprintClearance or radius
     local horizon=clamp(finite(input.lookahead) and input.lookahead or .25,.1,.3)
     local height=clamp(finite(input.verticalClearance) and input.verticalClearance or 5,2,8)
     local turnRate=clamp(finite(input.turnRate) and input.turnRate or 8,2,12)
@@ -125,7 +131,7 @@ function Avoidance.update(previous,input)
             end
         end
     end
-    local touching=nearest<=radius+.5
+    local touching=nearest<=sprintClearance
     if not touching then state.contactSince=nil
     elseif not finite(state.contactSince) then state.contactSince=now end
     local blocked=touching and measured~=nil and measured<math.max(1,speed*strength*.2)
@@ -158,7 +164,7 @@ function Avoidance.update(previous,input)
                 end
             end
         end
-        if gap<radius and approaching and other.relative:Dot(approachHeading)>=-radius*.4 then
+        if gap<threatRadius and approaching and other.relative:Dot(approachHeading)>=-radius*.4 then
             threat=true
             if not closestDistance or gap<closestDistance then closestThreat,closestDistance=other,gap end
         end
@@ -184,8 +190,10 @@ function Avoidance.update(previous,input)
         -- Test the actual bounded heading, not the final candidate heading.
         -- Neither an overlapping escape nor a path safe only at walking
         -- speed can spend sprint while turning around the other player.
-        return evaluate(direction,speed*strength)
-            and evaluate(direction,sprintSpeed*strength)
+        local actualSafe,actualGap=evaluate(direction,speed*strength)
+        local futureSafe,futureGap=evaluate(direction,sprintSpeed*strength)
+        return actualSafe and actualGap>=sprintClearance
+            and futureSafe and futureGap>=sprintClearance
     end
 
     if not threat and not blocked then

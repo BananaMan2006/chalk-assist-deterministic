@@ -1,4 +1,4 @@
--- Chalk-Release: 5.1.17
+-- Chalk-Release: 5.1.18
 -- Chalk-Product: deterministic
 -- Chalk It Up DB/WR ball assist using normal sprint/jump/dive controls.
 -- Cyan: replicated route (when supplied). Yellow: movement estimate.
@@ -47,7 +47,7 @@ assert(matchEvent and fxEvent and matchEvent:IsA("RemoteEvent") and fxEvent:IsA(
     "Chalk It Up Match/Fx events were not found")
 
 local api = {}
-local RELEASE_VERSION="5.1.17"
+local RELEASE_VERSION="5.1.18"
 local loadedGameId,loadedPlaceId,loadedJobId=game.GameId,game.PlaceId,game.JobId
 env.ChalkDB = api
 local alive, enabled = true, true
@@ -967,7 +967,7 @@ end
 function api.status()
     local ch = characterOf(opponent)
     local holder,isEnemy,holderRole=carrierContext()
-    return {product="deterministic",version=RELEASE_VERSION,buildId="00edfd316f0cb63c525ad8b61160dddf1d3d8a09739cdff1d4fea7b9af9893dd",policyMode="deterministic", enabled=enabled, role=role or "unknown",rawRole=rawRole or "unknown", phase=phase,
+    return {product="deterministic",version=RELEASE_VERSION,buildId="965226d3d58be1a6d2168b13b5f3dd176906cc9c236d5e74008f986a008b3d9f",policyMode="deterministic", enabled=enabled, role=role or "unknown",rawRole=rawRole or "unknown", phase=phase,
         ui={visible=windowVisible,minimized=minimized,x=panel.Position.X.Offset,y=panel.Position.Y.Offset},
         matchAlerts={enabled=alertSettings.enabled,saveError=alertSettings.saveError},
         preferences=preferences and preferences.status() or nil,
@@ -3481,6 +3481,12 @@ function Avoidance.update(previous,input)
         and sprintSpeed~=nil and sprintSpeed>=run
     local lookupSpeed=sprintEligible and math.max(speed,sprintSpeed) or speed
     local radius=clamp(finite(input.clearance) and input.clearance or 3.75,2,6)
+    -- Sprint already stops inside this near-contact band. Forecasting only
+    -- the smaller collision capsule can approve a heading that immediately
+    -- enters the band and turns sprint off on the following frame. Anticipate
+    -- the same boundary, without widening ordinary walking avoidance.
+    local sprintClearance=radius+.5
+    local threatRadius=sprintEligible and sprintClearance or radius
     local horizon=clamp(finite(input.lookahead) and input.lookahead or .25,.1,.3)
     local height=clamp(finite(input.verticalClearance) and input.verticalClearance or 5,2,8)
     local turnRate=clamp(finite(input.turnRate) and input.turnRate or 8,2,12)
@@ -3523,7 +3529,7 @@ function Avoidance.update(previous,input)
             end
         end
     end
-    local touching=nearest<=radius+.5
+    local touching=nearest<=sprintClearance
     if not touching then state.contactSince=nil
     elseif not finite(state.contactSince) then state.contactSince=now end
     local blocked=touching and measured~=nil and measured<math.max(1,speed*strength*.2)
@@ -3556,7 +3562,7 @@ function Avoidance.update(previous,input)
                 end
             end
         end
-        if gap<radius and approaching and other.relative:Dot(approachHeading)>=-radius*.4 then
+        if gap<threatRadius and approaching and other.relative:Dot(approachHeading)>=-radius*.4 then
             threat=true
             if not closestDistance or gap<closestDistance then closestThreat,closestDistance=other,gap end
         end
@@ -3582,8 +3588,10 @@ function Avoidance.update(previous,input)
         -- Test the actual bounded heading, not the final candidate heading.
         -- Neither an overlapping escape nor a path safe only at walking
         -- speed can spend sprint while turning around the other player.
-        return evaluate(direction,speed*strength)
-            and evaluate(direction,sprintSpeed*strength)
+        local actualSafe,actualGap=evaluate(direction,speed*strength)
+        local futureSafe,futureGap=evaluate(direction,sprintSpeed*strength)
+        return actualSafe and actualGap>=sprintClearance
+            and futureSafe and futureGap>=sprintClearance
     end
 
     if not threat and not blocked then
@@ -6239,6 +6247,22 @@ local function projectedOpponent(input,Config,seconds)
     return input.opponentPosition+boundedVelocity(input.opponentVelocity,Config.SprintSpeed)*math.min(seconds,.25)
 end
 local function worldPoint(p,offset,y) return Vector3.new(p.X+offset.X,y,p.Y+offset.Z) end
+-- Live-start samples can be lower than the setup HUD. This empirical setup
+-- allowance is conservative planning, not an asserted hidden server cost.
+-- Current/observed lower stamina always wins; refill never raises this cap.
+function Policy.setupStaminaBudget(current,Config,observedStart)
+    local maximum=finite(Config.Stamina) and math.max(0,Config.Stamina) or 0
+    local budget=math.min(finite(current) and math.max(0,current) or 0,maximum*.75)
+    if finite(observedStart) and observedStart>=0 then budget=math.min(budget,observedStart) end
+    return budget
+end
+local function stemRegeneration(stamina,openingCost,rest,Config)
+    local maximum=finite(Config.Stamina) and math.max(0,Config.Stamina) or 0
+    local rate=finite(Config.StaminaRegen) and math.max(0,Config.StaminaRegen) or 0
+    local delay=finite(Config.RegenDelay) and math.max(0,Config.RegenDelay)+.2 or INF
+    local capacity=math.max(0,maximum-stamina)+math.max(0,openingCost)
+    return math.min(capacity,math.max(0,rest-delay)*rate)
+end
 local function validField(Field)
     return type(Field)=="table" and finite(Field.MinX) and finite(Field.MaxX)
         and finite(Field.BackZ) and finite(Field.EndZ) and finite(Field.GoalZ)
@@ -6637,13 +6661,12 @@ local function campingBullet(input,Config,Field,RouteMath,Planner,base)
                                     local early=math.min(.9,total)
                                     local cutAt=(flatDistance(input.position,cut)-(sprint-run)*total)/run+.15
                                     local late=cutAt-(total-early)
-                                    local regenRate=finite(Config.StaminaRegen) and math.max(0,Config.StaminaRegen) or 0
-                                    local regenDelay=finite(Config.RegenDelay) and Config.RegenDelay+.2 or INF
-                                    local regen=math.min(early*drain,math.max(0,late-early-regenDelay)*regenRate)
+                                    local regen=stemRegeneration(input.stamina,early*drain,late-early,Config)
                                     local stamina=input.stamina-total*drain+regen
                                     -- A direct pre-cut forecast is sufficient only when the
                                     -- whole stem precedes the actual Bullet launch.
-                                    if cutAt>=total+.15 and cutAt<=plan.Launch and stamina>reserve then
+                                    if input.stamina>=early*drain+reserve
+                                        and cutAt>=total+.15 and cutAt<=plan.Launch and stamina>reserve then
                                         local snap={now=cutAt,launchAt=plan.Launch,role="WR",passType="Bullet",config=Config,
                                             arc={P0=Vector3.new(mid+offset.X,turf+Config.ReleaseHeight,los-Config.QBBackYards*yd+offset.Z),
                                                 P1=worldPoint(plan.Target,offset,turf+Config.CatchHeight),Flight=plan.Flight,Apex=plan.Apex},
@@ -6855,15 +6878,17 @@ function Policy.chooseScheduledRoute(input,Config,Field,RouteMath,Planner)
                                 local stemRun=shortField and clamp((detourDistance-sprint*stemSprint)
                                     /math.max(.01,cutAt-.15-stemSprint),run*.2,run) or run
                                 local at=cutAt
-                                -- Credit only recovery of this opening burst,
-                                -- after the native delay plus an off-input margin.
+                                -- Recovery can refill an observed initial deficit
+                                -- as well as this opening burst, after the native
+                                -- delay plus an off-input margin and up to capacity.
                                 -- Catch handoff rechecks actual current stamina.
                                 local regenRate=finite(Config.StaminaRegen) and math.max(0,Config.StaminaRegen) or 0
                                 local regenDelay=finite(Config.RegenDelay) and math.max(0,Config.RegenDelay)+.2 or INF
-                                local regenerated=math.min(earlySprint*drain,
-                                    math.max(0,lateStart-earlySprint-regenDelay)*regenRate)
+                                local regenerated=stemRegeneration(stamina,earlySprint*drain,
+                                    lateStart-earlySprint,Config)
                                 local afterStem=stamina-stemSprint*drain+regenerated
-                                if cutAt>=stemSprint+.15 and at<plan.Arrival-.12 and afterStem>reserve then
+                                if stamina>=earlySprint*drain+reserve
+                                    and cutAt>=stemSprint+.15 and at<plan.Arrival-.12 and afterStem>reserve then
                                     local endpoint=worldPoint(plan.Target,offset,turf+Config.CatchHeight)
                                     local arc={P0=Vector3.new(mid+offset.X,turf+Config.ReleaseHeight,
                                         los-Config.QBBackYards*yd+offset.Z),P1=endpoint,Flight=plan.Flight,Apex=plan.Apex}
@@ -7635,7 +7660,9 @@ function Policy.movement(input,Config,Field,RouteMath)
                         local required=(remainingBurst+finalSeconds)*drain+routeReserve
                         local openingCredit=0
                         if input.elapsed<early and finite(input.estimatedStemRegeneration) then
-                            openingCredit=clamp(input.estimatedStemRegeneration,0,early*drain)
+                            local maximum=finite(Config.Stamina) and math.max(0,Config.Stamina) or 0
+                            local capacity=math.max(0,maximum-stamina)+math.max(0,early-input.elapsed)*drain
+                            openingCredit=clamp(input.estimatedStemRegeneration,0,capacity)
                         end
                         local existingUntil=finite(input.stemRecoveryUntil) and input.stemRecoveryUntil or 0
                         local spent=finite(input.stemRecoverySpent) and clamp(input.stemRecoverySpent,0,.6) or 0
@@ -7663,6 +7690,7 @@ function Policy.movement(input,Config,Field,RouteMath)
                         end
                         if (input.elapsed<early or input.elapsed>=late or recoveryActive)
                             and stamina+openingCredit>=required+math.max(0,extraRemaining)*drain
+                            and (input.elapsed>=early or stamina>=math.max(0,early-input.elapsed)*drain+routeReserve)
                             then speed=sprintSpeed
                         else speed=stemRun end
                         scheduleCapacity=scheduleCapacity+(sprintSpeed-stemRun)*math.max(0,extraRemaining)
@@ -7944,6 +7972,8 @@ return function(ctx,Policy,services)
     local finalSprintCommitted=false
     local hardCutIssued=false
     local stemRecoveryUntil,stemRecoverySpent=0,0
+    local recoveryObservedAt,recoveryObservedSprint
+    local observedStartStamina,staminaObservedRound
     local observedSnapAt
     local message,errorMessage,saveError="Full auto off",nil,nil
     local navigationError
@@ -8034,6 +8064,42 @@ return function(ctx,Policy,services)
     end
     local function finite(value)
         return type(value)=="number" and value==value and math.abs(value)<math.huge
+    end
+    local function observeStartStamina(s)
+        if s.mode and s.mode~="1v1" then
+            observedStartStamina,staminaObservedRound=nil,nil
+            return
+        end
+        if not enabled or s.testing or s.role~="WR" or s.phase~="Live" or s.arc or not finite(s.snapAt) then return end
+        local elapsed=world:GetServerTimeNow()-s.snapAt
+        local key=tostring(s.roundKey or s.preSnapEnds or s.snapAt)
+        if key==staminaObservedRound or elapsed<0 or elapsed>.25 then return end
+        local value=tonumber(player:GetAttribute("Stamina"))
+        if not finite(value) or value<0 or not finite(Config.Stamina) or value>Config.Stamina then return end
+        staminaObservedRound=key
+        observedStartStamina=observedStartStamina and math.min(observedStartStamina,value) or value
+        log("startStamina",{observed=value,elapsed=elapsed,matchMinimum=observedStartStamina,
+            planningBudget=Policy.setupStaminaBudget(value,Config,observedStartStamina),
+            setupAllowanceFraction=.25,empiricalAllowance=true})
+    end
+    local function accountStemRecovery(input)
+        local at=input.elapsed
+        local confirmed=input.role=="WR" and input.phase=="Live" and not input.ballActive
+            and not input.passStarted and input.sprintOn==true
+            and finite(input.currentWalkSpeed) and input.currentWalkSpeed>Config.RunSpeed+.05
+        if finite(at) and finite(recoveryObservedAt) and confirmed and recoveryObservedSprint
+            and at>recoveryObservedAt then
+            local last=math.min(at,stemRecoveryUntil,
+                finite(input.stemSprintStart) and input.stemSprintStart or stemRecoveryUntil)
+            local spent=math.min(.1,math.max(0,last-recoveryObservedAt))
+            stemRecoverySpent=math.min(.6,stemRecoverySpent+spent)
+        end
+        -- An allocated burst is an outstanding request, not observed spending.
+        -- Walking/denied requests cannot consume the cap. Long observations
+        -- contribute at most100ms rather than erasing every low-FPS interval.
+        recoveryObservedAt=finite(at) and at or nil
+        recoveryObservedSprint=confirmed and finite(at) and at<stemRecoveryUntil
+        input.stemRecoverySpent=stemRecoverySpent
     end
     local function defenseDescriptor(value)
         if type(value)~="table" or (value.pass~="Bullet" and value.pass~="Floater")
@@ -8137,6 +8203,8 @@ return function(ctx,Policy,services)
         finalSprintCommitted=false
         hardCutIssued=false
         stemRecoveryUntil,stemRecoverySpent=0,0
+        recoveryObservedAt,recoveryObservedSprint=nil,nil
+        observedStartStamina,staminaObservedRound=nil,nil
         selected,routePlan,routeSource,planPass=nil,nil,nil,nil
         submitted=false;roundKey=nil;submitTries=0;nextSubmit=0;observedSnapAt=nil
         routeWaypoint=2;lastLoggedWaypoint=nil
@@ -8356,6 +8424,8 @@ return function(ctx,Policy,services)
         observationStarted=world:GetServerTimeNow()
         hardCutIssued=false
         stemRecoveryUntil,stemRecoverySpent=0,0
+        recoveryObservedAt,recoveryObservedSprint=nil,nil
+        staminaObservedRound=nil
         activeRoute=pending
         if not pending then finalSprintCommitted=false end
         if not activeDefense or activeDefense.roundKey~=key then activeDefense=nil end
@@ -8367,6 +8437,7 @@ return function(ctx,Policy,services)
     local function setup()
         local s=ctx.snapshot()
         syncOpponent(s)
+        observeStartStamina(s)
         if (s.phase=="RAC" or s.phase=="Run") and s.carrier==player.Character and s.carrier~=nil then
             ownPossessionObserved=true
         end
@@ -8414,6 +8485,8 @@ return function(ctx,Policy,services)
         if not root then message="Full auto · waiting for character";return end
         submitTries=submitTries+1;nextSubmit=now+1
         local input=inputFor(s,root)
+        local setupStamina=input.stamina
+        input.stamina=Policy.setupStaminaBudget(setupStamina,Config,observedStartStamina)
         -- These automatic candidates are forecast without a release prefix.
         -- Equipped/owned releases remain available to the native manual menu;
         -- do not silently add their cost, motion or timing to this forecast.
@@ -8548,7 +8621,9 @@ return function(ctx,Policy,services)
             bestDefenderEnvelopeMargin=chosen.bestDefenderEnvelopeMargin,
             position=coordinates(input.position),opponentPosition=coordinates(input.opponentPosition),
             opponentVelocity=coordinates(input.opponentVelocity),offset=coordinates(input.offset),
-            LOS=input.LOS,stamina=input.stamina})
+            LOS=input.LOS,stamina=input.stamina,setupStamina=setupStamina,
+            planningStamina=input.stamina,observedStartStamina=observedStartStamina,
+            setupAllowanceFraction=.25,empiricalSetupAllowance=true})
     end
     local accumulator=0
     local connection=run.Heartbeat:Connect(function(dt)
@@ -8562,6 +8637,7 @@ return function(ctx,Policy,services)
         if pauseReason(s) or not root or not h or h.PlatformStand then return nil end
         if s.role=="WR" and (s.phase=="PreSnap" or s.phase=="Hike") and (tonumber(h.WalkSpeed) or 0)<=0 then return nil end
         if finite(s.snapAt) then observedSnapAt=s.snapAt end
+        observeStartStamina(s)
         if s.route and #s.route>=2 and (routeSource~=s.route or planPass~=s.passType) then
             if routeSource~=nil then routeWaypoint=2 end
             routePlan=RouteMath.Plan(s.route,s.passType or selected and selected.payload.Pass or "Bullet")
@@ -8569,6 +8645,7 @@ return function(ctx,Policy,services)
         end
         local input=inputFor(s,root);input.dt=dt
         input.currentWalkSpeed=tonumber(h.WalkSpeed)
+        accountStemRecovery(input)
         if input.role=="WR" and input.carrierIsMe
             and (input.phase=="RAC" or input.phase=="Run") and lastKind~="carry" then
             -- Catch steering may finish far from the pre-throw route target.
@@ -8583,7 +8660,9 @@ return function(ctx,Policy,services)
         if choice.finalSprintCommitted==true then finalSprintCommitted=true end
         if finite(choice.stemRecoveryUntil) and finite(choice.stemRecoverySeconds) then
             stemRecoveryUntil=choice.stemRecoveryUntil
-            stemRecoverySpent=math.min(.6,stemRecoverySpent+choice.stemRecoverySeconds)
+            recoveryObservedAt=input.elapsed
+            recoveryObservedSprint=input.sprintOn==true and finite(input.currentWalkSpeed)
+                and input.currentWalkSpeed>Config.RunSpeed+.05
         end
         local hardCut=choice.finalSprintCommitted==true
             and (input.routeStrategy=="deep_middle_floater" or input.routeStrategy=="deep_middle_bullet")
@@ -8801,6 +8880,8 @@ return function(ctx,Policy,services)
             sessionHistory=sessionRecord(),
             defenseProfile=defenseProfile(),activeDefense=defenseDescriptor(activeDefense),
             finalSprintCommitted=finalSprintCommitted,
+            observedStartStamina=observedStartStamina,setupAllowanceFraction=.25,
+            stemRecoverySpent=stemRecoverySpent,stemRecoveryUntil=stemRecoveryUntil,
             routeWaypoint=routeWaypoint,routeRoundKey=roundIdentity(ctx.snapshot()),
             activeRoute=descriptor(activeRoute)}
     end
@@ -9500,7 +9581,7 @@ end
 end)()
 
 api.initializePreferences(createPreferences)
-assist = createAssist({snapshot=api.context,version=RELEASE_VERSION,buildId="00edfd316f0cb63c525ad8b61160dddf1d3d8a09739cdff1d4fea7b9af9893dd",fullplay=function(s,root,h,now,dt)
+assist = createAssist({snapshot=api.context,version=RELEASE_VERSION,buildId="965226d3d58be1a6d2168b13b5f3dd176906cc9c236d5e74008f986a008b3d9f",fullplay=function(s,root,h,now,dt)
     if fullplay then return fullplay.navigate(s,root,h,now,dt) end
 end},Planner,createTackle,WRApproach,Motion,createCarrierMoves,PlayerAvoidance)
 assist.setEnabled(false)
@@ -9516,7 +9597,7 @@ repeatWR = createWRRepeat({snapshot=api.context,
     autoplay=function() return autoplay.status() end,
     disableAutoplay=function() return api.setAutoplay(false) end})
 repeatWR.setEnabled(false)
-fullplay = createFullplay({Planner=Planner,snapshot=api.context,version=RELEASE_VERSION,buildId="00edfd316f0cb63c525ad8b61160dddf1d3d8a09739cdff1d4fea7b9af9893dd",
+fullplay = createFullplay({Planner=Planner,snapshot=api.context,version=RELEASE_VERSION,buildId="965226d3d58be1a6d2168b13b5f3dd176906cc9c236d5e74008f986a008b3d9f",
     assistEnabled=function() return assist.status().enabled end,
     release=function() if assist.releaseFullplay then assist.releaseFullplay() end end},FullplayPolicy)
 matchSkip = createMatchSkip({snapshot=api.context,startDisabled=true,preferencesManaged=true,
@@ -9539,7 +9620,7 @@ local GAME_ID,PLACE_ID=10770281752,116097127629859
 local MAIN_URL="https://raw.githubusercontent.com/BananaMan2006/chalk-assist-deterministic/main/chalk-it-up-1v1.lua"
 local CACHE_FILE="chalk-deterministic-cache.lua"
 local MAIN_FILE="chalk-it-up-1v1.lua"
-local MIN_RELEASE="5.1.17"
+local MIN_RELEASE="5.1.18"
 local MARKER="__ChalkDeterministicAutoBoot"
 local env=type(getgenv)=="function" and getgenv() or _G
 local boot

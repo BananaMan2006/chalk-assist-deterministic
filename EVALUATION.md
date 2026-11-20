@@ -1,6 +1,18 @@
-# Evaluation scope · 5.1.17
+# Evaluation scope · 5.1.18
 
 This release continues the authored, deterministic controller. Its checks establish local rule behavior and packaging properties. **They do not demonstrate a live win rate, a winning streak, perfect catching, or improvement through training.** The release has no training system or shared model.
+
+## 5.1.18 scope
+
+Three subsequent receiving incompletes exposed a prethrow route budget mismatch: twenty sampled routes were requested with stamina 100, while their first live movement samples showed 75. The planned opening sprint was then withheld by the real-time reserve check. One failed play also had a native jam; the other lost additional travel to collision avoidance. Neither had a jump, dive or local contact claim after the catch forecasts became unreachable. The available client source does not establish why the initial stamina changes, so the update does not assert a hidden server cost.
+
+Route forecasting now uses a conservative setup allowance and counts recovery of an initial stamina deficit only within the configured regeneration interval and capacity. Middle-stem recovery accounting distinguishes a requested burst from observed native sprint time. This addresses budget and allocation defects; it does not replay server physics or prove that a particular incomplete becomes a catch. A separate sprint-path inconsistency is also corrected: the path forecast previously allowed the character to enter the same near-contact band that forces sprint OFF on the next frame. Opted-in sprint paths now forecast that existing band; ordinary walking avoidance keeps its previous radius. The stronger check retains the actual bounded turn, side lock and stamina gates. Constant-velocity fixtures and a sparse, interpolated incident model are distinct from an exact live replay or proof of an interception. Validation passed 517 rule checks, 83 Full Auto checks, 57 airborne geometry checks and 36 build/installer/preferences checks. The [WR stamina review](evaluation/5.1.18-wr-stamina-review.json) records the native-math replay and its limits; the [DB clearance review](evaluation/5.1.18-db-clearance-review.json) retains both beneficial and adverse modeled crossings. Live observations are recorded separately.
+
+## Continued 5.1.17 live review
+
+The [separate follow-up](evaluation/5.1.17-followup-incidents.json) retained 29 resolved throws: WR had thirteen catches and two incompletes; DB had twelve interceptions, one incomplete and one opponent catch for a touchdown. Five fully observed matches were wins: four at 4–0 and one at 4–1. An initial partial match and three forfeits are excluded. This observation followed the earlier ten-minute window and does not replace or erase it. A [subsequent five-minute window](evaluation/5.1.17-pre18-incidents.json) added six WR catches and one incomplete, plus five DB interceptions, two swats and one defensive incomplete. Two fully observed matches ended 4–0; an initial partial match is excluded. The additional receiving miss remains part of the review.
+
+The sprint permission correction was exercised during active WR pursuit, including four samples that retained sprint without an arrival deadline. It did not rescue the two already-delayed receiving routes. The conceded DB Floater lost reachable forecasts after a close crossing and a required collision detour before the scheduled jump. No already-due feasible jump was omitted. These observations do not justify removing collision checks or guaranteeing possession.
 
 ## 5.1.17 scope
 
