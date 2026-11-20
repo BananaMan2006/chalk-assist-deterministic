@@ -1,12 +1,26 @@
-# Evaluation scope · 5.1.20
+# Evaluation scope · 5.1.21
 
 This release continues the authored, deterministic controller. Its checks establish local rule behavior and packaging properties. **They do not demonstrate a live win rate, a winning streak, perfect catching, or improvement through training.** The release has no training system or shared model.
+
+## 5.1.21 scope
+
+A defensive coverage review reproduced a numerical steering edge case: an exactly lateral heading turned through the intended forward semicircle, while a tiny negative depth component selected the rear semicircle. The actual function's bounded 60 Hz integration differed by about 8.87 studs in depth across the reversal. The observed play had a similar backward arc, but the private steering state was not recorded, so that association is not an exact replay of the incident.
+
+The same review found a large sideways gap after the receiver had already turned upfield. Existing recovery gates depended on an even larger lateral distance or a fast outward lateral velocity, leaving normal-speed coverage despite full stamina. The correction is limited to 0.4–1.5 seconds after the snap, with the receiver moving upfield, a diminished depth cushion and a substantial lateral gap. It retains the existing 85/70 sprint thresholds and is checked against the logged policy inputs. The [defense coverage review](evaluation/5.1.21-defense-coverage-review.json) keeps exact policy replay separate from the unobserved steering-state inference.
+
+Validation passed 534 rule checks, 86 deterministic Full Auto checks and 36 build, installer and preference checks. The new steering and alignment cases fail against the preceding production functions and pass against this release. Live verification is recorded separately below when complete.
+
+## Bounded 5.1.20 live review
+
+The [five-minute window](evaluation/5.1.20-live-incidents.json) retained fourteen throws: WR had five catches and one incomplete; DB had three interceptions, two swats and three opposing catches. Two opposing catches became touchdowns and one ended in a tackle. One completed match ended 4–0; a 2–0 forfeit and an unfinished 3–2 game are excluded from completed-match totals. No runtime errors were recorded. The later failures remain included despite the initially clean receiving sample.
+
+Five upright catches entered the bounded follow-through. Three explicit stop events included original-deadline expiry and native motion/reserve invalidation; other cancellation paths did not provide a separate stop event. The remaining incomplete involved a native dive and was correctly ineligible for upright follow-through. One closely sampled moving-overlap geometry supports an indirect escape witness, but the exact internal branch was not logged. These observations establish exercised behavior, not a controlled catch-rate improvement.
 
 ## 5.1.20 scope
 
 A receiving miss showed normal measured travel while a moving opponent stayed within the near-contact band. Sprint was withheld despite two nearby recorded opponent samples admitting the same bounded direction as a strictly separating path at both native speeds. The correction requires measured normal travel, a moving near body, positive separation throughout both forecasts, meaningful ending clearance and protection of every other body and field boundary. It cannot enable unrequested, unfunded, stationary, jammed or approaching sprint. The [moving-escape review](evaluation/5.1.20-moving-escape-review.json) labels the sparse geometry brackets as modeled evidence, not an exact replay or a catch rescue.
 
-A separate upright catch trace exposed early cancellation of a continuous movement plan after a local claim. The bounded continuation retains only the last checked command until the original stop time, for at most 150 ms, with fresh identity, ownership, native motion, reserve, wall and player-clearance checks. It cannot issue another jump, dive, sprint request, target or catch claim. Native results and invalidation revoke it. The [matched claim controls](evaluation/5.1.20-upright-claim-controls.json) include accepted catches with nearly identical margins and deceleration: this is an execution-contract correction, not proof of why the server rejected a particular claim.
+A separate upright catch trace exposed early cancellation of a continuous movement plan after a local claim. The bounded continuation retains only the last checked command until the original stop time, for a scheduled maximum of 150 ms, with fresh identity, ownership, native motion, reserve, wall and player-clearance checks. It cannot issue another jump, dive, sprint request, target or catch claim. Native results and invalidation revoke it. Deadline expiry is enforced on the next controller update; the schedule is not a hard real-time wall-clock guarantee. The [matched claim controls](evaluation/5.1.20-upright-claim-controls.json) include accepted catches with nearly identical margins and deceleration: this is an execution-contract correction, not proof of why the server rejected a particular claim.
 
 Validation passed 532 rule checks, including eight actual claim-lifecycle groups, 53 avoidance checks and 38 controller integration checks, plus 36 build/installer/preferences checks. The 84 Full Auto and 57 airborne checks from the preceding releases cover unchanged policy and geometry modules. The [claim continuation review](evaluation/5.1.20-claim-motion-review.json) documents the scope and limits.
 

@@ -1,6 +1,6 @@
 # Chalk Assist · deterministic edition
 
-Chalk Assist 5.1.20 is a rule-based Roblox client for Chalk It Up. It combines route and ball visualization, catch planning, nearby tackle attempts, collision-aware movement, and optional 1v1 Full Auto.
+Chalk Assist 5.1.21 is a rule-based Roblox client for Chalk It Up. It combines route and ball visualization, catch planning, nearby tackle attempts, collision-aware movement, and optional 1v1 Full Auto.
 
 This edition contains **no neural policy, training loop, model downloads, shared-learning service, or learned-action selection**. It does not improve itself by playing more games. Short-lived match observations can adjust authored rules, but no knowledge is pooled across computers.
 
@@ -10,7 +10,9 @@ Version 5.1.12 makes automatic WR routes **Floater-first**, using a deep middle 
 
 Version 5.1.14 can fund a smaller middle-stem recovery sprint when the entire requested burst would exceed the reserved catch budget. The total extra recovery remains capped at 0.6 seconds and cannot begin after the throw. It also lets defense spend its coverage reserve while chasing a verified opposing ball carrier after the catch; setup still preserves stamina. Fast sideways defensive recovery also no longer stops solely because the receiver has a small backward component; its existing stamina limits and coverage targets remain. These changes do not guarantee recovery from a jam or an existing large gap.
 
-Version 5.1.20 allows a checked sprint escape from a moving nearby player only when measured normal movement is already occurring and both native-speed paths strictly increase separation. Stationary bodies, jams and unsafe crossings remain ineligible. After a fresh local contact claim, a confirmed upright WR catch can also finish its original continuous movement for at most 150 ms, bounded by the original stop time and fresh ownership, motion, field and clearance checks. It sends no extra catch request or action, and an authoritative result cancels it immediately. Local contact is still not proof of possession.
+Version 5.1.21 corrects a numerical edge case in defensive lateral reversals and adds recovery during the first 0.4–1.5 seconds for a large sideways gap when the receiver has already turned upfield. It retains the native turn rate and existing sprint reserves. This improves specific coverage decisions without claiming that every throw is interceptable.
+
+Version 5.1.20 allows a checked sprint escape from a moving nearby player only when measured normal movement is already occurring and both native-speed paths strictly increase separation. Stationary bodies, jams and unsafe crossings remain ineligible. After a fresh local contact claim, a confirmed upright WR catch can also finish its original continuous movement for a scheduled maximum of 150 ms, bounded by the original stop time and fresh ownership, motion, field and clearance checks. Expiry is checked on each controller frame, so actual release can occur slightly after the scheduled time. It sends no extra catch request or action, and an authoritative result cancels it immediately. Local contact is still not proof of possession.
 
 Version 5.1.19 also preserves an already-funded WR route sprint through a checked prethrow bypass. This requires the current submitted route, its observed start time and a finite future waypoint deadline; ordinary walking, stale routes and defensive setup do not gain this permission. The actual path must still pass both speed checks and the existing clearance and stamina gates.
 

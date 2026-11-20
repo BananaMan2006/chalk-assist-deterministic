@@ -1683,6 +1683,15 @@ function Policy.movement(input,Config,Field,RouteMath)
             and observedDepth<0 and velocity.Z>2 and velocity.Magnitude>Config.RunSpeed+2
             and (input.sprintOn==true and range>yd and velocity:Dot(away)>Config.RunSpeed*.5
                 or input.sprintOn~=true and range>1.25*yd and rangeOpening>2 and forecastRange>2*yd)
+        -- A release can move the receiver across the field before they turn
+        -- upfield at ordinary run speed. That leaves a large lateral recovery
+        -- even after their outward velocity has ended. Start a funded burst
+        -- only outside three yards with the opening cushion mostly gone, and
+        -- release at one and a half yards instead of pressing into their body.
+        local alignmentRecovery=not nearGoal and finite(input.elapsed)
+            and input.elapsed>=.4 and input.elapsed<=1.5
+            and velocity.Z>Config.RunSpeed*.5 and observedDepth<2*yd
+            and lateral>(input.sprintOn==true and 1.5 or 3)*yd
         local retreatingSafe=velocity.Z < -2
         -- Allow a brief trail or a modest lead without restoring fixed spacing.
         -- Use observed positions so projection does not erase that free band.
@@ -1690,7 +1699,7 @@ function Policy.movement(input,Config,Field,RouteMath)
         -- threat, retaining a lateral buffer instead of copying every cut.
         local needsSprint=phase=="Live" and (lateralCutRecovery or not retreatingSafe
             and (urgent or forwardThreat or lateralThreat or downfieldRecovery or deepRunRecovery
-                or separationRecovery))
+                or separationRecovery or alignmentRecovery))
         local stamina=finite(input.stamina) and math.max(0,input.stamina) or 0
         local startAt,stopAt=urgent and 75 or 85,urgent and 60 or 70
         local sprint=needsSprint and (input.sprintOn==true and stamina>stopAt

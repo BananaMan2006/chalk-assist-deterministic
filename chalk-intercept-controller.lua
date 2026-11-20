@@ -412,7 +412,10 @@ return function(ctx, Planner, createTackle, WRApproach, Motion, createCarrierMov
         local delta=(b-a+math.pi)%(2*math.pi)-math.pi
         -- Coverage targets remain goal-side. For lateral reversals, turn
         -- through that forward semicircle rather than the wrapped rear arc.
-        if preferForward and flat.Z>=0 and steering.Z>=0 then delta=b-a end
+        -- A lateral Vector3 may have a tiny negative Z after normalization or
+        -- native float rounding. Do not let that numerical sign choose the
+        -- entire backward semicircle for a goal-side coverage reversal.
+        if preferForward and flat.Z>=-1e-6 and steering.Z>=-1e-6 then delta=b-a end
         local turn=math.clamp(delta,-9*dt,9*dt)
         steering=Vector3.new(math.sin(a+turn),0,math.cos(a+turn))
         return steering

@@ -1,4 +1,4 @@
--- Chalk-Release: 5.1.20
+-- Chalk-Release: 5.1.21
 -- Chalk-Product: deterministic
 -- Chalk It Up DB/WR ball assist using normal sprint/jump/dive controls.
 -- Cyan: replicated route (when supplied). Yellow: movement estimate.
@@ -47,7 +47,7 @@ assert(matchEvent and fxEvent and matchEvent:IsA("RemoteEvent") and fxEvent:IsA(
     "Chalk It Up Match/Fx events were not found")
 
 local api = {}
-local RELEASE_VERSION="5.1.20"
+local RELEASE_VERSION="5.1.21"
 local loadedGameId,loadedPlaceId,loadedJobId=game.GameId,game.PlaceId,game.JobId
 env.ChalkDB = api
 local alive, enabled = true, true
@@ -967,7 +967,7 @@ end
 function api.status()
     local ch = characterOf(opponent)
     local holder,isEnemy,holderRole=carrierContext()
-    return {product="deterministic",version=RELEASE_VERSION,buildId="a745f1cf9c9d0c118390c498f5c50e25bb22aaba03c817c89d2388035ef2e2be",policyMode="deterministic", enabled=enabled, role=role or "unknown",rawRole=rawRole or "unknown", phase=phase,
+    return {product="deterministic",version=RELEASE_VERSION,buildId="5958b21322549383bc7339b61ab0ab86cf45f1607ba2246faecd470779700d14",policyMode="deterministic", enabled=enabled, role=role or "unknown",rawRole=rawRole or "unknown", phase=phase,
         ui={visible=windowVisible,minimized=minimized,x=panel.Position.X.Offset,y=panel.Position.Y.Offset},
         matchAlerts={enabled=alertSettings.enabled,saveError=alertSettings.saveError},
         preferences=preferences and preferences.status() or nil,
@@ -4508,7 +4508,10 @@ return function(ctx, Planner, createTackle, WRApproach, Motion, createCarrierMov
         local delta=(b-a+math.pi)%(2*math.pi)-math.pi
         -- Coverage targets remain goal-side. For lateral reversals, turn
         -- through that forward semicircle rather than the wrapped rear arc.
-        if preferForward and flat.Z>=0 and steering.Z>=0 then delta=b-a end
+        -- A lateral Vector3 may have a tiny negative Z after normalization or
+        -- native float rounding. Do not let that numerical sign choose the
+        -- entire backward semicircle for a goal-side coverage reversal.
+        if preferForward and flat.Z>=-1e-6 and steering.Z>=-1e-6 then delta=b-a end
         local turn=math.clamp(delta,-9*dt,9*dt)
         steering=Vector3.new(math.sin(a+turn),0,math.cos(a+turn))
         return steering
@@ -8032,6 +8035,15 @@ function Policy.movement(input,Config,Field,RouteMath)
             and observedDepth<0 and velocity.Z>2 and velocity.Magnitude>Config.RunSpeed+2
             and (input.sprintOn==true and range>yd and velocity:Dot(away)>Config.RunSpeed*.5
                 or input.sprintOn~=true and range>1.25*yd and rangeOpening>2 and forecastRange>2*yd)
+        -- A release can move the receiver across the field before they turn
+        -- upfield at ordinary run speed. That leaves a large lateral recovery
+        -- even after their outward velocity has ended. Start a funded burst
+        -- only outside three yards with the opening cushion mostly gone, and
+        -- release at one and a half yards instead of pressing into their body.
+        local alignmentRecovery=not nearGoal and finite(input.elapsed)
+            and input.elapsed>=.4 and input.elapsed<=1.5
+            and velocity.Z>Config.RunSpeed*.5 and observedDepth<2*yd
+            and lateral>(input.sprintOn==true and 1.5 or 3)*yd
         local retreatingSafe=velocity.Z < -2
         -- Allow a brief trail or a modest lead without restoring fixed spacing.
         -- Use observed positions so projection does not erase that free band.
@@ -8039,7 +8051,7 @@ function Policy.movement(input,Config,Field,RouteMath)
         -- threat, retaining a lateral buffer instead of copying every cut.
         local needsSprint=phase=="Live" and (lateralCutRecovery or not retreatingSafe
             and (urgent or forwardThreat or lateralThreat or downfieldRecovery or deepRunRecovery
-                or separationRecovery))
+                or separationRecovery or alignmentRecovery))
         local stamina=finite(input.stamina) and math.max(0,input.stamina) or 0
         local startAt,stopAt=urgent and 75 or 85,urgent and 60 or 70
         local sprint=needsSprint and (input.sprintOn==true and stamina>stopAt
@@ -9714,7 +9726,7 @@ end
 end)()
 
 api.initializePreferences(createPreferences)
-assist = createAssist({snapshot=api.context,version=RELEASE_VERSION,buildId="a745f1cf9c9d0c118390c498f5c50e25bb22aaba03c817c89d2388035ef2e2be",fullplay=function(s,root,h,now,dt)
+assist = createAssist({snapshot=api.context,version=RELEASE_VERSION,buildId="5958b21322549383bc7339b61ab0ab86cf45f1607ba2246faecd470779700d14",fullplay=function(s,root,h,now,dt)
     if fullplay then return fullplay.navigate(s,root,h,now,dt) end
 end},Planner,createTackle,WRApproach,Motion,createCarrierMoves,PlayerAvoidance)
 assist.setEnabled(false)
@@ -9730,7 +9742,7 @@ repeatWR = createWRRepeat({snapshot=api.context,
     autoplay=function() return autoplay.status() end,
     disableAutoplay=function() return api.setAutoplay(false) end})
 repeatWR.setEnabled(false)
-fullplay = createFullplay({Planner=Planner,snapshot=api.context,version=RELEASE_VERSION,buildId="a745f1cf9c9d0c118390c498f5c50e25bb22aaba03c817c89d2388035ef2e2be",
+fullplay = createFullplay({Planner=Planner,snapshot=api.context,version=RELEASE_VERSION,buildId="5958b21322549383bc7339b61ab0ab86cf45f1607ba2246faecd470779700d14",
     assistEnabled=function() return assist.status().enabled end,
     release=function() if assist.releaseFullplay then assist.releaseFullplay() end end},FullplayPolicy)
 matchSkip = createMatchSkip({snapshot=api.context,startDisabled=true,preferencesManaged=true,
@@ -9753,7 +9765,7 @@ local GAME_ID,PLACE_ID=10770281752,116097127629859
 local MAIN_URL="https://raw.githubusercontent.com/BananaMan2006/chalk-assist-deterministic/main/chalk-it-up-1v1.lua"
 local CACHE_FILE="chalk-deterministic-cache.lua"
 local MAIN_FILE="chalk-it-up-1v1.lua"
-local MIN_RELEASE="5.1.20"
+local MIN_RELEASE="5.1.21"
 local MARKER="__ChalkDeterministicAutoBoot"
 local env=type(getgenv)=="function" and getgenv() or _G
 local boot

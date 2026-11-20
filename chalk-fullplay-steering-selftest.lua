@@ -61,6 +61,37 @@ end
     test("forward diagonal coverage reversal keeps depth smoothly",function()
         reversal(Vector3.new(-1,0,.1),Vector3.new(1,0,.1))
     end)
+    test("tiny negative lateral components do not choose a backward coverage semicircle",function()
+        for _,side in ipairs({-1,1}) do
+            for _,epsilon in ipairs({1e-12,1e-7,5e-7}) do
+                local f=harness()
+                local last=f:move(Vector3.new(side,0,-epsilon),true)
+                for _=1,25 do
+                    local current=f:move(Vector3.new(-side,0,-epsilon),true)
+                    assert(current.Z>=-1e-6,"rounded lateral coverage heading turned backward")
+                    assert(last:Dot(current)>=math.cos(9/60)-1e-9,"rounding fix bypassed turn limit")
+                    last=current
+                end
+                assert(last:Dot(Vector3.new(-side,0,-epsilon).Unit)>.999999)
+            end
+        end
+    end)
+    test("real backward components and ordinary near-lateral steering retain their semantics",function()
+        for _,side in ipairs({-1,1}) do
+            for _,epsilon in ipairs({2e-6,.005,.1}) do
+                local a,b=harness(),harness()
+                local start=Vector3.new(side,0,-epsilon)
+                local goal=Vector3.new(-side,0,-epsilon)
+                a:move(start,true);b:move(start,false)
+                for _=1,25 do
+                    assert((a:move(goal,true)-b:move(goal,false)).Magnitude<1e-10)
+                end
+            end
+            local f=harness();f:move(Vector3.new(side,0,-1e-7),false)
+            assert(f:move(Vector3.new(-side,0,-1e-7),false).Z<0,
+                "ordinary steering inherited the coverage tolerance")
+        end
+    end)
     test("ordinary catch and pursuit steering preserves wrapped baseline",function()
         local f=harness();f:move(Vector3.new(-1,0,0),false)
         local next=f:move(Vector3.new(1,0,0),false)

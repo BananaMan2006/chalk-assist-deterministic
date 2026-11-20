@@ -31,6 +31,68 @@ return function(Policy)
         for k,v in pairs(extra or {}) do p[k]=v end
         return p
     end
+    test("DB recorded sideways release recovers alignment after the receiver turns upfield",function()
+        local f,r=Field,{}
+        for _,side in ipairs({-1,1}) do
+            for _,offset in ipairs({Vector3.zero,Vector3.new(130,0,-240)}) do
+                local function reflected(x) return f.MidX+side*(x-f.MidX) end
+                local p=input({role="DB",phase="Live",elapsed=.566566,LOS=f.LOSZ,offset=offset,
+                    position=Vector3.new(reflected(27.000877),4.636868,-8.983637)+offset,
+                    velocity=Vector3.new(side*-20,0,0),
+                    opponentPosition=Vector3.new(reflected(6.681392),4.636789,-13.701223)+offset,
+                    opponentVelocity=Vector3.new(side*5.477962,0,19.226883),
+                    stamina=100,sprintOn=false})
+                local d=Policy.movement(p,Config,f,r)
+                assert(d.sprint,"recorded twenty-stud alignment gap was left at walking speed")
+                assert((d.target.X-p.position.X)*side<0 and d.target.Z>p.position.Z,
+                    "alignment recovery changed the existing coverage target")
+                for _,case in ipairs({{84,false,false},{85,false,true},{71,true,true},{70,true,false}}) do
+                    p.stamina=case[1];p.sprintOn=case[2]
+                    assert(Policy.movement(p,Config,f,r).sprint==case[3],"alignment burst bypassed ordinary reserve")
+                end
+            end
+        end
+    end)
+    test("DB opening alignment burst has spatial hysteresis and a bounded live window",function()
+        -- Integer yard units and a zero-centered receiver make the exact
+        -- strict boundaries representable, independent of translation ulps.
+        local f,r=table.clone(Field),{}
+        f.MinX,f.MaxX,f.MidX,f.YD=-30,30,0,3
+        local p=input({role="DB",phase="Live",elapsed=.6,LOS=f.LOSZ,
+            opponentPosition=Vector3.new(f.MidX,4.636868,10),
+            opponentVelocity=Vector3.new(0,0,20),velocity=Vector3.new(-20,0,0),
+            stamina=100,sprintOn=false})
+        local function at(lateral,depth)
+            p.position=p.opponentPosition+Vector3.new(lateral*f.YD,0,depth*f.YD)
+            return Policy.movement(p,Config,f,r)
+        end
+        assert(at(3.01,1).sprint and not at(3,1).sprint)
+        p.sprintOn=true
+        assert(at(2.99,1).sprint and at(1.51,1).sprint and not at(1.5,1).sprint)
+        p.sprintOn=false
+        assert(not at(1.51,1).sprint,"release edge restarted the alignment burst")
+        assert(not at(4,2).sprint,"large goal-side cushion spent sprint")
+        at(4,1)
+        for _,elapsed in ipairs({0,.399,1.501,5}) do
+            p.elapsed=elapsed;assert(not Policy.movement(p,Config,f,r).sprint)
+        end
+        p.elapsed=nil;assert(not Policy.movement(p,Config,f,r).sprint)
+        for _,elapsed in ipairs({.4,1.5}) do
+            p.elapsed=elapsed;assert(Policy.movement(p,Config,f,r).sprint)
+        end
+        p.elapsed=.6
+        for _,phase in ipairs({"PreSnap","Hike"}) do
+            p.phase=phase;assert(not Policy.movement(p,Config,f,r).sprint)
+        end
+        p.phase="Live"
+        for _,forward in ipairs({-20,0,2,10}) do
+            p.opponentVelocity=Vector3.new(0,0,forward)
+            assert(not Policy.movement(p,Config,f,r).sprint,"idle/retreating receiver triggered alignment sprint")
+        end
+        p.opponentVelocity=Vector3.new(0,0,20)
+        p.opponentPosition=Vector3.new(f.MidX,4.636868,f.GoalZ-5*f.YD)
+        assert(not at(4,1).sprint,"opening alignment rule changed near-goal urgency")
+    end)
     test("recorded opening diagonal sprint gets a burst before the old three-yard forecast gate",function()
         local p=openingRun();local c=move(p)
         local gap=(p.opponentPosition-p.position).Magnitude
