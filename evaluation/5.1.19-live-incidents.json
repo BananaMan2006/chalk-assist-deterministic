@@ -1,0 +1,1542 @@
+{
+  "schemaVersion": 1,
+  "release": "5.1.19",
+  "buildId": "2b4be0d7a548602fb871132a022fd7beb80097a342c91b9fa7310e24a54eb0e0",
+  "label": "Bounded live verification after 5.1.19 update",
+  "window": {
+    "start": 1795149382.205291,
+    "endExclusive": 1795149682.205291,
+    "durationSeconds": 300,
+    "closedReason": "bounded_observer_deadline",
+    "observerStopped": true,
+    "nativeResultTailLimitSeconds": 8,
+    "tailResultsIncluded": 0,
+    "partialAtCutoff": []
+  },
+  "matches": {
+    "terminalScoresObserved": 3,
+    "completedNonForfeit": 3,
+    "wins": 3,
+    "losses": 0,
+    "scores": {
+      "4-0": 3
+    },
+    "forfeitsExcluded": 0
+  },
+  "plays": {
+    "total": 15,
+    "roles": {
+      "WR": {
+        "total": 9,
+        "nativeOutcomes": {
+          "Catch": 6,
+          "Incomplete": 2,
+          "Swatted": 1
+        },
+        "passTypes": {
+          "Floater": 9
+        },
+        "actions": {
+          "jumpRequest": 8,
+          "jump": 8,
+          "diveAttempt": 1,
+          "dive": 1
+        }
+      },
+      "DB": {
+        "total": 6,
+        "nativeOutcomes": {
+          "Intercepted": 6
+        },
+        "passTypes": {
+          "Floater": 2,
+          "Bullet": 4
+        },
+        "actions": {
+          "jumpRequest": 6,
+          "jump": 6,
+          "diveAttempt": 5,
+          "dive": 5
+        }
+      }
+    }
+  },
+  "execution": {
+    "runtimeErrors": 0,
+    "solveMs": {
+      "count": 144,
+      "median": 13.322645841981284,
+      "p95": 32.952333334833384,
+      "max": 49.25045833806507
+    },
+    "exactBuildRecords": {
+      "ciu_auto_events.jsonl": {
+        "includedExactBuildRecords": 1034,
+        "excludedOtherVersionOrWindowRecords": 0
+      },
+      "ciu_deterministic_events.jsonl": {
+        "includedExactBuildRecords": 600,
+        "excludedOtherVersionOrWindowRecords": 0
+      },
+      "ciu_failures.jsonl": {
+        "includedExactBuildRecords": 0,
+        "excludedOtherVersionOrWindowRecords": 3
+      }
+    }
+  },
+  "liveExercise": {
+    "wrAvoidanceRows": 79,
+    "wrActivePermissionRows": 31,
+    "wrActivePermissionSprintRetainedRows": 18,
+    "wrActivePursueNoArrivalPermissionRows": 5,
+    "wrActivePursueNoArrivalSprintRetainedRows": 4,
+    "wrActivePursueNoArrivalDetails": [
+      {
+        "role": "WR",
+        "active": true,
+        "permission": true,
+        "retained": false,
+        "requested": true,
+        "blocked": false,
+        "planAction": "pursue",
+        "reachable": false,
+        "arrivalAbsent": true,
+        "nativeSpeed": 20
+      },
+      {
+        "role": "WR",
+        "active": true,
+        "permission": true,
+        "retained": true,
+        "requested": true,
+        "blocked": false,
+        "planAction": "pursue",
+        "reachable": false,
+        "arrivalAbsent": true,
+        "nativeSpeed": 27
+      },
+      {
+        "role": "WR",
+        "active": true,
+        "permission": true,
+        "retained": true,
+        "requested": true,
+        "blocked": false,
+        "planAction": "pursue",
+        "reachable": false,
+        "arrivalAbsent": true,
+        "nativeSpeed": 27
+      },
+      {
+        "role": "WR",
+        "active": true,
+        "permission": true,
+        "retained": true,
+        "requested": true,
+        "blocked": false,
+        "planAction": "pursue",
+        "reachable": false,
+        "arrivalAbsent": true,
+        "nativeSpeed": 27
+      },
+      {
+        "role": "WR",
+        "active": true,
+        "permission": true,
+        "retained": true,
+        "requested": true,
+        "blocked": false,
+        "planAction": "pursue",
+        "reachable": false,
+        "arrivalAbsent": true,
+        "nativeSpeed": 27
+      }
+    ],
+    "nativeSprintSequences": [
+      {
+        "role": "WR",
+        "pendingObservedSpeed": 20,
+        "pendingForecastSpeed": 20,
+        "restoredObservedSpeed": 27,
+        "restoredForecastSpeed": 27,
+        "elapsedMs": 95.1089859008789
+      },
+      {
+        "role": "DB",
+        "pendingObservedSpeed": 20,
+        "pendingForecastSpeed": 20,
+        "restoredObservedSpeed": 27,
+        "restoredForecastSpeed": 27,
+        "elapsedMs": 79.61106300354004
+      },
+      {
+        "role": "DB",
+        "pendingObservedSpeed": 20,
+        "pendingForecastSpeed": 20,
+        "restoredObservedSpeed": 27,
+        "restoredForecastSpeed": 27,
+        "elapsedMs": 150.7110595703125
+      },
+      {
+        "role": "WR",
+        "pendingObservedSpeed": 20,
+        "pendingForecastSpeed": 20,
+        "restoredObservedSpeed": 27,
+        "restoredForecastSpeed": 27,
+        "elapsedMs": 98.2370376586914
+      },
+      {
+        "role": "DB",
+        "pendingObservedSpeed": 20,
+        "pendingForecastSpeed": 20,
+        "restoredObservedSpeed": 27,
+        "restoredForecastSpeed": 27,
+        "elapsedMs": 180.9558868408203
+      },
+      {
+        "role": "WR",
+        "pendingObservedSpeed": 20,
+        "pendingForecastSpeed": 20,
+        "restoredObservedSpeed": 27,
+        "restoredForecastSpeed": 27,
+        "elapsedMs": 177.1399974822998
+      },
+      {
+        "role": "WR",
+        "pendingObservedSpeed": 20,
+        "pendingForecastSpeed": 20,
+        "restoredObservedSpeed": 27,
+        "restoredForecastSpeed": 27,
+        "elapsedMs": 33.50090980529785
+      },
+      {
+        "role": "DB",
+        "pendingObservedSpeed": 20,
+        "pendingForecastSpeed": 20,
+        "restoredObservedSpeed": 27,
+        "restoredForecastSpeed": 27,
+        "elapsedMs": 82.0009708404541
+      },
+      {
+        "role": "DB",
+        "pendingObservedSpeed": 20,
+        "pendingForecastSpeed": 20,
+        "restoredObservedSpeed": 27,
+        "restoredForecastSpeed": 27,
+        "elapsedMs": 49.85499382019043
+      }
+    ],
+    "interpretation": "Absence of arriveBy is joined with the latest same-flight pursue plan. Permission does not by itself establish sprint eligibility. Native speed observations remain separate from requested sprint and forecast speed; candidate ranking is not logged, so no optimizer-causality claim is made."
+  },
+  "incidents": [
+    {
+      "playIndex": 7,
+      "role": "WR",
+      "pass": "Floater",
+      "nativeOutcome": "Incomplete",
+      "terminal": {
+        "time": 1795149511.641431,
+        "result": "Incomplete",
+        "you": 2,
+        "them": 0,
+        "toWin": 4,
+        "round": 3,
+        "down": 2
+      },
+      "reachablePlans": 10,
+      "planCount": 10,
+      "actions": [
+        "jumpRequest",
+        "jump"
+      ],
+      "localContactClaims": 1,
+      "review": {
+        "status": "detailed_review_pending",
+        "finding": "A local contact callback was observed but did not establish possession; the separate native outcome above is authoritative."
+      }
+    },
+    {
+      "playIndex": 10,
+      "role": "WR",
+      "pass": "Floater",
+      "nativeOutcome": "Incomplete",
+      "terminal": {
+        "time": 1795149574.4456,
+        "result": "Incomplete",
+        "you": 0,
+        "them": 0,
+        "toWin": 4,
+        "round": 1,
+        "down": 2
+      },
+      "reachablePlans": 8,
+      "planCount": 25,
+      "actions": [],
+      "localContactClaims": 0,
+      "review": {
+        "status": "detailed_review_pending",
+        "finding": "No local contact callback is recorded; detailed review is pending."
+      }
+    },
+    {
+      "playIndex": 13,
+      "role": "WR",
+      "pass": "Floater",
+      "nativeOutcome": "Swatted",
+      "terminal": {
+        "time": 1795149633.378175,
+        "result": "Swatted",
+        "you": 2,
+        "them": 0,
+        "toWin": 4,
+        "round": 3,
+        "down": 2
+      },
+      "reachablePlans": 9,
+      "planCount": 10,
+      "actions": [
+        "jumpRequest",
+        "jump"
+      ],
+      "localContactClaims": 1,
+      "review": {
+        "status": "detailed_review_pending",
+        "finding": "A local contact callback was observed but did not establish possession; the separate native outcome above is authoritative."
+      }
+    }
+  ],
+  "limitations": [
+    "Native outcomes are distinguished from local contact callbacks and requested/observed inputs.",
+    "A bounded successful sample does not establish zero future incompletes or touchdowns conceded.",
+    "A reduction in failures during a small sample does not by itself prove each change caused the improvement.",
+    "Only exact release and build records in this observation window contribute to the totals."
+  ],
+  "startupBudget": {
+    "observations": [
+      {
+        "setupStamina": 100,
+        "planningStamina": 75,
+        "observedStartStamina": 75,
+        "updatedPlanningBudget": 75,
+        "matchMinimum": 75,
+        "elapsedAtObservation": 0.13386201858520508,
+        "earlyStemSprintSeconds": 0.9,
+        "allowanceFraction": 0.25,
+        "empiricalAllowance": true
+      },
+      {
+        "setupStamina": 100,
+        "planningStamina": 75,
+        "observedStartStamina": 75,
+        "updatedPlanningBudget": 75,
+        "matchMinimum": 75,
+        "elapsedAtObservation": 0.025478839874267578,
+        "earlyStemSprintSeconds": 0.9,
+        "allowanceFraction": 0.25,
+        "empiricalAllowance": true
+      },
+      {
+        "setupStamina": 100,
+        "planningStamina": 75,
+        "observedStartStamina": 75,
+        "updatedPlanningBudget": 75,
+        "matchMinimum": 75,
+        "elapsedAtObservation": 0.10929083824157715,
+        "earlyStemSprintSeconds": 0.9,
+        "allowanceFraction": 0.25,
+        "empiricalAllowance": true
+      },
+      {
+        "setupStamina": 100,
+        "planningStamina": 75,
+        "observedStartStamina": 75,
+        "updatedPlanningBudget": 75,
+        "matchMinimum": 75,
+        "elapsedAtObservation": 0.1133420467376709,
+        "earlyStemSprintSeconds": 0.9,
+        "allowanceFraction": 0.25,
+        "empiricalAllowance": true
+      },
+      {
+        "setupStamina": 100,
+        "planningStamina": 75,
+        "observedStartStamina": 75,
+        "updatedPlanningBudget": 75,
+        "matchMinimum": 75,
+        "elapsedAtObservation": 0.17228913307189941,
+        "earlyStemSprintSeconds": 0.9,
+        "allowanceFraction": 0.25,
+        "empiricalAllowance": true
+      },
+      {
+        "setupStamina": 100,
+        "planningStamina": 75,
+        "observedStartStamina": 75,
+        "updatedPlanningBudget": 75,
+        "matchMinimum": 75,
+        "elapsedAtObservation": 0.05714106559753418,
+        "earlyStemSprintSeconds": 0.9,
+        "allowanceFraction": 0.25,
+        "empiricalAllowance": true
+      },
+      {
+        "setupStamina": 100,
+        "planningStamina": 75,
+        "observedStartStamina": 75,
+        "updatedPlanningBudget": 75,
+        "matchMinimum": 75,
+        "elapsedAtObservation": 0.058998823165893555,
+        "earlyStemSprintSeconds": 0.9,
+        "allowanceFraction": 0.25,
+        "empiricalAllowance": true
+      },
+      {
+        "setupStamina": 100,
+        "planningStamina": 75,
+        "observedStartStamina": 75,
+        "updatedPlanningBudget": 75,
+        "matchMinimum": 75,
+        "elapsedAtObservation": 0.05820202827453613,
+        "earlyStemSprintSeconds": 0.9,
+        "allowanceFraction": 0.25,
+        "empiricalAllowance": true
+      },
+      {
+        "setupStamina": 100,
+        "planningStamina": 75,
+        "observedStartStamina": 75,
+        "updatedPlanningBudget": 75,
+        "matchMinimum": 75,
+        "elapsedAtObservation": 0.060456037521362305,
+        "earlyStemSprintSeconds": 0.9,
+        "allowanceFraction": 0.25,
+        "empiricalAllowance": true
+      }
+    ],
+    "planningMatchesObservedStartCount": 9,
+    "note": "Setup allowance is an empirical conservative planning adjustment, not a claim about a server rule. Native start observations are logged separately.",
+    "observedEarlyNativeSprint": [
+      {
+        "playIndex": 1,
+        "result": "Catch",
+        "elapsed": 0.5342628955841064,
+        "walkSpeed": 27,
+        "horizontalVelocity": 27.0,
+        "nativeSprintOn": true,
+        "stamina": 73,
+        "sampleCount": 2
+      },
+      {
+        "playIndex": 3,
+        "result": "Catch",
+        "elapsed": 0.466235876083374,
+        "walkSpeed": 27,
+        "horizontalVelocity": 27.0,
+        "nativeSprintOn": true,
+        "stamina": 74,
+        "sampleCount": 3
+      },
+      {
+        "playIndex": 5,
+        "result": "Catch",
+        "elapsed": 0.5263199806213379,
+        "walkSpeed": 27,
+        "horizontalVelocity": 27.0,
+        "nativeSprintOn": true,
+        "stamina": 72,
+        "sampleCount": 2
+      },
+      {
+        "playIndex": 7,
+        "result": "Incomplete",
+        "elapsed": 0.7306220531463623,
+        "walkSpeed": 27,
+        "horizontalVelocity": 27.000001170075425,
+        "nativeSprintOn": true,
+        "stamina": 70,
+        "sampleCount": 1
+      },
+      {
+        "playIndex": 8,
+        "result": "Catch",
+        "elapsed": 0.5891191959381104,
+        "walkSpeed": 27,
+        "horizontalVelocity": 27.00000049546565,
+        "nativeSprintOn": true,
+        "stamina": 72,
+        "sampleCount": 2
+      },
+      {
+        "playIndex": 10,
+        "result": "Incomplete",
+        "elapsed": 0.4737100601196289,
+        "walkSpeed": 27,
+        "horizontalVelocity": 27.00000062778075,
+        "nativeSprintOn": true,
+        "stamina": 73,
+        "sampleCount": 3
+      },
+      {
+        "playIndex": 11,
+        "result": "Catch",
+        "elapsed": 0.4599900245666504,
+        "walkSpeed": 27,
+        "horizontalVelocity": 27.000002148247084,
+        "nativeSprintOn": true,
+        "stamina": 72,
+        "sampleCount": 3
+      },
+      {
+        "playIndex": 13,
+        "result": "Swatted",
+        "elapsed": 0.6913509368896484,
+        "walkSpeed": 27,
+        "horizontalVelocity": 27.000003134950816,
+        "nativeSprintOn": true,
+        "stamina": 67,
+        "sampleCount": 2
+      },
+      {
+        "playIndex": 14,
+        "result": "Catch",
+        "elapsed": 0.4766371250152588,
+        "walkSpeed": 27,
+        "horizontalVelocity": 27.000000856114493,
+        "nativeSprintOn": true,
+        "stamina": 70,
+        "sampleCount": 3
+      }
+    ]
+  },
+  "nearContactObservations": {
+    "plays": [
+      {
+        "playIndex": 1,
+        "role": "WR",
+        "result": "Catch",
+        "lastReachableAction": "jumpDive",
+        "nearContactSprintTransitions": [
+          {
+            "secondsBeforeContact": 0.1387348175048828,
+            "sprintOn": false,
+            "observedSpeed": 27,
+            "sourceKind": "sample"
+          }
+        ],
+        "actionRejections": []
+      },
+      {
+        "playIndex": 2,
+        "role": "DB",
+        "result": "Intercepted",
+        "lastReachableAction": "jump",
+        "nearContactSprintTransitions": [],
+        "actionRejections": []
+      },
+      {
+        "playIndex": 3,
+        "role": "WR",
+        "result": "Catch",
+        "lastReachableAction": "jump",
+        "nearContactSprintTransitions": [],
+        "actionRejections": []
+      },
+      {
+        "playIndex": 4,
+        "role": "DB",
+        "result": "Intercepted",
+        "lastReachableAction": "jumpDive",
+        "nearContactSprintTransitions": [
+          {
+            "secondsBeforeContact": 0.11840629577636719,
+            "sprintOn": false,
+            "observedSpeed": 27,
+            "sourceKind": "sample"
+          }
+        ],
+        "actionRejections": []
+      },
+      {
+        "playIndex": 5,
+        "role": "WR",
+        "result": "Catch",
+        "lastReachableAction": "jump",
+        "nearContactSprintTransitions": [],
+        "actionRejections": []
+      },
+      {
+        "playIndex": 6,
+        "role": "DB",
+        "result": "Intercepted",
+        "lastReachableAction": "jumpDive",
+        "nearContactSprintTransitions": [
+          {
+            "secondsBeforeContact": 0.2105271816253662,
+            "sprintOn": false,
+            "observedSpeed": 27,
+            "sourceKind": "sample"
+          }
+        ],
+        "actionRejections": []
+      },
+      {
+        "playIndex": 7,
+        "role": "WR",
+        "result": "Incomplete",
+        "lastReachableAction": "jump",
+        "nearContactSprintTransitions": [],
+        "actionRejections": []
+      },
+      {
+        "playIndex": 8,
+        "role": "WR",
+        "result": "Catch",
+        "lastReachableAction": "jump",
+        "nearContactSprintTransitions": [],
+        "actionRejections": []
+      },
+      {
+        "playIndex": 9,
+        "role": "DB",
+        "result": "Intercepted",
+        "lastReachableAction": "dive",
+        "nearContactSprintTransitions": [
+          {
+            "secondsBeforeContact": 0.02432990074157715,
+            "sprintOn": false,
+            "observedSpeed": 27,
+            "sourceKind": "sample"
+          }
+        ],
+        "actionRejections": []
+      },
+      {
+        "playIndex": 10,
+        "role": "WR",
+        "result": "Incomplete",
+        "lastReachableAction": "jumpDive",
+        "nearContactSprintTransitions": [],
+        "actionRejections": []
+      },
+      {
+        "playIndex": 11,
+        "role": "WR",
+        "result": "Catch",
+        "lastReachableAction": "jump",
+        "nearContactSprintTransitions": [],
+        "actionRejections": []
+      },
+      {
+        "playIndex": 12,
+        "role": "DB",
+        "result": "Intercepted",
+        "lastReachableAction": "jumpDive",
+        "nearContactSprintTransitions": [
+          {
+            "secondsBeforeContact": 0.10927557945251465,
+            "sprintOn": false,
+            "observedSpeed": 27,
+            "sourceKind": "sample"
+          }
+        ],
+        "actionRejections": []
+      },
+      {
+        "playIndex": 13,
+        "role": "WR",
+        "result": "Swatted",
+        "lastReachableAction": "jump",
+        "nearContactSprintTransitions": [],
+        "actionRejections": []
+      },
+      {
+        "playIndex": 14,
+        "role": "WR",
+        "result": "Catch",
+        "lastReachableAction": "jump",
+        "nearContactSprintTransitions": [],
+        "actionRejections": []
+      },
+      {
+        "playIndex": 15,
+        "role": "DB",
+        "result": "Intercepted",
+        "lastReachableAction": "jumpDive",
+        "nearContactSprintTransitions": [
+          {
+            "secondsBeforeContact": 0.5668845176696777,
+            "sprintOn": true,
+            "observedSpeed": 20,
+            "sourceKind": "sample"
+          }
+        ],
+        "actionRejections": []
+      }
+    ],
+    "note": "Sprint state changes are sampled native attributes and are not automatically errors; parking or stopping can be part of the checked plan."
+  },
+  "savedSettingsVerification": {
+    "time": 1795149697.288923,
+    "version": "5.1.19",
+    "buildId": "2b4be0d7a548602fb871132a022fd7beb80097a342c91b9fa7310e24a54eb0e0",
+    "revision": 4,
+    "runtime": {
+      "master": true,
+      "assist": true,
+      "fullAuto": true,
+      "autoplay": true,
+      "autoLeave": true,
+      "matchAlerts": false,
+      "wrRepeat": false
+    },
+    "allRuntimeMatchSaved": true,
+    "diskMatchesMemory": true,
+    "modeMatches": true,
+    "saveRestoreErrors": {
+      "saveError": null,
+      "restoreError": null,
+      "recoveryWarning": null
+    }
+  },
+  "fundedPrethrowAvoidance": {
+    "activeRows": 52,
+    "requestedPermissionRows": 23,
+    "retainedSprintRows": 14,
+    "retainedWithMeasured27SoonRows": 13,
+    "observations": [
+      {
+        "playIndex": 1,
+        "nativeOutcome": "Catch",
+        "secondsBeforeThrow": 1.8201780319213867,
+        "requestedSprint": false,
+        "permission": false,
+        "retainedSprint": false,
+        "observedWalkSpeed": 20,
+        "blocked": false,
+        "reason": "passing player",
+        "futureArrival": true,
+        "routeReachable": true,
+        "routeBestEffort": null,
+        "measured27WithinNextPoint4Seconds": false,
+        "nextNativeElapsed": null
+      },
+      {
+        "playIndex": 1,
+        "nativeOutcome": "Catch",
+        "secondsBeforeThrow": 1.570439100265503,
+        "requestedSprint": false,
+        "permission": false,
+        "retainedSprint": false,
+        "observedWalkSpeed": 20,
+        "blocked": false,
+        "reason": "returning to path",
+        "futureArrival": true,
+        "routeReachable": true,
+        "routeBestEffort": null,
+        "measured27WithinNextPoint4Seconds": false,
+        "nextNativeElapsed": null
+      },
+      {
+        "playIndex": 1,
+        "nativeOutcome": "Catch",
+        "secondsBeforeThrow": 1.2867341041564941,
+        "requestedSprint": false,
+        "permission": false,
+        "retainedSprint": false,
+        "observedWalkSpeed": 20,
+        "blocked": false,
+        "reason": "passing player",
+        "futureArrival": true,
+        "routeReachable": true,
+        "routeBestEffort": null,
+        "measured27WithinNextPoint4Seconds": false,
+        "nextNativeElapsed": null
+      },
+      {
+        "playIndex": 1,
+        "nativeOutcome": "Catch",
+        "secondsBeforeThrow": 1.0364940166473389,
+        "requestedSprint": false,
+        "permission": false,
+        "retainedSprint": false,
+        "observedWalkSpeed": 20,
+        "blocked": false,
+        "reason": "returning to path",
+        "futureArrival": true,
+        "routeReachable": true,
+        "routeBestEffort": null,
+        "measured27WithinNextPoint4Seconds": false,
+        "nextNativeElapsed": null
+      },
+      {
+        "playIndex": 1,
+        "nativeOutcome": "Catch",
+        "secondsBeforeThrow": 0.48646020889282227,
+        "requestedSprint": false,
+        "permission": false,
+        "retainedSprint": false,
+        "observedWalkSpeed": 20,
+        "blocked": false,
+        "reason": "passing player",
+        "futureArrival": true,
+        "routeReachable": true,
+        "routeBestEffort": null,
+        "measured27WithinNextPoint4Seconds": true,
+        "nextNativeElapsed": 3.447016954421997
+      },
+      {
+        "playIndex": 1,
+        "nativeOutcome": "Catch",
+        "secondsBeforeThrow": 0.4700660705566406,
+        "requestedSprint": false,
+        "permission": false,
+        "retainedSprint": false,
+        "observedWalkSpeed": 20,
+        "blocked": false,
+        "reason": "returning to path",
+        "futureArrival": true,
+        "routeReachable": true,
+        "routeBestEffort": null,
+        "measured27WithinNextPoint4Seconds": true,
+        "nextNativeElapsed": 3.447016954421997
+      },
+      {
+        "playIndex": 3,
+        "nativeOutcome": "Catch",
+        "secondsBeforeThrow": 2.216732978820801,
+        "requestedSprint": false,
+        "permission": false,
+        "retainedSprint": false,
+        "observedWalkSpeed": 20,
+        "blocked": false,
+        "reason": "passing player",
+        "futureArrival": true,
+        "routeReachable": true,
+        "routeBestEffort": null,
+        "measured27WithinNextPoint4Seconds": false,
+        "nextNativeElapsed": null
+      },
+      {
+        "playIndex": 3,
+        "nativeOutcome": "Catch",
+        "secondsBeforeThrow": 2.0506601333618164,
+        "requestedSprint": false,
+        "permission": false,
+        "retainedSprint": false,
+        "observedWalkSpeed": 20,
+        "blocked": false,
+        "reason": "returning to path",
+        "futureArrival": true,
+        "routeReachable": true,
+        "routeBestEffort": null,
+        "measured27WithinNextPoint4Seconds": false,
+        "nextNativeElapsed": null
+      },
+      {
+        "playIndex": 3,
+        "nativeOutcome": "Catch",
+        "secondsBeforeThrow": 1.9834010601043701,
+        "requestedSprint": false,
+        "permission": false,
+        "retainedSprint": false,
+        "observedWalkSpeed": 20,
+        "blocked": false,
+        "reason": "passing player",
+        "futureArrival": true,
+        "routeReachable": true,
+        "routeBestEffort": null,
+        "measured27WithinNextPoint4Seconds": false,
+        "nextNativeElapsed": null
+      },
+      {
+        "playIndex": 3,
+        "nativeOutcome": "Catch",
+        "secondsBeforeThrow": 1.8994801044464111,
+        "requestedSprint": false,
+        "permission": false,
+        "retainedSprint": false,
+        "observedWalkSpeed": 20,
+        "blocked": false,
+        "reason": "returning to path",
+        "futureArrival": true,
+        "routeReachable": true,
+        "routeBestEffort": null,
+        "measured27WithinNextPoint4Seconds": false,
+        "nextNativeElapsed": null
+      },
+      {
+        "playIndex": 3,
+        "nativeOutcome": "Catch",
+        "secondsBeforeThrow": 1.5996220111846924,
+        "requestedSprint": false,
+        "permission": false,
+        "retainedSprint": false,
+        "observedWalkSpeed": 20,
+        "blocked": false,
+        "reason": "passing player",
+        "futureArrival": true,
+        "routeReachable": true,
+        "routeBestEffort": null,
+        "measured27WithinNextPoint4Seconds": false,
+        "nextNativeElapsed": null
+      },
+      {
+        "playIndex": 3,
+        "nativeOutcome": "Catch",
+        "secondsBeforeThrow": 1.3997750282287598,
+        "requestedSprint": false,
+        "permission": false,
+        "retainedSprint": false,
+        "observedWalkSpeed": 20,
+        "blocked": false,
+        "reason": "returning to path",
+        "futureArrival": true,
+        "routeReachable": true,
+        "routeBestEffort": null,
+        "measured27WithinNextPoint4Seconds": false,
+        "nextNativeElapsed": null
+      },
+      {
+        "playIndex": 7,
+        "nativeOutcome": "Incomplete",
+        "secondsBeforeThrow": 3.7524170875549316,
+        "requestedSprint": true,
+        "permission": true,
+        "retainedSprint": false,
+        "observedWalkSpeed": 20,
+        "blocked": false,
+        "reason": "passing player",
+        "futureArrival": true,
+        "routeReachable": true,
+        "routeBestEffort": null,
+        "measured27WithinNextPoint4Seconds": false,
+        "nextNativeElapsed": null
+      },
+      {
+        "playIndex": 7,
+        "nativeOutcome": "Incomplete",
+        "secondsBeforeThrow": 3.452760934829712,
+        "requestedSprint": true,
+        "permission": true,
+        "retainedSprint": false,
+        "observedWalkSpeed": 27,
+        "blocked": false,
+        "reason": "passing player",
+        "futureArrival": true,
+        "routeReachable": true,
+        "routeBestEffort": null,
+        "measured27WithinNextPoint4Seconds": true,
+        "nextNativeElapsed": 0.7306220531463623
+      },
+      {
+        "playIndex": 7,
+        "nativeOutcome": "Incomplete",
+        "secondsBeforeThrow": 3.4198949337005615,
+        "requestedSprint": true,
+        "permission": true,
+        "retainedSprint": false,
+        "observedWalkSpeed": 27,
+        "blocked": false,
+        "reason": "holding passing side",
+        "futureArrival": true,
+        "routeReachable": true,
+        "routeBestEffort": null,
+        "measured27WithinNextPoint4Seconds": true,
+        "nextNativeElapsed": 0.7306220531463623
+      },
+      {
+        "playIndex": 7,
+        "nativeOutcome": "Incomplete",
+        "secondsBeforeThrow": 3.3693630695343018,
+        "requestedSprint": true,
+        "permission": true,
+        "retainedSprint": true,
+        "observedWalkSpeed": 20,
+        "blocked": false,
+        "reason": "returning to path",
+        "futureArrival": true,
+        "routeReachable": true,
+        "routeBestEffort": null,
+        "measured27WithinNextPoint4Seconds": true,
+        "nextNativeElapsed": 0.7306220531463623
+      },
+      {
+        "playIndex": 8,
+        "nativeOutcome": "Catch",
+        "secondsBeforeThrow": 3.5262649059295654,
+        "requestedSprint": true,
+        "permission": true,
+        "retainedSprint": false,
+        "observedWalkSpeed": 20,
+        "blocked": false,
+        "reason": "passing player",
+        "futureArrival": true,
+        "routeReachable": true,
+        "routeBestEffort": null,
+        "measured27WithinNextPoint4Seconds": false,
+        "nextNativeElapsed": null
+      },
+      {
+        "playIndex": 8,
+        "nativeOutcome": "Catch",
+        "secondsBeforeThrow": 3.243741989135742,
+        "requestedSprint": true,
+        "permission": true,
+        "retainedSprint": true,
+        "observedWalkSpeed": 27,
+        "blocked": false,
+        "reason": "holding passing side",
+        "futureArrival": true,
+        "routeReachable": true,
+        "routeBestEffort": null,
+        "measured27WithinNextPoint4Seconds": true,
+        "nextNativeElapsed": 0.5891191959381104
+      },
+      {
+        "playIndex": 8,
+        "nativeOutcome": "Catch",
+        "secondsBeforeThrow": 3.1768460273742676,
+        "requestedSprint": true,
+        "permission": true,
+        "retainedSprint": true,
+        "observedWalkSpeed": 20,
+        "blocked": false,
+        "reason": "returning to path",
+        "futureArrival": true,
+        "routeReachable": true,
+        "routeBestEffort": null,
+        "measured27WithinNextPoint4Seconds": true,
+        "nextNativeElapsed": 0.5891191959381104
+      },
+      {
+        "playIndex": 10,
+        "nativeOutcome": "Incomplete",
+        "secondsBeforeThrow": 3.508837938308716,
+        "requestedSprint": true,
+        "permission": true,
+        "retainedSprint": false,
+        "observedWalkSpeed": 20,
+        "blocked": false,
+        "reason": "passing player",
+        "futureArrival": true,
+        "routeReachable": true,
+        "routeBestEffort": null,
+        "measured27WithinNextPoint4Seconds": true,
+        "nextNativeElapsed": 0.4737100601196289
+      },
+      {
+        "playIndex": 10,
+        "nativeOutcome": "Incomplete",
+        "secondsBeforeThrow": 3.208745002746582,
+        "requestedSprint": true,
+        "permission": true,
+        "retainedSprint": true,
+        "observedWalkSpeed": 27,
+        "blocked": false,
+        "reason": "passing player",
+        "futureArrival": true,
+        "routeReachable": true,
+        "routeBestEffort": null,
+        "measured27WithinNextPoint4Seconds": true,
+        "nextNativeElapsed": 0.691107988357544
+      },
+      {
+        "playIndex": 10,
+        "nativeOutcome": "Incomplete",
+        "secondsBeforeThrow": 3.091825008392334,
+        "requestedSprint": true,
+        "permission": true,
+        "retainedSprint": true,
+        "observedWalkSpeed": 27,
+        "blocked": false,
+        "reason": "holding passing side",
+        "futureArrival": true,
+        "routeReachable": true,
+        "routeBestEffort": null,
+        "measured27WithinNextPoint4Seconds": true,
+        "nextNativeElapsed": 0.691107988357544
+      },
+      {
+        "playIndex": 10,
+        "nativeOutcome": "Incomplete",
+        "secondsBeforeThrow": 2.9592370986938477,
+        "requestedSprint": true,
+        "permission": true,
+        "retainedSprint": true,
+        "observedWalkSpeed": 27,
+        "blocked": false,
+        "reason": "returning to path",
+        "futureArrival": true,
+        "routeReachable": true,
+        "routeBestEffort": null,
+        "measured27WithinNextPoint4Seconds": true,
+        "nextNativeElapsed": 0.9075050354003906
+      },
+      {
+        "playIndex": 11,
+        "nativeOutcome": "Catch",
+        "secondsBeforeThrow": 3.723587989807129,
+        "requestedSprint": true,
+        "permission": true,
+        "retainedSprint": true,
+        "observedWalkSpeed": 20,
+        "blocked": false,
+        "reason": "passing player",
+        "futureArrival": true,
+        "routeReachable": true,
+        "routeBestEffort": null,
+        "measured27WithinNextPoint4Seconds": false,
+        "nextNativeElapsed": null
+      },
+      {
+        "playIndex": 11,
+        "nativeOutcome": "Catch",
+        "secondsBeforeThrow": 3.406787157058716,
+        "requestedSprint": true,
+        "permission": true,
+        "retainedSprint": true,
+        "observedWalkSpeed": 27,
+        "blocked": false,
+        "reason": "holding passing side",
+        "futureArrival": true,
+        "routeReachable": true,
+        "routeBestEffort": null,
+        "measured27WithinNextPoint4Seconds": true,
+        "nextNativeElapsed": 0.4599900245666504
+      },
+      {
+        "playIndex": 11,
+        "nativeOutcome": "Catch",
+        "secondsBeforeThrow": 3.273982048034668,
+        "requestedSprint": true,
+        "permission": true,
+        "retainedSprint": true,
+        "observedWalkSpeed": 27,
+        "blocked": false,
+        "reason": "returning to path",
+        "futureArrival": true,
+        "routeReachable": true,
+        "routeBestEffort": null,
+        "measured27WithinNextPoint4Seconds": true,
+        "nextNativeElapsed": 0.6764168739318848
+      },
+      {
+        "playIndex": 11,
+        "nativeOutcome": "Catch",
+        "secondsBeforeThrow": 3.207508087158203,
+        "requestedSprint": true,
+        "permission": true,
+        "retainedSprint": true,
+        "observedWalkSpeed": 27,
+        "blocked": false,
+        "reason": "passing player",
+        "futureArrival": true,
+        "routeReachable": true,
+        "routeBestEffort": null,
+        "measured27WithinNextPoint4Seconds": true,
+        "nextNativeElapsed": 0.6764168739318848
+      },
+      {
+        "playIndex": 11,
+        "nativeOutcome": "Catch",
+        "secondsBeforeThrow": 2.9069550037384033,
+        "requestedSprint": true,
+        "permission": true,
+        "retainedSprint": true,
+        "observedWalkSpeed": 27,
+        "blocked": false,
+        "reason": "passing player",
+        "futureArrival": true,
+        "routeReachable": true,
+        "routeBestEffort": null,
+        "measured27WithinNextPoint4Seconds": true,
+        "nextNativeElapsed": 0.8919408321380615
+      },
+      {
+        "playIndex": 11,
+        "nativeOutcome": "Catch",
+        "secondsBeforeThrow": 2.8743081092834473,
+        "requestedSprint": false,
+        "permission": false,
+        "retainedSprint": false,
+        "observedWalkSpeed": 27,
+        "blocked": false,
+        "reason": "returning to path",
+        "futureArrival": true,
+        "routeReachable": true,
+        "routeBestEffort": null,
+        "measured27WithinNextPoint4Seconds": false,
+        "nextNativeElapsed": null
+      },
+      {
+        "playIndex": 11,
+        "nativeOutcome": "Catch",
+        "secondsBeforeThrow": 2.8071529865264893,
+        "requestedSprint": false,
+        "permission": false,
+        "retainedSprint": false,
+        "observedWalkSpeed": 27,
+        "blocked": false,
+        "reason": "passing player",
+        "futureArrival": true,
+        "routeReachable": true,
+        "routeBestEffort": null,
+        "measured27WithinNextPoint4Seconds": false,
+        "nextNativeElapsed": null
+      },
+      {
+        "playIndex": 11,
+        "nativeOutcome": "Catch",
+        "secondsBeforeThrow": 2.5408639907836914,
+        "requestedSprint": false,
+        "permission": false,
+        "retainedSprint": false,
+        "observedWalkSpeed": 20,
+        "blocked": false,
+        "reason": "returning to path",
+        "futureArrival": true,
+        "routeReachable": true,
+        "routeBestEffort": null,
+        "measured27WithinNextPoint4Seconds": false,
+        "nextNativeElapsed": null
+      },
+      {
+        "playIndex": 11,
+        "nativeOutcome": "Catch",
+        "secondsBeforeThrow": 2.39023494720459,
+        "requestedSprint": false,
+        "permission": false,
+        "retainedSprint": false,
+        "observedWalkSpeed": 20,
+        "blocked": false,
+        "reason": "passing player",
+        "futureArrival": true,
+        "routeReachable": true,
+        "routeBestEffort": null,
+        "measured27WithinNextPoint4Seconds": false,
+        "nextNativeElapsed": null
+      },
+      {
+        "playIndex": 11,
+        "nativeOutcome": "Catch",
+        "secondsBeforeThrow": 2.074233055114746,
+        "requestedSprint": false,
+        "permission": false,
+        "retainedSprint": false,
+        "observedWalkSpeed": 20,
+        "blocked": false,
+        "reason": "passing player",
+        "futureArrival": true,
+        "routeReachable": true,
+        "routeBestEffort": null,
+        "measured27WithinNextPoint4Seconds": false,
+        "nextNativeElapsed": null
+      },
+      {
+        "playIndex": 11,
+        "nativeOutcome": "Catch",
+        "secondsBeforeThrow": 1.9577500820159912,
+        "requestedSprint": false,
+        "permission": false,
+        "retainedSprint": false,
+        "observedWalkSpeed": 20,
+        "blocked": false,
+        "reason": "returning to path",
+        "futureArrival": true,
+        "routeReachable": true,
+        "routeBestEffort": null,
+        "measured27WithinNextPoint4Seconds": false,
+        "nextNativeElapsed": null
+      },
+      {
+        "playIndex": 11,
+        "nativeOutcome": "Catch",
+        "secondsBeforeThrow": 1.9408769607543945,
+        "requestedSprint": false,
+        "permission": false,
+        "retainedSprint": false,
+        "observedWalkSpeed": 20,
+        "blocked": false,
+        "reason": "passing player",
+        "futureArrival": true,
+        "routeReachable": true,
+        "routeBestEffort": null,
+        "measured27WithinNextPoint4Seconds": false,
+        "nextNativeElapsed": null
+      },
+      {
+        "playIndex": 11,
+        "nativeOutcome": "Catch",
+        "secondsBeforeThrow": 1.6405589580535889,
+        "requestedSprint": false,
+        "permission": false,
+        "retainedSprint": false,
+        "observedWalkSpeed": 20,
+        "blocked": false,
+        "reason": "returning to path",
+        "futureArrival": true,
+        "routeReachable": true,
+        "routeBestEffort": null,
+        "measured27WithinNextPoint4Seconds": false,
+        "nextNativeElapsed": null
+      },
+      {
+        "playIndex": 13,
+        "nativeOutcome": "Swatted",
+        "secondsBeforeThrow": 3.707887887954712,
+        "requestedSprint": true,
+        "permission": true,
+        "retainedSprint": false,
+        "observedWalkSpeed": 20,
+        "blocked": false,
+        "reason": "passing player",
+        "futureArrival": true,
+        "routeReachable": true,
+        "routeBestEffort": null,
+        "measured27WithinNextPoint4Seconds": false,
+        "nextNativeElapsed": null
+      },
+      {
+        "playIndex": 13,
+        "nativeOutcome": "Swatted",
+        "secondsBeforeThrow": 3.4075770378112793,
+        "requestedSprint": true,
+        "permission": true,
+        "retainedSprint": false,
+        "observedWalkSpeed": 27,
+        "blocked": false,
+        "reason": "passing player",
+        "futureArrival": true,
+        "routeReachable": true,
+        "routeBestEffort": null,
+        "measured27WithinNextPoint4Seconds": true,
+        "nextNativeElapsed": 0.6913509368896484
+      },
+      {
+        "playIndex": 13,
+        "nativeOutcome": "Swatted",
+        "secondsBeforeThrow": 3.357985019683838,
+        "requestedSprint": true,
+        "permission": true,
+        "retainedSprint": false,
+        "observedWalkSpeed": 20,
+        "blocked": false,
+        "reason": "returning to path",
+        "futureArrival": true,
+        "routeReachable": true,
+        "routeBestEffort": null,
+        "measured27WithinNextPoint4Seconds": true,
+        "nextNativeElapsed": 0.6913509368896484
+      },
+      {
+        "playIndex": 14,
+        "nativeOutcome": "Catch",
+        "secondsBeforeThrow": 3.8046109676361084,
+        "requestedSprint": true,
+        "permission": true,
+        "retainedSprint": false,
+        "observedWalkSpeed": 20,
+        "blocked": false,
+        "reason": "passing player",
+        "futureArrival": true,
+        "routeReachable": true,
+        "routeBestEffort": null,
+        "measured27WithinNextPoint4Seconds": false,
+        "nextNativeElapsed": null
+      },
+      {
+        "playIndex": 14,
+        "nativeOutcome": "Catch",
+        "secondsBeforeThrow": 3.4892311096191406,
+        "requestedSprint": true,
+        "permission": true,
+        "retainedSprint": true,
+        "observedWalkSpeed": 27,
+        "blocked": false,
+        "reason": "passing player",
+        "futureArrival": true,
+        "routeReachable": true,
+        "routeBestEffort": null,
+        "measured27WithinNextPoint4Seconds": true,
+        "nextNativeElapsed": 0.4766371250152588
+      },
+      {
+        "playIndex": 14,
+        "nativeOutcome": "Catch",
+        "secondsBeforeThrow": 3.37241792678833,
+        "requestedSprint": true,
+        "permission": true,
+        "retainedSprint": true,
+        "observedWalkSpeed": 27,
+        "blocked": false,
+        "reason": "holding passing side",
+        "futureArrival": true,
+        "routeReachable": true,
+        "routeBestEffort": null,
+        "measured27WithinNextPoint4Seconds": true,
+        "nextNativeElapsed": 0.6766679286956787
+      },
+      {
+        "playIndex": 14,
+        "nativeOutcome": "Catch",
+        "secondsBeforeThrow": 3.23915696144104,
+        "requestedSprint": true,
+        "permission": true,
+        "retainedSprint": true,
+        "observedWalkSpeed": 27,
+        "blocked": false,
+        "reason": "returning to path",
+        "futureArrival": true,
+        "routeReachable": true,
+        "routeBestEffort": null,
+        "measured27WithinNextPoint4Seconds": true,
+        "nextNativeElapsed": 0.6766679286956787
+      },
+      {
+        "playIndex": 14,
+        "nativeOutcome": "Catch",
+        "secondsBeforeThrow": 2.923082113265991,
+        "requestedSprint": false,
+        "permission": false,
+        "retainedSprint": false,
+        "observedWalkSpeed": 27,
+        "blocked": false,
+        "reason": "passing player",
+        "futureArrival": true,
+        "routeReachable": true,
+        "routeBestEffort": null,
+        "measured27WithinNextPoint4Seconds": false,
+        "nextNativeElapsed": null
+      },
+      {
+        "playIndex": 14,
+        "nativeOutcome": "Catch",
+        "secondsBeforeThrow": 2.7222580909729004,
+        "requestedSprint": false,
+        "permission": false,
+        "retainedSprint": false,
+        "observedWalkSpeed": 20,
+        "blocked": false,
+        "reason": "returning to path",
+        "futureArrival": true,
+        "routeReachable": true,
+        "routeBestEffort": null,
+        "measured27WithinNextPoint4Seconds": false,
+        "nextNativeElapsed": null
+      },
+      {
+        "playIndex": 14,
+        "nativeOutcome": "Catch",
+        "secondsBeforeThrow": 1.5385091304779053,
+        "requestedSprint": false,
+        "permission": false,
+        "retainedSprint": false,
+        "observedWalkSpeed": 20,
+        "blocked": false,
+        "reason": "passing player",
+        "futureArrival": true,
+        "routeReachable": true,
+        "routeBestEffort": null,
+        "measured27WithinNextPoint4Seconds": false,
+        "nextNativeElapsed": null
+      },
+      {
+        "playIndex": 14,
+        "nativeOutcome": "Catch",
+        "secondsBeforeThrow": 1.223020076751709,
+        "requestedSprint": false,
+        "permission": false,
+        "retainedSprint": false,
+        "observedWalkSpeed": 20,
+        "blocked": false,
+        "reason": "passing player",
+        "futureArrival": true,
+        "routeReachable": true,
+        "routeBestEffort": null,
+        "measured27WithinNextPoint4Seconds": false,
+        "nextNativeElapsed": null
+      },
+      {
+        "playIndex": 14,
+        "nativeOutcome": "Catch",
+        "secondsBeforeThrow": 0.955639123916626,
+        "requestedSprint": false,
+        "permission": false,
+        "retainedSprint": false,
+        "observedWalkSpeed": 20,
+        "blocked": false,
+        "reason": "returning to path",
+        "futureArrival": true,
+        "routeReachable": true,
+        "routeBestEffort": null,
+        "measured27WithinNextPoint4Seconds": false,
+        "nextNativeElapsed": null
+      },
+      {
+        "playIndex": 14,
+        "nativeOutcome": "Catch",
+        "secondsBeforeThrow": 0.8394579887390137,
+        "requestedSprint": false,
+        "permission": false,
+        "retainedSprint": false,
+        "observedWalkSpeed": 20,
+        "blocked": false,
+        "reason": "passing player",
+        "futureArrival": true,
+        "routeReachable": true,
+        "routeBestEffort": null,
+        "measured27WithinNextPoint4Seconds": false,
+        "nextNativeElapsed": null
+      },
+      {
+        "playIndex": 14,
+        "nativeOutcome": "Catch",
+        "secondsBeforeThrow": 0.6056859493255615,
+        "requestedSprint": false,
+        "permission": false,
+        "retainedSprint": false,
+        "observedWalkSpeed": 20,
+        "blocked": false,
+        "reason": "returning to path",
+        "futureArrival": true,
+        "routeReachable": true,
+        "routeBestEffort": null,
+        "measured27WithinNextPoint4Seconds": false,
+        "nextNativeElapsed": null
+      },
+      {
+        "playIndex": 14,
+        "nativeOutcome": "Catch",
+        "secondsBeforeThrow": 0.5563910007476807,
+        "requestedSprint": false,
+        "permission": false,
+        "retainedSprint": false,
+        "observedWalkSpeed": 20,
+        "blocked": false,
+        "reason": "passing player",
+        "futureArrival": true,
+        "routeReachable": true,
+        "routeBestEffort": null,
+        "measured27WithinNextPoint4Seconds": false,
+        "nextNativeElapsed": null
+      },
+      {
+        "playIndex": 14,
+        "nativeOutcome": "Catch",
+        "secondsBeforeThrow": 0.35633397102355957,
+        "requestedSprint": false,
+        "permission": false,
+        "retainedSprint": false,
+        "observedWalkSpeed": 20,
+        "blocked": false,
+        "reason": "returning to path",
+        "futureArrival": true,
+        "routeReachable": true,
+        "routeBestEffort": null,
+        "measured27WithinNextPoint4Seconds": true,
+        "nextNativeElapsed": 3.776808977127075
+      }
+    ],
+    "note": "Prethrow is bounded by observed PreSnap and authoritative launch time. Permission and retained input are distinguished from a later measured native velocity sample. The candidate-ranking cause is not logged."
+  }
+}

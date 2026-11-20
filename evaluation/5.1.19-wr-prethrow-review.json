@@ -1,0 +1,113 @@
+{
+  "schemaVersion": 1,
+  "version": "5.1.19",
+  "scope": "Preserve a currently funded WR route sprint through a checked prethrow bypass",
+  "trigger": {
+    "observedVersion": "5.1.18",
+    "incident": "WR-7",
+    "role": "WR",
+    "pass": "Floater",
+    "nativeResult": "Incomplete",
+    "reachablePlans": 10,
+    "totalPlans": 11,
+    "jumpRequestedAndObserved": true,
+    "diveRequestedAndObserved": true,
+    "jumpDispatchLateSeconds": 0.003466367721557617,
+    "diveDispatchLateSeconds": 0.0037763118743896484,
+    "actualDiveOriginErrorStuds": 0.362384728519908,
+    "diveOriginBeyondGoalStuds": 5.995506286621094,
+    "localContactClaim": true,
+    "serverAcceptedCatch": false,
+    "currentBallCapsuleMarginAtLocalClaimStuds": 0.15451683892183388,
+    "note": "Local contact is an attempted claim, not an accepted catch. The unobserved server rejection cause remains unresolved; this prethrow fix does not explain or claim to rescue that result."
+  },
+  "budgetFixObservation": {
+    "firstLiveElapsed": 0.11588501930236816,
+    "stamina": 75,
+    "openingSprintRequested": true,
+    "selectedStemYards": 17.500001852249916,
+    "recoveryCounterObservedConfirmedSeconds": 0.0741754722595207,
+    "meaning": "The prior budget fix is active and requests opening sprint immediately. Native walking samples and avoidance-induced releases still reduced actual route progress."
+  },
+  "prethrowDefect": {
+    "observed": "While the current route requested its funded opening sprint, the prethrow avoidance call always disabled sprint-detour permission for an uncommitted Floater. A passing-player decision released native sprint despite an existing route deadline.",
+    "notInferred": "No precise alternate trajectory or rescued catch is inferred from the recorded opponent path.",
+    "fix": "Only a submitted reachable non-best-effort route with the current round and observed snap may mark its arrival deadline. The consumer retains sprint only when the current movement request and stamina gate already request it, the target is finite, and the matching deadline is still in the future."
+  },
+  "offlineRegression": {
+    "fixture": "Authored stationary-obstacle geometry using the actual movement controller and avoidance helper. It demonstrates the live-observed permission defect; it does not replay the full live opponent path.",
+    "published18SourceWithNewTests": {
+      "passed": 36,
+      "total": 37,
+      "soleFailure": "funded current WR route retains a checked sprint before the ball exists"
+    },
+    "new19SourceWithNewTests": {
+      "passed": 37,
+      "total": 37
+    },
+    "witness": {
+      "old": {
+        "sprintRetained": false,
+        "requestedSprint": true,
+        "movementScale": 0.7407407407407407,
+        "permission": false,
+        "nativeSpeed": 27,
+        "forwardStudsPerSecond": 19.92389396183491
+      },
+      "new": {
+        "sprintRetained": true,
+        "requestedSprint": true,
+        "movementScale": 1.0,
+        "permission": true,
+        "nativeSpeed": 27,
+        "forwardStudsPerSecond": 25.37170076121953
+      }
+    },
+    "checkedClearanceStuds": 4.25,
+    "checkedNativeSpeeds": [
+      20,
+      27
+    ],
+    "directionTurnBoundRadiansPerSecond": 8,
+    "nativeSpeedMutated": false
+  },
+  "validation": {
+    "deterministicPolicyController": {
+      "passed": 84,
+      "total": 84,
+      "suites": {
+        "defensiveCuts": 16,
+        "scheduledRouteMix": 28,
+        "deterministicIsolation": 40
+      }
+    },
+    "avoidanceController": {
+      "passed": 37,
+      "total": 37
+    },
+    "negativeGates": [
+      "DB prethrow",
+      "PreSnap",
+      "passStarted",
+      "not requested",
+      "current stamina budget denied",
+      "missing or stale round",
+      "missing or stale snap",
+      "future snap",
+      "expired or non-finite deadline",
+      "non-finite target",
+      "unsubmitted route",
+      "best-effort route",
+      "native action ownership",
+      "physical overlap"
+    ],
+    "independentReview": "No blocking issue found in producer, consumer, current-budget gate, both-speed clearance, turn bound or action ownership.",
+    "gitDiffCheck": "passed"
+  },
+  "limitations": [
+    "Offline rules and geometry do not reproduce native physics, replication, opponent behavior or server catch decisions.",
+    "Native local contact is one-shot. No replacement of native claim behavior or speculative server timing adjustment is included.",
+    "This release preserves already-budgeted sprint permission; it does not request extra speed, override collision checks, or guarantee a catch.",
+    "No live outcome for 5.1.19 is claimed in this artifact."
+  ]
+}
