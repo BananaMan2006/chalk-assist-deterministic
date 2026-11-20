@@ -1,0 +1,235 @@
+{
+  "schemaVersion": 1,
+  "release": "5.1.15",
+  "buildId": "14914e08403ef1d80bb81f50aca8f554a693dd003868c0424506d54e2d05b2be",
+  "label": "Public 5.1.15 separate continuation",
+  "window": {
+    "start": 1795141457.2093718,
+    "endExclusive": 1795141837.080538,
+    "closedReason": "next_build_loaded",
+    "collectorStopped": true,
+    "elapsedWindowSeconds": 379.87116622924805,
+    "noEventOverlapWithPriorWindow": true
+  },
+  "matches": {
+    "completed": 4,
+    "wins": 4,
+    "losses": 0,
+    "scores": {
+      "4-0": 3,
+      "4-1": 1
+    },
+    "forfeits": {
+      "count": 1,
+      "winner": "unknown; excluded from win/loss totals",
+      "scoresAtExit": {
+        "3-0": 1
+      }
+    },
+    "continuedFromPriorPartialMatch": {
+      "completed": true,
+      "score": "4-0",
+      "firstObservedNativeFinal": 1795141492.409027,
+      "alreadyObservedScoreAtThisWindowStart": "2-0",
+      "includedInNativeCompletedTotals": true,
+      "includedInFullyObservedMatchTotals": false
+    },
+    "fullyObservedWithinThisWindow": {
+      "completed": 3,
+      "wins": 3,
+      "losses": 0,
+      "scores": {
+        "4-0": 2,
+        "4-1": 1
+      }
+    }
+  },
+  "plays": {
+    "total": 19,
+    "roles": {
+      "WR": {
+        "total": 9,
+        "passTypes": {
+          "Floater": 9
+        },
+        "nativeOutcomes": {
+          "Catch": 9
+        },
+        "actions": {
+          "jumpRequest": 9,
+          "jump": 9,
+          "diveAttempt": 1,
+          "dive": 1
+        }
+      },
+      "DB": {
+        "total": 10,
+        "passTypes": {
+          "Bullet": 9,
+          "Floater": 1
+        },
+        "nativeOutcomes": {
+          "Intercepted": 8,
+          "Catch": 1,
+          "Swatted": 1
+        },
+        "actions": {
+          "diveAttempt": 8,
+          "dive": 8,
+          "jumpRequest": 8,
+          "jump": 8
+        }
+      }
+    },
+    "opponentPoints": 1
+  },
+  "execution": {
+    "runtimeErrors": 0,
+    "normalSolveMs": {
+      "count": 156,
+      "median": 12.859187496360391,
+      "p95": 33.755249984096736,
+      "max": 40.91124999104068
+    },
+    "nativeJammedNotices": 1,
+    "localCatchCallbacks": 19,
+    "callbackTypes": {
+      "number": 19
+    },
+    "numericCallbackAgeMs": {
+      "count": 19,
+      "min": 0.12741668615490198,
+      "median": 0.36949999048374593,
+      "max": 0.8290833211503923
+    },
+    "nonPossessionOutcomeWithCallback": 2,
+    "recoveryAllowanceObservations": [
+      {
+        "seconds": 0.2663569355011003,
+        "nativeOutcome": "Catch",
+        "observedNativeSprintSample": true
+      },
+      {
+        "seconds": 0.2663569355011003,
+        "nativeOutcome": "Intercepted",
+        "observedNativeSprintSample": false
+      },
+      {
+        "seconds": 0.38386717796325837,
+        "nativeOutcome": "Catch",
+        "observedNativeSprintSample": true
+      },
+      {
+        "seconds": 0.38386717796325837,
+        "nativeOutcome": "Intercepted",
+        "observedNativeSprintSample": false
+      },
+      {
+        "seconds": 0.40743171691894753,
+        "nativeOutcome": "Catch",
+        "observedNativeSprintSample": false
+      },
+      {
+        "seconds": 0.2522190284729011,
+        "nativeOutcome": "Catch",
+        "observedNativeSprintSample": false
+      },
+      {
+        "seconds": 0.2663020515441904,
+        "nativeOutcome": "Catch",
+        "observedNativeSprintSample": true
+      },
+      {
+        "seconds": 0.2663020515441904,
+        "nativeOutcome": "Intercepted",
+        "observedNativeSprintSample": false
+      },
+      {
+        "seconds": 0.2712599658966074,
+        "nativeOutcome": "Catch",
+        "observedNativeSprintSample": true
+      },
+      {
+        "seconds": 0.2712599658966074,
+        "nativeOutcome": "Intercepted",
+        "observedNativeSprintSample": false
+      },
+      {
+        "seconds": 0.15436523437500116,
+        "nativeOutcome": "Catch",
+        "observedNativeSprintSample": true
+      },
+      {
+        "seconds": 0.15436523437500116,
+        "nativeOutcome": "Intercepted",
+        "observedNativeSprintSample": false
+      },
+      {
+        "seconds": 0.33115648269653486,
+        "nativeOutcome": "Catch",
+        "observedNativeSprintSample": true
+      },
+      {
+        "seconds": 0.33115648269653486,
+        "nativeOutcome": "Swatted",
+        "observedNativeSprintSample": false
+      },
+      {
+        "seconds": 0.25658461570739854,
+        "nativeOutcome": "Catch",
+        "observedNativeSprintSample": true
+      }
+    ],
+    "defensiveCarrierChaseBelow40Observed": false
+  },
+  "coverage": {
+    "retainedEvents": 1919,
+    "malformedLines": 0,
+    "fileResets": 0
+  },
+  "reviewedIncidentCount": 1,
+  "cases": [
+    {
+      "caseId": "F001",
+      "role": "DB",
+      "pass": "Bullet",
+      "nativeOutcome": "Catch",
+      "terminalOutcome": "Touchdown",
+      "pointAwarded": "Opp",
+      "group": "local_diving_claim_without_server_possession",
+      "evidence": "DB Bullet: four of five plans retained normal margins. A grounded dive was dispatched 0.879s after launch; a positive numeric local callback followed at 1.113s with age 0.255ms, diving posture and local capsule margin +0.816. Native opponent Catch occurred at 1.247s, then Touchdown at 3.833s. No tackle attempt was logged. First RAC navigation at 2.361s showed speed zero and 93 stamina; later samples sprinted at native 27 while stamina fell from 92 to 62, with roughly 35.5-stud pursuit-target distance. This was not the former stamina-reserve cutoff.",
+      "uncertainty": "A recent local callback and overlap do not prove server receipt or acceptance. The sampled post-dive recovery and large subsequent pursuit gap explain why no close tackle opportunity was observed, but do not establish that a different catch action would have won possession. No postclaim capsule samples were recorded before the native Catch.",
+      "planCount": 5,
+      "normalMarginForecastCount": 4,
+      "actions": {
+        "diveAttempt": 1,
+        "dive": 1
+      },
+      "localClaim": true,
+      "callbackProvenance": {
+        "touchType": "number",
+        "touchAge": 0.0002550833160057664
+      },
+      "postClaimSamples": [
+        {
+          "sinceClaim": 0,
+          "localCapsuleMargin": 0.8160968433827982,
+          "radius": 2.5,
+          "upY": 0.17364822328090668,
+          "diving": true
+        }
+      ]
+    }
+  ],
+  "limitations": [
+    "This is an uncontrolled exact-build observation, not a general win-rate estimate or a causal comparison.",
+    "A localCatch callback or recent numeric BallTouched value does not establish server acceptance. Native results decide possession.",
+    "Recent positive numeric callbacks also occurred before native non-possession outcomes; zero/string/stale reset values were not observed in that sampled cohort. This does not disclose server acceptance or rejection.",
+    "Partial recovery executing does not prove it repairs jam or collision losses.",
+    "Forfeit winner is unknown and is excluded. Wins do not establish perfect passes.",
+    "The first4\u20130 completion belongs to the game already2\u20130 at the prior fixed cutoff; it is a real native final, but not another wholly observed test game in this continuation.",
+    "This separate continuation contains only events after the previous cutoff and before the natural5.1.16 load.",
+    "A diving local claim preceded the one opponentCatch\u2192TD; server possession ordering remains unknown."
+  ],
+  "privacy": "No names, account/player/installation IDs, raw coordinates/states, credentials or native source."
+}

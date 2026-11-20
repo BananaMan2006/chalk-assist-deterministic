@@ -1,0 +1,355 @@
+{
+  "schemaVersion": 1,
+  "release": "5.1.15",
+  "buildId": "14914e08403ef1d80bb81f50aca8f554a693dd003868c0424506d54e2d05b2be",
+  "label": "Public 5.1.15 fixed observation",
+  "window": {
+    "start": 1795140777.521686,
+    "endExclusive": 1795141457.2093718,
+    "closedReason": "bounded_observer_deadline",
+    "elapsedWindowSeconds": 679.6876857280731,
+    "collectorSeconds": 605.6291649341583,
+    "backlogSecondsBeforeCollectorStart": 74.05858993530273,
+    "collectorStopped": true,
+    "collectorStopReason": "deadline",
+    "finalBoundedTailRead": true,
+    "lastIncludedNativeOutcomeAt": 1795141453.426957
+  },
+  "matches": {
+    "completed": 5,
+    "wins": 5,
+    "losses": 0,
+    "scores": {
+      "4-0": 4,
+      "4-2": 1
+    },
+    "forfeits": {
+      "count": 0,
+      "winner": "unknown; excluded from win/loss totals",
+      "scoresAtExit": {}
+    },
+    "partialAtCutoff": {
+      "count": 1,
+      "latestObservedScore": {
+        "own": 2,
+        "opponent": 0
+      },
+      "includedInWins": false,
+      "outcome": "unknown at cutoff"
+    }
+  },
+  "plays": {
+    "total": 26,
+    "roles": {
+      "WR": {
+        "total": 12,
+        "passTypes": {
+          "Floater": 12
+        },
+        "nativeOutcomes": {
+          "Catch": 12
+        },
+        "actions": {
+          "jumpRequest": 12,
+          "jump": 12,
+          "diveAttempt": 1,
+          "dive": 1
+        }
+      },
+      "DB": {
+        "total": 14,
+        "passTypes": {
+          "Bullet": 8,
+          "Floater": 6
+        },
+        "nativeOutcomes": {
+          "Intercepted": 9,
+          "Catch": 2,
+          "Swatted": 3
+        },
+        "actions": {
+          "jumpRequest": 12,
+          "jump": 12,
+          "diveAttempt": 8,
+          "dive": 8
+        }
+      }
+    },
+    "opponentPoints": 2
+  },
+  "execution": {
+    "runtimeErrors": 0,
+    "normalSolveMs": {
+      "count": 253,
+      "median": 9.609291679225862,
+      "p95": 29.454791656462476,
+      "max": 49.640500015811995
+    },
+    "nativeJammedNotices": 1,
+    "localCatchCallbacks": 25,
+    "callbackTypes": {
+      "number": 25
+    },
+    "numericCallbackAgeMs": {
+      "count": 25,
+      "min": 0.11666666250675917,
+      "median": 0.3240833175368607,
+      "max": 0.9195833408739418
+    },
+    "nonPossessionOutcomeWithCallback": 4,
+    "recoveryAllowanceObservations": [
+      {
+        "seconds": 0.44390837669372873,
+        "nativeOutcome": "Catch",
+        "observedNativeSprintSample": true
+      },
+      {
+        "seconds": 0.44390837669372873,
+        "nativeOutcome": "Intercepted",
+        "observedNativeSprintSample": false
+      },
+      {
+        "seconds": 0.3991806302751808,
+        "nativeOutcome": "Catch",
+        "observedNativeSprintSample": true
+      },
+      {
+        "seconds": 0.3991806302751808,
+        "nativeOutcome": "Intercepted",
+        "observedNativeSprintSample": false
+      },
+      {
+        "seconds": 0.21270553588867225,
+        "nativeOutcome": "Catch",
+        "observedNativeSprintSample": true
+      },
+      {
+        "seconds": 0.21270553588867225,
+        "nativeOutcome": "Intercepted",
+        "observedNativeSprintSample": false
+      },
+      {
+        "seconds": 0.34942807197571024,
+        "nativeOutcome": "Catch",
+        "observedNativeSprintSample": true
+      },
+      {
+        "seconds": 0.29859046936035316,
+        "nativeOutcome": "Catch",
+        "observedNativeSprintSample": true
+      },
+      {
+        "seconds": 0.29859046936035316,
+        "nativeOutcome": "Swatted",
+        "observedNativeSprintSample": false
+      },
+      {
+        "seconds": 0.34900390625000227,
+        "nativeOutcome": "Catch",
+        "observedNativeSprintSample": true
+      },
+      {
+        "seconds": 0.34900390625000227,
+        "nativeOutcome": "Catch",
+        "observedNativeSprintSample": false
+      },
+      {
+        "seconds": 0.30525390625000115,
+        "nativeOutcome": "Catch",
+        "observedNativeSprintSample": true
+      },
+      {
+        "seconds": 0.27249191284179874,
+        "nativeOutcome": "Catch",
+        "observedNativeSprintSample": false
+      },
+      {
+        "seconds": 0.27249191284179874,
+        "nativeOutcome": "Intercepted",
+        "observedNativeSprintSample": false
+      },
+      {
+        "seconds": 0.24836475372314526,
+        "nativeOutcome": "Catch",
+        "observedNativeSprintSample": true
+      },
+      {
+        "seconds": 0.31192220687866434,
+        "nativeOutcome": "Catch",
+        "observedNativeSprintSample": false
+      },
+      {
+        "seconds": 0.31192220687866434,
+        "nativeOutcome": "Swatted",
+        "observedNativeSprintSample": false
+      }
+    ],
+    "defensiveCarrierChaseBelow40Observed": false,
+    "overlapFallbackBranch": {
+      "provenExercised": false,
+      "zeroTranslationDecisionObserved": true,
+      "reason": "The event does not expose all five candidate-speed checks. A zero movement decision alone cannot identify the new fallback branch."
+    },
+    "rareCampingBulletExercised": false,
+    "wrLocalClaimsInsideKnownGoal": {
+      "true": 12,
+      "false": 0,
+      "unknown": 0,
+      "meaning": "Logged own root at the local callback, separately from native Catch and Touchdown."
+    },
+    "wrDiveOriginInsideKnownGoal": {
+      "observed": 1,
+      "inside": 1,
+      "outside": 0
+    },
+    "stemGuardSolveMs": {
+      "count": 7,
+      "min": 7.5209166679997,
+      "median": 9.978416666854173,
+      "max": 20.571000000927597
+    }
+  },
+  "coverage": {
+    "retainedEvents": 2790,
+    "malformedLines": 0,
+    "fileResets": 0
+  },
+  "reviewedIncidentCount": 2,
+  "cases": [
+    {
+      "caseId": "F001",
+      "role": "DB",
+      "pass": "Floater",
+      "nativeOutcome": "Catch",
+      "terminalOutcome": "Touchdown",
+      "pointAwarded": "Opp",
+      "group": "local_claim_without_server_possession",
+      "evidence": "DB Floater: all 20 own plans retained normal geometric margins. A jump request was followed by observed jump 16.2ms later; no dive. The positive numeric callback was 0.162ms old and the upright local capsule margins were +0.256 at callback and +0.659 at +66.7ms, then -2.722 at +132.6ms. The native result was opponent Catch then Touchdown. Two same-build accepted DB Floater jump-only comparisons had callback margins +0.728 and +0.198 and numeric ages 0.201ms and 0.324ms, so increasing a global overlap margin is not a demonstrated discriminator.",
+      "uncertainty": "Current sampled local geometry and a fresh BallTouched value do not prove server receipt, ordering or acceptance. The sampled callback geometry is not the native historical Reach substep. No causal timing correction is established.",
+      "planCount": 20,
+      "normalMarginForecastCount": 20,
+      "actions": {
+        "jumpRequest": 1,
+        "jump": 1
+      },
+      "localClaim": true,
+      "callbackProvenance": {
+        "touchType": "number",
+        "touchAge": 0.000161791656864807
+      },
+      "postClaimSamples": [
+        {
+          "sinceClaim": 0,
+          "localCapsuleMargin": 0.2556587971252089,
+          "radius": 3.75,
+          "upY": 1,
+          "diving": false
+        },
+        {
+          "sinceClaim": 0.06670498847961426,
+          "localCapsuleMargin": 0.6590962533134288,
+          "radius": 3.75,
+          "upY": 1,
+          "diving": false
+        },
+        {
+          "sinceClaim": 0.13255095481872559,
+          "localCapsuleMargin": -2.7217190966654137,
+          "radius": 3.75,
+          "upY": 1,
+          "diving": false
+        }
+      ],
+      "sameBuildAcceptedComparison": {
+        "matchingRolePassPosture": "DB Floater, upright airborne, jump only",
+        "acceptedInterceptionCount": 2,
+        "failedNumericAgeMs": 0.161791656864807,
+        "acceptedNumericAgesMs": [
+          0.20070833852514625,
+          0.3240833175368607
+        ],
+        "failedLocalMargin": 0.2556587971252089,
+        "acceptedLocalMargins": [
+          0.7275915328458167,
+          0.1980466960017928
+        ],
+        "finding": "An accepted interception had a smaller recorded callback margin than the miss. The small uncontrolled cohort does not identify a causal timing or margin correction."
+      }
+    },
+    {
+      "caseId": "F002",
+      "role": "DB",
+      "pass": "Floater",
+      "nativeOutcome": "Catch",
+      "terminalOutcome": "Touchdown",
+      "pointAwarded": "Opp",
+      "group": "normal_witness_lost_before_action_deadline",
+      "evidence": "DB Floater: 15 of 28 logged own plans had normal margins. The final normal jump-dive forecast at +1.822s still scheduled jump 0.792s later. Subsequent native-speed transition replans lost the witness; no jump, dive or local callback occurred before opponent Catch then Touchdown. Two collision-bypass periods were recorded, with the final clear-path transition at +1.894s. The last bypass sample still had 70 stamina; this is not the former 40-stamina reserve cutoff.",
+      "uncertainty": "Seven exact-state replays matched the logged action/margin/miss within about 0.000004. The pending native speed forecast changed to pursuit; the prior DB detour permission then removed sprint and native sprint switched off, allowing an optimistic reachable forecast again. Replays of the same held heading passed both the 20 and 27 speed clearance checks when that permission was retained. This establishes a permission feedback defect, not recovery of an interception: earlier detour costs and the complete achieved alternative path remain unproved.",
+      "planCount": 28,
+      "normalMarginForecastCount": 15,
+      "actions": {},
+      "localClaim": false,
+      "callbackProvenance": {
+        "touchType": null,
+        "touchAge": null
+      },
+      "postClaimSamples": []
+    }
+  ],
+  "limitations": [
+    "This is an uncontrolled exact-build observation, not a general win-rate estimate or a causal comparison.",
+    "A localCatch callback or recent numeric BallTouched value does not establish server acceptance. Native results decide possession.",
+    "Recent positive numeric callbacks also occurred before native non-possession outcomes; zero/string/stale reset values were not observed in that sampled cohort. This does not disclose server acceptance or rejection.",
+    "Partial recovery executing does not prove it repairs jam or collision losses.",
+    "Forfeit winner is unknown and is excluded. Wins do not establish perfect passes.",
+    "The next window continues separately; the partial 2\u20130 game is not a completed win in this report.",
+    "Repeated loads during the recorded lobby gap are not imputed as wins, losses or failed matches.",
+    "The exact new overlap fallback branch, rare camping Bullet and defensive carrier sprint below 40 stamina were not verified by this window.",
+    "A demonstrated permission feedback defect is supported by offline snapshot replay; a corrected live interception has not yet been demonstrated."
+  ],
+  "privacy": "No names, account/player/installation IDs, raw coordinates/states, credentials or native source.",
+  "lifecycleGap": {
+    "afterSecondCompletedMatch": true,
+    "secondsBetweenNativeLobbyAndNextMatchEntry": 182.524626,
+    "approximate": true,
+    "observations": "Repeated same-build loads and lobby searching were observed before normal gameplay resumed. A fresh status and the later read-only preference proof showed saved controls restored and no reported runtime error.",
+    "cause": "Unknown; no persistent skip/request evidence establishes why the brief sessions ended.",
+    "unseenGamesCounted": false
+  },
+  "defensiveBreakups": [
+    {
+      "pass": "Floater",
+      "nativeOutcome": "Swatted",
+      "ownPointAwarded": false,
+      "localCallbackObserved": true,
+      "actions": [
+        "jumpRequest",
+        "jump"
+      ],
+      "classification": "Observed pass breakup, not an interception; no opponent point on this play."
+    },
+    {
+      "pass": "Bullet",
+      "nativeOutcome": "Swatted",
+      "ownPointAwarded": false,
+      "localCallbackObserved": true,
+      "actions": [
+        "diveAttempt",
+        "dive"
+      ],
+      "classification": "Observed pass breakup, not an interception; no opponent point on this play."
+    },
+    {
+      "pass": "Floater",
+      "nativeOutcome": "Swatted",
+      "ownPointAwarded": true,
+      "localCallbackObserved": true,
+      "actions": [
+        "jumpRequest",
+        "jump"
+      ],
+      "classification": "Observed pass breakup, not an interception; no opponent point on this play."
+    }
+  ]
+}
