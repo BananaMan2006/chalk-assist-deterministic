@@ -1,0 +1,512 @@
+{
+  "schemaVersion": 1,
+  "release": "5.1.13",
+  "buildId": "e540c2eb523feaa2992a3411d7f484efe4514e4f484b1df9830ba3b3daf50a2d",
+  "window": {
+    "start": 1795137857.571014,
+    "endExclusive": 1795139295.987395,
+    "reason": "next_release_loaded",
+    "scope": "Exact-build read-only observation, not a randomized release comparison."
+  },
+  "matches": {
+    "completed": 12,
+    "wins": 12,
+    "losses": 0,
+    "scores": {
+      "4-0": 8,
+      "4-1": 3,
+      "4-2": 1
+    },
+    "forfeits": {
+      "count": 3,
+      "winner": "unknown; excluded from win/loss totals",
+      "scoresAtExit": {
+        "2-0": 1,
+        "3-0": 2
+      }
+    }
+  },
+  "plays": {
+    "total": 70,
+    "roles": {
+      "WR": {
+        "total": 34,
+        "passTypes": {
+          "Floater": 34
+        },
+        "nativeOutcomes": {
+          "Catch": 30,
+          "Swatted": 1,
+          "Incomplete": 3
+        },
+        "actions": {
+          "jumpRequest": 33,
+          "jump": 33,
+          "diveAttempt": 4,
+          "dive": 4
+        }
+      },
+      "DB": {
+        "total": 36,
+        "passTypes": {
+          "Bullet": 18,
+          "Floater": 18
+        },
+        "nativeOutcomes": {
+          "Intercepted": 25,
+          "Swatted": 4,
+          "Catch": 7
+        },
+        "actions": {
+          "jumpRequest": 34,
+          "jump": 34,
+          "diveAttempt": 19,
+          "dive": 19
+        }
+      }
+    },
+    "opponentPoints": 5,
+    "opponentCatchThenTackled": 3,
+    "opponentCatchThenTouchdown": 4
+  },
+  "execution": {
+    "runtimeErrors": 0,
+    "normalSolveMs": {
+      "count": 646,
+      "median": 10.663937515346333,
+      "p95": 29.545916651841253,
+      "max": 63.32029166514985
+    },
+    "localCatchCallbacks": 68,
+    "nativeJammedNotices": 4,
+    "DBSprintDetourWitness": "Checked passing detours retained requested sprint at native27 with stamina37 and25 on two observed Floater interceptions. Other contested catches still failed; causation and guaranteed improvement are not claimed."
+  },
+  "coverage": {
+    "malformedLines": 0,
+    "fileResets": 0,
+    "retainedEvents": 7436,
+    "firstLoadAndPreSnapObserved": true,
+    "finalCompleteMatchObserved": true
+  },
+  "reviewedIncidentCount": 11,
+  "cases": [
+    {
+      "caseId": "F001",
+      "role": "WR",
+      "pass": "Floater",
+      "nativeOutcome": "Swatted",
+      "terminalOutcome": "Swatted",
+      "pointAwarded": null,
+      "group": "contact_not_awarded",
+      "evidence": "All ten forecasts retained normal margin; confirmed jump and local airborne claim preceded native Swatted. No point on that down.",
+      "uncertainty": "The native contest outcome is authoritative; its server-side cause is unknown.",
+      "planCount": 10,
+      "normalMarginForecastCount": 10,
+      "actions": {
+        "jumpRequest": 1,
+        "jump": 1
+      },
+      "localClaim": true,
+      "postClaimSamples": [
+        {
+          "sinceClaim": 0,
+          "localCapsuleMargin": 0.40252123595201317,
+          "radius": 3.75,
+          "upY": 1,
+          "diving": false
+        },
+        {
+          "sinceClaim": 0.06381392478942871,
+          "localCapsuleMargin": 1.6274805472059652,
+          "radius": 3.75,
+          "upY": 1,
+          "diving": false
+        }
+      ]
+    },
+    {
+      "caseId": "F002",
+      "role": "WR",
+      "pass": "Floater",
+      "nativeOutcome": "Incomplete",
+      "terminalOutcome": "Incomplete",
+      "pointAwarded": "Opp",
+      "group": "prethrow_jam_and_travel_debt",
+      "evidence": "Native Jammed and sampled speed 9/12.15 interrupted the opening route. By launch the middle-stem travel deficit was 16.206 studs including slack, despite native speed 27 and stamina 86. All thirteen solves were unreachable, with no postthrow avoidance.",
+      "uncertainty": "Exact own-state replay reproduces predicted miss 8.51496 studs, unchanged with opponent removed. A hypothetical 4-stud forward shift restores a witness, but no achieved safe path was demonstrated; no timely jump existed from the observed pose.",
+      "planCount": 13,
+      "normalMarginForecastCount": 0,
+      "actions": {},
+      "localClaim": false,
+      "postClaimSamples": []
+    },
+    {
+      "caseId": "F003",
+      "role": "DB",
+      "pass": "Floater",
+      "nativeOutcome": "Catch",
+      "terminalOutcome": "Tackled",
+      "pointAwarded": null,
+      "group": "contact_not_awarded",
+      "evidence": "All five forecasts retained normal margin. Confirmed jump and local airborne claim, but native opponent Catch followed by Tackled about 48 ms later. No point.",
+      "uncertainty": "No flight avoidance or missing jump is demonstrated. Server possession ordering is unknown.",
+      "planCount": 5,
+      "normalMarginForecastCount": 5,
+      "actions": {
+        "jumpRequest": 1,
+        "jump": 1
+      },
+      "localClaim": true,
+      "postClaimSamples": [
+        {
+          "sinceClaim": 0,
+          "localCapsuleMargin": 0.0894895229286865,
+          "radius": 3.75,
+          "upY": 1,
+          "diving": false
+        }
+      ]
+    },
+    {
+      "caseId": "F004",
+      "role": "WR",
+      "pass": "Floater",
+      "nativeOutcome": "Incomplete",
+      "terminalOutcome": "Incomplete",
+      "pointAwarded": null,
+      "group": "upright_contact_not_awarded",
+      "evidence": "All nine forecasts retained normal margin; confirmed jump, no dive and no flight avoidance. In-goal airborne local claim had observed capsule margin +0.181 studs, then +1.106 at 65.7 ms; outside at the next 131.8 ms sample. Native Incomplete.",
+      "uncertainty": "This non-diving example prevents attributing all missed claims to dive tilt. Later sampled overlap does not establish server acceptance; an accepted upright counterexample had a smaller margin and similar timing, so no simple timing/margin correction is supported.",
+      "planCount": 9,
+      "normalMarginForecastCount": 9,
+      "actions": {
+        "jumpRequest": 1,
+        "jump": 1
+      },
+      "localClaim": true,
+      "postClaimSamples": [
+        {
+          "sinceClaim": 0,
+          "localCapsuleMargin": 0.18146325030627075,
+          "radius": 3.75,
+          "upY": 1,
+          "diving": false
+        },
+        {
+          "sinceClaim": 0.06570792198181152,
+          "localCapsuleMargin": 1.1063753702803907,
+          "radius": 3.75,
+          "upY": 1,
+          "diving": false
+        },
+        {
+          "sinceClaim": 0.1317758560180664,
+          "localCapsuleMargin": -1.864803694073914,
+          "radius": 3.75,
+          "upY": 1,
+          "diving": false
+        },
+        {
+          "sinceClaim": 0.1820228099822998,
+          "localCapsuleMargin": -4.673482679180879,
+          "radius": 3.75,
+          "upY": 1,
+          "diving": false
+        },
+        {
+          "sinceClaim": 0.24860787391662598,
+          "localCapsuleMargin": -8.637151128433048,
+          "radius": 3.75,
+          "upY": 1,
+          "diving": false
+        }
+      ]
+    },
+    {
+      "caseId": "F005",
+      "role": "DB",
+      "pass": "Bullet",
+      "nativeOutcome": "Catch",
+      "terminalOutcome": "Touchdown",
+      "pointAwarded": "Opp",
+      "group": "diving_contact_not_awarded_then_outpaced",
+      "evidence": "Three normal-margin forecasts, confirmed jump and airborne dive, local claim and four later poses; native opponent Catch then Touchdown. First run-after-catch sample was 37.04 studs away; minimum observed gap 35.75. No tackle attempt recorded.",
+      "uncertainty": "Native server possession cause is unknown. Sprint stopped at 42 stamina and the gap grew, but continuing sprint is not proven sufficient to close the existing gap; no same-position tackle window was demonstrated.",
+      "planCount": 3,
+      "normalMarginForecastCount": 3,
+      "actions": {
+        "jumpRequest": 1,
+        "jump": 1,
+        "diveAttempt": 1,
+        "dive": 1
+      },
+      "localClaim": true,
+      "postClaimSamples": [
+        {
+          "sinceClaim": 0,
+          "localCapsuleMargin": 0.7197745012833763,
+          "radius": 3.75,
+          "upY": 0.658974289894104,
+          "diving": true
+        },
+        {
+          "sinceClaim": 0.06365489959716797,
+          "localCapsuleMargin": 0.3206526332382511,
+          "radius": 2.5,
+          "upY": 0.24631793797016144,
+          "diving": true
+        },
+        {
+          "sinceClaim": 0.11463689804077148,
+          "localCapsuleMargin": -3.120511380162152,
+          "radius": 2.5,
+          "upY": 0.17364782094955444,
+          "diving": true
+        },
+        {
+          "sinceClaim": 0.18086791038513184,
+          "localCapsuleMargin": -7.575606822520742,
+          "radius": 2.5,
+          "upY": 0.17364756762981415,
+          "diving": true
+        },
+        {
+          "sinceClaim": 0.24773001670837402,
+          "localCapsuleMargin": -11.400962660990269,
+          "radius": 2.5,
+          "upY": 0.1736474484205246,
+          "diving": true
+        }
+      ]
+    },
+    {
+      "caseId": "F006",
+      "role": "DB",
+      "pass": "Floater",
+      "nativeOutcome": "Catch",
+      "terminalOutcome": "Tackled",
+      "pointAwarded": null,
+      "group": "contact_not_awarded",
+      "evidence": "All nine forecasts retained normal margin; confirmed jump and upright airborne local claim, then native opponent Catch and Tackled about118ms later. No flight avoidance or opponent point.",
+      "uncertainty": "Two later poses preserved. No missing input or server possession cause established.",
+      "planCount": 9,
+      "normalMarginForecastCount": 9,
+      "actions": {
+        "jumpRequest": 1,
+        "jump": 1
+      },
+      "localClaim": true,
+      "postClaimSamples": [
+        {
+          "sinceClaim": 0,
+          "localCapsuleMargin": 0.24941851410095728,
+          "radius": 3.75,
+          "upY": 1,
+          "diving": false
+        },
+        {
+          "sinceClaim": 0.06391501426696777,
+          "localCapsuleMargin": 0.6921757103266835,
+          "radius": 3.75,
+          "upY": 1,
+          "diving": false
+        },
+        {
+          "sinceClaim": 0.11434102058410645,
+          "localCapsuleMargin": -1.8094475452511034,
+          "radius": 3.75,
+          "upY": 1,
+          "diving": false
+        }
+      ]
+    },
+    {
+      "caseId": "F007",
+      "role": "WR",
+      "pass": "Floater",
+      "nativeOutcome": "Incomplete",
+      "terminalOutcome": "Incomplete",
+      "pointAwarded": null,
+      "group": "upright_contact_not_awarded",
+      "evidence": "Ten of eleven forecasts retained normal margin; confirmed jump7.22ms after schedule, upright airborne local callback and four subsequent poses. No dive, flight avoidance or native Jam notice. Native Incomplete.",
+      "uncertainty": "Initial route debt did not prevent a later valid airborne attempt. BallTouched attribute value was not recorded in this release, so callback provenance and server acceptance remain unknown.",
+      "planCount": 11,
+      "normalMarginForecastCount": 10,
+      "actions": {
+        "jumpRequest": 1,
+        "jump": 1
+      },
+      "localClaim": true,
+      "postClaimSamples": [
+        {
+          "sinceClaim": 0,
+          "localCapsuleMargin": 0.7545839964950689,
+          "radius": 3.75,
+          "upY": 1,
+          "diving": false
+        },
+        {
+          "sinceClaim": 0.06479787826538086,
+          "localCapsuleMargin": 1.1959775022621653,
+          "radius": 3.75,
+          "upY": 1,
+          "diving": false
+        },
+        {
+          "sinceClaim": 0.11529803276062012,
+          "localCapsuleMargin": -1.3216101141400056,
+          "radius": 3.75,
+          "upY": 1,
+          "diving": false
+        },
+        {
+          "sinceClaim": 0.18192386627197266,
+          "localCapsuleMargin": -5.249398342569897,
+          "radius": 3.75,
+          "upY": 1,
+          "diving": false
+        },
+        {
+          "sinceClaim": 0.24779582023620605,
+          "localCapsuleMargin": -9.25935769724218,
+          "radius": 3.75,
+          "upY": 1,
+          "diving": false
+        }
+      ]
+    },
+    {
+      "caseId": "F008",
+      "role": "DB",
+      "pass": "Floater",
+      "nativeOutcome": "Catch",
+      "terminalOutcome": "Touchdown",
+      "pointAwarded": "Opp",
+      "group": "contact_not_awarded",
+      "evidence": "Seventeen normal-margin forecasts, confirmed upright jump and local callback; opponent Catch and immediate Touchdown. Checked sprint permission was active; some tighter bypasses correctly withheld sprint while a normal catch forecast remained.",
+      "uncertainty": "No missing jump or unconditionally disabled sprint permission is shown. Client geometry/claim callback does not establish authoritative possession; server contest reason unknown.",
+      "planCount": 17,
+      "normalMarginForecastCount": 17,
+      "actions": {
+        "jumpRequest": 1,
+        "jump": 1
+      },
+      "localClaim": true,
+      "postClaimSamples": [
+        {
+          "sinceClaim": 0,
+          "localCapsuleMargin": 0.45814920042080276,
+          "radius": 3.75,
+          "upY": 1,
+          "diving": false
+        },
+        {
+          "sinceClaim": 0.06381011009216309,
+          "localCapsuleMargin": 2.2335092165946997,
+          "radius": 3.75,
+          "upY": 1,
+          "diving": false
+        }
+      ]
+    },
+    {
+      "caseId": "F009",
+      "role": "DB",
+      "pass": "Floater",
+      "nativeOutcome": "Catch",
+      "terminalOutcome": "Touchdown",
+      "pointAwarded": "Opp",
+      "group": "contact_not_awarded",
+      "evidence": "Thirteen normal-margin forecasts, confirmed upright jump and local callback; opponent Catch and immediate Touchdown. Safe passing detour retained sprint at native27 and stamina23.",
+      "uncertainty": "The new branch executed but does not guarantee the contested catch. Numeric BallTouched provenance is absent from this release; server outcome cause remains unknown.",
+      "planCount": 13,
+      "normalMarginForecastCount": 13,
+      "actions": {
+        "jumpRequest": 1,
+        "jump": 1
+      },
+      "localClaim": true,
+      "postClaimSamples": [
+        {
+          "sinceClaim": 0,
+          "localCapsuleMargin": 0.6661557971874794,
+          "radius": 3.75,
+          "upY": 1,
+          "diving": false
+        },
+        {
+          "sinceClaim": 0.06565284729003906,
+          "localCapsuleMargin": 0.4808996954203235,
+          "radius": 3.75,
+          "upY": 1,
+          "diving": false
+        },
+        {
+          "sinceClaim": 0.13181591033935547,
+          "localCapsuleMargin": -3.505727896475449,
+          "radius": 3.75,
+          "upY": 1,
+          "diving": false
+        }
+      ]
+    },
+    {
+      "caseId": "F010",
+      "role": "DB",
+      "pass": "Floater",
+      "nativeOutcome": "Catch",
+      "terminalOutcome": "Tackled",
+      "pointAwarded": null,
+      "group": "contact_not_awarded",
+      "evidence": "Five normal-margin forecasts, confirmed upright jump and local callback; native opponent Catch then Tackled about1.72seconds later, no point. Checked sprint permission was true but three tight bypasses withheld sprint.",
+      "uncertainty": "The local catch attempt occurred. No safe faster bypass or authoritative possession cause is demonstrated.",
+      "planCount": 5,
+      "normalMarginForecastCount": 5,
+      "actions": {
+        "jumpRequest": 1,
+        "jump": 1
+      },
+      "localClaim": true,
+      "postClaimSamples": [
+        {
+          "sinceClaim": 0,
+          "localCapsuleMargin": 0.7384896738128734,
+          "radius": 3.75,
+          "upY": 1,
+          "diving": false
+        },
+        {
+          "sinceClaim": 0.06405401229858398,
+          "localCapsuleMargin": 1.3519974956142735,
+          "radius": 3.75,
+          "upY": 0.9999279975891113,
+          "diving": false
+        }
+      ]
+    },
+    {
+      "caseId": "F011",
+      "role": "DB",
+      "pass": "Bullet",
+      "nativeOutcome": "Catch",
+      "terminalOutcome": "Touchdown",
+      "pointAwarded": "Opp",
+      "group": "coverage_loss_then_tackle_not_awarded",
+      "evidence": "No reachable catch forecast in six solves; initial predicted miss11.46stud despite native27 and ample sprint. A late receiver reversal widened prethrow separation from4.79 to12.02stud; coverage requested a brief sprint then stopped at98stamina. After Catch, a native tackle dive was attempted but no stop awarded.",
+      "uncertainty": "Independent tackle replay found predicted and actual paths consistent and positive native horizontal range at the sampled window. No Truck notice or confirmed server rejection cause. Later RAC40reserve caused walking again, but removing it is not proven sufficient to recover the gap.",
+      "planCount": 6,
+      "normalMarginForecastCount": 0,
+      "actions": {},
+      "localClaim": false,
+      "postClaimSamples": []
+    }
+  ],
+  "limitations": [
+    "Native results determine possession and scores; localCatch means a BallTouched-change callback, not server acceptance. Numeric attribute provenance was unavailable in this release.",
+    "Each WR failure and opponent catch/point is included; DB Swatted is counted separately as a defensive stop. No DB Incomplete occurred in this window.",
+    "Forfeit winner is not inferred from the score.",
+    "An observed jump or positive sampled contact margin is not proof of a successful server claim.",
+    "Wins do not mean perfect play: failed WR passes and opponent touchdowns remain. No general win rate or causal release improvement is established."
+  ],
+  "privacy": "No names, player/account/installation IDs, raw coordinates/states, credentials or native source."
+}
