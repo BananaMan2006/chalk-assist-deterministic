@@ -966,7 +966,9 @@ function api.context()
         route=route,snapAt=snapAt,passType=passType,preSnapEnds=preSnapEnds,
         roundKey=tostring(preSnapEnds or "current"),
         catchIntent=fullplay and fullplay.catchIntent and fullplay.catchIntent() or nil,
-        playBudget=fullplay and fullplay.movementBudget and fullplay.movementBudget() or nil,
+        -- Preserve the coverage reserve before the throw, then spend it in
+        -- pursuit of the observed live ball. No forecast/route alone unlocks it.
+        playBudget=fullplay and fullplay.movementBudget and fullplay.movementBudget(arc~=nil and phase=="Live") or nil,
         passStarted=passStarted,
         enabled=enabled,testing=testing,alive=alive,offset=offset,
         matchIdentityVerified=matchIdentityVerified,

@@ -14,6 +14,7 @@ return function(ctx, Planner, createTackle, WRApproach, Motion, createCarrierMov
     local controller = {}
     local auto, alive = false, true
     local plan, throwKey, throwRole, claimedKey, lastSnapshot, controlledHumanoid
+    local claimObservedAt,claimTraceCount,claimTraceNext=nil,0,0
     local steering, atTarget, parkedPosition = nil, false, nil
     local nextSolve, nextCheck, nextReplan, lastDive, lastJump = 0, 0, 0, -math.huge, -math.huge
     local ownsSprint = false
@@ -219,6 +220,23 @@ return function(ctx, Planner, createTackle, WRApproach, Motion, createCarrierMov
         if root and h and h.Health > 0 and not root.Anchored and not h.Sit then
             return root, h
         end
+    end
+    local function observePendingClaim(s,now)
+        -- BallTouched is a local request, not server confirmation. Record a
+        -- few actual poses while awaiting that result without changing inputs.
+        if not claimObservedAt or claimTraceCount>=4 or now<claimTraceNext
+            or now-claimObservedAt>.3 then return end
+        claimTraceCount=claimTraceCount+1;claimTraceNext=now+.05
+        local root,h=healthyCharacter()
+        if not root then return end
+        local waist,hands,radius=Planner.capsule({config=Config},root.CFrame,
+            h.FloorMaterial==Enum.Material.Air)
+        log("pendingCatchPose",{role=s.role,claimOnly=true,authoritative=false,
+            sinceClaim=now-claimObservedAt,position=xyz(root.Position),
+            velocity=xyz(root.AssemblyLinearVelocity),up=xyz(root.CFrame.UpVector),
+            waist=xyz(waist),hands=xyz(hands),radius=radius,
+            airborne=h.FloorMaterial==Enum.Material.Air,diving=h.PlatformStand,
+            ball=xyz(Planner.ballAt(s.arc,now-s.launchAt))})
     end
     local function locomotionState(root,h,now,sprintSeconds)
         if trackedSprintRoot~=root then trackedSprintRoot,sprintTracking=root,nil end
@@ -581,12 +599,37 @@ return function(ctx, Planner, createTackle, WRApproach, Motion, createCarrierMov
             stemRun,stage.recoveryUntilAt or 0)
         local check=now>=nextStemCheck or fresh.walkSpeed~=stemLastSpeed or fresh.runSpeed~=stemLastRun
             or fresh.sprintPending~=stemLastSprint or signature~=stemLastStage
-        local reason
+        local reason,immediateSolveMs
         if check then
             stemForecast,reason=Planner.forecastStem(fresh,stage,stamina)
             nextStemCheck=now+.10
             stemLastSpeed,stemLastSprint=fresh.walkSpeed,fresh.sprintPending
             stemLastRun,stemLastStage=fresh.runSpeed,signature
+            if stemForecast and fresh.requireEndzoneCatch==true then
+                -- A funded route extension is not permission to delay an
+                -- already reachable catch. Compare first contact using the
+                -- same actual motion/stamina snapshot and normal safety gates.
+                -- Ten milliseconds is a numerical tie allowance, not a new
+                -- waiting budget. Normal catch control solves again on handoff.
+                local solveStarted=os.clock()
+                local immediate=Planner.solve(fresh)
+                immediateSolveMs=(os.clock()-solveStarted)*1000
+                local first=immediate and immediate.firstTouchAt
+                local later=stemForecast.plan.firstTouchAt
+                local origin=immediate and immediate.firstTouchRoot
+                if immediate and immediate.reachable~=false and not immediate.risk and immediate.robust~=false
+                    and (immediate.airborneFinish=="jump" or immediate.airborneFinish=="jumpDive")
+                    and finite(immediate.margin) and immediate.margin>=(fresh.margin or .4)
+                    and finite(first) and first>fresh.now and finite(later) and later-first>.010001
+                    and finite(fresh.wrDiveGoalZ) and typeof(origin)=="Vector3"
+                    and finite(origin.Z) and origin.Z>=fresh.wrDiveGoalZ+.25 then
+                    log("wrStemRelease",{reason="Earlier airborne catch available now",position=xyz(root.Position),
+                        immediateFirstTouchAt=first,continuedFirstTouchAt=later,earlierBy=later-first,
+                        immediateAction=immediate.kind,immediateSolveMs=immediateSolveMs})
+                    finishStem("Earlier airborne catch available now")
+                    return false
+                end
+            end
         end
         local current=workspace:GetServerTimeNow()
         if not stemForecast or current>=stage.untilAt-.04 or not fresh.grounded then
@@ -608,7 +651,7 @@ return function(ctx, Planner, createTackle, WRApproach, Motion, createCarrierMov
         stemWasActive=true
         if check then log("wrPostThrowStem",{position=xyz(root.Position),cutAt=stage.untilAt,
             contactAt=stemForecast.plan.contactAt,staminaAfterCatch=stemForecast.staminaAfterCatch,
-            sprint=me:GetAttribute("SprintOn")==true}) end
+            sprint=me:GetAttribute("SprintOn")==true,immediateSolveMs=immediateSolveMs}) end
         message=note or "WR · deep middle stem before sharp cut"
         return true
     end
@@ -717,13 +760,16 @@ return function(ctx, Planner, createTackle, WRApproach, Motion, createCarrierMov
             stemWasActive=false
             wrFakeUsed=false;lastWRSkipReason=nil
             throwRole=s.role
-            if claimedKey~=s.launchAt then claimedKey=nil end
+            if claimedKey~=s.launchAt then
+                claimedKey=nil;claimObservedAt,claimTraceCount,claimTraceNext=nil,0,0
+            end
             counters.throws = counters.throws+1
             log("throw", {launchAt=s.launchAt, flight=s.arc.Flight, apex=s.arc.Apex,
                 networkPing=networkPing(),
                 origin=xyz(s.arc.P0),target=xyz(s.arc.P1),role=s.role,mode=s.mode or "1v1"})
         end
         if claimedKey==s.launchAt then
+            observePendingClaim(s,now)
             message="Catch attempt sent · awaiting result"; return
         end
         ownInput()
@@ -1324,6 +1370,7 @@ return function(ctx, Planner, createTackle, WRApproach, Motion, createCarrierMov
         if alive and s.phase=="Live" and s.arc and s.launchAt
             and (s.role=="WR" or s.role=="DB") then
             claimedKey=s.launchAt
+            claimObservedAt=workspace:GetServerTimeNow();claimTraceCount=0;claimTraceNext=claimObservedAt+.05
             local root,h=healthyCharacter()
             local waist,hands,radius
             local opponents={}

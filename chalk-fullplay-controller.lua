@@ -53,6 +53,7 @@ return function(ctx,Policy,services)
     local observationStarted
     local campingObservation
     local ownPossessionObserved=false
+    local campingCounterUsed=false
     local counters={routeRequests=0,rounds=0,pointsWon=0,pointsLost=0}
     local contactFxTimes={}
     local api={}
@@ -103,7 +104,7 @@ return function(ctx,Policy,services)
             "pacedSlant","slantWalkUntil","slantSprintDuration","routeFamily","cutDirection",
             "scheduledFamily","scheduleOverride","scheduledPass","passPreferenceOverride",
             "anticipatedLane","stemBlocked","preferAirborne","preferJumpDive","requireAirborne",
-            "bestEffort","bestEffortReason","reachable"}) do
+            "bestEffort","bestEffortReason","reachable","campingGateReason"}) do
             local v=value[key]
             if type(v)=="boolean" or type(v)=="string" and #v<=512
                 or type(v)=="number" and v==v and math.abs(v)<math.huge then out[key]=v end
@@ -112,6 +113,7 @@ return function(ctx,Policy,services)
             "earlyStemSprintSeconds","stemRunSpeed","estimatedStemRegeneration","ballTargetZ","shortField",
             "stemTravelDistance","postThrowStem","stemDetour","forecastCount","cutAngle","estimatedCatchInsideGoal","rareBullet",
             "rareCampingBullet","continuousBulletCatch","carryMoveReserve","observedEndzoneCamping","campingObservationKnown",
+            "campingEvidenceCount","campingCurrentKnown","campingCurrentWaiting","campingCounterUsed",
             "campingObservationSeconds","campingOwnProgressYards","campingDefenderDisplacementYards"}) do
             local v=value[key]
             if type(v)=="boolean" or type(v)=="number" and v==v and math.abs(v)<math.huge then out[key]=v end
@@ -200,6 +202,7 @@ return function(ctx,Policy,services)
             opponentKnown=memoryOpponent~=nil,updatedAt=memorySavedAt,
             recentRoutes=copyRecent(),recentSelections=copySelections(),
             recentDefense=copyDefense(),selectionIndex=selectionIndex,
+            campingCounterUsed=campingCounterUsed,
             lastLateBendTrialTrigger=lastLateBendTrialTrigger}
     end
     local function updateSessionHistory()
@@ -223,6 +226,7 @@ return function(ctx,Policy,services)
     local function clearSessionHistory()
         campingObservation=nil
         ownPossessionObserved=false
+        campingCounterUsed=false
         recentRoutes,activeRoute={},nil
         recentDefense,activeDefense={},nil
         recentSelections,selectionIndex={},0
@@ -424,6 +428,7 @@ return function(ctx,Policy,services)
             setupSeconds=math.max(0,(s.snapAt or s.preSnapEnds and (s.preSnapEnds+(Config.HikeTime or 3))
                 or world:GetServerTimeNow())-world:GetServerTimeNow()),
             laneSide=laneSide,priorTarget=priorTarget,recentRoutes=recentRoutes,
+            campingCounterUsed=campingCounterUsed,
             recentSelections=recentSelections,selectionIndex=selectionIndex,routeCycle=routeCycle,routeWaypoint=routeWaypoint,
             lastLateBendTrialTrigger=lastLateBendTrialTrigger,defenseProfile=defenseProfile(),
             middleStemDeep=choice and choice.middleStemDeep==true,
@@ -528,6 +533,9 @@ return function(ctx,Policy,services)
         local payload=table.clone(chosen.payload)
         payload.Release=nil
         submit(payload)
+        -- A failed selection or native submit must not spend the one session
+        -- counter. Explicit OFF clears observations, not a completed attempt.
+        if chosen.rareCampingBullet==true then campingCounterUsed=true end
         selected,routePlan=chosen,chosen.plan
         activeRoute=descriptor({pass=chosen.payload.Pass,side=chosen.side,depth=chosen.depth,
             shape=chosen.shape,family=chosen.family,signature=chosen.signature,
@@ -565,6 +573,9 @@ return function(ctx,Policy,services)
             cutAngle=chosen.cutAngle,estimatedCatchInsideGoal=chosen.estimatedCatchInsideGoal,rareBullet=chosen.rareBullet,
             rareCampingBullet=chosen.rareCampingBullet,continuousBulletCatch=chosen.continuousBulletCatch,
             carryMoveReserve=chosen.carryMoveReserve,
+            campingGateReason=chosen.campingGateReason,campingEvidenceCount=chosen.campingEvidenceCount,
+            campingCurrentKnown=chosen.campingCurrentKnown,campingCurrentWaiting=chosen.campingCurrentWaiting,
+            campingCounterUsed=campingCounterUsed,
             pacedSlant=chosen.pacedSlant,slantWalkUntil=chosen.slantWalkUntil,slantSprintDuration=chosen.slantSprintDuration,
             sidelineFallback=chosen.sidelineFallback,sidelineFallbackReason=chosen.sidelineFallbackReason,
             diveWitnessElapsed=chosen.diveWitnessElapsed,diveWitnessX=chosen.diveWitnessX,
@@ -585,6 +596,9 @@ return function(ctx,Policy,services)
             or chosen.adaptiveUnderneath and "Full auto · Underneath: defender deep"
             or "Full auto · "..chosen.payload.Pass.." route submitted"
         log("routeRequested",{pass=chosen.payload.Pass,startX=chosen.payload.StartX,
+            campingGateReason=chosen.campingGateReason,campingEvidenceCount=chosen.campingEvidenceCount,
+            campingCurrentKnown=chosen.campingCurrentKnown,campingCurrentWaiting=chosen.campingCurrentWaiting,
+            campingCounterUsed=campingCounterUsed,
             points=#chosen.payload.Points,arrival=chosen.plan.Arrival,launch=chosen.plan.Launch,
             estimatedSeparation=chosen.estimatedSeparation,estimateOnly=true,
             bestEffort=chosen.bestEffort,bestEffortReason=chosen.bestEffortReason,reachable=chosen.reachable,
@@ -923,7 +937,7 @@ return function(ctx,Policy,services)
             preferJumpDive=choice.preferJumpDive==true,
             continuousSprint=finalSprintCommitted,finalSprint=finalSprintCommitted}
     end
-    function api.movementBudget()
+    function api.movementBudget(airborneBall)
         if not alive or not enabled then return nil end
         -- Called while the core builds its snapshot: never recurse into it.
         -- A rare short Bullet reserves one actual native carrier move until
@@ -934,7 +948,7 @@ return function(ctx,Policy,services)
             and (selected and selected.payload.Pass or activeRoute.pass)=="Bullet"
             and finite(choice.carryReserve) and choice.carryReserve>=10
             and choice.carryReserve<=(Config.Stamina or 100) then reserve=choice.carryReserve end
-        return {dbReserve=40,wrReserve=reserve}
+        return {dbReserve=airborneBall==true and 2 or 40,wrReserve=reserve}
     end
     function api.unload()
         if not alive then return end

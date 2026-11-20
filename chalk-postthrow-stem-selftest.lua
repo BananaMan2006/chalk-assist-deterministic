@@ -102,7 +102,7 @@ return function(Planner,source)
     local harnessFactory=assert(loadstring([[
         return function(stemSprintSeconds)
             local state={now=100.2,walkSpeed=27,runSpeed=20,sprintPending=false,grounded=true,canJump=true,
-                stamina=100,forecastCalls=0,moves=0,canMove=true,valid=true,logs={}}
+                stamina=100,forecastCalls=0,solveCalls=0,moves=0,canMove=true,valid=true,logs={}}
             local stemFinished,stemForecast,nextStemCheck,stemLastSpeed,stemLastSprint=false,nil,0,nil,nil
             local stemLastRun,stemLastStage,stemWasActive
             local steering=Vector3.new(0,0,1)
@@ -126,14 +126,25 @@ return function(Planner,source)
             local workspace={GetServerTimeNow=function()return state.now end}
             local function snapshot()
                 return {now=state.now,walkSpeed=state.walkSpeed,runSpeed=state.runSpeed,
-                    sprintPending=state.sprintPending,grounded=state.grounded,canJump=state.canJump}
+                    sprintPending=state.sprintPending,grounded=state.grounded,canJump=state.canJump,
+                    requireEndzoneCatch=true,wrDiveGoalZ=state.goal or 40,margin=.4,
+                    sprintSeconds=math.max(0,(state.stamina-13)/25),actualToken=state}
             end
             local Planner={stemSprintSeconds=stemSprintSeconds,forecastStem=function(fresh,stage,stamina)
                 state.forecastCalls=state.forecastCalls+1
+                state.forecastInput=fresh
                 if not state.valid or not fresh.canJump or stamina<30 or fresh.runSpeed<10 then
                     return nil,"No current witness"
                 end
-                return {plan={contactAt=102.9},staminaAfterCatch=35}
+                return {plan={contactAt=102.9,firstTouchAt=102.88},staminaAfterCatch=35}
+            end,solve=function(fresh)
+                state.solveCalls=state.solveCalls+1
+                assert(fresh==state.forecastInput and fresh.actualToken==state,
+                    "Immediate comparison changed the actual snapshot")
+                assert(fresh.walkSpeed==state.walkSpeed and fresh.runSpeed==state.runSpeed
+                    and fresh.sprintSeconds==math.max(0,(state.stamina-13)/25))
+                state.solveInput=fresh
+                return state.immediate
             end}
             local function updateFullplay(copy)
                 assert(copy.allowPostThrowStem==true)
@@ -172,6 +183,54 @@ return function(Planner,source)
         end
     ]]))()
     local function harness() return harnessFactory(Planner.stemSprintSeconds) end
+    local function immediate(first,kind)
+        kind=kind or "jump"
+        return {kind=kind,firstTouchAt=first,contactAt=first+.02,firstTouchRoot=Vector3.new(10,8,42),
+            margin=.4,airborneFinish=kind,reachable=true}
+    end
+    test("meaningfully earlier robust in-goal contact releases the stem without dispatching its witness",function()
+        for _,kind in ipairs({"jump","jumpDive"}) do
+            local h=harness();h.state.immediate=immediate(102.86,kind)
+            assert(not h.tick() and h.finished() and h.state.moves==0 and h.state.solveCalls==1)
+            assert(h.state.logs[#h.state.logs].data.reason=="Earlier airborne catch available now")
+            local _,nextSolve=h.finished();assert(nextSolve==0)
+            assert(not h.tick(100.21) and h.state.solveCalls==1,"released stage resumed during this throw")
+            assert(h.state.lastMove==nil and h.steering()~=nil,"comparison dispatched a candidate action")
+        end
+    end)
+    test("tied or later contact keeps the funded stem and comparisons share its refresh cadence",function()
+        for _,at in ipairs({102.871,102.87,102.88,102.9}) do
+            local h=harness();h.state.immediate=immediate(at)
+            assert(h.tick() and h.state.solveCalls==1)
+            assert(h.tick(100.21) and h.state.solveCalls==1,"comparison ran inside the valid cache interval")
+            assert(h.tick(100.31) and h.state.solveCalls==2)
+        end
+        local h=harness();assert(h.tick())
+        h.state.immediate=immediate(102.869)
+        assert(not h.tick(100.31) and h.finished() and h.state.moves==1)
+        assert(h.steering()==nil and h.avoidancePreserved(),"handoff lost normal hard-cut/avoidance semantics")
+    end)
+    test("unknown, risky, ground, out-of-goal or insufficient-margin candidates cannot preempt the stem",function()
+        for _,change in ipairs({
+            function(p)p.risk="last-resort" end,
+            function(p)p.robust=false end,
+            function(p)p.reachable=false end,
+            function(p)p.margin=.399 end,
+            function(p)p.airborneFinish="dive" end,
+            function(p)p.airborneFinish=nil end,
+            function(p)p.firstTouchAt=0/0 end,
+            function(p)p.firstTouchAt=100.1 end,
+            function(p)p.firstTouchRoot=Vector3.new(10,8,40.24) end,
+            function(p)p.firstTouchRoot=nil end,
+        }) do
+            local h=harness();h.state.immediate=immediate(102.86);change(h.state.immediate)
+            assert(h.tick() and not h.finished() and h.state.moves==1)
+        end
+        local h=harness();h.state.goal=math.huge;h.state.immediate=immediate(102.86)
+        assert(h.tick())
+        h=harness();h.state.valid=false;h.state.immediate=immediate(102.86)
+        assert(not h.tick() and h.state.solveCalls==0,"unfunded stage paid for an unnecessary comparison")
+    end)
     test("first invalid witness hands off permanently for that throw",function()
         local h=harness();h.state.valid=false
         assert(not h.tick() and h.finished())

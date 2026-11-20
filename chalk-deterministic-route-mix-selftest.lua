@@ -42,13 +42,13 @@ return function(Policy,create,routeSource,Planner)
     end
     local function input(extra)
         local value={LOS=0,offset=Vector3.zero,position=Vector3.new(0,3,0),stamina=100,
-            selectionIndex=0,mode="1v1",role="WR",phase="PreSnap"}
+            selectionIndex=0,mode="1v1",role="WR",phase="PreSnap",campingCounterUsed=false}
         for key,item in pairs(extra or {}) do value[key]=item end
         return value
     end
     local function choose(value) return assert(Policy.chooseScheduledRoute(value,Config,Field,RouteMath,Planner)) end
 
-    test("automatic WR keeps Floaters even in the rare slot without observed camping",function()
+    test("automatic WR keeps Floaters at every cycle without observed camping",function()
         for _,cycle in ipairs({0,1,3,4,9,19}) do
             local c=choose(input({routeCycle=cycle}))
             assert(c.payload.Pass=="Floater" and c.payload.StartX==Field.MidX)
@@ -64,16 +64,17 @@ return function(Policy,create,routeSource,Planner)
         end
     end)
     local function campingInput(extra)
-        local p=input({routeCycle=19,opponentPosition=Vector3.new(Field.MidX,3,Field.GoalZ+2*Field.YD),
+        local p=input({routeCycle=2,opponentPosition=Vector3.new(Field.MidX,3,Field.GoalZ+2*Field.YD),
             opponentVelocity=Vector3.zero,recentRoutes={
                 {roundKey="first",campingObservationKnown=true,observedEndzoneCamping=true},
                 {roundKey="second",campingObservationKnown=true,observedEndzoneCamping=true}}})
         for key,value in pairs(extra or {}) do p[key]=value end
         return p
     end
-    test("repeated current camper permits a rare moving Bullet catch before goal with a move reserve",function()
+    test("third qualifying play responds immediately with a funded moving Bullet before goal",function()
         local c=choose(campingInput())
         assert(c.payload.Pass=="Bullet" and c.rareCampingBullet and c.rareBullet and c.continuousBulletCatch)
+        assert(c.campingGateReason=="counter_selected" and c.campingEvidenceCount==2 and c.campingCurrentWaiting)
         assert(c.routeStrategy=="deep_middle_bullet" and c.payload.StartX==Field.MidX)
         assert(c.stemYards>=(Field.GoalZ/Field.YD)-5 and c.cutAngle>=60)
         assert(c.cutAt<=c.plan.Launch and not c.postThrowStem)
@@ -97,8 +98,7 @@ return function(Policy,create,routeSource,Planner)
         assert(not Policy.movement(p,Config,Field,RouteMath).sprint,"missing rare-route reserve was guessed")
     end)
     test("camping evidence must cover two distinct recent plays and the opponent must still wait",function()
-        local cases={campingInput({routeCycle=18}),campingInput({routeCycle=20}),
-            campingInput({opponentVelocity=Vector3.new(Config.RunSpeed,0,0)}),
+        local cases={campingInput({opponentVelocity=Vector3.new(Config.RunSpeed,0,0)}),
             campingInput({opponentPosition=Vector3.new(0,3,Field.GoalZ-3*Field.YD)})}
         local one=campingInput();table.remove(one.recentRoutes,1);cases[#cases+1]=one
         local unknown=campingInput();unknown.recentRoutes[2].campingObservationKnown=false;cases[#cases+1]=unknown
@@ -106,6 +106,14 @@ return function(Policy,create,routeSource,Planner)
         local repeated=campingInput();repeated.recentRoutes[2].roundKey="first";cases[#cases+1]=repeated
         local missing=campingInput();missing.opponentVelocity=nil;cases[#cases+1]=missing
         for _,p in ipairs(cases) do assert(choose(p).payload.Pass=="Floater","unproven camping enabled a Bullet") end
+    end)
+    test("used or missing session allowance cannot be revived by the old cycle slot",function()
+        local used=choose(campingInput({routeCycle=19,campingCounterUsed=true}))
+        assert(used.payload.Pass=="Floater" and used.campingGateReason=="already_attempted")
+        assert(used.campingEvidenceCount==2 and used.campingCurrentWaiting)
+        local unknown=campingInput({routeCycle=19});unknown.campingCounterUsed=nil
+        local c=choose(unknown)
+        assert(c.payload.Pass=="Floater" and c.campingGateReason=="counter_state_unknown")
     end)
     test("unfunded or parked Bullet counter-route preserves the Floater fallback",function()
         local noBullet={pose=Planner.pose,forecastStem=Planner.forecastStem}
@@ -116,8 +124,10 @@ return function(Policy,create,routeSource,Planner)
         end
         local c=assert(Policy.chooseScheduledRoute(campingInput(),Config,Field,RouteMath,noBullet))
         assert(c.payload.Pass=="Floater" and not c.rareBullet,"parked counter-route was admitted")
+        assert(c.campingGateReason=="no_funded_counter" and c.campingEvidenceCount==2)
         c=choose(campingInput({stamina=20}))
         assert(c.payload.Pass=="Floater" and not c.rareBullet,"low stamina enabled unfunded Bullet")
+        assert(c.campingGateReason=="no_funded_floater")
     end)
     test("both sharp-cut sides remain available without changing the middle start",function()
         local left=choose(input({routeCycle=0}));local right=choose(input({routeCycle=1}))

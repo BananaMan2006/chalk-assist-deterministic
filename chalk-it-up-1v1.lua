@@ -1,4 +1,4 @@
--- Chalk-Release: 5.1.11
+-- Chalk-Release: 5.1.12
 -- Chalk-Product: deterministic
 -- Chalk It Up DB/WR ball assist using normal sprint/jump/dive controls.
 -- Cyan: replicated route (when supplied). Yellow: movement estimate.
@@ -47,7 +47,7 @@ assert(matchEvent and fxEvent and matchEvent:IsA("RemoteEvent") and fxEvent:IsA(
     "Chalk It Up Match/Fx events were not found")
 
 local api = {}
-local RELEASE_VERSION="5.1.11"
+local RELEASE_VERSION="5.1.12"
 local loadedGameId,loadedPlaceId,loadedJobId=game.GameId,game.PlaceId,game.JobId
 env.ChalkDB = api
 local alive, enabled = true, true
@@ -944,7 +944,7 @@ end
 function api.status()
     local ch = characterOf(opponent)
     local holder,isEnemy,holderRole=carrierContext()
-    return {product="deterministic",version=RELEASE_VERSION,buildId="0a4a454b411f14599fb1e1fb803037e5a6d21f6be1b1c4f7f6d9312b7e91d94d",policyMode="deterministic", enabled=enabled, role=role or "unknown",rawRole=rawRole or "unknown", phase=phase,
+    return {product="deterministic",version=RELEASE_VERSION,buildId="19f53bf03953c0b826483b1cf00d510931e6720b17905a68acce7e30bc961d34",policyMode="deterministic", enabled=enabled, role=role or "unknown",rawRole=rawRole or "unknown", phase=phase,
         ui={visible=windowVisible,minimized=minimized,x=panel.Position.X.Offset,y=panel.Position.Y.Offset},
         matchAlerts={enabled=alertSettings.enabled,saveError=alertSettings.saveError},
         idleGuard=idleGuard and idleGuard.status() or nil,
@@ -968,7 +968,9 @@ function api.context()
         route=route,snapAt=snapAt,passType=passType,preSnapEnds=preSnapEnds,
         roundKey=tostring(preSnapEnds or "current"),
         catchIntent=fullplay and fullplay.catchIntent and fullplay.catchIntent() or nil,
-        playBudget=fullplay and fullplay.movementBudget and fullplay.movementBudget() or nil,
+        -- Preserve the coverage reserve before the throw, then spend it in
+        -- pursuit of the observed live ball. No forecast/route alone unlocks it.
+        playBudget=fullplay and fullplay.movementBudget and fullplay.movementBudget(arc~=nil and phase=="Live") or nil,
         passStarted=passStarted,
         enabled=enabled,testing=testing,alive=alive,offset=offset,
         matchIdentityVerified=matchIdentityVerified,
@@ -3813,6 +3815,7 @@ return function(ctx, Planner, createTackle, WRApproach, Motion, createCarrierMov
     local controller = {}
     local auto, alive = false, true
     local plan, throwKey, throwRole, claimedKey, lastSnapshot, controlledHumanoid
+    local claimObservedAt,claimTraceCount,claimTraceNext=nil,0,0
     local steering, atTarget, parkedPosition = nil, false, nil
     local nextSolve, nextCheck, nextReplan, lastDive, lastJump = 0, 0, 0, -math.huge, -math.huge
     local ownsSprint = false
@@ -4018,6 +4021,23 @@ return function(ctx, Planner, createTackle, WRApproach, Motion, createCarrierMov
         if root and h and h.Health > 0 and not root.Anchored and not h.Sit then
             return root, h
         end
+    end
+    local function observePendingClaim(s,now)
+        -- BallTouched is a local request, not server confirmation. Record a
+        -- few actual poses while awaiting that result without changing inputs.
+        if not claimObservedAt or claimTraceCount>=4 or now<claimTraceNext
+            or now-claimObservedAt>.3 then return end
+        claimTraceCount=claimTraceCount+1;claimTraceNext=now+.05
+        local root,h=healthyCharacter()
+        if not root then return end
+        local waist,hands,radius=Planner.capsule({config=Config},root.CFrame,
+            h.FloorMaterial==Enum.Material.Air)
+        log("pendingCatchPose",{role=s.role,claimOnly=true,authoritative=false,
+            sinceClaim=now-claimObservedAt,position=xyz(root.Position),
+            velocity=xyz(root.AssemblyLinearVelocity),up=xyz(root.CFrame.UpVector),
+            waist=xyz(waist),hands=xyz(hands),radius=radius,
+            airborne=h.FloorMaterial==Enum.Material.Air,diving=h.PlatformStand,
+            ball=xyz(Planner.ballAt(s.arc,now-s.launchAt))})
     end
     local function locomotionState(root,h,now,sprintSeconds)
         if trackedSprintRoot~=root then trackedSprintRoot,sprintTracking=root,nil end
@@ -4380,12 +4400,37 @@ return function(ctx, Planner, createTackle, WRApproach, Motion, createCarrierMov
             stemRun,stage.recoveryUntilAt or 0)
         local check=now>=nextStemCheck or fresh.walkSpeed~=stemLastSpeed or fresh.runSpeed~=stemLastRun
             or fresh.sprintPending~=stemLastSprint or signature~=stemLastStage
-        local reason
+        local reason,immediateSolveMs
         if check then
             stemForecast,reason=Planner.forecastStem(fresh,stage,stamina)
             nextStemCheck=now+.10
             stemLastSpeed,stemLastSprint=fresh.walkSpeed,fresh.sprintPending
             stemLastRun,stemLastStage=fresh.runSpeed,signature
+            if stemForecast and fresh.requireEndzoneCatch==true then
+                -- A funded route extension is not permission to delay an
+                -- already reachable catch. Compare first contact using the
+                -- same actual motion/stamina snapshot and normal safety gates.
+                -- Ten milliseconds is a numerical tie allowance, not a new
+                -- waiting budget. Normal catch control solves again on handoff.
+                local solveStarted=os.clock()
+                local immediate=Planner.solve(fresh)
+                immediateSolveMs=(os.clock()-solveStarted)*1000
+                local first=immediate and immediate.firstTouchAt
+                local later=stemForecast.plan.firstTouchAt
+                local origin=immediate and immediate.firstTouchRoot
+                if immediate and immediate.reachable~=false and not immediate.risk and immediate.robust~=false
+                    and (immediate.airborneFinish=="jump" or immediate.airborneFinish=="jumpDive")
+                    and finite(immediate.margin) and immediate.margin>=(fresh.margin or .4)
+                    and finite(first) and first>fresh.now and finite(later) and later-first>.010001
+                    and finite(fresh.wrDiveGoalZ) and typeof(origin)=="Vector3"
+                    and finite(origin.Z) and origin.Z>=fresh.wrDiveGoalZ+.25 then
+                    log("wrStemRelease",{reason="Earlier airborne catch available now",position=xyz(root.Position),
+                        immediateFirstTouchAt=first,continuedFirstTouchAt=later,earlierBy=later-first,
+                        immediateAction=immediate.kind,immediateSolveMs=immediateSolveMs})
+                    finishStem("Earlier airborne catch available now")
+                    return false
+                end
+            end
         end
         local current=workspace:GetServerTimeNow()
         if not stemForecast or current>=stage.untilAt-.04 or not fresh.grounded then
@@ -4407,7 +4452,7 @@ return function(ctx, Planner, createTackle, WRApproach, Motion, createCarrierMov
         stemWasActive=true
         if check then log("wrPostThrowStem",{position=xyz(root.Position),cutAt=stage.untilAt,
             contactAt=stemForecast.plan.contactAt,staminaAfterCatch=stemForecast.staminaAfterCatch,
-            sprint=me:GetAttribute("SprintOn")==true}) end
+            sprint=me:GetAttribute("SprintOn")==true,immediateSolveMs=immediateSolveMs}) end
         message=note or "WR · deep middle stem before sharp cut"
         return true
     end
@@ -4516,13 +4561,16 @@ return function(ctx, Planner, createTackle, WRApproach, Motion, createCarrierMov
             stemWasActive=false
             wrFakeUsed=false;lastWRSkipReason=nil
             throwRole=s.role
-            if claimedKey~=s.launchAt then claimedKey=nil end
+            if claimedKey~=s.launchAt then
+                claimedKey=nil;claimObservedAt,claimTraceCount,claimTraceNext=nil,0,0
+            end
             counters.throws = counters.throws+1
             log("throw", {launchAt=s.launchAt, flight=s.arc.Flight, apex=s.arc.Apex,
                 networkPing=networkPing(),
                 origin=xyz(s.arc.P0),target=xyz(s.arc.P1),role=s.role,mode=s.mode or "1v1"})
         end
         if claimedKey==s.launchAt then
+            observePendingClaim(s,now)
             message="Catch attempt sent · awaiting result"; return
         end
         ownInput()
@@ -5123,6 +5171,7 @@ return function(ctx, Planner, createTackle, WRApproach, Motion, createCarrierMov
         if alive and s.phase=="Live" and s.arc and s.launchAt
             and (s.role=="WR" or s.role=="DB") then
             claimedKey=s.launchAt
+            claimObservedAt=workspace:GetServerTimeNow();claimTraceCount=0;claimTraceNext=claimObservedAt+.05
             local root,h=healthyCharacter()
             local waist,hands,radius
             local opponents={}
@@ -6204,21 +6253,40 @@ local function middleStemRoutes(input,Config,Field,RouteMath,los,stamina,opponen
     return candidates
 end
 
-local function repeatedEndzoneCamping(input,Config,Field)
+local function campingGate(input,Config,Field)
     local history=type(input.recentRoutes)=="table" and input.recentRoutes or {}
-    if input.role~="WR" or #history<2 or not vec(input.opponentPosition) or not vec(input.opponentVelocity) then return false end
-    local previousKey
-    for i=#history-1,#history do
+    local gate={eligible=false,evidenceCount=0,currentKnown=false,currentCamping=false}
+    local offset=offsetOf(input)
+    if vec(input.opponentPosition) and vec(input.opponentVelocity) then
+        gate.currentKnown=true
+        gate.currentCamping=input.opponentPosition.Z>=Field.GoalZ+offset.Z-Field.YD
+            and input.opponentPosition.Z<=Field.EndZ+offset.Z
+            and (input.opponentVelocity*FLAT).Magnitude<=Config.RunSpeed*.4
+    end
+    local previousKey,confirmed=nil,#history>=2
+    for i=math.max(1,#history-1),#history do
         local item=history[i]
         if type(item)~="table" or item.campingObservationKnown~=true or item.observedEndzoneCamping~=true
             or type(item.roundKey)~="string" or item.roundKey=="" or item.roundKey=="current"
-            or item.roundKey==previousKey then return false end
-        previousKey=item.roundKey
+            or item.roundKey==previousKey then confirmed=false
+        else gate.evidenceCount=gate.evidenceCount+1 end
+        previousKey=type(item)=="table" and item.roundKey or nil
     end
-    local offset=offsetOf(input)
-    return input.opponentPosition.Z>=Field.GoalZ+offset.Z-Field.YD
-        and input.opponentPosition.Z<=Field.EndZ+offset.Z
-        and (input.opponentVelocity*FLAT).Magnitude<=Config.RunSpeed*.4
+    if input.role~="WR" then gate.reason="not_wr"
+    elseif input.campingCounterUsed==true then gate.reason="already_attempted"
+    elseif input.campingCounterUsed~=false then gate.reason="counter_state_unknown"
+    elseif not confirmed then gate.reason="need_two_confirmed_plays"
+    elseif not gate.currentKnown then gate.reason="current_defender_unknown"
+    elseif not gate.currentCamping then gate.reason="defender_not_waiting_deep"
+    else gate.eligible=true;gate.reason="eligible" end
+    return gate
+end
+local function attachCampingGate(choice,gate,reason)
+    choice.campingGateReason=reason or gate.reason
+    choice.campingEvidenceCount=gate.evidenceCount
+    choice.campingCurrentKnown=gate.currentKnown
+    choice.campingCurrentWaiting=gate.currentCamping
+    return choice
 end
 
 -- A rare response to observed camping, not a default Bullet rotation. Keep
@@ -6345,7 +6413,8 @@ local function campingBullet(input,Config,Field,RouteMath,Planner,base)
 end
 
 -- Deep middle Floaters with alternating candidate sides. Observed coverage
--- chooses among funded routes; one cycle slot may admit a checked rare Bullet.
+-- chooses among funded routes; one confirmed camper response is allowed per
+-- opponent session, independently of the cosmetic left/right route cycle.
 function Policy.chooseScheduledRoute(input,Config,Field,RouteMath,Planner)
     input=input or {}
     if not validField(Field) or type(RouteMath)~="table" or type(RouteMath.Sanitize)~="function"
@@ -6366,6 +6435,7 @@ function Policy.chooseScheduledRoute(input,Config,Field,RouteMath,Planner)
     if sprint<=run then return nil,"Invalid native sprint speeds" end
     local index=finite(input.routeCycle) and math.floor(input.routeCycle)%20
         or finite(input.selectionIndex) and math.max(0,math.floor(input.selectionIndex)) or 0
+    local counterGate=campingGate(input,Config,Field)
     local preferredSide=index%2==0 and -1 or 1
     local opponent=projectedOpponent(input,Config,.2)
     local failures={[-1]=0,[1]=0}
@@ -6632,17 +6702,23 @@ function Policy.chooseScheduledRoute(input,Config,Field,RouteMath,Planner)
             or stemYards==stems[#stems]) and preferredDeep or nil
         if c then
             c.forecastCount=forecastCount
-            -- Only a repeated, still-observed camper makes this slot eligible.
+            -- Respond at the first qualified opportunity, rather than waiting
+            -- for a fixed cycle slot that can fall after this match has ended.
             -- A failed counter-route remains the original funded Floater.
-            if index%20==19 and repeatedEndzoneCamping(input,Config,Field) then
+            local gateReason
+            if counterGate.eligible then
                 local counter=campingBullet(input,Config,Field,RouteMath,Planner,c)
-                if counter then return counter end
+                if counter then return attachCampingGate(counter,counterGate,"counter_selected") end
+                gateReason="no_funded_counter"
             end
             c._contactSnapshot,c._staminaAtCut=nil,nil
-            return c
+            return attachCampingGate(c,counterGate,gateReason)
         end
     end
-    if bestEffort then bestEffort.forecastCount=forecastCount;return bestEffort end
+    if bestEffort then
+        bestEffort.forecastCount=forecastCount
+        return attachCampingGate(bestEffort,counterGate,counterGate.eligible and "no_funded_floater" or nil)
+    end
     return nil,"No deep middle Floater has a funded airborne catch forecast"
 end
 
@@ -7557,6 +7633,7 @@ return function(ctx,Policy,services)
     local observationStarted
     local campingObservation
     local ownPossessionObserved=false
+    local campingCounterUsed=false
     local counters={routeRequests=0,rounds=0,pointsWon=0,pointsLost=0}
     local contactFxTimes={}
     local api={}
@@ -7607,7 +7684,7 @@ return function(ctx,Policy,services)
             "pacedSlant","slantWalkUntil","slantSprintDuration","routeFamily","cutDirection",
             "scheduledFamily","scheduleOverride","scheduledPass","passPreferenceOverride",
             "anticipatedLane","stemBlocked","preferAirborne","preferJumpDive","requireAirborne",
-            "bestEffort","bestEffortReason","reachable"}) do
+            "bestEffort","bestEffortReason","reachable","campingGateReason"}) do
             local v=value[key]
             if type(v)=="boolean" or type(v)=="string" and #v<=512
                 or type(v)=="number" and v==v and math.abs(v)<math.huge then out[key]=v end
@@ -7616,6 +7693,7 @@ return function(ctx,Policy,services)
             "earlyStemSprintSeconds","stemRunSpeed","estimatedStemRegeneration","ballTargetZ","shortField",
             "stemTravelDistance","postThrowStem","stemDetour","forecastCount","cutAngle","estimatedCatchInsideGoal","rareBullet",
             "rareCampingBullet","continuousBulletCatch","carryMoveReserve","observedEndzoneCamping","campingObservationKnown",
+            "campingEvidenceCount","campingCurrentKnown","campingCurrentWaiting","campingCounterUsed",
             "campingObservationSeconds","campingOwnProgressYards","campingDefenderDisplacementYards"}) do
             local v=value[key]
             if type(v)=="boolean" or type(v)=="number" and v==v and math.abs(v)<math.huge then out[key]=v end
@@ -7704,6 +7782,7 @@ return function(ctx,Policy,services)
             opponentKnown=memoryOpponent~=nil,updatedAt=memorySavedAt,
             recentRoutes=copyRecent(),recentSelections=copySelections(),
             recentDefense=copyDefense(),selectionIndex=selectionIndex,
+            campingCounterUsed=campingCounterUsed,
             lastLateBendTrialTrigger=lastLateBendTrialTrigger}
     end
     local function updateSessionHistory()
@@ -7727,6 +7806,7 @@ return function(ctx,Policy,services)
     local function clearSessionHistory()
         campingObservation=nil
         ownPossessionObserved=false
+        campingCounterUsed=false
         recentRoutes,activeRoute={},nil
         recentDefense,activeDefense={},nil
         recentSelections,selectionIndex={},0
@@ -7928,6 +8008,7 @@ return function(ctx,Policy,services)
             setupSeconds=math.max(0,(s.snapAt or s.preSnapEnds and (s.preSnapEnds+(Config.HikeTime or 3))
                 or world:GetServerTimeNow())-world:GetServerTimeNow()),
             laneSide=laneSide,priorTarget=priorTarget,recentRoutes=recentRoutes,
+            campingCounterUsed=campingCounterUsed,
             recentSelections=recentSelections,selectionIndex=selectionIndex,routeCycle=routeCycle,routeWaypoint=routeWaypoint,
             lastLateBendTrialTrigger=lastLateBendTrialTrigger,defenseProfile=defenseProfile(),
             middleStemDeep=choice and choice.middleStemDeep==true,
@@ -8032,6 +8113,9 @@ return function(ctx,Policy,services)
         local payload=table.clone(chosen.payload)
         payload.Release=nil
         submit(payload)
+        -- A failed selection or native submit must not spend the one session
+        -- counter. Explicit OFF clears observations, not a completed attempt.
+        if chosen.rareCampingBullet==true then campingCounterUsed=true end
         selected,routePlan=chosen,chosen.plan
         activeRoute=descriptor({pass=chosen.payload.Pass,side=chosen.side,depth=chosen.depth,
             shape=chosen.shape,family=chosen.family,signature=chosen.signature,
@@ -8069,6 +8153,9 @@ return function(ctx,Policy,services)
             cutAngle=chosen.cutAngle,estimatedCatchInsideGoal=chosen.estimatedCatchInsideGoal,rareBullet=chosen.rareBullet,
             rareCampingBullet=chosen.rareCampingBullet,continuousBulletCatch=chosen.continuousBulletCatch,
             carryMoveReserve=chosen.carryMoveReserve,
+            campingGateReason=chosen.campingGateReason,campingEvidenceCount=chosen.campingEvidenceCount,
+            campingCurrentKnown=chosen.campingCurrentKnown,campingCurrentWaiting=chosen.campingCurrentWaiting,
+            campingCounterUsed=campingCounterUsed,
             pacedSlant=chosen.pacedSlant,slantWalkUntil=chosen.slantWalkUntil,slantSprintDuration=chosen.slantSprintDuration,
             sidelineFallback=chosen.sidelineFallback,sidelineFallbackReason=chosen.sidelineFallbackReason,
             diveWitnessElapsed=chosen.diveWitnessElapsed,diveWitnessX=chosen.diveWitnessX,
@@ -8089,6 +8176,9 @@ return function(ctx,Policy,services)
             or chosen.adaptiveUnderneath and "Full auto · Underneath: defender deep"
             or "Full auto · "..chosen.payload.Pass.." route submitted"
         log("routeRequested",{pass=chosen.payload.Pass,startX=chosen.payload.StartX,
+            campingGateReason=chosen.campingGateReason,campingEvidenceCount=chosen.campingEvidenceCount,
+            campingCurrentKnown=chosen.campingCurrentKnown,campingCurrentWaiting=chosen.campingCurrentWaiting,
+            campingCounterUsed=campingCounterUsed,
             points=#chosen.payload.Points,arrival=chosen.plan.Arrival,launch=chosen.plan.Launch,
             estimatedSeparation=chosen.estimatedSeparation,estimateOnly=true,
             bestEffort=chosen.bestEffort,bestEffortReason=chosen.bestEffortReason,reachable=chosen.reachable,
@@ -8427,7 +8517,7 @@ return function(ctx,Policy,services)
             preferJumpDive=choice.preferJumpDive==true,
             continuousSprint=finalSprintCommitted,finalSprint=finalSprintCommitted}
     end
-    function api.movementBudget()
+    function api.movementBudget(airborneBall)
         if not alive or not enabled then return nil end
         -- Called while the core builds its snapshot: never recurse into it.
         -- A rare short Bullet reserves one actual native carrier move until
@@ -8438,7 +8528,7 @@ return function(ctx,Policy,services)
             and (selected and selected.payload.Pass or activeRoute.pass)=="Bullet"
             and finite(choice.carryReserve) and choice.carryReserve>=10
             and choice.carryReserve<=(Config.Stamina or 100) then reserve=choice.carryReserve end
-        return {dbReserve=40,wrReserve=reserve}
+        return {dbReserve=airborneBall==true and 2 or 40,wrReserve=reserve}
     end
     function api.unload()
         if not alive then return end
@@ -9077,7 +9167,7 @@ end
 
 end)()
 
-assist = createAssist({snapshot=api.context,version=RELEASE_VERSION,buildId="0a4a454b411f14599fb1e1fb803037e5a6d21f6be1b1c4f7f6d9312b7e91d94d",fullplay=function(s,root,h,now,dt)
+assist = createAssist({snapshot=api.context,version=RELEASE_VERSION,buildId="19f53bf03953c0b826483b1cf00d510931e6720b17905a68acce7e30bc961d34",fullplay=function(s,root,h,now,dt)
     if fullplay then return fullplay.navigate(s,root,h,now,dt) end
 end},Planner,createTackle,WRApproach,Motion,createCarrierMoves,PlayerAvoidance)
 assist.setEnabled(false)
@@ -9092,7 +9182,7 @@ repeatWR = createWRRepeat({snapshot=api.context,
     autoplay=function() return autoplay.status() end,
     disableAutoplay=function() return api.setAutoplay(false) end})
 repeatWR.setEnabled(false)
-fullplay = createFullplay({Planner=Planner,snapshot=api.context,version=RELEASE_VERSION,buildId="0a4a454b411f14599fb1e1fb803037e5a6d21f6be1b1c4f7f6d9312b7e91d94d",
+fullplay = createFullplay({Planner=Planner,snapshot=api.context,version=RELEASE_VERSION,buildId="19f53bf03953c0b826483b1cf00d510931e6720b17905a68acce7e30bc961d34",
     assistEnabled=function() return assist.status().enabled end,
     release=function() if assist.releaseFullplay then assist.releaseFullplay() end end},FullplayPolicy)
 fullplay.setEnabled(false)
@@ -9114,7 +9204,7 @@ local GAME_ID,PLACE_ID=10770281752,116097127629859
 local MAIN_URL="https://raw.githubusercontent.com/BananaMan2006/chalk-assist-deterministic/main/chalk-it-up-1v1.lua"
 local CACHE_FILE="chalk-deterministic-cache.lua"
 local MAIN_FILE="chalk-it-up-1v1.lua"
-local MIN_RELEASE="5.1.11"
+local MIN_RELEASE="5.1.12"
 local MARKER="__ChalkDeterministicAutoBoot"
 local env=type(getgenv)=="function" and getgenv() or _G
 local boot

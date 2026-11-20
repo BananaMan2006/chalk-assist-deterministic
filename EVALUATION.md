@@ -1,6 +1,36 @@
-# Evaluation scope · 5.1.11
+# Evaluation scope · 5.1.12
 
 This release continues the authored, deterministic controller. Its checks establish local rule behavior and packaging properties. **They do not demonstrate a live win rate, a winning streak, perfect catching, or improvement through training.** The release has no training system or shared model.
+
+## 5.1.12 scope
+
+The DB coverage reserve remains 40 before the throw, but drops to 2 only while the core has an observed ball arc in the Live phase. The existing three-stamina dispatch allowance still applies. Previously the same coverage reserve was applied during an airborne interception attempt, stopping native sprint around 42 stamina. In an exact private replay of one allowed deep Floater, changing only that reserve made all seven early snapshots admit a robust jump-and-dive witness; the first predicted contact was 2.885 seconds after launch. This establishes a reachable forecast, not a reproduced collision path or guaranteed server interception.
+
+The rare camper response no longer waits for step 19 of a 20-route cycle. It can submit one checked Bullet per opponent session after two distinct completed plays confirm sustained deep, stationary defense and the current defender remains deep and slow. Unavailable candidates and failed local submissions do not spend the attempt; toggling OFF does not replenish it. The existing moving airborne catch, carrying-move reserve and observed run-in clearance gates remain. Diagnostics record why the counter is eligible or withheld. This fixes an unnecessarily delayed response, not a demonstrated missed live camper: none of the 31 completed receiving windows audited in the preceding sample met the camping conditions.
+
+The Floater catch priority remains the earliest reachable airborne contact in the end zone, with jump-and-dive considered if it reaches sooner. On each existing postthrow middle-stem refresh, the controller now compares that continuation with an immediate normal airborne catch plan using the same current movement and stamina. If immediate first contact is more than 10 ms earlier, it gives up the stem for that throw and returns to normal catch control. The comparison tolerance avoids reacting to tiny differences between the two forecasts; it is not a requested wait. Risky, grounded or pre-goal contacts cannot trigger this handoff. No extra waiting for theoretical separation was added. A bounded native-configuration route search found no funded sharper alternative to the observed 48.23-degree full-field cut, so this release does not promise a 90-degree route or change geometry without a reachable forecast.
+
+Local validation passed 499 rule checks, 68 deterministic route/controller checks, 57 airborne checks and 16 build/install checks. A separate native-configuration run passed 159 combined route/controller checks. Live validation is recorded separately; these fixtures do not reproduce server decisions.
+
+## Initial 5.1.12 staging observation
+
+Before the additional earliest-stem comparison and post-claim diagnostics, two fully observed matches ended 4–0 and 4–2. DB recorded five interceptions and one breakup, with no allowed touchdown. Actual native sprint continued below the old 43-stamina cutoff in nineteen samples across two DB passes, reaching seven stamina. This verifies the new reserve was actually spent; it does not isolate its effect on the match result.
+
+WR recorded three catches followed by touchdowns and four incompletes. All seven local contact claims were airborne and inside the end zone. The four incompletes followed on-time jump-and-dive actions. A private comparison against three earlier successful diving catches found overlapping dive ages, body tilt and capsule margins, and source-modeled dive positions agreed closely with the observed roots. The native client sends one local Reach request and stops its own contact loop; that request is not authoritative possession. Stopping assist steering does not cancel an already running native dive. These observations do not justify suppressing all dives, inventing retries or claiming a timing fix solves the server rejection. The failures remain unresolved.
+
+The final candidate adds at most four local pose samples during the first 300 ms after a claim while awaiting the result, without changing movement or catch inputs. This makes later body motion observable. No runtime errors occurred in the initial thirteen-throw window; the rare camper Bullet was not exercised.
+
+## Earliest-contact comparison checks
+
+The immediate-versus-continued-stem comparison passed 34 targeted controller checks, including both jump types, an earlier handoff that stays released for the throw, unknown/unsafe contacts, unchanged stamina inputs, the comparison tolerance and refresh cadence. In a separate intermediate live window with the same movement behavior, one match ended 4–0 and another ended 3–0 Forfeit with an unconfirmed winner. Four receiving Floaters were caught for touchdowns, including two jump-and-dive catches. Defense recorded three interceptions and one incomplete. The incomplete had no reachable forecast or action request from the observed pose; it was a deep opposite-side Bullet with insufficient remaining travel time, not a stamina-cutoff or missed-jump event.
+
+The extra comparison cost measured about 46 ms in offline Lua on the private fixture. The final live build recorded ten comparison calls during two valid middle-stem continuations, with a median of 9.08 ms and maximum of 11.92 ms. These run at the existing refresh interval, not on every frame. Runtime/environment differences mean the offline number cannot be treated as a native frame measurement.
+
+## Final 5.1.12 live observation
+
+The final exact build completed two fully observed matches at 4–0. All four WR Floaters produced native catches followed by touchdowns, with airborne local contacts inside the end zone; these were upright jumps, not dives. All four defensive Bullet passes were intercepted. No receiving failures, allowed catches, native jam notices or runtime errors occurred in this bounded eight-throw sample.
+
+The new immediate-versus-stem comparison executed, but no candidate beat continuation by more than the comparison tolerance, so the actual early-release branch remains covered by fixtures rather than a live trigger. Five post-claim pose samples were recorded across three successful plays before authoritative results ended observation. The rare camper Bullet, defensive Floater and lower-stamina DB pursuit were not exercised in this final window; earlier staging evidence for DB Floaters and spending the reserve is kept separate above. The initial four diving incompletes remain unresolved. Two clean matches do not establish perfect catching or a lasting win rate.
 
 ## 5.1.11 scope
 
@@ -17,6 +47,12 @@ Local 5.1.11 validation passed 495 rule checks, 65 deterministic route/controlle
 Two fully observed matches ended 4–0. Across eight completed throws, all four WR Floaters had native Catch followed by Touchdown, and all four DB throws were intercepted. No receiving incomplete, opponent catch or runtime error appeared in this bounded sample. The rare camping Bullet did not trigger, so its route and reserve validation remain offline evidence.
 
 Prethrow navigation included checked 5-degree, 10-degree and 25-degree bypasses rather than always starting with the old 35-degree candidate. Larger detours remained necessary around some obstacles. Opening sprint samples showed stamina decreasing from 100 to 84 and 87 on the first two receiving plays. These observations verify that the revised inputs were used; they do not isolate their causal effect on catches. No live postthrow bypass exercised the new safe-sprint handoff permission in this sample, and no claim is made that the native jam effect is removed.
+
+## Extended 5.1.11 observation
+
+The subsequent fixed audit window, including queued records after the initial two-match test, contained thirteen explicit completed matches: eleven 4–0 and two 4–1. Four separate Forfeit endings have unknown winners and are excluded. Across 71 throws, WR recorded 31 catches followed by touchdowns, two incompletes and two breakups; DB recorded 29 interceptions, five breakups, one incomplete and one allowed catch followed by a touchdown. No runtime errors were recorded. Eleven native jam notices occurred across the whole window, but none identified the four failures discussed below. All 35 completed receiving plays were Floaters, and none qualified as repeated endzone camping.
+
+Both WR incompletes lost travel around moving blockers. One initially reachable jump-and-dive forecast disappeared as avoidance redirected movement away from its approach; replacing only the recorded pose with the unblocked forecast restored a witness. A forced opposite-side probe did not provide a safe better path. The other was already unreachable at the first catch solve after prethrow detours and sprint withholding. Neither supports a claim that merely jumping earlier would recover the catch. The two breakups instead had confirmed jumps and airborne local contact inside the end zone before the native Swatted result; these are contested server outcomes. The allowed DB Floater is the reserve case described above. These failures remain part of the evaluation despite the winning match scores.
 
 ## 5.1.10 scope
 

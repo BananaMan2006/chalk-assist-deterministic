@@ -568,6 +568,8 @@ return function(Policy,create,routeSource,Planner)
             for _,notice in ipairs({"Catch","RAC"}) do
                 local f=harness();f.api.setEnabled(true);f:settle();f.snapshot.phase="Live"
                 assert(f.api.movementBudget().wrReserve==30 and f.api.movementBudget().dbReserve==40)
+                assert(f.api.movementBudget(true).wrReserve==30 and f.api.movementBudget(true).dbReserve==2)
+                assert(f.api.movementBudget(false).dbReserve==40 and f.api.movementBudget("true").dbReserve==40)
                 f.api.onFx({Type="BallResult",Result="Catch"})
                 assert(f.api.movementBudget().wrReserve==30,"unknown catcher released the carry reserve")
                 if notice=="Catch" then f.api.onFx({Type="BallResult",Result="Catch",Catcher=f.character})
@@ -603,6 +605,58 @@ return function(Policy,create,routeSource,Planner)
             deadline=5;f.snapshot.snapAt=nil;assert(f:navigate().avoidanceArrival==nil)
         end)
         Policy.movement=old;assert(ok,err)
+    end)
+    test("one successfully submitted camping counter remains spent across OFF and the next round",function()
+        observedRoute(function()
+            local selected=Policy.chooseScheduledRoute
+            local seen={}
+            Policy.chooseScheduledRoute=function(input,...)
+                seen[#seen+1]=input.campingCounterUsed
+                local choice=selected(input,...)
+                if input.campingCounterUsed then
+                    choice.payload.Pass="Floater";choice.rareCampingBullet=false;choice.continuousBulletCatch=false
+                    choice.campingGateReason="session_counter_used"
+                end
+                return choice
+            end
+            local f=harness();f.api.setEnabled(true);f:settle()
+            assert(seen[1]==false and f.api.status().sessionHistory.campingCounterUsed)
+            local route=f.api.status().activeRoute
+            assert(route.campingGateReason=="counter_selected" and route.campingEvidenceCount==2
+                and route.campingCurrentKnown and route.campingCurrentWaiting)
+            local event
+            for _,row in ipairs(f.events) do if row.kind=="routeRequested" then event=row end end
+            assert(event and event.campingCounterUsed and event.campingEvidenceCount==2
+                and event.campingCurrentKnown and event.campingCurrentWaiting)
+            f.api.setEnabled(false);f.api.setEnabled(true)
+            assert(f.api.status().sessionHistory.campingCounterUsed,"OFF restored an already spent counter")
+            f:newRound(2)
+            assert(seen[#seen]==true and f.submits[2].Pass=="Floater")
+            assert(f.api.status().activeRoute.campingGateReason=="session_counter_used")
+            f.accountId=456
+            assert(not f.api.status().sessionHistory.campingCounterUsed,"new opponent inherited the counter")
+            local fresh=harness({previousState={campingCounterUsed=true},saved={schemaVersion=1,campingCounterUsed=true}})
+            assert(not fresh.api.status().sessionHistory.campingCounterUsed)
+        end,{pass="Bullet",rareCampingBullet=true,continuousBulletCatch=true,
+            campingGateReason="counter_selected",campingEvidenceCount=2,campingCurrentKnown=true,campingCurrentWaiting=true})
+    end)
+    test("unavailable candidates and failed submissions do not consume the camping counter",function()
+        observedRoute(function()
+            local select=Policy.chooseScheduledRoute
+            local unavailable=true
+            Policy.chooseScheduledRoute=function(...)
+                if unavailable then return nil,"authored unavailable counter" end
+                return select(...)
+            end
+            local f=harness();f.api.setEnabled(true);f:settle()
+            assert(not f.api.status().sessionHistory.campingCounterUsed and #f.submits==0)
+            unavailable=false;f.submitError="authored native submit failure";f:newRound(2)
+            assert(not f.api.status().sessionHistory.campingCounterUsed and #f.submits==0)
+            f.submitError=nil;f:newRound(3)
+            assert(f.api.status().sessionHistory.campingCounterUsed and #f.submits==1)
+            f.snapshot.phase="Lobby"
+            assert(not f.api.status().sessionHistory.campingCounterUsed)
+        end,{pass="Bullet",rareCampingBullet=true})
     end)
     Vector2,typeof=oldVector2,oldTypeof
     report.fixture="Authored offline services and geometry; locally supplied RouteMath is not copied or published. No server outcome claim."

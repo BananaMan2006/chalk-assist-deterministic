@@ -346,21 +346,40 @@ local function middleStemRoutes(input,Config,Field,RouteMath,los,stamina,opponen
     return candidates
 end
 
-local function repeatedEndzoneCamping(input,Config,Field)
+local function campingGate(input,Config,Field)
     local history=type(input.recentRoutes)=="table" and input.recentRoutes or {}
-    if input.role~="WR" or #history<2 or not vec(input.opponentPosition) or not vec(input.opponentVelocity) then return false end
-    local previousKey
-    for i=#history-1,#history do
+    local gate={eligible=false,evidenceCount=0,currentKnown=false,currentCamping=false}
+    local offset=offsetOf(input)
+    if vec(input.opponentPosition) and vec(input.opponentVelocity) then
+        gate.currentKnown=true
+        gate.currentCamping=input.opponentPosition.Z>=Field.GoalZ+offset.Z-Field.YD
+            and input.opponentPosition.Z<=Field.EndZ+offset.Z
+            and (input.opponentVelocity*FLAT).Magnitude<=Config.RunSpeed*.4
+    end
+    local previousKey,confirmed=nil,#history>=2
+    for i=math.max(1,#history-1),#history do
         local item=history[i]
         if type(item)~="table" or item.campingObservationKnown~=true or item.observedEndzoneCamping~=true
             or type(item.roundKey)~="string" or item.roundKey=="" or item.roundKey=="current"
-            or item.roundKey==previousKey then return false end
-        previousKey=item.roundKey
+            or item.roundKey==previousKey then confirmed=false
+        else gate.evidenceCount=gate.evidenceCount+1 end
+        previousKey=type(item)=="table" and item.roundKey or nil
     end
-    local offset=offsetOf(input)
-    return input.opponentPosition.Z>=Field.GoalZ+offset.Z-Field.YD
-        and input.opponentPosition.Z<=Field.EndZ+offset.Z
-        and (input.opponentVelocity*FLAT).Magnitude<=Config.RunSpeed*.4
+    if input.role~="WR" then gate.reason="not_wr"
+    elseif input.campingCounterUsed==true then gate.reason="already_attempted"
+    elseif input.campingCounterUsed~=false then gate.reason="counter_state_unknown"
+    elseif not confirmed then gate.reason="need_two_confirmed_plays"
+    elseif not gate.currentKnown then gate.reason="current_defender_unknown"
+    elseif not gate.currentCamping then gate.reason="defender_not_waiting_deep"
+    else gate.eligible=true;gate.reason="eligible" end
+    return gate
+end
+local function attachCampingGate(choice,gate,reason)
+    choice.campingGateReason=reason or gate.reason
+    choice.campingEvidenceCount=gate.evidenceCount
+    choice.campingCurrentKnown=gate.currentKnown
+    choice.campingCurrentWaiting=gate.currentCamping
+    return choice
 end
 
 -- A rare response to observed camping, not a default Bullet rotation. Keep
@@ -487,7 +506,8 @@ local function campingBullet(input,Config,Field,RouteMath,Planner,base)
 end
 
 -- Deep middle Floaters with alternating candidate sides. Observed coverage
--- chooses among funded routes; one cycle slot may admit a checked rare Bullet.
+-- chooses among funded routes; one confirmed camper response is allowed per
+-- opponent session, independently of the cosmetic left/right route cycle.
 function Policy.chooseScheduledRoute(input,Config,Field,RouteMath,Planner)
     input=input or {}
     if not validField(Field) or type(RouteMath)~="table" or type(RouteMath.Sanitize)~="function"
@@ -508,6 +528,7 @@ function Policy.chooseScheduledRoute(input,Config,Field,RouteMath,Planner)
     if sprint<=run then return nil,"Invalid native sprint speeds" end
     local index=finite(input.routeCycle) and math.floor(input.routeCycle)%20
         or finite(input.selectionIndex) and math.max(0,math.floor(input.selectionIndex)) or 0
+    local counterGate=campingGate(input,Config,Field)
     local preferredSide=index%2==0 and -1 or 1
     local opponent=projectedOpponent(input,Config,.2)
     local failures={[-1]=0,[1]=0}
@@ -774,17 +795,23 @@ function Policy.chooseScheduledRoute(input,Config,Field,RouteMath,Planner)
             or stemYards==stems[#stems]) and preferredDeep or nil
         if c then
             c.forecastCount=forecastCount
-            -- Only a repeated, still-observed camper makes this slot eligible.
+            -- Respond at the first qualified opportunity, rather than waiting
+            -- for a fixed cycle slot that can fall after this match has ended.
             -- A failed counter-route remains the original funded Floater.
-            if index%20==19 and repeatedEndzoneCamping(input,Config,Field) then
+            local gateReason
+            if counterGate.eligible then
                 local counter=campingBullet(input,Config,Field,RouteMath,Planner,c)
-                if counter then return counter end
+                if counter then return attachCampingGate(counter,counterGate,"counter_selected") end
+                gateReason="no_funded_counter"
             end
             c._contactSnapshot,c._staminaAtCut=nil,nil
-            return c
+            return attachCampingGate(c,counterGate,gateReason)
         end
     end
-    if bestEffort then bestEffort.forecastCount=forecastCount;return bestEffort end
+    if bestEffort then
+        bestEffort.forecastCount=forecastCount
+        return attachCampingGate(bestEffort,counterGate,counterGate.eligible and "no_funded_floater" or nil)
+    end
     return nil,"No deep middle Floater has a funded airborne catch forecast"
 end
 

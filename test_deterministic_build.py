@@ -101,6 +101,34 @@ class DeterministicBuildTests(unittest.TestCase):
             assert(events[#events].caughtByMe==nil)
         ''')
 
+    def test_coverage_reserve_unlock_requires_observed_live_ball(self):
+        source = (ROOT / 'chalk-overlay-core.lua').read_text()
+        start = source.index('function api.context()')
+        stop = source.index('function api.syncFromGame()', start)
+        lua = LuaRuntime(unpack_returned_tuples=True)
+        lua.execute(r'''
+            api={}
+            carrierContext=function()return nil,false,nil end
+            characterOf=function()return nil end
+            enemyCharacters=function()return {} end
+            fullplay={movementBudget=function(airborne)
+                return {dbReserve=airborne==true and 2 or 40}
+            end}
+        ''')
+        lua.execute(source[start:stop])
+        lua.execute(r'''
+            phase="Live";arc=nil
+            assert(api.context().playBudget.dbReserve==40)
+            arc={P0={},P1={}}
+            assert(api.context().playBudget.dbReserve==2)
+            for _,value in ipairs({"PreSnap","Hike","RAC","Result","Lobby"}) do
+                phase=value
+                assert(api.context().playBudget.dbReserve==40)
+            end
+            fullplay=nil
+            assert(api.context().playBudget==nil)
+        ''')
+
     def test_autoplay_constructor_stays_off_with_saved_on_until_user_enables(self):
         lua = LuaRuntime(unpack_returned_tuples=True)
         lua.execute(r'''
