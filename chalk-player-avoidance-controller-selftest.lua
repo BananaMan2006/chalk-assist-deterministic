@@ -4,7 +4,8 @@ return function(source,Avoidance)
     assert(type(Avoidance)=="table" and type(Avoidance.update)=="function","real Avoidance helper required")
     local helpers=assert(source:match("(    local function smoothDirection.-)    local function moveWRApproach"))
     local navigation=assert(source:match("(    local function updateFullplay.-)    local function updateWRReturn"))
-    local catch=assert(source:match("            if moving then\n(.-)            else\n                h:Move%(Vector3.zero"))
+    local catch=assert(source:match("            if moving then\n(.-)            else\n                h:Move%(Vector3.zero")
+        or source:match("            if moving then\n(.-)            else\n                lastCatchMotion=nil\n                h:Move%(Vector3.zero"))
     local cancellation=assert(source:match("(    local function releaseSprint.-)    local walls"))
     local handoff=assert(source:match("            local preserveMovement=(.-)\n            cancel%(preserveMovement%)"))
     local compile=loadstring or load
@@ -605,6 +606,39 @@ end
         assert(not canHandoff(full,true,true,nil),"missing humanoid was preserved")
         assert(not canHandoff(full,true,true,{}),"removed humanoid was preserved")
         assert(not canHandoff(full,true,true,{Parent={},PlatformStand=true}),"diving humanoid was preserved")
+    end)
+    test("moving overlap escape still requires current catch funding and explicit permission",function()
+        for _,gate in ipairs({"funded","budget","permission"}) do
+            local f=fixture();f.realAvoidance=Avoidance;f.sprinting=true;f.stamina=50
+            f.context.role="WR";f.context.arc={};f.context.catchIntent={}
+            f.plan.kind="pursue";f.plan.reachable=false
+            local heading=Vector3.new(-.06792052835226059,0,.997690737247467).Unit
+            f.plan.direction=Vector3.new(.6574468016624451,0,.7535009384155273).Unit
+            f.plan.approachTarget=f.root.Position+f.plan.direction*30
+            f.root.AssemblyLinearVelocity=heading*20
+            f.initialAvoidance={now=f.now-1/60,active=true,side=-1,heading=heading,
+                desiredHeading=f.plan.direction,contactSince=f.now-.2,
+                samples={{time=f.now-.2,position=f.root.Position-heading*4}}}
+            local other={Position=f.root.Position+Vector3.new(2.074424743652344,0,-1.802398681640625),
+                AssemblyLinearVelocity=Vector3.new(.1613544076681137,0,19.984384536743164)}
+            f.context.opponent={FindFirstChild=function()return other end,
+                FindFirstChildOfClass=function()return {Health=100}end}
+            if gate=="budget" then f.canSprint=false;f.stamina=1
+            elseif gate=="permission" then f.context.catchIntent=nil end
+            f.api=factory(f);f.api.catch(f.context)
+            equal(f.sprinting,gate=="funded",gate.." escaped the current sprint gate")
+            equal(f.h.WalkSpeed,20,"moving escape changed native speed")
+            if gate=="funded" then
+                local out=f.moves[#f.moves]
+                assert(out.Unit:Dot(heading)>=math.cos(8/60)-1e-8,"escape skipped its turn bound")
+                for _,speed in ipairs({20,27}) do
+                    local relative=other.Position-f.root.Position
+                    local rv=other.AssemblyLinearVelocity-out*speed
+                    assert(relative:Dot(rv)>.05,"funded escape closes on the moving body")
+                    assert((relative+rv*.25).Magnitude>=relative.Magnitude+.25)
+                end
+            end
+        end
     end)
     return report
 end

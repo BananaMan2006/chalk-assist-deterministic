@@ -92,7 +92,8 @@ return function(Planner,source)
     local section=assert(source:match("(    local function updatePostThrowStem.-)    local function updateWRReturn"),
         "Production post-throw stage function not found")
     local smooth=assert(source:match("(    local function smoothDirection.-)    local function avoidPlayers"))
-    local catchMove=assert(source:match("(                h:Move%(avoid.active and avoid.direction.-,false%))"),
+    local catchMove=assert(source:match("(                local command=avoid.active and avoid.direction.-\n                h:Move%(command,false%))")
+        or source:match("(                h:Move%(avoid.active and avoid.direction.-,false%))"),
         "Production catch avoidance/steering dispatch not found")
     local routeCut=assert(source:match("(        if directive.hardCut==true.-)        return true,avoid.active"))
     local reset=assert(source:match("            (stemFinished,stemForecast,nextStemCheck,stemLastSpeed,stemLastSprint=false,nil,0,nil,nil)"),

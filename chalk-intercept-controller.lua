@@ -15,6 +15,7 @@ return function(ctx, Planner, createTackle, WRApproach, Motion, createCarrierMov
     local auto, alive = false, true
     local plan, throwKey, throwRole, claimedKey, lastSnapshot, controlledHumanoid
     local claimObservedAt,claimTraceCount,claimTraceNext=nil,0,0
+    local pendingClaimMotion,lastCatchMotion
     local steering, atTarget, parkedPosition = nil, false, nil
     local nextSolve, nextCheck, nextReplan, lastDive, lastJump = 0, 0, 0, -math.huge, -math.huge
     local ownsSprint = false
@@ -151,6 +152,7 @@ return function(ctx, Planner, createTackle, WRApproach, Motion, createCarrierMov
         trackedSprintRoot,sprintTracking=nil,nil
     end
     local function release()
+        pendingClaimMotion,lastCatchMotion=nil,nil
         navigation=false
         navigationIdleSince,navigationIdleRoot=nil,nil
         avoidanceState,avoidanceRoot,avoidancePhase,lastAvoidanceReason=nil,nil,nil,nil
@@ -165,6 +167,7 @@ return function(ctx, Planner, createTackle, WRApproach, Motion, createCarrierMov
         releaseInput()
     end
     local function cancel(preserveMovement)
+        pendingClaimMotion,lastCatchMotion=nil,nil
         navigationIdleSince,navigationIdleRoot=nil,nil
         if preserveMovement then
             -- A running Full Auto route hands its existing native sprint to
@@ -728,6 +731,88 @@ return function(ctx, Planner, createTackle, WRApproach, Motion, createCarrierMov
         end
         return true
     end
+    local function claimFinite(value)
+        return type(value)=="number" and value==value and math.abs(value)<math.huge
+    end
+    local function checkedClaimMotion(record,s,now)
+        if not alive or not auto or not s.enabled or s.testing or not inputOwned or not s.playBudget
+            or UIS:GetFocusedTextBox() or GuiService.MenuIsOpen
+            or s.phase~="Live" or s.role~="WR" or s.launchAt~=record.launchAt or s.arc~=record.arc
+            or not claimFinite(now) or now<record.started or now>=record.stopAt then return nil,"ownership or deadline" end
+        local root,h=healthyCharacter()
+        if root~=record.root or h~=record.h or h.PlatformStand or h.FloorMaterial~=Enum.Material.Air
+            or not Moves.Upright() then return nil,"native motion" end
+        if not claimFinite(h.WalkSpeed) or math.abs(h.WalkSpeed-record.speed)>.05
+            or (me:GetAttribute("SprintOn")==true)~=record.sprint
+            or record.sprint and not sprintBudget(s).canSprint then return nil,"native speed or reserve" end
+        local fresh=snapshot(s,root,h,now)
+        if not fresh.physicalAirborne or fresh.reachAirborne==false then return nil,"airborne reach" end
+        local remaining=record.stopAt-now
+        local endpoint=root.Position+record.direction*h.WalkSpeed*remaining
+        local bounds=fresh.bounds
+        local function inside(p)
+            return bounds and claimFinite(p.X) and claimFinite(p.Y) and claimFinite(p.Z)
+                and claimFinite(bounds.minX) and claimFinite(bounds.maxX)
+                and claimFinite(bounds.minZ) and claimFinite(bounds.maxZ)
+                and p.X>=bounds.minX and p.X<=bounds.maxX and p.Z>=bounds.minZ and p.Z<=bounds.maxZ
+        end
+        if not inside(root.Position) or not inside(endpoint) then return nil,"field bounds" end
+        if record.requireGoal and (not claimFinite(fresh.wrDiveGoalZ)
+            or root.Position.Z<fresh.wrDiveGoalZ or endpoint.Z<fresh.wrDiveGoalZ) then return nil,"goal boundary" end
+        local distance=(endpoint-root.Position).Magnitude
+        if clippedDistance(root.Position,record.direction.Unit,distance)<distance-.001 then return nil,"wall" end
+        if not PlayerAvoidance then return nil,"clearance unavailable" end
+        -- Check a fresh path without modifying the live avoidance state. Any
+        -- detour aborts; only the exact already-issued command may continue.
+        local _,decision=PlayerAvoidance.update(nil,{now=now,dt=1/60,position=root.Position,
+            velocity=root.AssemblyLinearVelocity,desiredDirection=record.direction,
+            currentDirection=record.direction.Unit,
+            opponents=fresh.opponents or (fresh.opponent and {fresh.opponent} or {}),bounds=bounds,
+            requestedSprint=record.sprint,walkSpeed=h.WalkSpeed,runSpeed=Config.RunSpeed,
+            sprintSpeed=Config.SprintSpeed,allowSprintDetour=record.sprint,canDetour=true,
+            targetPosition=endpoint,arriveBy=record.stopAt})
+        if not decision or decision.sprint~=record.sprint
+            or typeof(decision.direction)~="Vector3" or (decision.direction-record.direction).Magnitude>.00001 then
+            return nil,"clearance changed"
+        end
+        return root,h
+    end
+    local function beginClaimMotion(s,root,h,now,nativeTouchAge)
+        local command=lastCatchMotion
+        if not claimFinite(nativeTouchAge) or nativeTouchAge<0 or nativeTouchAge>.05
+            or not plan or plan.kind~="jump" or plan.continuousCatch~=true or plan.reachable==false
+            or plan.diveAt or dived or not jumped or jumpRequest or not lastSnapshot
+            or not command or command.root~=root or command.h~=h or command.launchAt~=s.launchAt
+            or not claimFinite(command.at) or now-command.at<0 or now-command.at>.05
+            or not claimFinite(plan.stopAt) or plan.stopAt<=now or plan.stopAt-now>.15
+            or typeof(command.direction)~="Vector3" or not claimFinite(command.direction.Magnitude)
+            or command.direction.Magnitude<.001 or command.direction.Magnitude>1.000001
+            or typeof(plan.direction)~="Vector3" or not claimFinite(plan.direction.Magnitude)
+            or plan.direction.Magnitude<.001
+            or command.direction.Unit:Dot(plan.direction.Unit)<math.cos(.1) then return false end
+        local record={root=root,h=h,launchAt=s.launchAt,arc=s.arc,started=now,stopAt=plan.stopAt,
+            direction=command.direction,speed=h.WalkSpeed,sprint=me:GetAttribute("SprintOn")==true,
+            requireGoal=lastSnapshot.requireEndzoneCatch==true}
+        local valid=checkedClaimMotion(record,s,now)
+        if not valid then return false end
+        cancel(true)
+        pendingClaimMotion=record
+        log("claimMovementContinue",{role=s.role,claimOnly=true,authoritative=false,
+            stopAt=record.stopAt,remaining=record.stopAt-now,direction=xyz(record.direction)})
+        return true
+    end
+    local function updateClaimMotion(s,now)
+        local record=pendingClaimMotion
+        if not record then return end
+        local root,h=checkedClaimMotion(record,s,now)
+        if not root then
+            log("claimMovementStop",{role=s.role,claimOnly=true,authoritative=false,
+                elapsed=math.max(0,now-record.started),reason=h,stopAt=record.stopAt})
+            cancel();return
+        end
+        -- No fresh action, speed request, target, or native catch claim.
+        h:Move(record.direction,false)
+    end
     local function tick(dt)
         local s = ctx.snapshot()
         local supportedRole=s.role=="DB" or s.role=="WR"
@@ -773,7 +858,7 @@ return function(ctx, Planner, createTackle, WRApproach, Motion, createCarrierMov
         if tackleAssist then tackleAssist.cancel(true) end
         catching=true
         if throwKey~=s.launchAt then
-            local preserveMovement=s.playBudget and ownsSprint and me:GetAttribute("SprintOn")==true
+            local preserveMovement=not pendingClaimMotion and s.playBudget and ownsSprint and me:GetAttribute("SprintOn")==true
                 and controlledHumanoid and controlledHumanoid.Parent and not controlledHumanoid.PlatformStand
             cancel(preserveMovement)
             wrDefenderDeadline=nil
@@ -793,6 +878,7 @@ return function(ctx, Planner, createTackle, WRApproach, Motion, createCarrierMov
                 origin=xyz(s.arc.P0),target=xyz(s.arc.P1),role=s.role,mode=s.mode or "1v1"})
         end
         if claimedKey==s.launchAt then
+            updateClaimMotion(s,now)
             observePendingClaim(s,now)
             message="Catch attempt sent · awaiting result"; return
         end
@@ -1104,10 +1190,13 @@ return function(ctx, Planner, createTackle, WRApproach, Motion, createCarrierMov
                     Moves.HoldSprint(false);ownsSprint=false
                     trackedSprintRoot,sprintTracking=nil,nil
                 end
-                h:Move(avoid.active and avoid.direction
-                    or smoothDirection(avoid.direction,root,h,dt)*math.min(1,avoid.direction.Magnitude),false)
+                local command=avoid.active and avoid.direction
+                    or smoothDirection(avoid.direction,root,h,dt)*math.min(1,avoid.direction.Magnitude)
+                h:Move(command,false)
+                lastCatchMotion={root=root,h=h,launchAt=s.launchAt,at=now,direction=command}
                 if avoid.active then nextReplan=math.min(nextReplan,now+.1) end
             else
+                lastCatchMotion=nil
                 h:Move(Vector3.zero,false)
                 releaseSprint()
             end
@@ -1360,6 +1449,7 @@ return function(ctx, Planner, createTackle, WRApproach, Motion, createCarrierMov
     end
     function controller.onMatch(data)
         if type(data)~="table" or not data.Phase then return end
+        if pendingClaimMotion and data.Phase~="Live" then cancel() end
         local holder=typeof(data.Carrier)=="Instance" and data.Carrier.Name or nil
         log("match",{phase=data.Phase,role=data.Role,result=data.Result,
             point=data.Point,carrier=holder,scorerIsYou=data.ScorerIsYou})
@@ -1442,7 +1532,7 @@ return function(ctx, Planner, createTackle, WRApproach, Motion, createCarrierMov
                 humanoidState=humanoidState(h),airborne=h and h.FloorMaterial==Enum.Material.Air,
                 jumpHeld=h and h.Jump,diving=h and h.PlatformStand,lastJumpAt=lastJump,
                 ball=xyz(Planner.ballAt(s.arc,workspace:GetServerTimeNow()-s.launchAt))})
-            cancel()
+            if not beginClaimMotion(s,root,h,claimObservedAt,touchNumber and touchClock-touchNumber) then cancel() end
         end
     end)
     function controller.history() return table.clone(history) end

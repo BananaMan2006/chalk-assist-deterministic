@@ -186,12 +186,35 @@ function Avoidance.update(previous,input)
         return escaping,minimum,true
     end
     local function keepSprint(direction)
-        if not sprintEligible or blocked or touching then return false end
+        if not sprintEligible or blocked then return false end
         -- Test the actual bounded heading, not the final candidate heading.
-        -- Neither an overlapping escape nor a path safe only at walking
-        -- speed can spend sprint while turning around the other player.
+        -- A path safe only at walking speed cannot spend sprint while turning
+        -- around the other player.
         local actualSafe,actualGap=evaluate(direction,speed*strength)
         local futureSafe,futureGap=evaluate(direction,sprintSpeed*strength)
+        if touching then
+            -- A moving player can follow just behind us while we already make
+            -- normal native progress. Walking forever inside that contact band
+            -- needlessly prevents a separating sprint. This exception needs
+            -- measured travel, not reported velocity, and cannot help a jammed
+            -- or stationary body. Both native-speed paths must strictly move
+            -- away from every near body throughout the prediction interval.
+            if not actualSafe or not futureSafe or not finite(measured)
+                or measured<run*.75 or measured>math.max(speed,sprintSpeed)*1.25
+                or speed<run*.95 then return false end
+            for _,moveSpeed in ipairs({speed*strength,sprintSpeed*strength}) do
+                for _,other in ipairs(obstacles) do
+                    local initial=other.relative.Magnitude
+                    local rv=other.velocity-direction*moveSpeed
+                    local gap,ending=clearance(other.relative,rv,horizon)
+                    if initial<=sprintClearance then
+                        if other.velocity.Magnitude<math.max(2,run*.2)
+                            or other.relative:Dot(rv)<=.05 or ending<initial+.25 then return false end
+                    elseif gap<sprintClearance then return false end
+                end
+            end
+            return true
+        end
         return actualSafe and actualGap>=sprintClearance
             and futureSafe and futureGap>=sprintClearance
     end

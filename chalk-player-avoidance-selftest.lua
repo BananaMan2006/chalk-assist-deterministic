@@ -752,5 +752,92 @@ return function(Avoidance)
             same(d.direction,p.desiredDirection)
         end
     end)
+    local function movingEscapeFixture(mirror,angle,offset)
+        mirror,angle,offset=mirror or 1,angle or 0,offset or Vector3.zero
+        local function transform(v)
+            local x,z=v.X*mirror,v.Z
+            return Vector3.new(x*math.cos(angle)+z*math.sin(angle),v.Y,z*math.cos(angle)-x*math.sin(angle))
+        end
+        local heading=transform(Vector3.new(-.06792052835226059,0,.997690737247467)).Unit
+        local desired=transform(Vector3.new(.6574468016624451,0,.7535009384155273)).Unit
+        local other={position=offset+transform(Vector3.new(2.074424743652344,0,-1.802398681640625)),
+            velocity=transform(Vector3.new(.1613544076681137,0,19.984384536743164))}
+        local p=fixture({position=offset,walkSpeed=20,currentDirection=heading,desiredDirection=desired,
+            dt=1/60,allowSprintDetour=true,sprintSpeed=27,opponents={other},
+            targetPosition=offset+desired*30,arriveBy=1.3,
+            bounds={minX=-100,maxX=100,minZ=-100,maxZ=100}})
+        local state={active=true,side=-mirror,heading=heading,desiredHeading=desired,
+            samples={{time=-.2,position=offset-heading*4}},contactSince=-.2}
+        return p,state,other
+    end
+    test("measured moving overlap keeps only a monotonically separating sprint at both native speeds",function()
+        -- Recorded before/after obstacle brackets are geometry witnesses, not
+        -- exact heartbeat replay or proof that a different catch would win.
+        for _,mirror in ipairs({-1,1}) do
+            for _,angle in ipairs({0,math.rad(37)}) do
+                local p,state,other=movingEscapeFixture(mirror,angle,Vector3.new(27,0,-30))
+                local before=state.heading
+                local nextState,d=Avoidance.update(state,p)
+                assert(d.active and d.sprint and not d.blocked,"normal moving escape unnecessarily released sprint")
+                assert(nextState.side==state.side,"moving escape changed passing side")
+                assert(math.acos(math.clamp(before:Dot(nextState.heading),-1,1))<=8*p.dt+1e-6,
+                    "moving escape skipped the bounded turn")
+                local relative=other.position-p.position
+                local initial=relative.Magnitude
+                for _,speed in ipairs({20,27}) do
+                    local rv=other.velocity-d.direction*speed
+                    assert(relative:Dot(rv)>.05,"escape can initially close at a checked speed")
+                    assert((relative+rv*.25).Magnitude>=initial+.25,"escape has no meaningful separation gain")
+                    for step=0,25 do
+                        assert((relative+rv*step/100).Magnitude>=initial-1e-6,"escape deepened an existing overlap")
+                    end
+                end
+                assert(d.direction:Dot(p.desiredDirection)*27>14,
+                    "moving escape sacrificed too much forward progress")
+                legal(p,d.direction)
+            end
+        end
+        -- The later sample places the moving body slightly ahead; the same
+        -- bounded path must still separate at both native speeds to qualify.
+        local p,state,other=movingEscapeFixture()
+        other.position=Vector3.new(2.194639205932617,0,.24544525146484375)
+        other.velocity=Vector3.new(1.5266423225402832,0,19.936634063720703)
+        local _,d=Avoidance.update(state,p)
+        assert(d.sprint,"second recorded bracket lost a strictly separating path")
+        for _,speed in ipairs({20,27}) do
+            local rv=other.velocity-d.direction*speed
+            assert(other.position:Dot(rv)>.05 and (other.position+rv*.25).Magnitude>=other.position.Magnitude+.25)
+        end
+    end)
+    test("moving overlap exception rejects unmeasured stationary jammed approaching and unfunded cases",function()
+        for _,gate in ipairs({"no measurement","zero movement","implausible movement","jammed",
+            "stationary body","approaching body","not requested","not opted in"}) do
+            local p,state,other=movingEscapeFixture()
+            if gate=="no measurement" then state.samples={}
+            elseif gate=="zero movement" then state.samples={{time=-.2,position=p.position}}
+            elseif gate=="implausible movement" then state.samples={{time=-.2,position=p.position-p.currentDirection*20}}
+            elseif gate=="jammed" then p.walkSpeed=9
+            elseif gate=="stationary body" then other.velocity=Vector3.zero
+            elseif gate=="approaching body" then other.velocity=p.currentDirection*20-other.position.Unit*10
+            elseif gate=="not requested" then p.requestedSprint=false
+            else p.allowSprintDetour=false end
+            local _,d=Avoidance.update(state,p)
+            assert(not d.sprint,gate.." unlocked the moving escape exception")
+            legal(p,d.direction)
+        end
+    end)
+    test("moving overlap cannot sacrifice another body clearance or field bounds",function()
+        for _,gate in ipairs({"crossing body","stationary near body","boundary"}) do
+            local p,state=movingEscapeFixture()
+            if gate=="crossing body" then
+                p.opponents[2]={position=Vector3.new(-4,0,6),velocity=Vector3.new(16,0,0)}
+            elseif gate=="stationary near body" then
+                p.opponents[2]={position=Vector3.new(-3,0,1),velocity=Vector3.zero}
+            else p.bounds.maxZ=1 end
+            local _,d=Avoidance.update(state,p)
+            assert(not d.sprint,gate.." was ignored by the moving escape exception")
+            legal(p,d.direction)
+        end
+    end)
     return report
 end

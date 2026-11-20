@@ -1,4 +1,4 @@
-# Running Chalk Assist 5.1.19
+# Running Chalk Assist 5.1.20
 
 The public repository is [BananaMan2006/chalk-assist-deterministic](https://github.com/BananaMan2006/chalk-assist-deterministic). The ready-to-run file is `chalk-it-up-1v1.lua`.
 
@@ -10,7 +10,7 @@ Join Chalk It Up, attach your executor, and run:
 loadstring(game:HttpGet("https://raw.githubusercontent.com/BananaMan2006/chalk-assist-deterministic/main/chalk-it-up-1v1.lua"))()
 ```
 
-The executor must support HTTP requests and `loadstring`. No GitHub account or token is needed. Verify **5.1.19** in the window's release badge. On a new installation, gameplay automation starts OFF. After you choose settings, later loads and rejoins restore those choices, including ON switches.
+The executor must support HTTP requests and `loadstring`. No GitHub account or token is needed. Verify **5.1.20** in the window's release badge. On a new installation, gameplay automation starts OFF. After you choose settings, later loads and rejoins restore those choices, including ON switches.
 
 Preferences are kept in two alternating, verified local files in the executor workspace: `ciu_deterministic_preferences_v1.a.json` and `ciu_deterministic_preferences_v1.b.json`. A complete copy can recover an interrupted write to the other. If settings cannot be saved or restored, the panel reports the error. File access is required for persistence after Roblox exits. These preferences stay on each computer; they are not sent to GitHub or synchronized across laptops.
 

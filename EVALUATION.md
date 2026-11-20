@@ -1,6 +1,20 @@
-# Evaluation scope · 5.1.19
+# Evaluation scope · 5.1.20
 
 This release continues the authored, deterministic controller. Its checks establish local rule behavior and packaging properties. **They do not demonstrate a live win rate, a winning streak, perfect catching, or improvement through training.** The release has no training system or shared model.
+
+## 5.1.20 scope
+
+A receiving miss showed normal measured travel while a moving opponent stayed within the near-contact band. Sprint was withheld despite two nearby recorded opponent samples admitting the same bounded direction as a strictly separating path at both native speeds. The correction requires measured normal travel, a moving near body, positive separation throughout both forecasts, meaningful ending clearance and protection of every other body and field boundary. It cannot enable unrequested, unfunded, stationary, jammed or approaching sprint. The [moving-escape review](evaluation/5.1.20-moving-escape-review.json) labels the sparse geometry brackets as modeled evidence, not an exact replay or a catch rescue.
+
+A separate upright catch trace exposed early cancellation of a continuous movement plan after a local claim. The bounded continuation retains only the last checked command until the original stop time, for at most 150 ms, with fresh identity, ownership, native motion, reserve, wall and player-clearance checks. It cannot issue another jump, dive, sprint request, target or catch claim. Native results and invalidation revoke it. The [matched claim controls](evaluation/5.1.20-upright-claim-controls.json) include accepted catches with nearly identical margins and deceleration: this is an execution-contract correction, not proof of why the server rejected a particular claim.
+
+Validation passed 532 rule checks, including eight actual claim-lifecycle groups, 53 avoidance checks and 38 controller integration checks, plus 36 build/installer/preferences checks. The 84 Full Auto and 57 airborne checks from the preceding releases cover unchanged policy and geometry modules. The [claim continuation review](evaluation/5.1.20-claim-motion-review.json) documents the scope and limits.
+
+## Bounded 5.1.19 live review
+
+The [five-minute observation](evaluation/5.1.19-live-incidents.json) had three completed 4–0 wins and no runtime errors. WR had six catches, two incompletes and one swatted pass; DB intercepted all six throws. All nine WR plays showed measured early native sprint movement. The new prethrow sprint permission was genuinely exercised, including thirteen retained-sprint observations followed by measured native speed 27. Positive scores do not erase the three receiving failures.
+
+The upright incomplete had a fresh local contact claim and confirmed jump. The no-action incomplete lost reach after a sustained moving overlap. The [swatted pass review](evaluation/5.1.19-swatted-review.json) found every reachable plan marked contested, with the opponent's estimated reachable time preceding our contact. The jump, sprint and local contact occurred; no verified safer reachable alternative or local timing defect was established. Authoritative contest outcomes remain separate from client geometry.
 
 ## 5.1.19 scope
 
