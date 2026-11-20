@@ -1,0 +1,175 @@
+{
+  "schema": 1,
+  "version": "5.1.19",
+  "cases": [
+    {
+      "case": "WR01",
+      "miss7": false,
+      "nativeOutcome": "Catch",
+      "confirmedOwnCatch": true,
+      "upY": 0.6515893936157227,
+      "radiusStuds": 3.75,
+      "marginStuds": 0.4101665273999262,
+      "jumpDispatchDelayMs": 10.164260864257812,
+      "jumpAgeAtCallbackMs": 202.1791934967041,
+      "pingMs": 56.88999965786934,
+      "dive": true,
+      "claimSecondsAfterLaunch": 2.8899898529052734,
+      "claimVersusPlannedFirstTouchMs": 7.358789443969727,
+      "callbackAgeMs": 0.4180416581220925,
+      "callbackToResultMs": 284.49010848999023,
+      "callbackHorizontalSpeed": 29.98965983364924,
+      "pending": [
+        {
+          "afterClaimMs": 65.1090145111084,
+          "marginStuds": 0.1641791082711892,
+          "horizontalSpeed": 24.08769319129485
+        }
+      ]
+    },
+    {
+      "case": "WR02",
+      "miss7": false,
+      "nativeOutcome": "Catch",
+      "confirmedOwnCatch": true,
+      "upY": 1,
+      "radiusStuds": 3.75,
+      "marginStuds": 0.7119219529307559,
+      "jumpDispatchDelayMs": 6.0329437255859375,
+      "jumpAgeAtCallbackMs": 285.994291305542,
+      "pingMs": 57.02200159430504,
+      "dive": false,
+      "claimSecondsAfterLaunch": 2.863931894302368,
+      "claimVersusPlannedFirstTouchMs": 11.867046356201172,
+      "callbackAgeMs": 0.7632916676811874,
+      "callbackToResultMs": 284.72900390625,
+      "callbackHorizontalSpeed": 26.2537386711656,
+      "pending": [
+        {
+          "afterClaimMs": 64.54110145568848,
+          "marginStuds": 1.31036322711428,
+          "horizontalSpeed": 16.720397553493882
+        },
+        {
+          "afterClaimMs": 132.39216804504395,
+          "marginStuds": -1.9060362446694494,
+          "horizontalSpeed": 7.187059719007168
+        }
+      ]
+    },
+    {
+      "case": "WR03",
+      "miss7": false,
+      "nativeOutcome": "Catch",
+      "confirmedOwnCatch": true,
+      "upY": 1,
+      "radiusStuds": 3.75,
+      "marginStuds": 0.13333344983466322,
+      "jumpDispatchDelayMs": 10.364770889282227,
+      "jumpAgeAtCallbackMs": 269.32334899902344,
+      "pingMs": 85.01199632883072,
+      "dive": false,
+      "claimSecondsAfterLaunch": 2.851675033569336,
+      "claimVersusPlannedFirstTouchMs": -0.446319580078125,
+      "callbackAgeMs": 0.3789166803471744,
+      "callbackToResultMs": 331.805944442749,
+      "callbackHorizontalSpeed": 25.054437813881904,
+      "pending": [
+        {
+          "afterClaimMs": 65.11282920837402,
+          "marginStuds": 1.6081325068291203,
+          "horizontalSpeed": 15.521107718150358
+        },
+        {
+          "afterClaimMs": 131.1969757080078,
+          "marginStuds": -1.4276908459297015,
+          "horizontalSpeed": 5.987773887907924
+        }
+      ]
+    },
+    {
+      "case": "WR04",
+      "miss7": true,
+      "nativeOutcome": "Incomplete",
+      "confirmedOwnCatch": false,
+      "upY": 1,
+      "radiusStuds": 3.75,
+      "marginStuds": 0.13367920056876725,
+      "jumpDispatchDelayMs": 9.809017181396484,
+      "jumpAgeAtCallbackMs": 268.2204246520996,
+      "pingMs": 89.00000154972076,
+      "dive": false,
+      "claimSecondsAfterLaunch": 2.8512990474700928,
+      "claimVersusPlannedFirstTouchMs": -0.9799003601074219,
+      "callbackAgeMs": 0.47754167462699115,
+      "callbackToResultMs": 816.990852355957,
+      "callbackHorizontalSpeed": 26.46915706180114,
+      "pending": [
+        {
+          "afterClaimMs": 64.55683708190918,
+          "marginStuds": 1.5740367833761257,
+          "horizontalSpeed": 16.93581717593844
+        },
+        {
+          "afterClaimMs": 115.43703079223633,
+          "marginStuds": -0.6323072282271172,
+          "horizontalSpeed": 9.7858197402919
+        },
+        {
+          "afterClaimMs": 181.34593963623047,
+          "marginStuds": -4.386273524043901,
+          "horizontalSpeed": 0.3181193017595051
+        },
+        {
+          "afterClaimMs": 247.70498275756836,
+          "marginStuds": -8.468666532480185,
+          "horizontalSpeed": 1.2262872842554019e-06
+        }
+      ]
+    },
+    {
+      "case": "WR05",
+      "miss7": false,
+      "nativeOutcome": "Catch",
+      "confirmedOwnCatch": true,
+      "upY": 1,
+      "radiusStuds": 3.75,
+      "marginStuds": 0.11350558233365327,
+      "jumpDispatchDelayMs": 11.725187301635742,
+      "jumpAgeAtCallbackMs": 272.04298973083496,
+      "pingMs": 86.41199767589569,
+      "dive": false,
+      "claimSecondsAfterLaunch": 2.8515450954437256,
+      "claimVersusPlannedFirstTouchMs": -0.4832744598388672,
+      "callbackAgeMs": 0.36741665098816156,
+      "callbackToResultMs": 268.29004287719727,
+      "callbackHorizontalSpeed": 26.447925550110327,
+      "pending": [
+        {
+          "afterClaimMs": 65.92583656311035,
+          "marginStuds": 1.5892256362226682,
+          "horizontalSpeed": 17.510420977066374
+        }
+      ]
+    }
+  ],
+  "privacy": "No player names, account IDs, absolute server times, raw positions, machine paths or extracted native source.",
+  "releaseReviewVersion": "5.1.20",
+  "sourceBuildIds": [
+    "2b4be0d7a548602fb871132a022fd7beb80097a342c91b9fa7310e24a54eb0e0"
+  ],
+  "scope": "Frozen descriptive comparison of five completed WR attempts with logged local native claims in the bounded5.1.19 window. This is not a population success-rate estimate.",
+  "findings": [
+    "The incomplete upright attempt and an accepted upright control have nearly identical positive capsule margin, jump age, flight time and network ping.",
+    "Another accepted upright control has a smaller logged contact margin and nearly identical horizontal speed.",
+    "Accepted controls also decelerate after the local claim and can leave contact before server confirmation. Early cancellation is not established as the server rejection cause.",
+    "The planned continuous movement can be preserved only under its original validated deadline; any such change is a controller-contract correction, not a proven cure for rejected native claims."
+  ],
+  "limitations": [
+    "Local BallTouched is a native client claim signal, not authoritative possession.",
+    "Margin uses the logged current ball and hand/waist segment, not the exact native Reach packet or historical server state.",
+    "The server rejection reason, exact server pose history, and exact native substep arguments are unavailable.",
+    "The cases do not justify a universal margin, timing or radius threshold.",
+    "No unlogged or future outcomes are imputed."
+  ]
+}

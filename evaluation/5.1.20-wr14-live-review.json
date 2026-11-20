@@ -1,0 +1,187 @@
+{
+  "schemaVersion": 1,
+  "version": "5.1.20",
+  "incident": "WR-14",
+  "scope": "Read-only audit of the final receiver incomplete in the bounded live window",
+  "liveObservation": {
+    "pass": "Floater",
+    "nativeResult": "Incomplete",
+    "serverAcceptedCatch": false,
+    "scoreAtResult": {
+      "you": 3,
+      "them": 2
+    },
+    "reachablePlans": 11,
+    "totalPlans": 11,
+    "jumpRequestObserved": true,
+    "jumpTakeoffObserved": true,
+    "jumpDispatchLateSeconds": 0.011201143264770508,
+    "jumpDispatchToConfirmationSeconds": 0.016162872314453125,
+    "diveAttemptObserved": true,
+    "nativeDiveObserved": true,
+    "diveDispatchLateSeconds": 0.0013413429260253906,
+    "diveOriginErrorStuds": 0.13482557146991475,
+    "diveOriginBeyondGoalStuds": 5.4499664306640625,
+    "localAirborneClaimObserved": true,
+    "localClaimFreshAgeSeconds": 0.00033037501270882785,
+    "localClaimMinusPlannedFirstTouchSeconds": -0.002207040786743164,
+    "pingSeconds": 0.017635999247431755,
+    "localClaimBeyondGoalStuds": 10.674964904785156,
+    "localClaimIsServerConfirmation": false,
+    "pendingPoses": [
+      {
+        "secondsAfterClaim": 0.0,
+        "radiusStuds": 3.75,
+        "currentBallCapsuleMarginStuds": 0.0446955403122935,
+        "rootUpY": 0.8012877106666565
+      },
+      {
+        "secondsAfterClaim": 0.06541299819946289,
+        "radiusStuds": 2.5,
+        "currentBallCapsuleMarginStuds": -0.5756056440089004,
+        "rootUpY": 0.3590342700481415
+      },
+      {
+        "secondsAfterClaim": 0.13208413124084473,
+        "radiusStuds": 2.5,
+        "currentBallCapsuleMarginStuds": 1.902953654111759,
+        "rootUpY": 0.17364822328090668
+      },
+      {
+        "secondsAfterClaim": 0.18210506439208984,
+        "radiusStuds": 2.5,
+        "currentBallCapsuleMarginStuds": -0.39415242826439467,
+        "rootUpY": 0.17364822328090668
+      },
+      {
+        "secondsAfterClaim": 0.23217010498046875,
+        "radiusStuds": 2.5,
+        "currentBallCapsuleMarginStuds": -2.4678433548850682,
+        "rootUpY": 0.17364822328090668
+      }
+    ]
+  },
+  "executionChecks": {
+    "openingSprintRequestedAtFirstSample": true,
+    "firstLiveStamina": 75,
+    "firstObservedNative27SpeedElapsedSeconds": 0.46651387214660645,
+    "postthrowStemAbandonedForReachableCatch": true,
+    "claimContinuationEvents": 0,
+    "claimContinuationExpected": false,
+    "reason": "The native dive owns motion. The new upright continuous-jump continuation correctly does not apply to this action.",
+    "actionRejections": 0
+  },
+  "motionReplay": {
+    "kind": "Offline replay rebased at the observed native dive dispatch using locally inspected configuration; no native source is published.",
+    "observedVersusModelSamples": [
+      {
+        "sinceClaim": 0.0,
+        "radius": 3.75,
+        "predictedMargin": 0.02829713205187101,
+        "observedPoseErrorStuds": 0.07641626122222901,
+        "predictedUpY": 0.7924947795619351,
+        "actualUpY": 0.8012877106666565
+      },
+      {
+        "sinceClaim": 0.06541299819946289,
+        "radius": 2.5,
+        "predictedMargin": -0.5804990911272898,
+        "observedPoseErrorStuds": 0.42394145643183145,
+        "predictedUpY": 0.24370309147953254,
+        "actualUpY": 0.3590342700481415
+      },
+      {
+        "sinceClaim": 0.13208413124084473,
+        "radius": 2.5,
+        "predictedMargin": 1.9781077999712944,
+        "observedPoseErrorStuds": 0.22949976014636658,
+        "predictedUpY": 0.17364817766693041,
+        "actualUpY": 0.17364822328090668
+      },
+      {
+        "sinceClaim": 0.18210506439208984,
+        "radius": 2.5,
+        "predictedMargin": -0.10864554917046254,
+        "observedPoseErrorStuds": 0.35180903212537107,
+        "predictedUpY": 0.17364817766693041,
+        "actualUpY": 0.17364822328090668
+      },
+      {
+        "sinceClaim": 0.23217010498046875,
+        "radius": 2.5,
+        "predictedMargin": -2.059953687801949,
+        "observedPoseErrorStuds": 0.46836814535337995,
+        "predictedUpY": 0.17364817766693041,
+        "actualUpY": 0.17364822328090668
+      }
+    ],
+    "firstClaimToCentralWindow": {
+      "claimToCentralSeconds": 0.10452985763549805,
+      "minMarginBeforeCentralPlus12ms": -2.689693088829607,
+      "negativeSamples": 53,
+      "negativeFirstSeconds": 0.023,
+      "negativeLastSeconds": 0.075
+    },
+    "finding": "Both observed and predicted capsule geometry temporarily lose ball overlap when the dive tips, then regain overlap near the later planned contact center. The motion model already predicts this gap."
+  },
+  "acceptedDiveControls": [
+    {
+      "version": "5.1.17",
+      "nativeResult": "Catch",
+      "role": "WR",
+      "airborneDive": true,
+      "firstLocalClaimMarginStuds": 0.8294338906618317,
+      "pingSeconds": 0.041871000081300735,
+      "modelWindow": {
+        "claimToCentralSeconds": 0.09127640724182129,
+        "minMarginBeforeCentralPlus12ms": -1.6836582544438645,
+        "negativeSamples": 42,
+        "negativeFirstSeconds": 0.022,
+        "negativeLastSeconds": 0.063
+      }
+    },
+    {
+      "version": "5.1.18",
+      "nativeResult": "Catch",
+      "role": "WR",
+      "airborneDive": true,
+      "firstLocalClaimMarginStuds": 0.32740375121757426,
+      "pingSeconds": 0.019902000203728676,
+      "modelWindow": {
+        "claimToCentralSeconds": 0.08233809471130371,
+        "minMarginBeforeCentralPlus12ms": -1.8614874638230283,
+        "negativeSamples": 50,
+        "negativeFirstSeconds": 0.005,
+        "negativeLastSeconds": 0.054
+      }
+    },
+    {
+      "version": "5.1.19",
+      "nativeResult": "Catch",
+      "role": "WR",
+      "airborneDive": true,
+      "firstLocalClaimMarginStuds": 0.4101665273999262,
+      "pingSeconds": 0.05688999965786934,
+      "modelWindow": {
+        "claimToCentralSeconds": 0.08750176429748535,
+        "minMarginBeforeCentralPlus12ms": -3.1393018303083835,
+        "negativeSamples": 59,
+        "negativeFirstSeconds": 0.005,
+        "negativeLastSeconds": 0.063
+      }
+    }
+  ],
+  "decision": {
+    "classification": "Local native claim followed by unconfirmed server acceptance; no new actionable dispatch or pose defect established.",
+    "changeMade": false,
+    "rejectedTuning": "Do not reject all first-claim-to-central-contact gaps. Three native accepted WR dives from 5.1.17/18/19 also have predicted gaps, so that universal filter would discard known successful trajectories.",
+    "sameVersionComparison": "The bounded 5.1.20 window has five upright WR catches and this one diving WR incomplete; it contains no accepted WR dive control.",
+    "unresolved": "The server rejection reason, server-side character pose, claim receipt time and validation rule are unavailable. Thin local overlap or a predicted tipping gap alone does not establish the cause."
+  },
+  "limitations": [
+    "Local capsule margins and replay poses are not server validation evidence.",
+    "Replay uses double-precision offline math rebased at a sampled native pose; it does not reproduce network replication or native physics exactly.",
+    "Comparators test whether a proposed universal rule is justified; they are not a controlled trial or a win-rate comparison.",
+    "No guaranteed catch, rescued incomplete or universal timing correction is claimed."
+  ]
+}

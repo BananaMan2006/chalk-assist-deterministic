@@ -1,0 +1,102 @@
+{
+  "schema": 1,
+  "version": "5.1.20",
+  "incident": "WR Floater incomplete10",
+  "privacy": "No player names, account IDs, absolute timestamps or match keys.",
+  "observations": {
+    "nativeJamNotificationObserved": false,
+    "postthrowSprintPermission": true,
+    "requestedSprint": true,
+    "staminaBeforeRecoveryRange": [
+      83,
+      94
+    ],
+    "firstPostthrowOpponentDistanceStuds": 3.3367,
+    "firstUnreachableAtSecondsAfterLaunch": 0.882,
+    "nativeSprintRestoredAtSecondsAfterLaunch": 1.126,
+    "jumpOrDiveActions": 0
+  },
+  "classification": "Existing physical overlap followed by slow escape; not missing permission, exhausted stamina, or a missed due jump.",
+  "escapeWitness": {
+    "headingAlreadyEmitted": {
+      "x": -0.06792052835226059,
+      "z": 0.997690737247467
+    },
+    "lookaheadSeconds": 0.25,
+    "observedCurrentSpeed": 20,
+    "prospectiveSprintSpeed": 27,
+    "measuredNormalTravelObserved": true,
+    "loggedBlocked": false,
+    "brackets": [
+      {
+        "observationOffsetMilliseconds": -43,
+        "initialDistanceStuds": 2.7480682350802272,
+        "walkDistanceDerivativeDot": 3.0975391156542855,
+        "sprintDistanceDerivativeDot": 16.67146657446466,
+        "walkEndpointDistanceStuds": 3.040569410183326,
+        "sprintEndpointDistanceStuds": 4.377003497904107
+      },
+      {
+        "observationOffsetMilliseconds": 57,
+        "initialDistanceStuds": 2.2083216739603833,
+        "walkDistanceDerivativeDot": 6.327433266049013,
+        "sprintDistanceDerivativeDot": 5.656711469700767,
+        "walkEndpointDistanceStuds": 2.925857196306283,
+        "sprintEndpointDistanceStuds": 3.387364441441064
+      }
+    ],
+    "meaning": "Under each constant-velocity bracket, the same already-bounded heading monotonically increases existing separation at both speeds. The touching gate alone disallows prospective sprint."
+  },
+  "limitations": [
+    "The two bracket poses are independent geometry witnesses; the exact opponent pose at arbitration was not logged.",
+    "Measured normal movement is supported by position samples, not just reported velocity.",
+    "A separating-heading witness does not prove that an entire alternative route or catch would succeed.",
+    "Any future exception must preserve bounds, initially-clear bodies, measured-motion checks, and blocked/stationary/approaching rejection.",
+    "The lookahead uses bounded current opponent velocity, not a guarantee against future acceleration or a live catch result.",
+    "No outcome improvement rate is claimed from these geometry witnesses."
+  ],
+  "sourceVersion": "5.1.19",
+  "change": {
+    "scope": "Retain an already requested and opted-in native sprint only during a measured, strictly separating escape from moving near-contact bodies.",
+    "gates": [
+      "Existing caller stamina budget and sprint opt-in remain required.",
+      "Blocked movement is rejected.",
+      "Measured travel must be at least 75% of normal run speed and at most 125% of the larger current/sprint speed. Reported velocity alone does not qualify.",
+      "Current native speed must be at least 95% of normal run speed; jammed movement remains excluded.",
+      "Every near-contact body must itself be moving at least 20% of normal run speed, with a minimum 2 studs/second.",
+      "At both current and prospective movement speeds, every near-body distance derivative must be strictly positive and endpoint separation must improve by at least 0.25 studs over the existing lookahead.",
+      "Every initially clear body retains the existing 4.25 stud sprint band in the default configuration.",
+      "Original bounded turning, same-side preference, obstacle evaluation, field bounds, and ordinary opt-out behavior remain in force."
+    ],
+    "notChanged": [
+      "No speed or character property writes.",
+      "No catch, jump, dive, or server-claim validation changes.",
+      "No extra sprint request when the caller has not funded/requested one."
+    ]
+  },
+  "validation": {
+    "currentHelperTests": {
+      "passed": 53,
+      "total": 53
+    },
+    "previousHelperAgainstUpdatedTests": {
+      "passed": 52,
+      "total": 53
+    },
+    "positiveRegression": "Recorded geometry brackets plus mirrored, rotated, translated fixtures check exact helper outputs, monotonic clearance at both speeds, bounded turning, and stable passing side.",
+    "negativeCases": [
+      "missing position history",
+      "zero observed travel",
+      "implausibly fast position change",
+      "jammed native speed",
+      "stationary near body",
+      "approaching near body",
+      "not requested",
+      "not opted in",
+      "second crossing body",
+      "second stationary near body",
+      "field boundary"
+    ],
+    "controllerBudgetIntegration": "Owned by the independent controller reviewer; release validation runs the full controller suite."
+  }
+}

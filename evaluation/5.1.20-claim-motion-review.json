@@ -1,0 +1,127 @@
+{
+  "schemaVersion": 1,
+  "version": "5.1.20",
+  "scope": "Complete a short already-planned upright WR movement interval after a local contact claim",
+  "observedFailure": {
+    "version": "5.1.19",
+    "incident": "WR-7",
+    "role": "WR",
+    "pass": "Floater",
+    "nativeResult": "Incomplete",
+    "reachablePlans": 10,
+    "totalPlans": 10,
+    "confirmedJump": true,
+    "diveAttempted": false,
+    "localAirborneClaim": true,
+    "serverAcceptedCatch": false,
+    "localClaimMinusPredictedFirstTouchSeconds": -0.0009799003601074219,
+    "plannedCentralContactAfterClaimSeconds": 0.021530866622924805,
+    "plannedStopAfterClaimSeconds": 0.10153079032897949,
+    "jumpDispatchLateSeconds": 0.009809017181396484,
+    "observedPingSeconds": 0.08900000154972076,
+    "pendingPoses": [
+      {
+        "secondsAfterClaim": 0.0,
+        "horizontalSpeedStudsPerSecond": 26.46915706180114,
+        "currentBallCapsuleMarginStuds": 0.13367920056876725
+      },
+      {
+        "secondsAfterClaim": 0.06455683708190918,
+        "horizontalSpeedStudsPerSecond": 16.93581717593844,
+        "currentBallCapsuleMarginStuds": 1.5740367833761257
+      },
+      {
+        "secondsAfterClaim": 0.11543703079223633,
+        "horizontalSpeedStudsPerSecond": 9.7858197402919,
+        "currentBallCapsuleMarginStuds": -0.6323072282271172
+      },
+      {
+        "secondsAfterClaim": 0.18134593963623047,
+        "horizontalSpeedStudsPerSecond": 0.3181193017595051,
+        "currentBallCapsuleMarginStuds": -4.386273524043901
+      },
+      {
+        "secondsAfterClaim": 0.24770498275756836,
+        "horizontalSpeedStudsPerSecond": 1.2262872842554019e-06,
+        "currentBallCapsuleMarginStuds": -8.468666532480185
+      }
+    ]
+  },
+  "diagnosis": {
+    "confirmed": "The controller called full cancellation at the first local BallTouched signal. That zeroed movement about 101.5ms before the existing continuous catch plan was due to stop, including before its central contact forecast.",
+    "notConfirmed": "The server rejection cause is not known. Two accepted upright controls had similar claim margins, ping and post-claim deceleration; premature stopping is therefore an execution-contract discrepancy, not an established cause of this incomplete.",
+    "acceptedControlComparisons": [
+      {
+        "firstClaimMarginStuds": 0.133333,
+        "pingSeconds": 0.085,
+        "alsoDeceleratedAfterClaim": true
+      },
+      {
+        "firstClaimMarginStuds": 0.1135,
+        "pingSeconds": 0.0864,
+        "alsoDeceleratedAfterClaim": true
+      }
+    ]
+  },
+  "correction": {
+    "eligible": "Automatic owned WR movement only: confirmed upright airborne jump, continuous reachable plan, no dive or pending jump, a fresh native numeric touch timestamp and a fresh exact issued movement command aligned with that plan.",
+    "maximumInitialRemainingSeconds": 0.15,
+    "commandMaxAgeSeconds": 0.05,
+    "nativeTouchMaxAgeSeconds": 0.05,
+    "deadline": "The original finite plan.stopAt; never extended by another claim. Cancellation occurs at the first control update reaching that deadline.",
+    "retained": "Only the exact original command, including its movement scale and current native sprint state. No new target, solve, jump, dive, sprint activation or catch request.",
+    "freshChecks": [
+      "same launch and arc",
+      "same healthy character and humanoid",
+      "Live WR phase",
+      "automatic input ownership and active play budget",
+      "native airborne/upright state",
+      "unchanged native speed and sprint state",
+      "current stamina permission",
+      "goal and field bounds",
+      "wall clearance",
+      "single-opponent 1v1 or multi-opponent clearance without changing live avoidance state"
+    ],
+    "revocation": [
+      "original deadline",
+      "native result or ball stop",
+      "phase transition including carry",
+      "disable or assist off",
+      "menu or text focus",
+      "test mode",
+      "character or arc replacement",
+      "new throw",
+      "manual ownership loss",
+      "invalid motion speed geometry or stamina",
+      "required collision detour",
+      "unload"
+    ],
+    "nativeClaimsChanged": false
+  },
+  "offlineValidation": {
+    "claimMotion": {
+      "passed": 8,
+      "total": 8,
+      "method": "Execute actual BallTouched callback, control tick, cancellation, enable, onMatch, onFx and unload functions using authored services and real avoidance math. The last issued command record is seeded; its production capture site was separately source-reviewed."
+    },
+    "avoidanceController": {
+      "passed": 38,
+      "total": 38
+    },
+    "pendingSprint": {
+      "passed": 9,
+      "total": 9
+    },
+    "oldVersionRegression": "Published 5.1.19 fails the positive claim-preservation test by cancelling the still-valid command immediately.",
+    "independentReview": "No remaining blocker found after fixing the real 1v1 single-opponent snapshot fallback and adding native-touch freshness plus new-throw revocation tests.",
+    "diffCheck": "passed",
+    "controllerSha256": "fc71580ad9f16d0c48c471593d1ca1b0e5de53a39c93ba5c155f3d6be61b93a0",
+    "normalCI": "claim-motion is included in run-chalk-tests.py --all."
+  },
+  "limitations": [
+    "This is a planning/execution continuity correction, not evidence of a rescued native catch.",
+    "No server reach rules, lag compensation, validation reason or acceptance window are inferred from local contact.",
+    "Authored callbacks and geometry do not reproduce Roblox physics, real network timing or opponent choices.",
+    "Live 5.1.20 outcomes must be reported separately and failures remain visible."
+  ]
+}

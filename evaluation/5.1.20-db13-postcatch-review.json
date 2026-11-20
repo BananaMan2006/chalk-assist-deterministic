@@ -1,0 +1,121 @@
+{
+  "schemaVersion": 1,
+  "release": "5.1.20",
+  "buildId": "a745f1cf9c9d0c118390c498f5c50e25bb22aaba03c817c89d2388035ef2e2be",
+  "incident": 13,
+  "role": "DB",
+  "pass": "Bullet",
+  "scope": "Read-only post-catch chase and tackle audit; prethrow coverage reviewed separately. No new monitoring or game inputs.",
+  "authoritativeOutcome": {
+    "pass": "Opponent Catch",
+    "terminal": "Opponent Touchdown",
+    "score": {
+      "local": 3,
+      "opponent": 2
+    },
+    "throwToTouchdownSeconds": 7.1997950077056885,
+    "catchToTouchdownSeconds": 6.343108177185059
+  },
+  "tackleAttempt": {
+    "nativeDiveStarted": true,
+    "diveAttempts": 1,
+    "jumpAttempts": 0,
+    "grabAttempts": 0,
+    "explicitRejectionEvents": 0,
+    "secondsAfterCatch": 1.5647320747375488,
+    "initialHorizontalGapStuds": 8.629412365145207,
+    "requestedAndModeledDirectionAgree": true,
+    "predictedFirstContactSeconds": 0.0675,
+    "predictedContactWindowSeconds": 0.04000000000000001,
+    "predictedMinimumMarginStuds": 1.3534846305847168,
+    "requiredMarginStuds": 1.249900484085083,
+    "nativeTackleRequestSent": "unobserved",
+    "nativeTackleRequestAccepted": "unobserved"
+  },
+  "diveSamples": [
+    {
+      "secondsAfterDivePlan": 0.08289194107055664,
+      "nativeDiveTraceAgeSeconds": 0.08293700218200684,
+      "horizontalGapStuds": 3.471890687942505,
+      "forwardGapStuds": 3.0509742501603228,
+      "lateralGapStuds": 1.656979826976866,
+      "verticalGapStuds": 0.23778009414672852,
+      "insideInspectedNativeHorizontalEnvelope": true,
+      "directionalMarginStuds": 1.843020173023134,
+      "opponentSpeedStudsPerSecond": 19.994237801429648,
+      "opponentHeadingChangeFromPlanDegrees": 3.768730602684194,
+      "diving": true
+    },
+    {
+      "secondsAfterDivePlan": 0.16592907905578613,
+      "nativeDiveTraceAgeSeconds": 0.1659870147705078,
+      "horizontalGapStuds": 3.6505751609802246,
+      "forwardGapStuds": -1.5542211057734505,
+      "lateralGapStuds": 3.3031946190203354,
+      "verticalGapStuds": 0.9452526569366455,
+      "insideInspectedNativeHorizontalEnvelope": true,
+      "directionalMarginStuds": 0.1968053809796646,
+      "opponentSpeedStudsPerSecond": 20.439842254089537,
+      "opponentHeadingChangeFromPlanDegrees": 2.263073766151961,
+      "diving": true
+    },
+    {
+      "secondsAfterDivePlan": 0.2530660629272461,
+      "nativeDiveTraceAgeSeconds": 0.25312280654907227,
+      "horizontalGapStuds": 6.384448051452637,
+      "forwardGapStuds": -3.8056993066523006,
+      "lateralGapStuds": 5.126190308685295,
+      "verticalGapStuds": 1.8121263980865479,
+      "insideInspectedNativeHorizontalEnvelope": false,
+      "directionalMarginStuds": -1.6261903086852953,
+      "opponentSpeedStudsPerSecond": 29.859015196123213,
+      "opponentHeadingChangeFromPlanDegrees": 34.75399440172424,
+      "diving": true
+    },
+    {
+      "secondsAfterDivePlan": 0.3415639400482178,
+      "nativeDiveTraceAgeSeconds": 0.3416149616241455,
+      "horizontalGapStuds": 8.01082706451416,
+      "forwardGapStuds": -3.6582659647891376,
+      "lateralGapStuds": 7.126741726946712,
+      "verticalGapStuds": 2.370163917541504,
+      "insideInspectedNativeHorizontalEnvelope": false,
+      "directionalMarginStuds": -3.6267417269467117,
+      "opponentSpeedStudsPerSecond": 29.83191812010971,
+      "opponentHeadingChangeFromPlanDegrees": 34.63463899295646,
+      "diving": true
+    }
+  ],
+  "pursuit": {
+    "navigationSamples": 24,
+    "firstSampleSecondsAfterCatch": 0.014245033264160156,
+    "initialGapStuds": 33.134422302246094,
+    "preDiveLastGapStuds": 10.079268455505371,
+    "firstPostDiveNavigationSecondsAfterDive": 1.5443990230560303,
+    "firstPostDiveGapStuds": 29.787757873535156,
+    "minimumPostDiveNavigationGapStuds": 20.89348602294922,
+    "finalSampleGapStuds": 22.29537010192871,
+    "actualNativeSprintSamples": 11,
+    "postDiveSamples": 16,
+    "firstPostDiveStamina": 59,
+    "lastStamina": 4,
+    "firstPostDiveSprintOffAfterDrainSecondsAfterDive": 4.077530145645142
+  },
+  "findings": [
+    "The controller issued one ground dive and native PlatformStand confirmed it started. No local rejection, extra jump, or second tackle attempt is logged.",
+    "The first two sampled replicated positions satisfy the inspected native horizontal tackle envelope, after its minimum dive fraction. Horizontal center distance alone is not the decision rule. This rules out claiming that every sample was simply outside nominal native contact geometry.",
+    "By the third sample the opponent heading differs by about 35 degrees and its speed increases from about 20 to 29.9 studs/second. The sample is then outside the envelope. A defensive move is plausible, but no specific opponent move or immunity state was recorded.",
+    "Navigation resumes about 1.54 seconds after the dive, consistent with an ordinary ground-dive recovery duration. The logs do not provide per-frame Upright transitions, so this is not an exact measurement of unavailable-control duration.",
+    "After recovery the sampled gap remains above 20 studs, beyond the ordinary tackle-dive reach used by this controller. Native sprint resumes, then reserve falls to 4 and the character returns to speed 20. There is no demonstrated reachable second tackle opportunity in those samples.",
+    "The observed failed tackle is not explained by a proven missing-input or heading-model defect. Earlier nominal contact and later opponent escape require native claim/acceptance or opponent-state evidence before a narrower fix can be justified."
+  ],
+  "limitations": [
+    "The existing diagnostics record dive start but not the native dive-tackle request or server response. No server rejection cause can be inferred.",
+    "Replicated positions sampled roughly every 83 ms are not server poses and can miss shorter contact windows.",
+    "The cached inspected client rules inform the nominal envelope only; they are not proof of current server acceptance.",
+    "The chase is sampled roughly every 0.2 seconds. No claim is made that all intervening states or counterfactual paths were exhausted."
+  ],
+  "recommendedNextDiagnostic": "Record passive native tackle-send/authoritative outcome correlation and opponent movement-state timing before altering robust-contact thresholds. Preserve this failure as a regression incident and keep the observed uncertainty explicit.",
+  "runtimeChangesByReviewer": false,
+  "monitoringContinued": false
+}

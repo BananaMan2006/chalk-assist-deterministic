@@ -1,0 +1,88 @@
+{
+  "schemaVersion": 1,
+  "release": "5.1.19",
+  "incident": 13,
+  "role": "WR",
+  "pass": "Floater",
+  "nativeOutcome": "Swatted",
+  "localContactClaims": 1,
+  "sourceSha256": "3960002196ce57b85a3e71565209ef8e434fa2215db10d3f04bb4fb4258ce561",
+  "planner": {
+    "plans": 10,
+    "reachablePlans": 9,
+    "reachableSafetyLabels": [
+      "contested"
+    ],
+    "predictedFirstTouchSecondsAfterLaunch": 2.85227632522583,
+    "plannedContactSecondsAfterLaunch": 2.8728554248809814,
+    "defenderEnvelopeSecondsAfterLaunch": 2.797844409942627,
+    "defenderEnvelopeEarlierThanFirstTouchMs": 54.431915283203125,
+    "finalMovementScale": 0.915234174529319,
+    "forecastContactMarginStuds": 0.4016728401184082,
+    "lastReplanReason": "refresh",
+    "lastReplanPositionDriftStuds": 0.08447089006171535
+  },
+  "execution": {
+    "jumpRequestDelayMs": 4.777669906616211,
+    "dispatchToTakeoffObservationMs": 17.15993881225586,
+    "estimatedTakeoffDelayMs": 0.621795654296875,
+    "jumpObserved": true,
+    "diveRequested": false,
+    "actionRejections": 0,
+    "activeAvoidanceRowsDuringFlight": 0,
+    "nearJumpAndClaimSprintSamples": 9,
+    "nearJumpAndClaimAllSprintOn": true,
+    "nativeWalkSpeedValuesNearJumpAndClaim": [
+      27
+    ]
+  },
+  "localContact": {
+    "secondsAfterLaunch": 2.8628461360931396,
+    "callbackAgeMs": 0.39145833579823375,
+    "delayAfterPredictedFirstTouchMs": 10.56981086730957,
+    "millisecondsBeforePlannedContact": 10.009288787841797,
+    "capsuleDistanceStuds": 3.114540847408455,
+    "radiusStuds": 3.75,
+    "marginStuds": 0.6354591525915452,
+    "airborne": true,
+    "diving": false,
+    "upY": 1,
+    "horizontalVelocityStudsPerSecond": 24.7113238411989,
+    "verticalVelocityStudsPerSecond": -6.250348091125488,
+    "rootDistanceInsideKnownGoalStuds": 15.92144775390625,
+    "networkPingMs": 21.8959990888834,
+    "authoritativePossession": false
+  },
+  "opponentObservationAtClaim": [
+    {
+      "replicatedAirborne": false,
+      "replicatedDiving": false,
+      "replicatedHumanoidState": "Freefall",
+      "horizontalRootSeparationStuds": 9.49041289735572,
+      "horizontalBallSeparationStuds": 9.028107786379358,
+      "verticalBallAboveRootStuds": 12.560665130615234,
+      "horizontalVelocityStudsPerSecond": 27.004959797304252,
+      "groundedPoseCapsuleDistanceStuds": 15.065403200555961,
+      "hypotheticalAirborneHandPoseDistanceAtSameRootStuds": 12.790714710743508,
+      "ordinaryRadiusStuds": 3.75,
+      "interpretation": "Current replicated geometry is not the authoritative opponent pose or action at server adjudication; it cannot disprove a server contest or establish the exact opponent input."
+    }
+  ],
+  "nativeResult": {
+    "receiptSecondsAfterLaunch": 2.9964001178741455,
+    "receiptAfterLocalClaimMs": 133.55398178100586,
+    "positionProjectedOntoArcSeconds": 2.8561480357476916,
+    "positionArcResidualStuds": 8.387206520529437e-07,
+    "projectedPositionBeforeLocalClaimMs": 6.698100345448044,
+    "interpretation": "Projection compares positions on the known trajectory; it is not the server processing time or a rejection reason."
+  },
+  "conclusion": "This was a forecast-contested catch, followed by an on-time observed jump and valid local contact geometry, then native Swatted. The local logs do not establish a missed action, rejected jump, late local trajectory, unnecessary sprint cancellation, or collision detour during flight as the cause. The opponent envelope already allowed earlier contact; current replicated opponent geometry cannot identify the authoritative contest pose. No narrow local execution defect is established by this incident alone.",
+  "actionableNextStep": "Preserve this as a contested-outcome regression case and compare any candidate route/contact policy against the recorded defender envelope plus verified reachable alternatives. Do not relax contact validation or treat a local callback as success.",
+  "limitations": [
+    "No exact server catch/swat decision, rejection reason, or server opponent pose is available.",
+    "Native Reach substep arguments are not logged.",
+    "The reported opponent envelope is a conservative reachable-time forecast, not an observed opponent action.",
+    "A safer alternative route or earlier reachable catch was not established by this audit."
+  ],
+  "privacy": "No account names, identifiers, absolute timestamps, raw positions, local paths, or credentials."
+}
