@@ -1,4 +1,4 @@
--- Chalk-Release: 5.1.14
+-- Chalk-Release: 5.1.15
 -- Chalk-Product: deterministic
 -- Chalk It Up DB/WR ball assist using normal sprint/jump/dive controls.
 -- Cyan: replicated route (when supplied). Yellow: movement estimate.
@@ -47,7 +47,7 @@ assert(matchEvent and fxEvent and matchEvent:IsA("RemoteEvent") and fxEvent:IsA(
     "Chalk It Up Match/Fx events were not found")
 
 local api = {}
-local RELEASE_VERSION="5.1.14"
+local RELEASE_VERSION="5.1.15"
 local loadedGameId,loadedPlaceId,loadedJobId=game.GameId,game.PlaceId,game.JobId
 env.ChalkDB = api
 local alive, enabled = true, true
@@ -967,7 +967,7 @@ end
 function api.status()
     local ch = characterOf(opponent)
     local holder,isEnemy,holderRole=carrierContext()
-    return {product="deterministic",version=RELEASE_VERSION,buildId="a6dd99d2c4368fd77dfd0040d9a2135412980753a34344abce229dffb503acd7",policyMode="deterministic", enabled=enabled, role=role or "unknown",rawRole=rawRole or "unknown", phase=phase,
+    return {product="deterministic",version=RELEASE_VERSION,buildId="14914e08403ef1d80bb81f50aca8f554a693dd003868c0424506d54e2d05b2be",policyMode="deterministic", enabled=enabled, role=role or "unknown",rawRole=rawRole or "unknown", phase=phase,
         ui={visible=windowVisible,minimized=minimized,x=panel.Position.X.Offset,y=panel.Position.Y.Offset},
         matchAlerts={enabled=alertSettings.enabled,saveError=alertSettings.saveError},
         preferences=preferences and preferences.status() or nil,
@@ -3695,9 +3695,10 @@ function Avoidance.update(previous,input)
         if safe then safeAmount=amount*fraction;break end
     end
     if not safeAmount then
-        -- Release sprint immediately during a contact escape. When still
-        -- outside the capsule, wait for the smooth turn to open a safe path.
-        safeAmount=nearest<radius and amount or 0
+        -- An overlap does not make a rejected forward step safe. Keep the
+        -- bounded heading turning below, but wait to translate until one of
+        -- its checked speeds can escape without deepening the overlap.
+        safeAmount=0
     end
     if not inside(position+steered*math.max(radius,speed*safeAmount*horizon),input.bounds) then safeAmount=0 end
     state.heading,state.active=steered,true
@@ -9476,7 +9477,7 @@ end
 end)()
 
 api.initializePreferences(createPreferences)
-assist = createAssist({snapshot=api.context,version=RELEASE_VERSION,buildId="a6dd99d2c4368fd77dfd0040d9a2135412980753a34344abce229dffb503acd7",fullplay=function(s,root,h,now,dt)
+assist = createAssist({snapshot=api.context,version=RELEASE_VERSION,buildId="14914e08403ef1d80bb81f50aca8f554a693dd003868c0424506d54e2d05b2be",fullplay=function(s,root,h,now,dt)
     if fullplay then return fullplay.navigate(s,root,h,now,dt) end
 end},Planner,createTackle,WRApproach,Motion,createCarrierMoves,PlayerAvoidance)
 assist.setEnabled(false)
@@ -9492,7 +9493,7 @@ repeatWR = createWRRepeat({snapshot=api.context,
     autoplay=function() return autoplay.status() end,
     disableAutoplay=function() return api.setAutoplay(false) end})
 repeatWR.setEnabled(false)
-fullplay = createFullplay({Planner=Planner,snapshot=api.context,version=RELEASE_VERSION,buildId="a6dd99d2c4368fd77dfd0040d9a2135412980753a34344abce229dffb503acd7",
+fullplay = createFullplay({Planner=Planner,snapshot=api.context,version=RELEASE_VERSION,buildId="14914e08403ef1d80bb81f50aca8f554a693dd003868c0424506d54e2d05b2be",
     assistEnabled=function() return assist.status().enabled end,
     release=function() if assist.releaseFullplay then assist.releaseFullplay() end end},FullplayPolicy)
 matchSkip = createMatchSkip({snapshot=api.context,startDisabled=true,preferencesManaged=true,
@@ -9515,7 +9516,7 @@ local GAME_ID,PLACE_ID=10770281752,116097127629859
 local MAIN_URL="https://raw.githubusercontent.com/BananaMan2006/chalk-assist-deterministic/main/chalk-it-up-1v1.lua"
 local CACHE_FILE="chalk-deterministic-cache.lua"
 local MAIN_FILE="chalk-it-up-1v1.lua"
-local MIN_RELEASE="5.1.14"
+local MIN_RELEASE="5.1.15"
 local MARKER="__ChalkDeterministicAutoBoot"
 local env=type(getgenv)=="function" and getgenv() or _G
 local boot

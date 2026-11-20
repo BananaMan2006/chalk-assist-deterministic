@@ -76,6 +76,70 @@ return function(Avoidance)
         assert(sawActive and sawClear and p.position.Z>16,"bypass never resumed normal movement")
         assert(minDistance>=3.6,"proactive bypass entered the collision capsule")
     end)
+    test("overlapping forward turn waits when every checked movement speed worsens contact",function()
+        for _,side in ipairs({-1,1}) do
+            local p=fixture({dt=1/60,walkSpeed=20,
+                opponents={{position=Vector3.new(side*.25,0,3.1),velocity=Vector3.zero}}})
+            local state,d=Avoidance.update(nil,p)
+            assert(d.active and not d.sprint and d.direction.Magnitude==0,
+                "failed clearance checks were bypassed by the overlapping full-walk fallback")
+            assert(state.heading:Dot(p.desiredDirection)<1 and state.heading.Z>0,
+                "waiting discarded the bounded turn")
+            local firstHeading=state.heading
+            p.now=p.now+p.dt
+            state,d=Avoidance.update(state,p)
+            assert(d.direction.Magnitude==0 and state.heading:Dot(p.desiredDirection)<firstHeading.Z,
+                "zero movement restarted the turn instead of retaining progress")
+        end
+    end)
+    test("centered and mirrored overlap escapes resume after a bounded turn without permanent holding",function()
+        for _,offset in ipairs({-.25,0,.25}) do
+            local obstacle=Vector3.new(offset,0,3.1)
+            local p=fixture({dt=1/60,walkSpeed=20,
+                opponents={{position=obstacle,velocity=Vector3.zero}}})
+            local state,firstMotion,cleared,side=nil,nil,false,nil
+            local initialGap=obstacle.Magnitude
+            for _=1,90 do
+                local oldHeading=state and state.heading or p.currentDirection
+                local d;state,d=Avoidance.update(state,p)
+                if d.active then
+                    assert(not d.sprint,"overlapping escape spent sprint")
+                    if d.side then
+                        side=side or d.side
+                        assert(d.side==side,"waiting changed the chosen passing side")
+                    end
+                    local angle=math.acos(math.max(-1,math.min(1,oldHeading.Unit:Dot(state.heading.Unit))))
+                    assert(angle<=8*p.dt+1e-7,"escape bypassed the bounded turn")
+                end
+                if d.direction.Magnitude>.001 then
+                    firstMotion=firstMotion or p.now
+                    p.currentDirection=d.direction.Unit
+                end
+                legal(p,d.direction)
+                p.position=p.position+d.direction*p.walkSpeed*p.dt
+                assert((p.position-obstacle).Magnitude>=initialGap-.16,
+                    "escape substantially deepened the initial overlap")
+                assert(math.abs(p.position.X)<6,"escape took an unnecessarily wide side path")
+                if not d.active and p.position.Z>7 then cleared=true;break end
+                p.now=p.now+p.dt
+            end
+            assert(firstMotion and firstMotion>0 and firstMotion<.25,
+                "safe translation did not resume after the short bounded turn")
+            assert(cleared and p.now<1,"overlap escape remained held instead of restoring forward movement")
+        end
+    end)
+    test("already safe sideways overlap escapes still move immediately",function()
+        for _,side in ipairs({-1,1}) do
+            local p=fixture({dt=1/60,walkSpeed=20,currentDirection=Vector3.new(side,0,0),
+                opponents={{position=Vector3.new(-side*.25,0,3.1),velocity=Vector3.zero}}})
+            local _,d=Avoidance.update(nil,p)
+            assert(d.active and not d.sprint and d.direction.Magnitude>.99,
+                "safe contact escape was unnecessarily held")
+            local ending=(p.opponents[1].position-d.direction*p.walkSpeed*.25).Magnitude
+            assert(ending>p.opponents[1].position.Magnitude+.25)
+            legal(p,d.direction)
+        end
+    end)
     test("retained side is stable across small opponent jitter and roster reordering",function()
         local p=fixture({opponents={{position=Vector3.new(0,0,6),velocity=Vector3.zero}}})
         local state,d=Avoidance.update(nil,p);local side=state.side;assert(side)

@@ -1,6 +1,22 @@
-# Evaluation scope · 5.1.14
+# Evaluation scope · 5.1.15
 
 This release continues the authored, deterministic controller. Its checks establish local rule behavior and packaging properties. **They do not demonstrate a live win rate, a winning streak, perfect catching, or improvement through training.** The release has no training system or shared model.
+
+## 5.1.15 scope
+
+Two jammed receiving misses exposed a clearance bypass in the already-overlapping fallback. After every checked speed fraction on the actual bounded-turn heading failed the existing escape test, it still issued full walking input. Under the helper's observed-velocity model, that chosen motion reduced the predicted minimum separation almost to zero. The correction releases translation while retaining the same bounded heading rotation; a checked escape resumes immediately when available. Already-safe overlap exits are unchanged. No new waiting timer, clearance radius, side preference, sprint permission or turn rate is introduced.
+
+Private constant-velocity integrations of the two recorded states resumed movement after about 150–184 ms. Stationary and mirrored fixtures resumed after about 133–150 ms, then returned to forward movement. These are local geometric checks, not Roblox collision replays: both recorded cases began within native jam range, and a moving opponent can change course. The correction removes an unchecked movement decision; it does not prove that either incomplete becomes a catch.
+
+Validation passed 507 rule checks (including 45 avoidance and 29 controller integration checks), 76 deterministic route/controller checks, and 26 build/preferences/install checks. An independent 27-case stationary-overlap matrix across three frame rates also resumed and cleared in every case. These checks do not establish live catch outcomes.
+
+## Continued 5.1.14 live review
+
+The initial candidate's [frozen observation](evaluation/5.1.14-initial-incidents.json) contained eight completed 4–0 wins, but also four receiving incompletes. All four misses lacked a catch action after reachable forecasts were lost; three had explicit native jam notices and substantial prethrow travel deficits. Two Forfeit endings had unknown winners and were excluded. Those scores were not a stopping condition.
+
+The final candidate's [frozen window](evaluation/5.1.14-final-incidents.json) contains five completed matches: four 4–0 wins and one 3–4 loss. One Forfeit has an unknown winner and is excluded. Across 32 passes, WR had twelve catches and four breakups; DB had nine interceptions, two breakups and five allowed catches. All nine problem plays remain recorded. The loss included several contested receiving claims and allowed defensive catches. A bounded [contact comparison](evaluation/5.1.14-contact-comparison.json) found fresh positive native timestamps in failed callbacks, with ages overlapping accepted catches. Accepted and failed contacts also overlapped in geometric margin, timing and airborne state. This does not support a universal earlier-jump, larger-margin or no-dive fix. It rules out a reset/stale timestamp as the observed explanation, without exposing the server's arbitration reason. Client contact remains distinct from authoritative possession. The loss and every failed play remain in the incident review; opponent changes mean this is not a controlled version comparison.
+
+A fresh in-game preferences check on the exact final 5.1.14 build confirmed all seven switches matched saved values, with Auto Leave, Full Auto and 1v1 Autoplay ON, the saved username list matching its visible field, and no save or restore errors. The GitHub source tree and installed runtime/autoexec were byte-identical, and GitHub checks passed.
 
 ## 5.1.14 scope
 

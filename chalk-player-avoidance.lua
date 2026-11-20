@@ -297,9 +297,10 @@ function Avoidance.update(previous,input)
         if safe then safeAmount=amount*fraction;break end
     end
     if not safeAmount then
-        -- Release sprint immediately during a contact escape. When still
-        -- outside the capsule, wait for the smooth turn to open a safe path.
-        safeAmount=nearest<radius and amount or 0
+        -- An overlap does not make a rejected forward step safe. Keep the
+        -- bounded heading turning below, but wait to translate until one of
+        -- its checked speeds can escape without deepening the overlap.
+        safeAmount=0
     end
     if not inside(position+steered*math.max(radius,speed*safeAmount*horizon),input.bounds) then safeAmount=0 end
     state.heading,state.active=steered,true
