@@ -1,0 +1,100 @@
+{
+  "release": "5.1.21",
+  "scope": "Read-only audit of WR Floater incomplete, bounded live window play 4.",
+  "buildId": "5958b21322549383bc7339b61ab0ab86cf45f1607ba2246faecd470779700d14",
+  "liveObserved": {
+    "nativeResult": "Incomplete",
+    "plans": 24,
+    "reachablePlans": 8,
+    "jumpRequests": 0,
+    "confirmedJumps": 0,
+    "diveAttempts": 0,
+    "localContactClaims": 0,
+    "firstPlanAfterLaunchSeconds": 0.040909,
+    "initialOpponentRelativeStuds": {
+      "lateral": 3.986057,
+      "forward": 2.04887
+    },
+    "initialOpponentVelocityStudsPerSecond": {
+      "lateral": 4.529851,
+      "forward": 19.404373
+    },
+    "initialStamina": 82,
+    "postthrowStemReleasedReason": "Current middle-stem movement or sprint budget changed",
+    "positionAtFirstPlanStuds": {
+      "lateral": 14.969084,
+      "forward": 54.652737
+    },
+    "positionAfterAbout0_66SecondsStuds": {
+      "lateral": 9.245804,
+      "forward": 68.521873
+    },
+    "initialCatchTargetStuds": {
+      "lateral": 63.477818,
+      "forward": 112.574158
+    },
+    "lastReachableSnapshotAfterLaunchSeconds": 0.5069,
+    "firstSustainedUnreachableSnapshotAfterLaunchSeconds": 0.5579,
+    "avoidanceReturnedClearAfterLaunchSeconds": 1.0911,
+    "summary": "The moving defender stayed close on the right while the collision helper took a leftward bypass. The route lost lateral progress toward its right-side catch target. Reachability disappeared before the planned jump, so no jump was dispatched."
+  },
+  "offlineRecordedSnapshotChecks": {
+    "method": "Actual helper candidate logic with recorded position, opponent velocity, current heading, native speed, target and bounds; final candidate and bounded turn checked separately.",
+    "examples": [
+      {
+        "afterLaunchSeconds": 0.1903,
+        "existingLeftNativeSpeed": 27,
+        "existingLeftTargetProgressStudsPerSecond": 13.5,
+        "boundedRightPermittedSpeed": 15,
+        "boundedRightTargetProgressStudsPerSecond": 10.201
+      },
+      {
+        "afterLaunchSeconds": 0.2576,
+        "existingLeftNativeSpeed": 27,
+        "existingLeftTargetProgressStudsPerSecond": 9.235,
+        "boundedRightPermittedSpeed": 10,
+        "boundedRightTargetProgressStudsPerSecond": 5.246
+      },
+      {
+        "afterLaunchSeconds": 0.357,
+        "existingLeftNativeSpeed": 27,
+        "existingLeftTargetProgressStudsPerSecond": 6.988,
+        "boundedRightPermittedSpeed": 5,
+        "boundedRightTargetProgressStudsPerSecond": 2.305
+      },
+      {
+        "afterLaunchSeconds": 0.4073,
+        "oppositeRightCandidateAvailable": false
+      }
+    ],
+    "finding": "Choosing the opposite final heading after the bypass is established would not justify sprinting through the current turn. Existing actual/prospective speed checks impose substantial slowing or reject that side."
+  },
+  "offlineInitialSideCounterfactual": {
+    "method": "Actual helper integrated at 60 Hz from first recorded postthrow snapshot with reset helper state, fixed original catch target, interpolated recorded opponent trajectory, and an authored 50 ms native sprint transition.",
+    "durationSeconds": 0.8,
+    "defaultSideRemainingTargetDistanceStuds": 64.796535,
+    "alternateInitialSideRemainingTargetDistanceStuds": 55.350639,
+    "alternateMinimumSampledBodyGapStuds": 3.780532,
+    "existingClearanceAndBudgetGatesRetained": true,
+    "limitation": "This holds the recorded opponent response fixed after our path changes and does not reproduce native collision physics, future opponent choices, or a server-accepted catch. It is a strategy-selection lead, not a proven safe catch rescue or grounds to force a side."
+  },
+  "classification": "Collision-constrained travel loss; no omitted reachable action or native claim rejection demonstrated.",
+  "sourceAudit": {
+    "reviewed": [
+      "phase and ownership cancellation",
+      "jump dispatch and observed takeoff",
+      "fresh jump and airborne-dive validation",
+      "action deadlines",
+      "native result and local-contact separation"
+    ],
+    "newConcreteLifecycleDefectReproduced": false,
+    "productionChangesMadeForThisIncident": false
+  },
+  "nextStep": "Investigate initial bypass selection with a bounded multi-step forecast and responsive-opponent controls before changing passing-side persistence. Retain current clearance, stamina, action, and catch validity gates.",
+  "claimsNotMade": [
+    "Guaranteed catches",
+    "A proven server rejection cause",
+    "An alternate trajectory would have caught this pass",
+    "All future misses are fixed"
+  ]
+}

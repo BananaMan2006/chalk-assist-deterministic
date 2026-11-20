@@ -1,0 +1,108 @@
+{
+  "schemaVersion": 1,
+  "release": "5.1.21",
+  "incident": 13,
+  "role": "DB",
+  "passType": "Bullet",
+  "outcome": "Opponent Catch, then Touchdown",
+  "scope": "Read-only audit of the frozen five-minute live window.",
+  "catchAttempt": {
+    "nativeObservationDelaySeconds": 0.067028,
+    "firstSolveMilliseconds": 55.73316669324413,
+    "firstPlanRisk": "last-resort",
+    "firstPlanMarginStuds": 0.07457447052001953,
+    "firstSnapshotToDriftSeconds": 0.05993986129760742,
+    "observedPositionDriftStuds": 1.5232745579334201,
+    "positionDriftGateStuds": 1.3,
+    "secondsRemainingToScheduledJumpAtInvalidation": 0.3275601863861084,
+    "headingDifferenceAtFirstSnapshotDegrees": 60.97729603246917,
+    "firstReactionDelaySeconds": 0,
+    "laterReachablePlans": 0,
+    "laterPlanCount": 4,
+    "laterBestEffortMissStuds": [
+      7.994148254394531,
+      8.325479507446289,
+      8.30981159210205,
+      8.308572769165039
+    ],
+    "jumpAttempts": 0,
+    "diveCatchAttempts": 0,
+    "localContactClaims": 0
+  },
+  "tackleAttempt": {
+    "nativeDiveStarted": true,
+    "secondsAfterNativeCatch": 0.015479087829589844,
+    "initialHorizontalGapStuds": 10.443819433895621,
+    "predictedFirstContactSeconds": 0.1475,
+    "predictedContactWindowSeconds": 0.03999999999999998,
+    "predictedMarginStuds": 1.6548559665679932,
+    "requiredMarginStuds": 1.250012493133545,
+    "nativeTackleRequestSent": "unobserved",
+    "nativeTackleAcceptance": "unobserved",
+    "samples": [
+      {
+        "secondsAfterDive": 0.081836,
+        "horizontalGapStuds": 6.523746,
+        "forwardGapStuds": 6.457675,
+        "lateralGapStuds": 0.926114,
+        "verticalGapStuds": 0.236732,
+        "nominalDirectionalMarginStuds": -1.457675,
+        "insideNominalEnvelope": false,
+        "receiverHeadingChangeDegrees": 0.501834,
+        "receiverSpeed": 19.997535
+      },
+      {
+        "secondsAfterDive": 0.165123,
+        "horizontalGapStuds": 3.69207,
+        "forwardGapStuds": 3.150785,
+        "lateralGapStuds": 1.92456,
+        "verticalGapStuds": 0.958175,
+        "nominalDirectionalMarginStuds": 1.57544,
+        "insideNominalEnvelope": true,
+        "receiverHeadingChangeDegrees": 56.905013,
+        "receiverSpeed": 15.981663
+      },
+      {
+        "secondsAfterDive": 0.248254,
+        "horizontalGapStuds": 3.777759,
+        "forwardGapStuds": -0.311595,
+        "lateralGapStuds": 3.764887,
+        "verticalGapStuds": 1.822522,
+        "nominalDirectionalMarginStuds": -0.264887,
+        "insideNominalEnvelope": false,
+        "receiverHeadingChangeDegrees": 81.202189,
+        "receiverSpeed": 23.360866
+      },
+      {
+        "secondsAfterDive": 0.331366,
+        "horizontalGapStuds": 6.167699,
+        "forwardGapStuds": -2.392738,
+        "lateralGapStuds": 5.684657,
+        "verticalGapStuds": 2.350661,
+        "nominalDirectionalMarginStuds": -2.184657,
+        "insideNominalEnvelope": false,
+        "receiverHeadingChangeDegrees": 81.504521,
+        "receiverSpeed": 24.398885
+      }
+    ]
+  },
+  "pursuit": {
+    "firstPostDiveNavigationSeconds": 1.498032808303833,
+    "firstPostDiveGapStuds": 33.357112884521484,
+    "minimumPostDiveGapStuds": 25.41120147705078,
+    "lastStamina": 19
+  },
+  "findings": [
+    "One narrow last-resort catch forecast was invalidated by measured drift before its scheduled jump; every later forecast was unreachable. This is not a missed jump dispatch or native catch rejection.",
+    "The logged initial heading was still turning while the planner modeled zero-reaction straight travel. The first solve also consumed 55.7 ms. The resulting position discrepancy is directly recorded; separating native turn dynamics from solve latency requires finer execution telemetry.",
+    "The opening alignment branch was not responsible: the observed lateral gap was below its start threshold. Existing lateral recovery requested sprint before the throw.",
+    "The subsequent ground tackle dive started. One sampled position satisfies nominal directional tackle geometry, while later samples show the receiver turning away; no native tackle request/acceptance or opponent immunity/move state is logged.",
+    "No collision, drift or catch validation is weakened. No global timing or sprint threshold change is justified by this single incident."
+  ],
+  "limitations": [
+    "Planner scalar replay is not native physics or server confirmation.",
+    "A nominal tackle envelope overlap does not prove a server-accepted tackle.",
+    "Opponent turns after a committed dive are not known when the dive is chosen."
+  ],
+  "privacy": "No player names, account identifiers, credentials, extracted source, or machine paths."
+}

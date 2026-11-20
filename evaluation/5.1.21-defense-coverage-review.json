@@ -1,0 +1,198 @@
+{
+  "schemaVersion": 1,
+  "release": "5.1.21",
+  "observedBuild": "5.1.20",
+  "scope": "Three opponent catches from one bounded live window; not a general win-rate estimate.",
+  "findings": {
+    "nativeStamina": {
+      "firstLiveStamina": [
+        100,
+        100,
+        100
+      ],
+      "conclusion": "The WR 75-stamina opening assumption does not explain these DB cases. All three DB cases began with 100."
+    },
+    "coverageReversal": {
+      "sourceVerified": true,
+      "example": {
+        "startDirection": [
+          1,
+          0,
+          -1e-07
+        ],
+        "desiredDirection": [
+          -1,
+          0,
+          0
+        ],
+        "preserveDepth": true,
+        "turnRateRadiansPerSecond": 9,
+        "stepSeconds": 0.016666666666666666,
+        "steps": 22,
+        "speedStudsPerSecond": 20,
+        "oldModeledDepthTravelStuds": -4.437430801,
+        "forwardSemicircleModeledDepthTravelStuds": 4.437430803
+      },
+      "observedCase8BackwardTravelStuds": 4.154937,
+      "fix": "Use a 1e-6 tolerance on normalized Z only when selecting the existing goal-side coverage turn. Turn rate and genuine backward/noncoverage behavior stay unchanged.",
+      "limitation": "Private steering state is not recorded. The observed backward arc is consistent with this reproduced edge case, but the incident does not prove it was the sole live cause."
+    },
+    "openingAlignment": {
+      "oldGates": "Wide lateral emergency required more than 6 yards; the smaller lateral-cut trigger required fast outward velocity. A receiver already turning upfield at ordinary speed could leave a large opening alignment gap with neither trigger active.",
+      "newGate": {
+        "minimumElapsedSeconds": 0.4,
+        "maximumElapsedSeconds": 1.5,
+        "minimumForwardReceiverSpeedFractionOfRunSpeed": 0.5,
+        "maximumGoalSideDepthYards": 2,
+        "startLateralGapYardsStrictlyGreaterThan": 3,
+        "continueLateralGapYardsStrictlyGreaterThan": 1.5,
+        "nearGoalExcluded": true,
+        "startStamina": 85,
+        "stopStamina": 70
+      },
+      "unchanged": [
+        "Existing coverage target",
+        "Native run speed 20 and sprint speed 27",
+        "Collision and bounds checks",
+        "Urgent-defense stamina thresholds",
+        "Postthrow catch geometry and server claims"
+      ],
+      "replay": [
+        {
+          "incident": 8,
+          "passType": "Floater",
+          "terminal": "Touchdown",
+          "rawCoverageSamples": 23,
+          "originalDecisionMismatches": 0,
+          "firstLiveStamina": 100,
+          "changedDecisions": [
+            {
+              "elapsed": 0.566566,
+              "depthStuds": 4.717587,
+              "lateralStuds": 20.319486,
+              "stamina": 100,
+              "nativeSpeed": 20,
+              "receiverVelocityX": 5.477962,
+              "receiverVelocityZ": 19.226883,
+              "oldSprint": false,
+              "newSprint": true,
+              "targetUnchanged": true
+            },
+            {
+              "elapsed": 0.767231,
+              "depthStuds": 1.870587,
+              "lateralStuds": 18.021655,
+              "stamina": 100,
+              "nativeSpeed": 20,
+              "receiverVelocityX": -16.151882,
+              "receiverVelocityZ": 18.306105,
+              "oldSprint": false,
+              "newSprint": true,
+              "targetUnchanged": true
+            },
+            {
+              "elapsed": 0.983914,
+              "depthStuds": -1.245736,
+              "lateralStuds": 14.993879,
+              "stamina": 100,
+              "nativeSpeed": 20,
+              "receiverVelocityX": 4.499952,
+              "receiverVelocityZ": 19.486637,
+              "oldSprint": false,
+              "newSprint": true,
+              "targetUnchanged": true
+            }
+          ]
+        },
+        {
+          "incident": 10,
+          "passType": "Bullet",
+          "terminal": "Tackled",
+          "rawCoverageSamples": 34,
+          "originalDecisionMismatches": 0,
+          "firstLiveStamina": 100,
+          "changedDecisions": []
+        },
+        {
+          "incident": 13,
+          "passType": "Bullet",
+          "terminal": "Touchdown",
+          "rawCoverageSamples": 30,
+          "originalDecisionMismatches": 0,
+          "firstLiveStamina": 100,
+          "changedDecisions": []
+        }
+      ]
+    },
+    "case8CatchGeometrySensitivity": {
+      "originalFirstPlanReachable": false,
+      "originalRecordedBestEffortMissStuds": 11.0656,
+      "pureForwardPositionShifts": [
+        {
+          "studs": 4,
+          "hypotheticalPlan": "jumpDive",
+          "risk": "last-resort",
+          "margin": 0.184893
+        },
+        {
+          "studs": 6,
+          "hypotheticalPlan": "jumpDive",
+          "margin": 0.401113
+        }
+      ],
+      "limitation": "These are planner geometry counterfactuals using the same throw and authored native-like configuration. They do not establish an executable recovery path, native collision behavior, or an awarded catch."
+    },
+    "remainingCases": [
+      {
+        "incident": 10,
+        "type": "Bullet",
+        "result": "Opponent catch, then successfully tackled",
+        "catchPlanReachableCount": 0,
+        "catchPlanCount": 6,
+        "observation": "Late sideways cut occurred outside the opening window. The new opening rule does not change the replayed coverage decisions. No postthrow jump/dive was omitted from a feasible catch plan."
+      },
+      {
+        "incident": 13,
+        "type": "Bullet",
+        "result": "Opponent catch, later touchdown",
+        "catchPlanReachableCount": 0,
+        "catchPlanCount": 5,
+        "observation": "Receiver retreated before throwing. The DB retained goal-side depth, then chased at normal speed; no catch plan was feasible from the recorded throw geometry. Opening changes do not claim to fix this distinct late retreat. Post-catch tackle was reviewed separately."
+      }
+    ]
+  },
+  "verification": {
+    "steeringCases": 11,
+    "steeringPassed": 11,
+    "newPolicyCases": 2,
+    "newPolicyCasesPassed": 2,
+    "newPolicyCasesFailAgainstPreviousSource": 2,
+    "originalPolicyReplaySamples": 87,
+    "originalPolicyReplayDecisionMismatches": 0,
+    "changedRecordedDecisions": 3,
+    "counterexampleCoverage": [
+      "Mirrored and translated recorded geometry",
+      "Exact start/continue lateral thresholds with representable fixture coordinates",
+      "0.4 and 1.5 second window boundaries",
+      "Low stamina, setup phases, stationary/retreating receivers and near-goal exclusions",
+      "Tiny-negative heading components on both reversal directions",
+      "Genuine backward and noncoverage turns",
+      "9-radian-per-second turn limit"
+    ],
+    "publicDefensiveCases": 18,
+    "publicDefensiveCasesPassed": 18,
+    "publicDefensiveCasesPassedOnPreviousSource": 16,
+    "steeringCasesPassedOnPreviousSource": 10,
+    "scheduledRouteMixCasesPassed": 28,
+    "deterministicIsolationCasesPassed": 40,
+    "retainedPolicyCasesPassed": 91,
+    "testCoverage": "The existing91 retained cases and both new policy cases passed. The new cases are also in the normal public defensive suite, which passed18/18."
+  },
+  "limitations": [
+    "Offline policy replay reproduces logged inputs, not full native physics or the opponent reacting to changed movement.",
+    "A changed sprint request is not proof of native sprint acceptance, recovered catch, or prevented touchdown.",
+    "No server catch/tackle rejection reason was available.",
+    "No claim of perfect defense or zero future incompletes."
+  ],
+  "privacy": "No player names, account identifiers, credentials, extracted game source, or machine paths."
+}
