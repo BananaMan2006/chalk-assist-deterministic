@@ -1,6 +1,26 @@
-# Evaluation scope · 5.1.13
+# Evaluation scope · 5.1.14
 
 This release continues the authored, deterministic controller. Its checks establish local rule behavior and packaging properties. **They do not demonstrate a live win rate, a winning streak, perfect catching, or improvement through training.** The release has no training system or shared model.
+
+## 5.1.14 scope
+
+A demonstrated middle-stem budget allocation defect is corrected: a requested recovery burst was rejected wholesale when only a smaller one was affordable. Recorded eligible snapshots showed unused budget even after reserving all remaining scheduled sprint, final catch travel, the catch reserve and an extra 0.12-second dispatch allowance. The policy now caps the requested burst by that available budget, and the new partial fallback requires observed native speed at least equal to normal running speed. It does not infer that a slowed character can recover normal-speed distance. A bounded private replay found 461 qualifying normal-speed snapshots across the recorded routes; these are independent allocation checks, not a simulated sequence of catches. Existing fully funded choices are unchanged; the 0.6-second total cap, 0.12-second minimum, measured-debt threshold, active-window accounting and prohibition on starting after the throw remain. This recovers usable budget; it does not prove that a jammed receiving miss becomes a catch.
+
+An allowed catch exposed a second defensive stamina cutoff: both the movement policy and assist budget reverted to the 40-stamina setup reserve while chasing the opposing carrier. The correction allows spending down to the normal floor only with a verified opposing holder in RAC/Run. Prethrow coverage, unknown holders and tackle range/cooldown checks remain unchanged. In the audited touchdown the defender was already roughly 36 studs behind after its failed local claim; preserving sprint cannot be claimed to erase that gap.
+
+Local contact records now include the native touch attribute's type, finite numeric value and local clock age. This is observation only: no catch request, packet, native script or claim-cancellation behavior is changed. It can distinguish the inspected native timestamp write from an unrelated attribute change in future evidence. A fallback to an older complete preferences copy is now visible in the panel as well as in status.
+
+A fast outward sideways cut with a small backward component was incorrectly classified as a safe retreat, ending a funded defensive sprint. That branch now recognizes the fast lateral cut while retaining the existing 85-start/70-stop stamina limits, depth band and target positions. Replaying the four recorded frames changes only the two erroneous late OFF requests; all target coordinates remain identical. Pure retreats, slow or inward cuts and small gaps do not unlock a new burst. This avoids unnecessary travel loss; it does not establish that the previously conceded play becomes an interception.
+
+Validation passed 504 rule checks, 76 deterministic route/controller checks, 57 airborne checks and 26 build/preferences/install checks. A separate private native-configuration run passed 167 checks. These do not reproduce server arbitration.
+
+## Continued 5.1.13 live review
+
+The frozen [incident review](evaluation/5.1.13-extended-incidents.json) contains 70 throws and twelve completed wins: eight at 4–0, three at 4–1 and one at 4–2. Three Forfeit endings have unknown winners and are excluded. WR caught 30 of 34 Floaters, with three incompletes and one breakup. DB recorded 25 interceptions, four breakups and seven allowed catches; three were tackled and four became touchdowns. Five opponent points and all eleven problem plays remain in the report. No runtime errors were recorded. These observations do not isolate a release effect or establish reliability.
+
+The updated DB safe-sprint detour permission was exercised during live Floaters, followed by native interceptions. This confirms the branch ran at ordinary native speed; it does not establish a causal win-rate improvement. Receiving jump-and-dive catches also succeeded, but the longer observation still produced failures, so the first two 4–0 results were not a stopping condition.
+
+One jammed WR incomplete was unreachable from the first post-launch snapshot. The observed native jam and detours left a 16.2-stud middle-stem deficit; an exact replay remained unreachable even with the opponent removed. A hypothetical head start restored a forecast, but no observed trajectory achieved it. Another WR incomplete followed an upright airborne local claim with no dive or active avoidance. A successful same-build upright comparison had a smaller edge margin and almost identical takeoff/contact timing. That evidence does not support a blanket dive prohibition, larger margin or earlier jump as the fix. Native possession acceptance remains unresolved. Every further missed catch, allowed catch and point remains in the running local incident review.
 
 ## 5.1.13 scope
 
@@ -10,7 +30,7 @@ A DB pursuing a reachable observed live ball can now keep sprint on a checked de
 
 Local checks passed **504 rules, 68 deterministic route/controller checks, 57 airborne checks, and 26 build/preferences/install checks**. The preference tests execute the real restore/setter/unload paths, including saved ON/OFF, a torn write, conflicting or corrupt records, mode removal, an existing queue and stale session records. These are offline checks, not native gameplay guarantees.
 
-The laptop naturally loaded the exact 5.1.13 candidate. A read-only in-game check found all seven saved switches equal to their active states and disk readback equal to memory, with Full Auto and 1v1 Autoplay ON and no settings error. Auto Leave was already OFF in the old saved file; the lost historical ON choice cannot be inferred. Verification of an ON Auto Leave choice in a live restart remains separate from the offline persistence checks.
+The laptop naturally loaded the exact 5.1.13 candidate. A read-only in-game check found all seven saved switches equal to their active states and disk readback equal to memory, with Full Auto and 1v1 Autoplay ON and no settings error. Auto Leave was already OFF in the old saved file. After the user explicitly chose ON, a second verified journal revision stored that choice. A later lobby return and match join entered a different server with Auto Leave still ON, all seven saved switches matching runtime, and both the saved username list and visible field matching after normalization. This verifies a natural rejoin; it is distinct from the offline full-runtime restart test.
 
 ## Extended 5.1.12 failure audit
 

@@ -116,7 +116,7 @@ return function(Policy)
     end)
     test("inward slow idle and safely retreating motion do not cause new side bursts",function()
         local p=input()
-        for _,v in ipairs({Vector3.zero,Vector3.new(-15,0,0),Vector3.new(25,0,0),Vector3.new(-25,0,-5)}) do
+        for _,v in ipairs({Vector3.zero,Vector3.new(-15,0,0),Vector3.new(25,0,0),Vector3.new(-15,0,-5)}) do
             p.opponentVelocity=v;assert(not move(p).sprint)
         end
     end)
@@ -145,6 +145,78 @@ return function(Policy)
         c=move(p);assert(not c.sprint and math.abs(c.target.X-p.opponentPosition.X)<=.21*Field.YD)
         p.position=Vector3.new(c.target.X+.1*Field.YD,3,c.target.Z)
         assert(move(p).target.X==p.position.X,"minor lineup jitter caused offset chasing")
+    end)
+    local function retreatingSideCut(extra)
+        local p=input({position=Vector3.new(-1.341536522,3,56.32739258),velocity=Vector3.new(20.17902374,0,0),
+            opponentPosition=Vector3.new(4.594630241,3,48.19269562),
+            opponentVelocity=Vector3.new(26.20711136,0,-6.492323875),elapsed=4.740035057,stamina=98})
+        for k,v in pairs(extra or {}) do p[k]=v end
+        return p
+    end
+    test("fast outward sideways retreat preserves lateral recovery on both sides without changing depth",function()
+        local p=retreatingSideCut();local a=move(p)
+        assert(a.sprint and a.target.X>p.opponentPosition.X,"negative depth velocity hid a fast outward cut")
+        assert(a.target.Z==p.position.Z,"lateral recovery moved the depth target")
+        local mirror=table.clone(p)
+        mirror.position=Vector3.new(2*Field.MidX-p.position.X,3,p.position.Z)
+        mirror.opponentPosition=Vector3.new(2*Field.MidX-p.opponentPosition.X,3,p.opponentPosition.Z)
+        mirror.velocity=Vector3.new(-p.velocity.X,0,p.velocity.Z)
+        mirror.opponentVelocity=Vector3.new(-p.opponentVelocity.X,0,p.opponentVelocity.Z)
+        local b=move(mirror)
+        assert(b.sprint and math.abs(a.target.X+b.target.X-2*Field.MidX)<1e-6)
+        assert(b.target.Z==mirror.position.Z)
+    end)
+    test("retreating lateral recovery retains85-start70-stop and releases for safe motion or small gaps",function()
+        local p=retreatingSideCut()
+        for _,stamina in ipairs({0,40,70,84.9}) do p.stamina=stamina;assert(not move(p).sprint) end
+        p.stamina=85;assert(move(p).sprint)
+        p.sprintOn=true;p.stamina=70.1;assert(move(p).sprint)
+        p.stamina=70;assert(not move(p).sprint)
+        for _,velocity in ipairs({Vector3.new(0,0,-27),Vector3.new(15,0,-6),Vector3.new(-26,0,-6)}) do
+            p=retreatingSideCut({sprintOn=true,opponentVelocity=velocity})
+            assert(not move(p).sprint,"pure/slow/inward retreat prolonged a side burst")
+        end
+        for _,phase in ipairs({"PreSnap","Hike"}) do
+            assert(not move(retreatingSideCut({phase=phase})).sprint)
+        end
+        p=retreatingSideCut({sprintOn=true})
+        p.position=Vector3.new(p.opponentPosition.X-.5*Field.YD,3,p.position.Z)
+        assert(not move(p).sprint,"continued sprint inside the lateral release band")
+        p=retreatingSideCut({sprintOn=true})
+        p.position=Vector3.new(p.position.X,3,p.opponentPosition.Z+3.01*Field.YD)
+        assert(not move(p).sprint,"lateral recovery crossed the unchanged depth band")
+    end)
+    test("confirmed opposing possession funds the DB chase without spending the native sprint floor",function()
+        for _,phase in ipairs({"RAC","Run"}) do
+            local p=input({phase=phase,enemyCarrier=true,stamina=42})
+            local original=p.stamina
+            local c=move(p)
+            assert(c.kind=="pursue" and c.sprint,"confirmed carrier chase retained the prethrow reserve")
+            assert(p.stamina==original and c.target.Z>=p.opponentPosition.Z)
+            for _,stamina in ipairs({0,2,5.75}) do
+                p.stamina=stamina;assert(not move(p).sprint,"chase spent the reserve and native input allowance")
+            end
+            p.stamina=5.76;assert(move(p).sprint)
+            p.stamina=nil;assert(not move(p).sprint,"unknown stamina funded a chase")
+        end
+    end)
+    test("low pursuit reserve requires known enemy possession and keeps Live and WR reserves",function()
+        for _,phase in ipairs({"RAC","Run"}) do
+            local p=input({phase=phase,enemyCarrier=false,stamina=42})
+            assert(Policy.movement(p,Config,Field,{})==nil)
+            p.enemyCarrier=nil;assert(Policy.movement(p,Config,Field,{})==nil)
+            p.enemyCarrier="unknown";assert(Policy.movement(p,Config,Field,{})==nil)
+            p.enemyCarrier=true;p.opponentPosition=nil
+            assert(Policy.movement(p,Config,Field,{})==nil,"missing carrier position enabled pursuit")
+        end
+        local p=input({phase="Live",enemyCarrier=true,stamina=42})
+        assert(not move(p).sprint,"Live reserve was relaxed without the confirmed catch phase")
+        p.stamina=43.75;assert(not move(p).sprint)
+        p.stamina=43.76;assert(move(p).sprint)
+        p.phase="RAC";p.role="WR";p.stamina=13.75
+        assert(not move(p).sprint,"WR reserve changed with the DB chase fix")
+        p.stamina=13.76;assert(move(p).sprint)
+        p.phase=nil;assert(Policy.movement(p,Config,Field,{})==nil)
     end)
     return report
 end

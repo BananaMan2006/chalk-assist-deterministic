@@ -666,6 +666,7 @@ return function(ctx,Policy,services)
             routeSource,planPass=s.route,s.passType
         end
         local input=inputFor(s,root);input.dt=dt
+        input.currentWalkSpeed=tonumber(h.WalkSpeed)
         if input.role=="WR" and input.carrierIsMe
             and (input.phase=="RAC" or input.phase=="Run") and lastKind~="carry" then
             -- Catch steering may finish far from the pre-throw route target.
@@ -937,7 +938,7 @@ return function(ctx,Policy,services)
             preferJumpDive=choice.preferJumpDive==true,
             continuousSprint=finalSprintCommitted,finalSprint=finalSprintCommitted}
     end
-    function api.movementBudget(airborneBall)
+    function api.movementBudget(committedPursuit)
         if not alive or not enabled then return nil end
         -- Called while the core builds its snapshot: never recurse into it.
         -- A rare short Bullet reserves one actual native carrier move until
@@ -948,7 +949,7 @@ return function(ctx,Policy,services)
             and (selected and selected.payload.Pass or activeRoute.pass)=="Bullet"
             and finite(choice.carryReserve) and choice.carryReserve>=10
             and choice.carryReserve<=(Config.Stamina or 100) then reserve=choice.carryReserve end
-        return {dbReserve=airborneBall==true and 2 or 40,wrReserve=reserve}
+        return {dbReserve=committedPursuit==true and 2 or 40,wrReserve=reserve}
     end
     function api.unload()
         if not alive then return end

@@ -915,8 +915,8 @@ local function render()
         routeKind, lastError and ("Error: "..lastError) or "Gold: pass target · pink: turf if untouched",
         autoStatus and (autoStatus.error or autoStatus.message) or "Auto starting")
     local settingsStatus=preferences and preferences.status()
-    if settingsStatus and (settingsStatus.saveError or settingsStatus.restoreError) then
-        text.Text=text.Text.."\nSettings: "..(settingsStatus.saveError or settingsStatus.restoreError)
+    if settingsStatus and (settingsStatus.saveError or settingsStatus.restoreError or settingsStatus.recoveryWarning) then
+        text.Text=text.Text.."\nSettings: "..(settingsStatus.saveError or settingsStatus.restoreError or settingsStatus.recoveryWarning)
     end
     if autoStatus then autoButton.Text=autoStatus.enabled and "ASSIST ON · V" or "ASSIST OFF · V" end
     updateAutoplayUI()
@@ -990,9 +990,12 @@ function api.context()
         route=route,snapAt=snapAt,passType=passType,preSnapEnds=preSnapEnds,
         roundKey=tostring(preSnapEnds or "current"),
         catchIntent=fullplay and fullplay.catchIntent and fullplay.catchIntent() or nil,
-        -- Preserve the coverage reserve before the throw, then spend it in
-        -- pursuit of the observed live ball. No forecast/route alone unlocks it.
-        playBudget=fullplay and fullplay.movementBudget and fullplay.movementBudget(arc~=nil and phase=="Live") or nil,
+        -- Preserve the coverage reserve before the throw. An observed live
+        -- ball or a verified opposing carrier after the catch can spend it.
+        -- A forecast, stale carrier or unknown team alone cannot unlock it.
+        playBudget=fullplay and fullplay.movementBudget and fullplay.movementBudget(
+            arc~=nil and phase=="Live"
+            or holder~=nil and isEnemy==true and (phase=="RAC" or phase=="Run")) or nil,
         passStarted=passStarted,
         enabled=enabled,testing=testing,alive=alive,offset=offset,
         matchIdentityVerified=matchIdentityVerified,

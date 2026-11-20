@@ -593,12 +593,19 @@ return function(Policy,create,routeSource,Planner)
         local old=Policy.movement
         local target=Vector3.new(20,3,60)
         local kind,deadline="route",5
-        Policy.movement=function() return {kind=kind,target=target,routeDeadline=deadline,sprint=false} end
+        local observedSpeed
+        Policy.movement=function(input)
+            observedSpeed=input.currentWalkSpeed
+            return {kind=kind,target=target,routeDeadline=deadline,sprint=false}
+        end
         local ok,err=pcall(function()
             local f=harness();f.api.setEnabled(true);f.time=100
             f.snapshot.phase="Live";f.snapshot.snapAt=98
             local request=assert(f:navigate())
             assert(request.avoidanceArrival.targetPosition==target and request.avoidanceArrival.arriveBy==103)
+            assert(observedSpeed==20)
+            f.humanoid.WalkSpeed=9;assert(f:navigate());assert(observedSpeed==9 and f.humanoid.WalkSpeed==9)
+            f.humanoid.WalkSpeed=20
             f.snapshot.role="DB";assert(f:navigate().avoidanceArrival==nil)
             f.snapshot.role="WR";kind="carry";assert(f:navigate().avoidanceArrival==nil)
             kind="route";deadline=nil;assert(f:navigate().avoidanceArrival==nil)

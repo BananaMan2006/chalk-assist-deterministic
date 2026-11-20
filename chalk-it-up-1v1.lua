@@ -1,4 +1,4 @@
--- Chalk-Release: 5.1.13
+-- Chalk-Release: 5.1.14
 -- Chalk-Product: deterministic
 -- Chalk It Up DB/WR ball assist using normal sprint/jump/dive controls.
 -- Cyan: replicated route (when supplied). Yellow: movement estimate.
@@ -47,7 +47,7 @@ assert(matchEvent and fxEvent and matchEvent:IsA("RemoteEvent") and fxEvent:IsA(
     "Chalk It Up Match/Fx events were not found")
 
 local api = {}
-local RELEASE_VERSION="5.1.13"
+local RELEASE_VERSION="5.1.14"
 local loadedGameId,loadedPlaceId,loadedJobId=game.GameId,game.PlaceId,game.JobId
 env.ChalkDB = api
 local alive, enabled = true, true
@@ -917,8 +917,8 @@ local function render()
         routeKind, lastError and ("Error: "..lastError) or "Gold: pass target · pink: turf if untouched",
         autoStatus and (autoStatus.error or autoStatus.message) or "Auto starting")
     local settingsStatus=preferences and preferences.status()
-    if settingsStatus and (settingsStatus.saveError or settingsStatus.restoreError) then
-        text.Text=text.Text.."\nSettings: "..(settingsStatus.saveError or settingsStatus.restoreError)
+    if settingsStatus and (settingsStatus.saveError or settingsStatus.restoreError or settingsStatus.recoveryWarning) then
+        text.Text=text.Text.."\nSettings: "..(settingsStatus.saveError or settingsStatus.restoreError or settingsStatus.recoveryWarning)
     end
     if autoStatus then autoButton.Text=autoStatus.enabled and "ASSIST ON · V" or "ASSIST OFF · V" end
     updateAutoplayUI()
@@ -967,7 +967,7 @@ end
 function api.status()
     local ch = characterOf(opponent)
     local holder,isEnemy,holderRole=carrierContext()
-    return {product="deterministic",version=RELEASE_VERSION,buildId="e540c2eb523feaa2992a3411d7f484efe4514e4f484b1df9830ba3b3daf50a2d",policyMode="deterministic", enabled=enabled, role=role or "unknown",rawRole=rawRole or "unknown", phase=phase,
+    return {product="deterministic",version=RELEASE_VERSION,buildId="a6dd99d2c4368fd77dfd0040d9a2135412980753a34344abce229dffb503acd7",policyMode="deterministic", enabled=enabled, role=role or "unknown",rawRole=rawRole or "unknown", phase=phase,
         ui={visible=windowVisible,minimized=minimized,x=panel.Position.X.Offset,y=panel.Position.Y.Offset},
         matchAlerts={enabled=alertSettings.enabled,saveError=alertSettings.saveError},
         preferences=preferences and preferences.status() or nil,
@@ -992,9 +992,12 @@ function api.context()
         route=route,snapAt=snapAt,passType=passType,preSnapEnds=preSnapEnds,
         roundKey=tostring(preSnapEnds or "current"),
         catchIntent=fullplay and fullplay.catchIntent and fullplay.catchIntent() or nil,
-        -- Preserve the coverage reserve before the throw, then spend it in
-        -- pursuit of the observed live ball. No forecast/route alone unlocks it.
-        playBudget=fullplay and fullplay.movementBudget and fullplay.movementBudget(arc~=nil and phase=="Live") or nil,
+        -- Preserve the coverage reserve before the throw. An observed live
+        -- ball or a verified opposing carrier after the catch can spend it.
+        -- A forecast, stale carrier or unknown team alone cannot unlock it.
+        playBudget=fullplay and fullplay.movementBudget and fullplay.movementBudget(
+            arc~=nil and phase=="Live"
+            or holder~=nil and isEnemy==true and (phase=="RAC" or phase=="Run")) or nil,
         passStarted=passStarted,
         enabled=enabled,testing=testing,alive=alive,offset=offset,
         matchIdentityVerified=matchIdentityVerified,
@@ -5432,6 +5435,12 @@ return function(ctx, Planner, createTackle, WRApproach, Motion, createCarrierMov
         local s=ctx.snapshot()
         if alive and s.phase=="Live" and s.arc and s.launchAt
             and (s.role=="WR" or s.role=="DB") then
+            -- Observe the native signal itself as well as contact geometry.
+            -- A changed attribute is not proof that the server accepted it.
+            local touchValue=me:GetAttribute("BallTouched")
+            local touchClock=os.clock()
+            local touchNumber=type(touchValue)=="number" and touchValue==touchValue
+                and math.abs(touchValue)<math.huge and touchValue or nil
             claimedKey=s.launchAt
             claimObservedAt=workspace:GetServerTimeNow();claimTraceCount=0;claimTraceNext=claimObservedAt+.05
             local root,h=healthyCharacter()
@@ -5453,6 +5462,8 @@ return function(ctx, Planner, createTackle, WRApproach, Motion, createCarrierMov
                     h.FloorMaterial==Enum.Material.Air)
             end
             log("localCatch",{role=s.role,claimOnly=true,authoritative=false,
+                touchType=type(touchValue),touchValue=touchNumber,
+                touchClock=touchClock,touchAge=touchNumber and touchClock-touchNumber,
                 networkPing=networkPing(),
                 opponents=opponents,
                 position=root and xyz(root.Position),velocity=root and xyz(root.AssemblyLinearVelocity),
@@ -7470,11 +7481,12 @@ function Policy.movement(input,Config,Field,RouteMath)
         local los=finite(input.LOS) and input.LOS or Field.LOSZ
         return result(Vector3.new(input.startX+offset.X,position.Y,los+offset.Z),"lineup",false,.5)
     end
-    if input.enemyCarrier and opponent and (phase=="RAC" or phase=="Live" or phase=="Run") then
+    if input.enemyCarrier==true and opponent and (phase=="RAC" or phase=="Live" or phase=="Run") then
         local distance=flatDistance(position,opponent)
         local lead=math.min(.45,distance/math.max(1,Config.SprintSpeed)*.3)
         local target=opponent+boundedVelocity(input.opponentVelocity,Config.SprintSpeed)*lead
-        local reserve=role=="DB" and 40 or 10
+        local committedPursuit=role=="DB" and (phase=="RAC" or phase=="Run")
+        local reserve=role=="DB" and (committedPursuit and 2 or 40) or 10
         local stamina=finite(input.stamina) and math.max(0,input.stamina) or 0
         local sprint=stamina>reserve+math.max(1,(Config.SprintDrain or 25)*.15)
         return result(target,"pursue",sprint,.8)
@@ -7612,6 +7624,14 @@ function Policy.movement(input,Config,Field,RouteMath)
                             and not input.ballActive and not input.passStarted
                             and debt>.75 and sprintSpeed>stemRun and spent<.6 then
                             local duration=math.min(.6-spent,late-input.elapsed,(debt+.15)/(sprintSpeed-stemRun)+.12)
+                            local fundedSeconds=math.max(0,(stamina-required)/drain)
+                            if duration>fundedSeconds then
+                                -- A smaller correction can be affordable even when
+                                -- the entire requested burst is not. Keep an extra
+                                -- input-duration allowance; never borrow regeneration.
+                                duration=finite(input.currentWalkSpeed) and input.currentWalkSpeed>=run
+                                    and math.min(duration,math.max(0,fundedSeconds-.12)) or 0
+                            end
                             if duration>=.12 and stamina>=(remainingBurst+duration+finalSeconds)*drain+routeReserve then
                                 recoveryUntil=input.elapsed+duration;recoverySeconds=duration
                                 recoveryActive=true;extraRemaining=duration
@@ -7804,7 +7824,11 @@ function Policy.movement(input,Config,Field,RouteMath)
             or nearGoal and observedDepth<sprintMinDepth-yd)
         local forwardThreat=velocity.Z>Config.RunSpeed*.5 and observedDepth < sprintMinDepth-yd
         local lateralThreat=lateral>6*yd and observedDepth<3*yd and velocity.Z>=-2
-        local lateralCutRecovery=outward and velocity.Z>=-2 and observedDepth<3*yd
+        -- Backward depth motion does not make a fast outward side escape safe.
+        -- Preserve the same depth/lateral bands and stamina hysteresis; slower
+        -- retreating motion still releases recovery rather than chasing it.
+        local lateralCutRecovery=outward and observedDepth<3*yd
+            and (velocity.Z>=-2 or math.abs(velocity.X)>Config.RunSpeed+2)
             and (input.sprintOn==true and lateral>.65*yd and forecastLateral>yd
                 or input.sprintOn~=true and math.abs(velocity.X)>Config.RunSpeed+2
                     and lateral>.6*yd and forecastLateral>1.5*yd)
@@ -7836,9 +7860,9 @@ function Policy.movement(input,Config,Field,RouteMath)
         -- Use observed positions so projection does not erase that free band.
         -- Walk routine recovery; save sprint for real separation or a goal-line
         -- threat, retaining a lateral buffer instead of copying every cut.
-        local needsSprint=phase=="Live" and not retreatingSafe
-            and (urgent or forwardThreat or lateralThreat or lateralCutRecovery or downfieldRecovery or deepRunRecovery
-                or separationRecovery)
+        local needsSprint=phase=="Live" and (lateralCutRecovery or not retreatingSafe
+            and (urgent or forwardThreat or lateralThreat or downfieldRecovery or deepRunRecovery
+                or separationRecovery))
         local stamina=finite(input.stamina) and math.max(0,input.stamina) or 0
         local startAt,stopAt=urgent and 75 or 85,urgent and 60 or 70
         local sprint=needsSprint and (input.sprintOn==true and stamina>stopAt
@@ -8520,6 +8544,7 @@ return function(ctx,Policy,services)
             routeSource,planPass=s.route,s.passType
         end
         local input=inputFor(s,root);input.dt=dt
+        input.currentWalkSpeed=tonumber(h.WalkSpeed)
         if input.role=="WR" and input.carrierIsMe
             and (input.phase=="RAC" or input.phase=="Run") and lastKind~="carry" then
             -- Catch steering may finish far from the pre-throw route target.
@@ -8791,7 +8816,7 @@ return function(ctx,Policy,services)
             preferJumpDive=choice.preferJumpDive==true,
             continuousSprint=finalSprintCommitted,finalSprint=finalSprintCommitted}
     end
-    function api.movementBudget(airborneBall)
+    function api.movementBudget(committedPursuit)
         if not alive or not enabled then return nil end
         -- Called while the core builds its snapshot: never recurse into it.
         -- A rare short Bullet reserves one actual native carrier move until
@@ -8802,7 +8827,7 @@ return function(ctx,Policy,services)
             and (selected and selected.payload.Pass or activeRoute.pass)=="Bullet"
             and finite(choice.carryReserve) and choice.carryReserve>=10
             and choice.carryReserve<=(Config.Stamina or 100) then reserve=choice.carryReserve end
-        return {dbReserve=airborneBall==true and 2 or 40,wrReserve=reserve}
+        return {dbReserve=committedPursuit==true and 2 or 40,wrReserve=reserve}
     end
     function api.unload()
         if not alive then return end
@@ -9451,7 +9476,7 @@ end
 end)()
 
 api.initializePreferences(createPreferences)
-assist = createAssist({snapshot=api.context,version=RELEASE_VERSION,buildId="e540c2eb523feaa2992a3411d7f484efe4514e4f484b1df9830ba3b3daf50a2d",fullplay=function(s,root,h,now,dt)
+assist = createAssist({snapshot=api.context,version=RELEASE_VERSION,buildId="a6dd99d2c4368fd77dfd0040d9a2135412980753a34344abce229dffb503acd7",fullplay=function(s,root,h,now,dt)
     if fullplay then return fullplay.navigate(s,root,h,now,dt) end
 end},Planner,createTackle,WRApproach,Motion,createCarrierMoves,PlayerAvoidance)
 assist.setEnabled(false)
@@ -9467,7 +9492,7 @@ repeatWR = createWRRepeat({snapshot=api.context,
     autoplay=function() return autoplay.status() end,
     disableAutoplay=function() return api.setAutoplay(false) end})
 repeatWR.setEnabled(false)
-fullplay = createFullplay({Planner=Planner,snapshot=api.context,version=RELEASE_VERSION,buildId="e540c2eb523feaa2992a3411d7f484efe4514e4f484b1df9830ba3b3daf50a2d",
+fullplay = createFullplay({Planner=Planner,snapshot=api.context,version=RELEASE_VERSION,buildId="a6dd99d2c4368fd77dfd0040d9a2135412980753a34344abce229dffb503acd7",
     assistEnabled=function() return assist.status().enabled end,
     release=function() if assist.releaseFullplay then assist.releaseFullplay() end end},FullplayPolicy)
 matchSkip = createMatchSkip({snapshot=api.context,startDisabled=true,preferencesManaged=true,
@@ -9490,7 +9515,7 @@ local GAME_ID,PLACE_ID=10770281752,116097127629859
 local MAIN_URL="https://raw.githubusercontent.com/BananaMan2006/chalk-assist-deterministic/main/chalk-it-up-1v1.lua"
 local CACHE_FILE="chalk-deterministic-cache.lua"
 local MAIN_FILE="chalk-it-up-1v1.lua"
-local MIN_RELEASE="5.1.13"
+local MIN_RELEASE="5.1.14"
 local MARKER="__ChalkDeterministicAutoBoot"
 local env=type(getgenv)=="function" and getgenv() or _G
 local boot

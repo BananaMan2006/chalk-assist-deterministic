@@ -278,6 +278,84 @@ return function(Policy,create,routeSource,Planner)
         local afterThrow=assert(Policy.movement(p,Config,Field,RouteMath))
         assert(not afterThrow.stemRecoverySeconds,"new recovery burst invented after catch handoff")
     end)
+    local function partialRecoveryInput(extra)
+        local p=input({phase="Live",elapsed=2,routePlan={
+            Points={Vector2.new(0,0),Vector2.new(0,90),Vector2.new(-40,130)},
+            Times={0,4.25,6.5},Arrival=6.5},
+            routeStrategy="deep_middle_floater",slowStem=true,slowStemTime=4.25,
+            stemSprintStart=3.65,earlyStemSprintSeconds=.6,estimatedCatchAt=6.3,
+            middleStemDeep=true,routeWaypoint=2,position=Vector3.new(0,3,36),stamina=90,currentWalkSpeed=20})
+        for k,v in pairs(extra or {}) do p[k]=v end
+        return p
+    end
+    test("partial recovery uses idle funded budget without spending the catch allowance",function()
+        local p=partialRecoveryInput()
+        local originalStamina=p.stamina
+        local scheduled=p.slowStemTime-p.stemSprintStart
+        local final=p.estimatedCatchAt-p.slowStemTime+.12
+        local required=(scheduled+final)*Config.SprintDrain+10
+        assert(required+.6*Config.SprintDrain>p.stamina,"fixture already funds the full burst")
+        local c=assert(Policy.movement(p,Config,Field,RouteMath))
+        local expected=(p.stamina-required)/Config.SprintDrain-.12
+        assert(c.sprint and math.abs(c.stemRecoverySeconds-expected)<1e-8)
+        assert(c.stemRecoverySeconds>=.12 and c.stemRecoverySeconds<.6)
+        assert(p.stamina-(scheduled+final+c.stemRecoverySeconds+.12)*Config.SprintDrain>=10-1e-8)
+        assert(p.stamina==originalStamina,"movement invented stamina")
+        assert(c.moveSpeed==Config.SprintSpeed and not c.hardCut and not c.finalSprintCommitted)
+        assert(math.abs(c.routeScheduleCapacity-(Config.RunSpeed*(p.slowStemTime-p.elapsed)
+            +(Config.SprintSpeed-Config.RunSpeed)*(scheduled+c.stemRecoverySeconds)))<1e-8)
+        p.stemRecoveryUntil=c.stemRecoveryUntil;p.stemRecoverySpent=c.stemRecoverySeconds
+        p.elapsed=p.elapsed+.05;p.stamina=p.stamina-.05*Config.SprintDrain
+        local active=assert(Policy.movement(p,Config,Field,RouteMath))
+        assert(active.sprint and not active.stemRecoverySeconds,"active burst was allocated twice")
+        assert(math.abs(active.routeScheduleCapacity-(Config.RunSpeed*(p.slowStemTime-p.elapsed)
+            +(Config.SprintSpeed-Config.RunSpeed)*(scheduled+p.stemRecoveryUntil-p.elapsed)))<1e-8,
+            "active recovery and scheduled sprint were double-counted")
+    end)
+    test("partial recovery rejects an unfunded minimum and honors the route reserve and total cap",function()
+        local p=partialRecoveryInput({stamina=85})
+        assert(not Policy.movement(p,Config,Field,RouteMath).stemRecoverySeconds,
+            "allocated less than the funded minimum plus dispatch allowance")
+        p.stamina=90;p.routeStrategy="deep_middle_bullet";p.finalSprintReserve=30
+        assert(not Policy.movement(p,Config,Field,RouteMath).stemRecoverySeconds,"spent the carry move reserve")
+        p.routeStrategy="deep_middle_floater";p.finalSprintReserve=10;p.stemRecoverySpent=.49
+        assert(not Policy.movement(p,Config,Field,RouteMath).stemRecoverySeconds,"exceeded the remaining route cap")
+        p.stemRecoverySpent=.6
+        assert(not Policy.movement(p,Config,Field,RouteMath).stemRecoverySeconds,"restarted an exhausted cap")
+        p.stemRecoverySpent=.4
+        local limited=assert(Policy.movement(p,Config,Field,RouteMath))
+        assert(limited.stemRecoverySeconds and p.stemRecoverySpent+limited.stemRecoverySeconds<=.6+1e-8)
+    end)
+    test("new partial recovery needs observed normal speed while previously funded bursts are unchanged",function()
+        local p=partialRecoveryInput()
+        for _,speed in ipairs({9,12.15,0,math.huge,0/0}) do
+            p.currentWalkSpeed=speed
+            assert(not Policy.movement(p,Config,Field,RouteMath).stemRecoverySeconds,
+                "partial recovery spent stamina during a native slowdown or invalid observation")
+        end
+        p.currentWalkSpeed=nil
+        assert(not Policy.movement(p,Config,Field,RouteMath).stemRecoverySeconds,"unknown native speed funded partial recovery")
+        p.currentWalkSpeed=27;assert(Policy.movement(p,Config,Field,RouteMath).stemRecoverySeconds)
+        p.currentWalkSpeed=9;p.stamina=100
+        local existing=assert(Policy.movement(p,Config,Field,RouteMath))
+        assert(existing.stemRecoverySeconds==.6,"new partial guard changed an existing fully funded burst")
+    end)
+    test("recovery ends before scheduled sprint and cannot begin after throw or a committed cut",function()
+        local p=partialRecoveryInput({elapsed=3.52,stamina=100})
+        local nearLate=assert(Policy.movement(p,Config,Field,RouteMath))
+        assert(nearLate.stemRecoveryUntil and nearLate.stemRecoveryUntil<=p.stemSprintStart+1e-8)
+        p.stemRecoveryUntil=nearLate.stemRecoveryUntil;p.stemRecoverySpent=nearLate.stemRecoverySeconds
+        p.elapsed=p.stemSprintStart+.01
+        local late=assert(Policy.movement(p,Config,Field,RouteMath))
+        assert(late.sprint and not late.stemRecoverySeconds)
+        assert(math.abs(late.routeScheduleCapacity-Config.SprintSpeed*(p.slowStemTime-p.elapsed))<1e-8,
+            "expired recovery was added to scheduled sprint")
+        p=partialRecoveryInput({ballActive=true,passStarted=true,allowPostThrowStem=true,postThrowStem=true})
+        assert(not Policy.movement(p,Config,Field,RouteMath).stemRecoverySeconds,"invented post-throw recovery")
+        p=partialRecoveryInput({finalSprintCommitted=true})
+        local committed=assert(Policy.movement(p,Config,Field,RouteMath))
+        assert(committed.finalSprintCommitted and not committed.stemRecoverySeconds,"reopened the committed stem")
+    end)
     test("short remaining downs use a paced side Floater with no parked first contact",function()
         for _,yards in ipairs({1.3,.25}) do
             local los=Field.GoalZ-yards*Field.YD

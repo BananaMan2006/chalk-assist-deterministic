@@ -1378,6 +1378,12 @@ return function(ctx, Planner, createTackle, WRApproach, Motion, createCarrierMov
         local s=ctx.snapshot()
         if alive and s.phase=="Live" and s.arc and s.launchAt
             and (s.role=="WR" or s.role=="DB") then
+            -- Observe the native signal itself as well as contact geometry.
+            -- A changed attribute is not proof that the server accepted it.
+            local touchValue=me:GetAttribute("BallTouched")
+            local touchClock=os.clock()
+            local touchNumber=type(touchValue)=="number" and touchValue==touchValue
+                and math.abs(touchValue)<math.huge and touchValue or nil
             claimedKey=s.launchAt
             claimObservedAt=workspace:GetServerTimeNow();claimTraceCount=0;claimTraceNext=claimObservedAt+.05
             local root,h=healthyCharacter()
@@ -1399,6 +1405,8 @@ return function(ctx, Planner, createTackle, WRApproach, Motion, createCarrierMov
                     h.FloorMaterial==Enum.Material.Air)
             end
             log("localCatch",{role=s.role,claimOnly=true,authoritative=false,
+                touchType=type(touchValue),touchValue=touchNumber,
+                touchClock=touchClock,touchAge=touchNumber and touchClock-touchNumber,
                 networkPing=networkPing(),
                 opponents=opponents,
                 position=root and xyz(root.Position),velocity=root and xyz(root.AssemblyLinearVelocity),

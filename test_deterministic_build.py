@@ -102,7 +102,7 @@ class DeterministicBuildTests(unittest.TestCase):
             assert(events[#events].caughtByMe==nil)
         ''')
 
-    def test_coverage_reserve_unlock_requires_observed_live_ball(self):
+    def test_coverage_reserve_unlock_requires_live_ball_or_verified_postcatch_carrier(self):
         source = (ROOT / 'chalk-overlay-core.lua').read_text()
         start = source.index('function api.context()')
         stop = source.index('function api.syncFromGame()', start)
@@ -126,6 +126,21 @@ class DeterministicBuildTests(unittest.TestCase):
                 phase=value
                 assert(api.context().playBudget.dbReserve==40)
             end
+            arc=nil
+            carrierContext=function()return {},true,"WR" end
+            for _,value in ipairs({"RAC","Run"}) do
+                phase=value;assert(api.context().playBudget.dbReserve==2)
+            end
+            for _,value in ipairs({"PreSnap","Hike","Live","Result","Lobby"}) do
+                phase=value;assert(api.context().playBudget.dbReserve==40)
+            end
+            phase="RAC"
+            carrierContext=function()return nil,true,"WR" end
+            assert(api.context().playBudget.dbReserve==40)
+            carrierContext=function()return {},false,"WR" end
+            assert(api.context().playBudget.dbReserve==40)
+            carrierContext=function()return {},nil,"WR" end
+            assert(api.context().playBudget.dbReserve==40)
             fullplay=nil
             assert(api.context().playBudget==nil)
         ''')

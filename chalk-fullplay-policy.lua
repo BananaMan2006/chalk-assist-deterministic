@@ -1289,11 +1289,12 @@ function Policy.movement(input,Config,Field,RouteMath)
         local los=finite(input.LOS) and input.LOS or Field.LOSZ
         return result(Vector3.new(input.startX+offset.X,position.Y,los+offset.Z),"lineup",false,.5)
     end
-    if input.enemyCarrier and opponent and (phase=="RAC" or phase=="Live" or phase=="Run") then
+    if input.enemyCarrier==true and opponent and (phase=="RAC" or phase=="Live" or phase=="Run") then
         local distance=flatDistance(position,opponent)
         local lead=math.min(.45,distance/math.max(1,Config.SprintSpeed)*.3)
         local target=opponent+boundedVelocity(input.opponentVelocity,Config.SprintSpeed)*lead
-        local reserve=role=="DB" and 40 or 10
+        local committedPursuit=role=="DB" and (phase=="RAC" or phase=="Run")
+        local reserve=role=="DB" and (committedPursuit and 2 or 40) or 10
         local stamina=finite(input.stamina) and math.max(0,input.stamina) or 0
         local sprint=stamina>reserve+math.max(1,(Config.SprintDrain or 25)*.15)
         return result(target,"pursue",sprint,.8)
@@ -1431,6 +1432,14 @@ function Policy.movement(input,Config,Field,RouteMath)
                             and not input.ballActive and not input.passStarted
                             and debt>.75 and sprintSpeed>stemRun and spent<.6 then
                             local duration=math.min(.6-spent,late-input.elapsed,(debt+.15)/(sprintSpeed-stemRun)+.12)
+                            local fundedSeconds=math.max(0,(stamina-required)/drain)
+                            if duration>fundedSeconds then
+                                -- A smaller correction can be affordable even when
+                                -- the entire requested burst is not. Keep an extra
+                                -- input-duration allowance; never borrow regeneration.
+                                duration=finite(input.currentWalkSpeed) and input.currentWalkSpeed>=run
+                                    and math.min(duration,math.max(0,fundedSeconds-.12)) or 0
+                            end
                             if duration>=.12 and stamina>=(remainingBurst+duration+finalSeconds)*drain+routeReserve then
                                 recoveryUntil=input.elapsed+duration;recoverySeconds=duration
                                 recoveryActive=true;extraRemaining=duration
@@ -1623,7 +1632,11 @@ function Policy.movement(input,Config,Field,RouteMath)
             or nearGoal and observedDepth<sprintMinDepth-yd)
         local forwardThreat=velocity.Z>Config.RunSpeed*.5 and observedDepth < sprintMinDepth-yd
         local lateralThreat=lateral>6*yd and observedDepth<3*yd and velocity.Z>=-2
-        local lateralCutRecovery=outward and velocity.Z>=-2 and observedDepth<3*yd
+        -- Backward depth motion does not make a fast outward side escape safe.
+        -- Preserve the same depth/lateral bands and stamina hysteresis; slower
+        -- retreating motion still releases recovery rather than chasing it.
+        local lateralCutRecovery=outward and observedDepth<3*yd
+            and (velocity.Z>=-2 or math.abs(velocity.X)>Config.RunSpeed+2)
             and (input.sprintOn==true and lateral>.65*yd and forecastLateral>yd
                 or input.sprintOn~=true and math.abs(velocity.X)>Config.RunSpeed+2
                     and lateral>.6*yd and forecastLateral>1.5*yd)
@@ -1655,9 +1668,9 @@ function Policy.movement(input,Config,Field,RouteMath)
         -- Use observed positions so projection does not erase that free band.
         -- Walk routine recovery; save sprint for real separation or a goal-line
         -- threat, retaining a lateral buffer instead of copying every cut.
-        local needsSprint=phase=="Live" and not retreatingSafe
-            and (urgent or forwardThreat or lateralThreat or lateralCutRecovery or downfieldRecovery or deepRunRecovery
-                or separationRecovery)
+        local needsSprint=phase=="Live" and (lateralCutRecovery or not retreatingSafe
+            and (urgent or forwardThreat or lateralThreat or downfieldRecovery or deepRunRecovery
+                or separationRecovery))
         local stamina=finite(input.stamina) and math.max(0,input.stamina) or 0
         local startAt,stopAt=urgent and 75 or 85,urgent and 60 or 70
         local sprint=needsSprint and (input.sprintOn==true and stamina>stopAt

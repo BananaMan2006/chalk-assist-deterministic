@@ -1434,7 +1434,7 @@ return function(Policy,create,routeSource,policySource)
         assert(d.target.X>p.position.X and d.sprint)
         p.stamina=84;assert(not Policy.movement(p,Config,f,RouteMath).sprint)
     end)
-    test("DB retreating receivers cannot trigger sprint or forward near-goal restoration",function()
+    test("DB pure retreat avoids sprint while fast side escapes keep the near-goal depth target",function()
         local p=input({role="DB",phase="Live",position=Vector3.new(0,3,105),
             opponentPosition=Vector3.new(0,3,110),opponentVelocity=Vector3.new(0,0,-12),stamina=100,sprintOn=true})
         local d=move(p);near(d.target.Z,p.position.Z);assert(not d.sprint)
@@ -1445,17 +1445,17 @@ return function(Policy,create,routeSource,policySource)
         for _,side in ipairs({-1,1}) do
             p=input({role="DB",phase="Live",position=Vector3.new(side*22,3,114),
                 opponentPosition=Vector3.new(side*26,3,110),opponentVelocity=Vector3.new(side*27,0,-3),stamina=100})
-            d=move(p);inBounds(d.target);assert(d.target.Z<=p.position.Z and not d.sprint)
+            d=move(p);inBounds(d.target);assert(d.target.Z<=p.position.Z and d.sprint)
         end
     end)
-    test("DB coverage reserves do not replace ball ownership and pursuit preserves forty",function()
+    test("DB coverage yields to ball control and confirmed RAC pursuit retains its lower floor",function()
         local p=input({role="DB",phase="Live",position=Vector3.new(0,3,0),
             opponentPosition=Vector3.new(0,3,30),stamina=100,defenseProfile={depthBiasYards=2.5}})
         p.ballActive=true;assert(move(p)==nil)
         p.ballActive=false;p.passStarted=true;assert(move(p)==nil)
         p.phase="RAC";p.enemyCarrier=true
-        for _,stamina in ipairs({0,39,40,43}) do p.stamina=stamina;assert(not move(p).sprint) end
-        p.stamina=44;assert(move(p).kind=="pursue" and move(p).sprint)
+        for _,stamina in ipairs({0,2,5.75}) do p.stamina=stamina;assert(not move(p).sprint) end
+        p.stamina=5.76;assert(move(p).kind=="pursue" and move(p).sprint)
     end)
     test("Throw to BallStop decision gap cannot restart live route or shadow",function()
         for _,role in ipairs({"WR","DB"}) do
