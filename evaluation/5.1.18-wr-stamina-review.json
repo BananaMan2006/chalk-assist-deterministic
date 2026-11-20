@@ -1,0 +1,182 @@
+{
+  "schemaVersion": 1,
+  "version": "5.1.18",
+  "scope": "Receiver route stamina funding and recovery sprint accounting",
+  "evidenceTypes": {
+    "live": "Unmodified 5.1.17 failure observations; no 5.1.18 match outcome claimed here.",
+    "offline": "Final canonical 5.1.18 policy/controller regressions and private native-math route replay."
+  },
+  "liveStartBudget": {
+    "sampledWRPlays": 20,
+    "setupStamina": 100,
+    "firstLiveStamina": 75,
+    "firstLiveSampleElapsedSeconds": {
+      "min": 0.044259071350097656,
+      "max": 0.14796996116638184
+    },
+    "firstLiveNativeSpeed": 20,
+    "firstLiveSprintRequestedCount": 0,
+    "causeOfNativeStaminaChange": "Unknown. Reviewed client scripts read stamina; explicit no-release uses the same nil payload. No verified hidden 25-point release rule is inferred."
+  },
+  "incidents": [
+    {
+      "id": "WR-A",
+      "observedVersion": "5.1.17",
+      "role": "WR",
+      "pass": "Floater",
+      "nativeResult": "Incomplete",
+      "plans": 20,
+      "reachablePlans": 0,
+      "jumpOrDiveActions": 0,
+      "localCatchClaims": 0,
+      "stageRelease": {
+        "remainingDistanceStuds": 38.52791213989258,
+        "availableTravelStuds": 19.747620105743408,
+        "distanceDeficitStuds": 18.78029203414917,
+        "remainingSeconds": 0.7313933372497559,
+        "stamina": 92
+      },
+      "analysis": "Native Jammed notice and speed 9 added travel delay before throw.",
+      "newVersionCatchRescueVerified": false
+    },
+    {
+      "id": "WR-B",
+      "observedVersion": "5.1.17",
+      "role": "WR",
+      "pass": "Floater",
+      "nativeResult": "Incomplete",
+      "plans": 17,
+      "reachablePlans": 3,
+      "jumpOrDiveActions": 0,
+      "localCatchClaims": 0,
+      "stageRelease": {
+        "remainingDistanceStuds": 29.22822380065918,
+        "availableTravelStuds": 19.780521154403687,
+        "distanceDeficitStuds": 9.447702646255493,
+        "remainingSeconds": 0.732611894607544,
+        "stamina": 99
+      },
+      "analysis": "Avoidance denied recovery sprint while allocation accounting exhausted the cap; brief postthrow reachable forecasts were lost.",
+      "newVersionCatchRescueVerified": false
+    },
+    {
+      "id": "WR-C",
+      "observedVersion": "5.1.17",
+      "role": "WR",
+      "pass": "Floater",
+      "nativeResult": "Incomplete",
+      "plans": 18,
+      "reachablePlans": 0,
+      "jumpOrDiveActions": 0,
+      "localCatchClaims": 0,
+      "stageRelease": {
+        "remainingDistanceStuds": 30.85480308532715,
+        "availableTravelStuds": 15.603459119796753,
+        "distanceDeficitStuds": 15.251343965530396,
+        "remainingSeconds": 0.5779058933258057,
+        "stamina": 100
+      },
+      "analysis": "Repeated avoidance denied recovery sprint; cap reached 0.6 while native speed remained 20 and observed stamina refilled to 100.",
+      "newVersionCatchRescueVerified": false
+    }
+  ],
+  "fixes": [
+    "Plan with min(current stamina, 75% of configured maximum, earliest lower Live start observed in this match). The 25% allowance is empirical and conservative, not an asserted server cost.",
+    "Clear observed start on lobby, opponent change or mode change; ignore test, invalid and late samples. Refill does not raise this match minimum; no cross-session learning or persistence.",
+    "Forecast refill of both the initial deficit and spent opening sprint, capped by actual configured maximum, rate and delayed walking interval. Opening sprint still requires current funding before future recovery.",
+    "Charge recovery cap only for observed native SprintOn at above-normal WalkSpeed during an allocated recovery interval. Denied or merely allocated requests are not charged; physical blockage does not exempt native sprint spending.",
+    "Bound each confirmed accounting interval to 100ms, intersect its end with the allocation and scheduled sprint start, and retain the 600ms confirmed-time cap. This counter is sampled confirmed time, not a claim to know exact native stamina cost."
+  ],
+  "nativeMathReplay": {
+    "privacy": "Authorized native Config and RouteMath were read locally and are not published. Only scalar outputs are retained.",
+    "oldPolicyVersion": "5.1.17",
+    "newPolicyVersion": "5.1.18",
+    "observedLiveStamina": 75,
+    "oldSetup100": {
+      "launch": 3.772575323738969,
+      "estimatedStemRegeneration": 22.5,
+      "cutAt": 4.570209774909952,
+      "scheduleCapacity": 100.09273009178119,
+      "stamina": 100,
+      "initialSprint": false,
+      "late": 3.6702097749099525,
+      "initialSpeed": 20,
+      "estimatedCatchStamina": 22.41308593750003,
+      "pass": "Floater",
+      "stemYards": 20.00000264607131,
+      "estimatedCatchAt": 6.653686337409951,
+      "early": 0.9
+    },
+    "oldBudgetOnly75": {
+      "launch": 3.659806838715449,
+      "cutAt": 3.659806838715449,
+      "stamina": 75,
+      "initialSprint": false,
+      "late": 3.659806838715449,
+      "scheduleCapacity": 70.29875499177724,
+      "bestEffort": true,
+      "pass": "Floater",
+      "initialSpeed": 20,
+      "stemYards": 24.00000264607131,
+      "early": 0
+    },
+    "newBudgetAndRegeneration75": {
+      "pass": "Floater",
+      "estimatedCatchStamina": 17.568643568704843,
+      "cutAt": 4.173160319789159,
+      "initialSpeed": 27,
+      "stamina": 75,
+      "late": 3.873160319789159,
+      "scheduleCapacity": 87.95174098936533,
+      "estimatedCatchAt": 6.571090007289159,
+      "initialSprint": true,
+      "estimatedStemRegeneration": 35.516885756204864,
+      "launch": 3.690588863882479,
+      "early": 0.9,
+      "stemYards": 17.500001852249916
+    },
+    "finding": "Old 100 route suppresses opening sprint at actual 75. Reducing only the old planning budget yields an unverified best-effort route. Final 75-budget policy instead produces a funded Floater forecast and immediately requests native 27 sprint. This is a mathematical feasibility change, not proof of a live catch."
+  },
+  "validation": {
+    "deterministicPolicyAndController": {
+      "passed": 83,
+      "total": 83,
+      "suites": {
+        "defensiveCuts": 16,
+        "scheduledRouteMix": 28,
+        "deterministicIsolation": 39
+      }
+    },
+    "avoidanceController": {
+      "passed": 34,
+      "total": 34
+    },
+    "coveredCases": [
+      "first-play allowance",
+      "lower observed start",
+      "refill cannot increase budget",
+      "zero/low/invalid stamina",
+      "mode/opponent/lobby resets",
+      "test snapshot exclusion",
+      "disabled/missing regeneration",
+      "opening sprint current affordability",
+      "denied allocation does not spend cap",
+      "pending 20 speed does not count",
+      "native 27 with zero velocity counts",
+      "long-frame accounting bounded and charged",
+      "new-round reset",
+      "pending DB movement checked at 20 and 27 with 4.25 clearance"
+    ],
+    "gitDiffCheck": "passed",
+    "canonicalSourceSha256": {
+      "chalk-fullplay-policy.lua": "c2b6592ef5a43b956cf657119f3acd34fc848e236f7eed1de45c1957d1171d09",
+      "chalk-fullplay-controller.lua": "7b1bcd76b6f271988859e46a09ca4516fc27abb53d6d78d4487b561986c036f0"
+    }
+  },
+  "limitations": [
+    "No alternate live trajectories were executed by the replay. Opponent changes, jam outcomes, physics, latency and native catch decisions remain live-test requirements.",
+    "The early Live budget observation may include a small amount of movement cost; conservative downward-only handling deliberately avoids optimistic refill evidence.",
+    "A hard jam can still make a fixed already-submitted route unreachable; this update does not remove native jam or catch validation.",
+    "No wins, guaranteed catches, training improvement or server acceptance are claimed."
+  ]
+}

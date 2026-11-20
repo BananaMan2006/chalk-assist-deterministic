@@ -1,0 +1,2295 @@
+{
+  "failures": 0,
+  "inputs": {
+    "config": "chalk-offline-fixture-config.lua",
+    "field": "chalk-offline-fixture-field.lua"
+  },
+  "limitations": [
+    "Offline Lua with double-precision Vector3/CFrame math; Roblox float32 rounding and Luau runtime are not reproduced.",
+    "No physics, replication, frame/input latency, native action execution, or server catch/tackle confirmation.",
+    "Instance fixtures are isolated data tables, not simulated characters. Unsupported APIs fail.",
+    "Authored field bounds and numeric configuration exercise rules; they do not verify current game dimensions or settings."
+  ],
+  "runtime": "Lua 5.5",
+  "suites": {
+    "approach": {
+      "failed": 0,
+      "offlineSeconds": 0.0790874999947846,
+      "passed": 15,
+      "results": [
+        {
+          "name": "WR first moves directly away from the catch point",
+          "passed": true
+        },
+        {
+          "name": "latest feasible detour leaves approximately 125 ms arrival slack",
+          "passed": true
+        },
+        {
+          "name": "contested catch may fake with spare time without delaying contact",
+          "passed": true
+        },
+        {
+          "name": "unknown defender visibility retains an honest unknown baseline",
+          "passed": true
+        },
+        {
+          "name": "detour cannot worsen defender risk",
+          "passed": true
+        },
+        {
+          "name": "contested fake cannot delay original contact beyond 15 ms",
+          "passed": true
+        },
+        {
+          "name": "clear catch preserves original absolute defender deadline",
+          "passed": true
+        },
+        {
+          "name": "ordinary catch cannot become a jump or dive to accommodate a fake",
+          "passed": true
+        },
+        {
+          "name": "no fake is attempted without arrival slack",
+          "passed": true
+        },
+        {
+          "name": "last-chance catch never spends time on a fake",
+          "passed": true
+        },
+        {
+          "name": "fake return requires normal catch margins",
+          "passed": true
+        },
+        {
+          "name": "blocked straight-away path permits only a backward diagonal",
+          "passed": true
+        },
+        {
+          "name": "fake cannot collect the ball along its curved path",
+          "passed": true
+        },
+        {
+          "name": "return contract models turn time and remaining sprint without mutation",
+          "passed": true
+        },
+        {
+          "name": "real planner preserves a late grounded catch after an away-first fake",
+          "passed": true
+        }
+      ],
+      "total": 15
+    },
+    "autoload": {
+      "failed": 0,
+      "offlineSeconds": 0.012592334009241313,
+      "passed": 53,
+      "results": [
+        {
+          "name": "wrong game performs no HTTP or file operations",
+          "passed": true
+        },
+        {
+          "name": "unverified place is guarded",
+          "passed": true
+        },
+        {
+          "name": "loaded and native dependencies are awaited before download",
+          "passed": true
+        },
+        {
+          "name": "same server automatic startup is idempotent",
+          "passed": true
+        },
+        {
+          "name": "waiting marker blocks concurrent startup",
+          "passed": true
+        },
+        {
+          "name": "F8 stays unloaded automatically; manual startup can resume",
+          "passed": true
+        },
+        {
+          "name": "new server reloads despite inherited old markers and app",
+          "passed": true
+        },
+        {
+          "name": "old app without marker cannot suppress a new server load",
+          "passed": true
+        },
+        {
+          "name": "dependency timeout clears marker and permits retry",
+          "passed": true
+        },
+        {
+          "name": "F8 during dependency wait cancels pending public startup",
+          "passed": true
+        },
+        {
+          "name": "manual main during dependency wait prevents duplicate startup",
+          "passed": true
+        },
+        {
+          "name": "F8 during HTTP prevents execution and cache writes",
+          "passed": true
+        },
+        {
+          "name": "download failure uses cached source",
+          "passed": true
+        },
+        {
+          "name": "invalid download falls back to local installed main",
+          "passed": true
+        },
+        {
+          "name": "runtime failure neither poisons cache nor executes fallback",
+          "passed": true
+        },
+        {
+          "name": "online startup works without file APIs",
+          "passed": true
+        },
+        {
+          "name": "request fallback works when HttpGet is unavailable",
+          "passed": true
+        },
+        {
+          "name": "no valid download or cache fails without a sticky marker",
+          "passed": true
+        },
+        {
+          "name": "stale public response cannot downgrade installed release",
+          "passed": true
+        },
+        {
+          "name": "newest valid local release sets floor above bootstrap minimum",
+          "passed": true
+        },
+        {
+          "name": "newer installed main wins over older valid cache",
+          "passed": true
+        },
+        {
+          "name": "newer public release replaces local copies only after startup",
+          "passed": true
+        },
+        {
+          "name": "missing or malformed first-line release metadata is rejected",
+          "passed": true
+        },
+        {
+          "name": "below-minimum or unversioned local sources are not fallback candidates",
+          "passed": true
+        },
+        {
+          "name": "invalid higher-version local source does not raise floor",
+          "passed": true
+        },
+        {
+          "name": "valid metadata with invalid downloaded syntax falls back",
+          "passed": true
+        },
+        {
+          "name": "source limit applies to downloads and local fallback before compilation",
+          "passed": true
+        },
+        {
+          "name": "local update during HTTP sets newest release floor",
+          "passed": true
+        },
+        {
+          "name": "failed newer startup preserves valid installed release and cache",
+          "passed": true
+        },
+        {
+          "name": "capability queue_on_teleport",
+          "passed": true
+        },
+        {
+          "name": "capability queueonteleport",
+          "passed": true
+        },
+        {
+          "name": "capability syn.queue_on_teleport",
+          "passed": true
+        },
+        {
+          "name": "missing queue capability reports a limitation without errors",
+          "passed": true
+        },
+        {
+          "name": "distinct capability fallback succeeds and duplicate aliases are not retried",
+          "passed": true
+        },
+        {
+          "name": "failed queue receives one bounded teleport retry",
+          "passed": true
+        },
+        {
+          "name": "late queue availability is detected once on teleport",
+          "passed": true
+        },
+        {
+          "name": "F8 disconnects pending callback and marks only current job unloaded",
+          "passed": true
+        },
+        {
+          "name": "reload preserves boot state and deduplicates queue; new job queues again",
+          "passed": true
+        },
+        {
+          "name": "wrong game controller never queues or mutates boot state",
+          "passed": true
+        },
+        {
+          "name": "actual queued bootstrap loads once after rejoin and respects F8 afterward",
+          "passed": true
+        },
+        {
+          "name": "optional teleport signal failure does not stop main startup",
+          "passed": true
+        },
+        {
+          "name": "local loader stays offline and respects same-job unload",
+          "passed": true
+        },
+        {
+          "name": "local loader failure permits retry and wrong game does nothing",
+          "passed": true
+        },
+        {
+          "name": "F8 during dependency wait cancels pending local startup",
+          "passed": true
+        },
+        {
+          "name": "legacy higher-version cache cannot restore learning",
+          "passed": true
+        },
+        {
+          "name": "legacy running app does not suppress deterministic replacement",
+          "passed": true
+        },
+        {
+          "name": "local loader rejects old product before compiling",
+          "passed": true
+        },
+        {
+          "name": "queued bootstrap forwards one-hop provenance while ordinary entries do not",
+          "passed": true
+        },
+        {
+          "name": "local autoexec identifies entry without adding ON flags",
+          "passed": true
+        },
+        {
+          "name": "queued handoff waits for partial autoexec runtime continuity readiness",
+          "passed": true
+        },
+        {
+          "name": "manual bootstrap cancels a running session and switches automation off",
+          "passed": true
+        },
+        {
+          "name": "teleport callbacks still reach session gate after queue registration",
+          "passed": true
+        },
+        {
+          "name": "legacy queued payload is supplemented once with session-aware bootstrap",
+          "passed": true
+        }
+      ],
+      "total": 53
+    },
+    "autoplay": {
+      "failed": 0,
+      "offlineSeconds": 0.0009250000002793968,
+      "passed": 20,
+      "results": [
+        {
+          "name": "catalog keeps unavailable modes visible and includes both ranked queues",
+          "passed": true
+        },
+        {
+          "name": "new settings start disabled and unavailable saved mode cannot enable fallback",
+          "passed": true
+        },
+        {
+          "name": "lobby joins exactly once and waits for acknowledgement",
+          "passed": true
+        },
+        {
+          "name": "every per-play phase including Result prevents queueing",
+          "passed": true
+        },
+        {
+          "name": "match server and missing player readiness cannot queue",
+          "passed": true
+        },
+        {
+          "name": "end of game rearms only after actual Lobby and native idle bootstrap",
+          "passed": true
+        },
+        {
+          "name": "a lobby on a match server waits for native return teleport",
+          "passed": true
+        },
+        {
+          "name": "existing manual search survives enabling and changing autoplay mode",
+          "passed": true
+        },
+        {
+          "name": "turning autoplay off cancels its own accepted search once",
+          "passed": true
+        },
+        {
+          "name": "off while Join is pending still cancels a later Searching acknowledgement",
+          "passed": true
+        },
+        {
+          "name": "off or mode change cancels pending Join immediately before any acknowledgement",
+          "passed": true
+        },
+        {
+          "name": "mode change waits for cancellation acknowledgement before new join",
+          "passed": true
+        },
+        {
+          "name": "late search packets do not undo cancellation or spam Leave",
+          "passed": true
+        },
+        {
+          "name": "Found wins cancellation race and cannot be cancelled",
+          "passed": true
+        },
+        {
+          "name": "manual native cancel pauses autoplay rather than silently restarting",
+          "passed": true
+        },
+        {
+          "name": "three rejected joins back off and disable instead of flooding",
+          "passed": true
+        },
+        {
+          "name": "missing Join acknowledgement cancels before any retry",
+          "passed": true
+        },
+        {
+          "name": "unconfirmed or rejected cancellation pauses instead of rejoining",
+          "passed": true
+        },
+        {
+          "name": "found alerts work while autoplay off and deduplicate native repeats",
+          "passed": true
+        },
+        {
+          "name": "runtime reload preserves owned search without resending Join",
+          "passed": true
+        }
+      ],
+      "total": 20
+    },
+    "avoidance": {
+      "failed": 0,
+      "offlineSeconds": 0.06259308301378042,
+      "passed": 50,
+      "results": [
+        {
+          "name": "fresh clear movement retains the exact vector magnitude and sprint request",
+          "passed": true
+        },
+        {
+          "name": "far behind departing and vertically separated players preserve clear movement",
+          "passed": true
+        },
+        {
+          "name": "moving crossing capsule triggers avoidance before physical contact",
+          "passed": true
+        },
+        {
+          "name": "proactive walk bypass clears a stationary blocker without touching or side chatter",
+          "passed": true
+        },
+        {
+          "name": "overlapping forward turn waits when every checked movement speed worsens contact",
+          "passed": true
+        },
+        {
+          "name": "centered and mirrored overlap escapes resume after a bounded turn without permanent holding",
+          "passed": true
+        },
+        {
+          "name": "already safe sideways overlap escapes still move immediately",
+          "passed": true
+        },
+        {
+          "name": "retained side is stable across small opponent jitter and roster reordering",
+          "passed": true
+        },
+        {
+          "name": "oscillating clearance boundary cannot alternate bypass and return headings every frame",
+          "passed": true
+        },
+        {
+          "name": "release hysteresis never holds an old bypass into a sideline",
+          "passed": true
+        },
+        {
+          "name": "material catch-target change starts a bounded return without the old clear-frame hold",
+          "passed": true
+        },
+        {
+          "name": "changed goal still checks the bounded return heading for player collisions",
+          "passed": true
+        },
+        {
+          "name": "small requested-heading jitter preserves ordinary passing-side hysteresis",
+          "passed": true
+        },
+        {
+          "name": "sideline bypass selects the open side and remains bounded",
+          "passed": true
+        },
+        {
+          "name": "no bounded bypass releases sprint and does not push into the obstacle",
+          "passed": true
+        },
+        {
+          "name": "recorded-style low displacement detects blocking despite reported velocity27",
+          "passed": true
+        },
+        {
+          "name": "real positional progress prevents false blocking even when reported velocity is zero",
+          "passed": true
+        },
+        {
+          "name": "brief contact does not claim prolonged blocking before its observation window",
+          "passed": true
+        },
+        {
+          "name": "committed movement bypass clears detour and progress state without changing input",
+          "passed": true
+        },
+        {
+          "name": "zero movement resets stale state and never fabricates a detour",
+          "passed": true
+        },
+        {
+          "name": "first detour starts from actual current heading with a bounded turn",
+          "passed": true
+        },
+        {
+          "name": "turning away from an opponent still protects the actual current travel direction",
+          "passed": true
+        },
+        {
+          "name": "smoothed return to a clear path remains bounds-safe beside a sideline",
+          "passed": true
+        },
+        {
+          "name": "active detours never increase requested movement strength or enable unrequested sprint",
+          "passed": true
+        },
+        {
+          "name": "invalid inputs are contained and cannot produce nonfinite steering",
+          "passed": true
+        },
+        {
+          "name": "malformed bounds cannot authorize a new sideways path",
+          "passed": true
+        },
+        {
+          "name": "state updates are pure and sample history remains bounded",
+          "passed": true
+        },
+        {
+          "name": "clock rollback discards stale contact history",
+          "passed": true
+        },
+        {
+          "name": "recorded8892 clear passing heading retains an explicitly requested native sprint",
+          "passed": true
+        },
+        {
+          "name": "explicit opt out is identical to default across a moving detour",
+          "passed": true
+        },
+        {
+          "name": "prospective27 collision slows a path that is clear at current20",
+          "passed": true
+        },
+        {
+          "name": "actual20 crossing still slows even when prospective27 would escape",
+          "passed": true
+        },
+        {
+          "name": "prospective lookahead includes obstacles beyond slowed native speed shortlist",
+          "passed": true
+        },
+        {
+          "name": "sprint option never spends sprint during contact or measured physical blocking",
+          "passed": true
+        },
+        {
+          "name": "held sprint heading is rejected when only prospective speed leaves bounds",
+          "passed": true
+        },
+        {
+          "name": "safe sprint return keeps bounded turns and original analog strength",
+          "passed": true
+        },
+        {
+          "name": "sprint exception requires an explicit valid native speed and preserves action priority",
+          "passed": true
+        },
+        {
+          "name": "opted in sprint bypass clears blocker without entering capsule or switching sides",
+          "passed": true
+        },
+        {
+          "name": "timed catch takes a small clear bypass instead of the first coarse35degree angle",
+          "passed": true
+        },
+        {
+          "name": "catch with no travel slack returns without spending the clearpath hold",
+          "passed": true
+        },
+        {
+          "name": "funded catch path retains ordinary boundary hysteresis",
+          "passed": true
+        },
+        {
+          "name": "expired catch deadline cannot bypass collision or field bounds",
+          "passed": true
+        },
+        {
+          "name": "deadline return still checks the bounded currentheading collision",
+          "passed": true
+        },
+        {
+          "name": "malformed optional deadlines preserve default avoidance",
+          "passed": true
+        },
+        {
+          "name": "timed bypass keeps one side and reduces lateral distance in authored movement",
+          "passed": true
+        },
+        {
+          "name": "timed sprint bypass selects a slightly wider faster safe path",
+          "passed": true
+        },
+        {
+          "name": "sprint ranking does not choose a wide slow sideways path just to sprint",
+          "passed": true
+        },
+        {
+          "name": "recorded floater detour brackets admit a faster checked same-side heading",
+          "passed": true
+        },
+        {
+          "name": "sprint forecast preserves its own near-contact gate across mirrored moving bypasses",
+          "passed": true
+        },
+        {
+          "name": "near-contact sprint anticipation remains an explicit opt-in",
+          "passed": true
+        }
+      ],
+      "total": 50
+    },
+    "avoidance-controller": {
+      "failed": 0,
+      "offlineSeconds": 0.004000749991973862,
+      "passed": 34,
+      "results": [
+        {
+          "name": "manual low-stamina catch preserves user sprint and analog strength",
+          "passed": true
+        },
+        {
+          "name": "catch avoidance receives the current approach point and earliest arrival deadline",
+          "passed": true
+        },
+        {
+          "name": "live DB pursuit retains a safe pending sprint without inventing a catch deadline",
+          "passed": true
+        },
+        {
+          "name": "pursuit permission still obeys real overlap clearance and current stamina budget",
+          "passed": true
+        },
+        {
+          "name": "recorded WR pending-speed pursuit preserves checked sprint without a catch deadline",
+          "passed": true
+        },
+        {
+          "name": "WR pursuit still stops sprint for real overlap or an exhausted budget",
+          "passed": true
+        },
+        {
+          "name": "live pursuit opt-in does not extend to prethrow other phases or WR without catch intent",
+          "passed": true
+        },
+        {
+          "name": "clear navigation preserves directive strength and an already-on sprint",
+          "passed": true
+        },
+        {
+          "name": "WR route arrival is forwarded without giving DB navigation a catch deadline",
+          "passed": true
+        },
+        {
+          "name": "blocked navigation applies bypass direction and disables sprint once",
+          "passed": true
+        },
+        {
+          "name": "navigation applies explicit holds and obeys collision and sprint overrides",
+          "passed": true
+        },
+        {
+          "name": "confirmed Full Auto stop discards the old backward heading before forward coverage restarts",
+          "passed": true
+        },
+        {
+          "name": "moving direction reversals retain the native controller turn bound",
+          "passed": true
+        },
+        {
+          "name": "zero requested movement while coasting does not count as a confirmed stop",
+          "passed": true
+        },
+        {
+          "name": "movement resumption and root changes restart the idle confirmation interval",
+          "passed": true
+        },
+        {
+          "name": "manual catch airborne and committed action states cannot clear navigation steering",
+          "passed": true
+        },
+        {
+          "name": "clear catch does not toggle an already-on sprint",
+          "passed": true
+        },
+        {
+          "name": "blocked catch applies bypass and requests an early replan",
+          "passed": true
+        },
+        {
+          "name": "turning Full Auto off clears status and old bypass state",
+          "passed": true
+        },
+        {
+          "name": "character and phase changes reset previous bypass state",
+          "passed": true
+        },
+        {
+          "name": "catch action deadlines and committed actions forbid detours",
+          "passed": true
+        },
+        {
+          "name": "airborne and platform-standing movement never authorizes a detour",
+          "passed": true
+        },
+        {
+          "name": "reserve-denied navigation does not request sprint from the helper",
+          "passed": true
+        },
+        {
+          "name": "active carrier action takes priority without an avoidance call",
+          "passed": true
+        },
+        {
+          "name": "committed WR route permits checked sprint detours while ordinary DB coverage does not",
+          "passed": true
+        },
+        {
+          "name": "DB catch and pursuit permit a checked sprint only with a live ball",
+          "passed": true
+        },
+        {
+          "name": "DB checked sprint still obeys reserve action and ground restrictions",
+          "passed": true
+        },
+        {
+          "name": "WR sprint detour permission preserves budget and catch action gates",
+          "passed": true
+        },
+        {
+          "name": "a WR catch handoff can keep a checked sprint before the abandoned stem deadline",
+          "passed": true
+        },
+        {
+          "name": "committed WR navigation retains a helper-approved active sprint",
+          "passed": true
+        },
+        {
+          "name": "roster duplicates are inspected once and field offset reaches helper",
+          "passed": true
+        },
+        {
+          "name": "throw handoff clears catch actions without stopping existing movement",
+          "passed": true
+        },
+        {
+          "name": "normal cancellation clears catch actions and releases movement",
+          "passed": true
+        },
+        {
+          "name": "throw handoff requires Full Auto and a live owned sprint",
+          "passed": true
+        }
+      ],
+      "total": 34
+    },
+    "carrier-moves": {
+      "failed": 0,
+      "fixture": "Native Juke numeric configuration with explicit positions; no server acceptance, collision physics, or tackle outcome simulation.",
+      "offlineSeconds": 0.004196458990918472,
+      "passed": 30,
+      "results": [
+        {
+          "name": "near closing defender selects native juke away from pressure",
+          "passed": true
+        },
+        {
+          "name": "distant separating and harmless crossing defenders do not cause a juke",
+          "passed": true
+        },
+        {
+          "name": "possession phase health air and team gates never request offensive moves",
+          "passed": true
+        },
+        {
+          "name": "stamina retains ten units after native cost and cooldown blocks retries",
+          "passed": true
+        },
+        {
+          "name": "sideline choice uses the open side and rejects unsafe starting space",
+          "passed": true
+        },
+        {
+          "name": "blocked preferred path chooses clear alternative and both blocked yields none",
+          "passed": true
+        },
+        {
+          "name": "field translation preserves decision and world geometry overrides base bounds",
+          "passed": true
+        },
+        {
+          "name": "invalid vectors and another burst speed fail closed",
+          "passed": true
+        },
+        {
+          "name": "only an observed native burst owns movement for a bounded duration",
+          "passed": true
+        },
+        {
+          "name": "native nil without Burst is unconfirmed and never holds movement",
+          "passed": true
+        },
+        {
+          "name": "native error is isolated and rate limited while navigation can continue",
+          "passed": true
+        },
+        {
+          "name": "missing native action or existing unrelated burst never invokes juke",
+          "passed": true
+        },
+        {
+          "name": "native one-on-one context without Mode still permits confirmed WR RAC",
+          "passed": true
+        },
+        {
+          "name": "confirmed carrier and native upright gates are checked before action",
+          "passed": true
+        },
+        {
+          "name": "moving diving tackler remains a threat despite PlatformStand",
+          "passed": true
+        },
+        {
+          "name": "possession loss missing burst cancel and unload release ownership without resetting cooldown",
+          "passed": true
+        },
+        {
+          "name": "repeated identical geometry keeps the same juke sign",
+          "passed": true
+        },
+        {
+          "name": "missing juke does not trigger fallback moves without a close closing threat",
+          "passed": true
+        },
+        {
+          "name": "native Spin is offered only when both random-side paths clear geometry",
+          "passed": true
+        },
+        {
+          "name": "native Spin fallback confirms actual Burst without choosing its random side",
+          "passed": true
+        },
+        {
+          "name": "Truck requires close frontal threat native stamina reserve and an in-bounds lunge",
+          "passed": true
+        },
+        {
+          "name": "native Truck fallback needs observed Burst and respects ordinary cooldown",
+          "passed": true
+        },
+        {
+          "name": "normal carry jump requires a real vertical clearance window without spending move stamina",
+          "passed": true
+        },
+        {
+          "name": "carry jump confirms observed takeoff rather than its request or requested Humanoid state",
+          "passed": true
+        },
+        {
+          "name": "unconfirmed or cancelled carry jump never records execution or holds jump indefinitely",
+          "passed": true
+        },
+        {
+          "name": "safe fallback selection repeats exactly and never calls a random chooser",
+          "passed": true
+        },
+        {
+          "name": "carrier finish never starts a dive before the goal even with clear scoring distance",
+          "passed": true
+        },
+        {
+          "name": "translated field and explicit world geometry cannot revive the old goal-crossing dive",
+          "passed": true
+        },
+        {
+          "name": "carrier update never reaches the native dive wrapper from old finish geometry",
+          "passed": true
+        },
+        {
+          "name": "removing carrier finish dive leaves a real grounded carry jump available",
+          "passed": true
+        }
+      ],
+      "total": 30
+    },
+    "fullplay-steering": {
+      "failed": 0,
+      "offlineSeconds": 0.0016214170027524233,
+      "passed": 9,
+      "results": [
+        {
+          "name": "left-to-right coverage reversal keeps depth smoothly",
+          "passed": true
+        },
+        {
+          "name": "right-to-left coverage reversal keeps depth smoothly",
+          "passed": true
+        },
+        {
+          "name": "forward diagonal coverage reversal keeps depth smoothly",
+          "passed": true
+        },
+        {
+          "name": "ordinary catch and pursuit steering preserves wrapped baseline",
+          "passed": true
+        },
+        {
+          "name": "explicit backward target retains ordinary turn semantics",
+          "passed": true
+        },
+        {
+          "name": "carrier move cannot run when full auto has no movement directive",
+          "passed": true
+        },
+        {
+          "name": "confirmed carrier burst owns movement without another navigation input",
+          "passed": true
+        },
+        {
+          "name": "declined carrier action preserves ordinary navigation",
+          "passed": true
+        },
+        {
+          "name": "reserve blocks a requested sprint without blocking movement",
+          "passed": true
+        }
+      ],
+      "total": 9
+    },
+    "idle-guard": {
+      "failed": 0,
+      "offlineSeconds": 0.0005723340145777911,
+      "passed": 9,
+      "results": [
+        {
+          "name": "startup delivery and one recurring 60-second timer",
+          "passed": true
+        },
+        {
+          "name": "repeated idle events throttle delivery but retain idle diagnostics",
+          "passed": true
+        },
+        {
+          "name": "idle pulse and periodic pulse share the same cooldown",
+          "passed": true
+        },
+        {
+          "name": "failed delivery is contained and retries recover status",
+          "passed": true
+        },
+        {
+          "name": "unload disconnects and cancels; stale callbacks cannot deliver or reschedule",
+          "passed": true
+        },
+        {
+          "name": "timer cancellation failure still invalidates delayed work",
+          "passed": true
+        },
+        {
+          "name": "reload leaves one listener and one effective periodic timer",
+          "passed": true
+        },
+        {
+          "name": "unload during delivery prevents the next periodic schedule",
+          "passed": true
+        },
+        {
+          "name": "no character, phase, UI, or assist state is required",
+          "passed": true
+        }
+      ],
+      "total": 9
+    },
+    "match-skip": {
+      "failed": 0,
+      "offlineSeconds": 0.003976499981945381,
+      "passed": 57,
+      "results": [
+        {
+          "name": "deterministic startup preserves names but ignores saved enabled and retry state",
+          "passed": true
+        },
+        {
+          "name": "deterministic first startup keeps default target disabled",
+          "passed": true
+        },
+        {
+          "name": "managed startup keeps saved ON intact until a single preference restoration",
+          "passed": true
+        },
+        {
+          "name": "managed missing preference defaults OFF and retains the username box",
+          "passed": true
+        },
+        {
+          "name": "missing settings initialize enabled exact target and verify saved version",
+          "passed": true
+        },
+        {
+          "name": "saved disabled and blank settings survive reload without defaults",
+          "passed": true
+        },
+        {
+          "name": "saved custom username is loaded without being replaced",
+          "passed": true
+        },
+        {
+          "name": "list input accepts separators optional at-signs and case-insensitive duplicates",
+          "passed": true
+        },
+        {
+          "name": "second and third configured accounts each trigger exact actual-opponent matches",
+          "passed": true
+        },
+        {
+          "name": "multiple names never turn display names substrings lobby presence or teammates into matches",
+          "passed": true
+        },
+        {
+          "name": "legacy v1 settings migrate to v2 without changing toggle username or blank choice",
+          "passed": true
+        },
+        {
+          "name": "v2 list order and toggle persist across same and different job reloads",
+          "passed": true
+        },
+        {
+          "name": "status returns a defensive copy of the configured usernames",
+          "passed": true
+        },
+        {
+          "name": "invalid list rejects the entire draft without partial mutation or save",
+          "passed": true
+        },
+        {
+          "name": "empty separator-only input clears all names while retaining the enabled toggle",
+          "passed": true
+        },
+        {
+          "name": "invalid stored v2 list fails as a whole instead of loading its valid prefix",
+          "passed": true
+        },
+        {
+          "name": "normalization trims optional at-sign and exact name ignores account case",
+          "passed": true
+        },
+        {
+          "name": "blank disables matching without disabling its saved toggle",
+          "passed": true
+        },
+        {
+          "name": "invalid drafts leave prior settings unchanged and unsaved",
+          "passed": true
+        },
+        {
+          "name": "toggle off persists and prevents an otherwise exact match",
+          "passed": true
+        },
+        {
+          "name": "active phase and role whitelist includes verified Team offense pick",
+          "passed": true
+        },
+        {
+          "name": "lobby result waiting unknown phases and unrelated roles never act",
+          "passed": true
+        },
+        {
+          "name": "wrong game place mode testing dead context or disabled master never act",
+          "passed": true
+        },
+        {
+          "name": "explicit fresh identity proof is mandatory and mode source can veto it",
+          "passed": true
+        },
+        {
+          "name": "DisplayName collision and substring account names never match",
+          "passed": true
+        },
+        {
+          "name": "nil unknown enemy and lobby bystanders are not searched",
+          "passed": true
+        },
+        {
+          "name": "local player and stale teammate fallback never match",
+          "passed": true
+        },
+        {
+          "name": "native enemy identity does not depend on unrelated Roblox Team membership",
+          "passed": true
+        },
+        {
+          "name": "stale character mapping cannot authorize a departed character",
+          "passed": true
+        },
+        {
+          "name": "Team checks only enemy roster and never cached single opponent",
+          "passed": true
+        },
+        {
+          "name": "pending request never repeats and silence becomes blocked after twenty seconds",
+          "passed": true
+        },
+        {
+          "name": "same-job reload keeps pending request original deadline and dedupe",
+          "passed": true
+        },
+        {
+          "name": "different-job reload restores settings but no request ownership",
+          "passed": true
+        },
+        {
+          "name": "different-job stale runtime settings cannot replace current disk preferences",
+          "passed": true
+        },
+        {
+          "name": "failure signal filters foreign player place and unowned failures",
+          "passed": true
+        },
+        {
+          "name": "verified failures retry at five then ten seconds and stop at three attempts",
+          "passed": true
+        },
+        {
+          "name": "pcall teleport failures use the same bounded retry schedule",
+          "passed": true
+        },
+        {
+          "name": "synchronous failure signal and thrown error cannot schedule twice",
+          "passed": true
+        },
+        {
+          "name": "same-job reload retains retry time count and last failure",
+          "passed": true
+        },
+        {
+          "name": "retry revalidates active phase identity account settings and master",
+          "passed": true
+        },
+        {
+          "name": "retry remains on its original account after list and enemy-roster reordering",
+          "passed": true
+        },
+        {
+          "name": "another configured enemy cannot inherit a retry when original opponent disappears",
+          "passed": true
+        },
+        {
+          "name": "removing only the requested target cancels retry despite other configured matches",
+          "passed": true
+        },
+        {
+          "name": "adding names while pending preserves original ownership and later retry",
+          "passed": true
+        },
+        {
+          "name": "same name on a different resolved account cannot inherit retry ownership",
+          "passed": true
+        },
+        {
+          "name": "off stops retries without pretending to cancel a pending teleport",
+          "passed": true
+        },
+        {
+          "name": "editing suspends new work and retries until a valid draft is committed",
+          "passed": true
+        },
+        {
+          "name": "setting changes during pending preserve ownership and cancel later retry",
+          "passed": true
+        },
+        {
+          "name": "write failure remains visible while accepted runtime settings survive reload",
+          "passed": true
+        },
+        {
+          "name": "unsaved multi-name settings survive same-job reload and repair as a complete v2 list",
+          "passed": true
+        },
+        {
+          "name": "write readback mismatch is reported and retry can repair it",
+          "passed": true
+        },
+        {
+          "name": "corrupt or unreadable saved preferences never enable the initial target",
+          "passed": true
+        },
+        {
+          "name": "unavailable IO is visible and write-only saving follows available capability",
+          "passed": true
+        },
+        {
+          "name": "missing-file read fallback initializes defaults but arbitrary read error does not",
+          "passed": true
+        },
+        {
+          "name": "unload disconnects both listeners and stale callbacks cannot send",
+          "passed": true
+        },
+        {
+          "name": "unload during pending retry prevents stale work but replacement retains ownership",
+          "passed": true
+        },
+        {
+          "name": "temporary snapshot failure is contained without issuing any request",
+          "passed": true
+        }
+      ],
+      "total": 57
+    },
+    "match-skip-identity": {
+      "failed": 0,
+      "offlineSeconds": 0.0016503749939147383,
+      "passed": 15,
+      "results": [
+        {
+          "name": "fresh native nil-mode 1v1 Opp establishes actual opponent proof",
+          "passed": true
+        },
+        {
+          "name": "Team to native 1v1 clears stale roster before selecting fresh Opp",
+          "passed": true
+        },
+        {
+          "name": "new Pick or PreSnap cannot inherit prior opponent proof without fresh identity",
+          "passed": true
+        },
+        {
+          "name": "Lobby clears proof and opponent even when the packet includes old Opp",
+          "passed": true
+        },
+        {
+          "name": "MatchOver invalidates proof despite included identity and stays invalid in Live",
+          "passed": true
+        },
+        {
+          "name": "ordinary within-match Live keeps fresh identity until next round reset",
+          "passed": true
+        },
+        {
+          "name": "Team roster proves local membership and excludes self and teammates",
+          "passed": true
+        },
+        {
+          "name": "Team roster missing local account or putting it on another team fails closed",
+          "passed": true
+        },
+        {
+          "name": "empty fresh Team roster revokes proof without reusing stale opponent as enemy",
+          "passed": true
+        },
+        {
+          "name": "new Team round requires both fresh roster and Team rather than cached halves",
+          "passed": true
+        },
+        {
+          "name": "account and user-id references resolve but DisplayName and unknown references do not",
+          "passed": true
+        },
+        {
+          "name": "fresh Team membership cannot revive a terminal match proof",
+          "passed": true
+        },
+        {
+          "name": "changed local Team outside round setup cannot reinterpret cached teammate as verified enemy",
+          "passed": true
+        },
+        {
+          "name": "mode changes outside round setup require new opponent proof",
+          "passed": true
+        },
+        {
+          "name": "fresh identity in the same changed-scope packet can establish proof again",
+          "passed": true
+        }
+      ],
+      "total": 15
+    },
+    "mode": {
+      "failed": 0,
+      "offlineSeconds": 0.0012756669893860817,
+      "passed": 12,
+      "results": [
+        {
+          "name": "1v1 Live WR survives stale Team geometry on reload",
+          "passed": true
+        },
+        {
+          "name": "native plain Live role repairs a previously corrupted Team mode",
+          "passed": true
+        },
+        {
+          "name": "native team Live role overrides an old 1v1 context",
+          "passed": true
+        },
+        {
+          "name": "trusted Team survives ambiguous plain PreSnap roles",
+          "passed": true
+        },
+        {
+          "name": "trusted Team survives native RAC roles after a catch",
+          "passed": true
+        },
+        {
+          "name": "geometry without mode evidence cannot establish Team",
+          "passed": true
+        },
+        {
+          "name": "known 1v1 survives ambiguous PreSnap roles",
+          "passed": true
+        },
+        {
+          "name": "Lobby clears old Team and native role evidence",
+          "passed": true
+        },
+        {
+          "name": "base Field is never recovered as Team geometry",
+          "passed": true
+        },
+        {
+          "name": "observed Team packet geometry outranks cached upvalues",
+          "passed": true
+        },
+        {
+          "name": "fresh native Team role can recover complete Team geometry",
+          "passed": true
+        },
+        {
+          "name": "incomplete or inverted geometry is not usable for catch bounds",
+          "passed": true
+        }
+      ],
+      "total": 12
+    },
+    "motion": {
+      "failed": 0,
+      "offlineSeconds": 0.0009165830269921571,
+      "passed": 34,
+      "results": [
+        {
+          "name": "full-auto DB prediction excludes its reserve and dispatch allowance",
+          "passed": true
+        },
+        {
+          "name": "WR final sprint uses its own lower reserved budget",
+          "passed": true
+        },
+        {
+          "name": "DB spends coverage reserve during a live ball race without inventing stamina",
+          "passed": true
+        },
+        {
+          "name": "manual assistance keeps its existing sprint allowance",
+          "passed": true
+        },
+        {
+          "name": "invalid stamina or reserve data cannot produce infinite sprint",
+          "passed": true
+        },
+        {
+          "name": "recorded slowed sprint cannot predict full speed",
+          "passed": true
+        },
+        {
+          "name": "slowed walking still predicts the reduced sprint when engaged",
+          "passed": true
+        },
+        {
+          "name": "normal walking before sprint engages preserves sprint forecast",
+          "passed": true
+        },
+        {
+          "name": "pending sprint uses observed speed from the first acknowledged request",
+          "passed": true
+        },
+        {
+          "name": "repeated snapshots preserve the pending sprint timer",
+          "passed": true
+        },
+        {
+          "name": "native sprint confirmation restores full forecast immediately",
+          "passed": true
+        },
+        {
+          "name": "sprint off resets the pending interval for a new request",
+          "passed": true
+        },
+        {
+          "name": "a slow movement penalty remains distinct from a delayed sprint",
+          "passed": true
+        },
+        {
+          "name": "stale state cannot cap confirmed speed or invent stamina",
+          "passed": true
+        },
+        {
+          "name": "pending and confirmed transitions refresh only before actions commit",
+          "passed": true
+        },
+        {
+          "name": "penalty forecast recovers immediately when normal speed returns",
+          "passed": true
+        },
+        {
+          "name": "immobile and invalid speed observations stay bounded",
+          "passed": true
+        },
+        {
+          "name": "recorded delayed takeoff cannot become another grounded jump",
+          "passed": true
+        },
+        {
+          "name": "recorded rising park position stays physically airborne",
+          "passed": true
+        },
+        {
+          "name": "ordinary grounded velocity and floor jitter remain grounded",
+          "passed": true
+        },
+        {
+          "name": "stationary elevated player does not imply takeoff",
+          "passed": true
+        },
+        {
+          "name": "elevation alone and velocity alone do not infer ascent",
+          "passed": true
+        },
+        {
+          "name": "descending elevated body is not grounded by a stale floor flag",
+          "passed": true
+        },
+        {
+          "name": "native airborne flag preserves native reach and dive mode",
+          "passed": true
+        },
+        {
+          "name": "confirmed flight remains airborne through its apex",
+          "passed": true
+        },
+        {
+          "name": "landing clears a prior airborne inference at the ground reference",
+          "passed": true
+        },
+        {
+          "name": "trusted elevated standing reference supports local takeoff detection",
+          "passed": true
+        },
+        {
+          "name": "invalid numbers cannot authorize grounded jumps or matched dive mode",
+          "passed": true
+        },
+        {
+          "name": "recorded DB4508 restored airborne actions refresh restricted pursuit",
+          "passed": true
+        },
+        {
+          "name": "ordinary jump dive survives its first native airborne frame",
+          "passed": true
+        },
+        {
+          "name": "restored action refresh waits for native airborne confirmation",
+          "passed": true
+        },
+        {
+          "name": "pending or active actions block capability refresh",
+          "passed": true
+        },
+        {
+          "name": "ordinary grounded pursuit does not use the takeoff recovery path",
+          "passed": true
+        },
+        {
+          "name": "resnapshot after restored capability prevents repeated refresh",
+          "passed": true
+        }
+      ],
+      "total": 34
+    },
+    "pending-sprint": {
+      "failed": 0,
+      "offlineSeconds": 0.0012412919895723462,
+      "passed": 9,
+      "results": [
+        {
+          "name": "controller keeps a requested sprint pending across repeated snapshots",
+          "passed": true
+        },
+        {
+          "name": "replacing the character resets old pending sprint history",
+          "passed": true
+        },
+        {
+          "name": "release resets tracking even when a manual sprint key keeps the request on",
+          "passed": true
+        },
+        {
+          "name": "observed sprint off and confirmed speed clear a pending forecast",
+          "passed": true
+        },
+        {
+          "name": "controller refreshes once when pending starts or native sprint arrives",
+          "passed": true
+        },
+        {
+          "name": "committed jump dive and parked catch ownership survive speed transitions",
+          "passed": true
+        },
+        {
+          "name": "Full Auto reserve releases sprint even when it did not own the request",
+          "passed": true
+        },
+        {
+          "name": "manual catch control does not force off the user's sprint",
+          "passed": true
+        },
+        {
+          "name": "WR reserve permits the final sprint above its dispatch floor",
+          "passed": true
+        }
+      ],
+      "total": 9
+    },
+    "planner": {
+      "benchmark": {
+        "result": "jump",
+        "seconds": 0.02232400000000001
+      },
+      "failed": 0,
+      "offlineSeconds": 1.4238451670098584,
+      "passed": 54,
+      "results": [
+        {
+          "name": "ball endpoints and midpoint",
+          "passed": true
+        },
+        {
+          "name": "capsule checks segment ends and interior",
+          "passed": true
+        },
+        {
+          "name": "ground dive halfway has exact eased position and tilt",
+          "passed": true
+        },
+        {
+          "name": "ground dive recovers only after ground hold",
+          "passed": true
+        },
+        {
+          "name": "air dive holds horizontal endpoint while still airborne",
+          "passed": true
+        },
+        {
+          "name": "falling dive clamps initial downward velocity to zero",
+          "passed": true
+        },
+        {
+          "name": "jump then dive retains upward ballistic trajectory",
+          "passed": true
+        },
+        {
+          "name": "standing and diving use different native catch radii",
+          "passed": true
+        },
+        {
+          "name": "already catchable ball requires no action",
+          "passed": true
+        },
+        {
+          "name": "nearby high ball selects a reachable jump",
+          "passed": true
+        },
+        {
+          "name": "low forward ball selects a reachable dive",
+          "passed": true
+        },
+        {
+          "name": "nearby ordinary contact selects movement without jump",
+          "passed": true
+        },
+        {
+          "name": "wall-limited dive is rejected",
+          "passed": true
+        },
+        {
+          "name": "distant ball does not cause whole-field steering",
+          "passed": true
+        },
+        {
+          "name": "disabled actions cannot reach high stationary ball",
+          "passed": true
+        },
+        {
+          "name": "invalid flight is rejected",
+          "passed": true
+        },
+        {
+          "name": "chase reaches a farther contact outside local overlay range",
+          "passed": true
+        },
+        {
+          "name": "chase chooses earlier jump instead of later grounded contact",
+          "passed": true
+        },
+        {
+          "name": "sprint exhaustion changes exact movement and stop time",
+          "passed": true
+        },
+        {
+          "name": "exhausted sprint cannot claim constant sprint reach",
+          "passed": true
+        },
+        {
+          "name": "WR chooses upright catch even when DB can dive earlier",
+          "passed": true
+        },
+        {
+          "name": "WR still dives when every upright action is unreachable",
+          "passed": true
+        },
+        {
+          "name": "WR low bullet prefers running over a needless late jump",
+          "passed": true
+        },
+        {
+          "name": "WR still jumps when ordinary movement cannot reach a high ball",
+          "passed": true
+        },
+        {
+          "name": "unreachable fallback pursues future ball without claiming a catch",
+          "passed": true
+        },
+        {
+          "name": "pursuit stops when the trajectory has already hit turf",
+          "passed": true
+        },
+        {
+          "name": "active steering can disable hold without losing reachable catch",
+          "passed": true
+        },
+        {
+          "name": "WR maximizes effective downfield touch rather than early DB contact",
+          "passed": true
+        },
+        {
+          "name": "full approach scan detects a premature native catch",
+          "passed": true
+        },
+        {
+          "name": "possible earlier defender reach selects honest contested fallback",
+          "passed": true
+        },
+        {
+          "name": "contested WR floater jumps before a later ordinary catch",
+          "passed": true
+        },
+        {
+          "name": "WR never replaces reachable upright catches with contested dives",
+          "passed": true
+        },
+        {
+          "name": "WR still dives when no upright catch is reachable",
+          "passed": true
+        },
+        {
+          "name": "timed WR arrival keeps moving until the catch without delaying contact",
+          "passed": true
+        },
+        {
+          "name": "timed arrival remains opt-in and does not pace DB interception",
+          "passed": true
+        },
+        {
+          "name": "timed arrival never alters a dive launch or last-chance catch",
+          "passed": true
+        },
+        {
+          "name": "timed arrival rejects creeping and invalidated contact geometry",
+          "passed": true
+        },
+        {
+          "name": "deep scoring intent keeps an available upright goal catch",
+          "passed": true
+        },
+        {
+          "name": "WR respects supplied field root bounds",
+          "passed": true
+        },
+        {
+          "name": "a second closer defender changes team catch risk",
+          "passed": true
+        },
+        {
+          "name": "DB refines the first reachable timing cell",
+          "passed": true
+        },
+        {
+          "name": "grounded catch reach preserves ballistic jump motion",
+          "passed": true
+        },
+        {
+          "name": "shortened native reach rejects an airborne-only catch",
+          "passed": true
+        },
+        {
+          "name": "required WR finish commits a real dive before first contact",
+          "passed": true
+        },
+        {
+          "name": "required WR dive does not silently fall back to an upright catch",
+          "passed": true
+        },
+        {
+          "name": "already touching the ball cannot be called a future diving catch",
+          "passed": true
+        },
+        {
+          "name": "DB ignores WR-only required dive preference",
+          "passed": true
+        },
+        {
+          "name": "upright finish exception is explicit and keeps strict default",
+          "passed": true
+        },
+        {
+          "name": "normal contested upright finish beats artificial late dive without hiding risk",
+          "passed": true
+        },
+        {
+          "name": "upright finish keeps dives that have no normal upright goal witness",
+          "passed": true
+        },
+        {
+          "name": "upright finish cannot replace a normal dive with late weak upright contact",
+          "passed": true
+        },
+        {
+          "name": "upright finish still requires known coverage and a finite scoring goal",
+          "passed": true
+        },
+        {
+          "name": "upright finish preserves field bounds and exhausted sprint budget",
+          "passed": true
+        },
+        {
+          "name": "upright finish flag leaves DB and ordinary WR selection unchanged",
+          "passed": true
+        }
+      ],
+      "total": 54
+    },
+    "postthrow-stem": {
+      "failed": 0,
+      "offlineSeconds": 0.05793400001130067,
+      "passed": 34,
+      "results": [
+        {
+          "name": "funded actual state permits only a robust airborne jump after the stem",
+          "passed": true
+        },
+        {
+          "name": "unknown nonfinite and expired stage timing fails closed",
+          "passed": true
+        },
+        {
+          "name": "low current stamina cannot borrow an old final sprint budget",
+          "passed": true
+        },
+        {
+          "name": "observed slowdown denies an otherwise funded nominal stem",
+          "passed": true
+        },
+        {
+          "name": "actual grounding and jump availability are required",
+          "passed": true
+        },
+        {
+          "name": "standing contact during the stem immediately needs catch ownership",
+          "passed": true
+        },
+        {
+          "name": "out of bounds or already reached stem does not extend movement",
+          "passed": true
+        },
+        {
+          "name": "an unreachable later ball cannot authorize the intermediate stage",
+          "passed": true
+        },
+        {
+          "name": "meaningfully earlier robust in-goal contact releases the stem without dispatching its witness",
+          "passed": true
+        },
+        {
+          "name": "tied or later contact keeps the funded stem and comparisons share its refresh cadence",
+          "passed": true
+        },
+        {
+          "name": "unknown, risky, ground, out-of-goal or insufficient-margin candidates cannot preempt the stem",
+          "passed": true
+        },
+        {
+          "name": "first invalid witness hands off permanently for that throw",
+          "passed": true
+        },
+        {
+          "name": "catch action ownership or platform stand prevents stem movement",
+          "passed": true
+        },
+        {
+          "name": "missing intent or invalid point cannot begin a stage",
+          "passed": true
+        },
+        {
+          "name": "deadline and loss of route movement release catch control immediately",
+          "passed": true
+        },
+        {
+          "name": "grounding loss releases even inside the witness cache interval",
+          "passed": true
+        },
+        {
+          "name": "native speed change rechecks the forecast before moving",
+          "passed": true
+        },
+        {
+          "name": "jump availability loss invalidates a cached witness before moving",
+          "passed": true
+        },
+        {
+          "name": "insufficient current stamina invalidates a cached witness before moving",
+          "passed": true
+        },
+        {
+          "name": "run speed change invalidates a cached witness before moving",
+          "passed": true
+        },
+        {
+          "name": "changed stage values cannot reuse the previous geometry witness",
+          "passed": true
+        },
+        {
+          "name": "cached path that falls behind capacity hands off without another move",
+          "passed": true
+        },
+        {
+          "name": "grounded stem handoff commits one clear ninety-degree input then smooths corrections",
+          "passed": true
+        },
+        {
+          "name": "handoff preserves avoidance and its movement command wins over the clear-cut direction",
+          "passed": true
+        },
+        {
+          "name": "unstarted DB airborne and committed-action stages do not reset steering",
+          "passed": true
+        },
+        {
+          "name": "route hard-cut uses actual dispatch while later route corrections remain smooth",
+          "passed": true
+        },
+        {
+          "name": "route hard-cut does not override avoidance or non-WR airborne action gates",
+          "passed": true
+        },
+        {
+          "name": "recovery and late sprint use their time union without charging the walking gap",
+          "passed": true
+        },
+        {
+          "name": "short-field pacing cannot borrow unrequested native running speed",
+          "passed": true
+        },
+        {
+          "name": "active recovery is charged against future catch stamina",
+          "passed": true
+        },
+        {
+          "name": "paced run and recovery changes invalidate cached controller eligibility",
+          "passed": true
+        },
+        {
+          "name": "continuous Floater keeps moving after crossing its target instead of reversing midair",
+          "passed": true
+        },
+        {
+          "name": "continuous catch input ends at its explicit post-contact deadline",
+          "passed": true
+        },
+        {
+          "name": "ordinary catch direction and stop behavior remain separate from continuous Floater",
+          "passed": true
+        }
+      ],
+      "total": 34
+    },
+    "risky": {
+      "benchmarks": {
+        "1": {
+          "contactAt": 1794796663.168412,
+          "diveAt": 1794796662.9234118,
+          "jumpAt": 1794796662.678412,
+          "margin": 0.09955555298083452,
+          "normalMargin": -0.2553654836021675,
+          "poseCalls": 8391,
+          "seconds": 0.1973609999999999
+        },
+        "2": {
+          "contactAt": 1794796663.173234,
+          "diveAt": 1794796662.923234,
+          "jumpAt": 1794796662.675734,
+          "margin": 0.07792628226983433,
+          "normalMargin": -0.302747919465689,
+          "poseCalls": 3156,
+          "seconds": 0.07408099999999962
+        },
+        "recordedDB3875": {
+          "contactAt": 1794863876.6745381,
+          "diveAt": 1794863876.454538,
+          "jumpAt": 1794863876.1845381,
+          "margin": 0.12077670973753385,
+          "normalMargin": -0.005005879682288938,
+          "poseCalls": 11202,
+          "seconds": 0.2471770000000002
+        },
+        "recordedWR9478": {
+          "contactAt": 1795039481.030964,
+          "diveAt": 1795039480.840964,
+          "jumpAt": 1795039480.730964,
+          "margin": 0.2425880083488452,
+          "poseCalls": 7242,
+          "seconds": 0.1706080000000001
+        }
+      },
+      "failed": 0,
+      "limitations": "Recorded velocities are estimated; no walls/opponent snapshot, engine latency or server outcomes are simulated.",
+      "offlineSeconds": 2.154115500015905,
+      "passed": 16,
+      "results": [
+        {
+          "name": "actual replan 1 ideal narrow contact does not survive execution delay",
+          "passed": true,
+          "seconds": 0.6657519999999999
+        },
+        {
+          "name": "actual replan 2 ideal narrow contact does not survive execution delay",
+          "passed": true,
+          "seconds": 0.3218379999999996
+        },
+        {
+          "name": "late actual replan remains unreachable",
+          "passed": true,
+          "seconds": 0.05464899999999995
+        },
+        {
+          "name": "DB normal-only policy remains available",
+          "passed": true,
+          "seconds": 0.14315100000000003
+        },
+        {
+          "name": "recorded DB 3875 keeps an explicitly risky 35 ms interception after normal 60 ms search fails",
+          "passed": true,
+          "seconds": 0.37749299999999986
+        },
+        {
+          "name": "late recorded DB 3875 remains unreachable",
+          "passed": true,
+          "seconds": 0.0320630000000004
+        },
+        {
+          "name": "recorded WR9478 retains a narrow normal-age jump-dive after small drift",
+          "passed": true,
+          "seconds": 0.3286640000000003
+        },
+        {
+          "name": "recorded WR9478 narrow retry respects required dive and field bounds",
+          "passed": true,
+          "seconds": 0.033119999999999816
+        },
+        {
+          "name": "recorded WR9478 narrow retry retains an earlier defender deadline",
+          "passed": true,
+          "seconds": 0.16575300000000004
+        },
+        {
+          "name": "last-resort upright catch stays ahead of diving",
+          "passed": true,
+          "seconds": 0.006977000000000011
+        },
+        {
+          "name": "last-resort upright catch does not require an available dive",
+          "passed": true,
+          "seconds": 0.0010900000000000354
+        },
+        {
+          "name": "last-resort upright catch keeps field bounds when diving is unavailable",
+          "passed": true,
+          "seconds": 0.0008859999999999424
+        },
+        {
+          "name": "ordinary reachable catch never enters risk search",
+          "passed": true,
+          "seconds": 0.0011350000000001081
+        },
+        {
+          "name": "DB normal catch keeps priority over last-chance search",
+          "passed": true,
+          "seconds": 0.000144000000000144
+        },
+        {
+          "name": "available normal DB jump retains its 60 ms reserve instead of taking a risky earlier contact",
+          "passed": true,
+          "seconds": 0.011952999999999658
+        },
+        {
+          "name": "unreachable distant ball stays unreachable",
+          "passed": true,
+          "seconds": 6.899999999987472e-05
+        }
+      ],
+      "total": 16
+    },
+    "session": {
+      "failed": 0,
+      "offlineSeconds": 0.0019952919974457473,
+      "passed": 26,
+      "results": [
+        {
+          "name": "fresh and manual entries never inherit enabled settings",
+          "passed": true
+        },
+        {
+          "name": "owned lobby match lobby round trip carries explicit choices once",
+          "passed": true
+        },
+        {
+          "name": "owned match aborted before any round continues only into the lobby",
+          "passed": true
+        },
+        {
+          "name": "aborted-match return does not treat another match as a lobby",
+          "passed": true
+        },
+        {
+          "name": "aborted return needs known ownership destination and current ON choices",
+          "passed": true
+        },
+        {
+          "name": "unowned or mode-mismatched Found never arms",
+          "passed": true
+        },
+        {
+          "name": "unowned manually entered match cannot arm return",
+          "passed": true
+        },
+        {
+          "name": "OFF after irrevocable queue registration cancels continuation",
+          "passed": true
+        },
+        {
+          "name": "saved OFF rejects stale ON lease even when platform revocation failed",
+          "passed": true
+        },
+        {
+          "name": "failed platform revocation is reported without claiming stale lease was cancelled",
+          "passed": true
+        },
+        {
+          "name": "Full Auto OFF carries only Autoplay and never revives Full Auto",
+          "passed": true
+        },
+        {
+          "name": "Assist OFF before later Found cannot revive gameplay",
+          "passed": true
+        },
+        {
+          "name": "autoexec-first runtime can consume later queued handoff",
+          "passed": true
+        },
+        {
+          "name": "destination user OFF wins over delayed queued handoff",
+          "passed": true
+        },
+        {
+          "name": "F8 and same-job replacement invalidate prior lease",
+          "passed": true
+        },
+        {
+          "name": "cross-job automatic disposal preserves handoff but same-job reload revokes",
+          "passed": true
+        },
+        {
+          "name": "actual core startup preserves only cross-job automatic old-runtime cleanup",
+          "passed": true
+        },
+        {
+          "name": "consume happens before application and duplicate callbacks",
+          "passed": true
+        },
+        {
+          "name": "same source wrong source and wrong destination kind stay OFF",
+          "passed": true
+        },
+        {
+          "name": "expired corrupt and future leases remain OFF",
+          "passed": true
+        },
+        {
+          "name": "failed and unsupported teleports revoke",
+          "passed": true
+        },
+        {
+          "name": "native MatchOver only and no visual test can arm return",
+          "passed": true
+        },
+        {
+          "name": "queue fault or implicit disabled state cannot rearm completed match",
+          "passed": true
+        },
+        {
+          "name": "unavailable mode or failed consume never enables",
+          "passed": true
+        },
+        {
+          "name": "apply failure stops partially enabled features without retry",
+          "passed": true
+        },
+        {
+          "name": "refresh preserves original expiry and latest flags",
+          "passed": true
+        }
+      ],
+      "total": 26
+    },
+    "tackle": {
+      "failed": 0,
+      "offlineSeconds": 0.015953499998431653,
+      "passed": 18,
+      "results": [
+        {
+          "name": "native-valid close carrier uses grab without dive",
+          "passed": true
+        },
+        {
+          "name": "teammate possession never triggers tackle or movement",
+          "passed": true
+        },
+        {
+          "name": "nil native grab never calls native tackle callback",
+          "passed": true
+        },
+        {
+          "name": "cancellation releases only owned input once",
+          "passed": true
+        },
+        {
+          "name": "distant carrier leaves manual movement untouched",
+          "passed": true
+        },
+        {
+          "name": "live QB cannot trigger a dive tackle",
+          "passed": true
+        },
+        {
+          "name": "ordinary reachable carrier uses dive without jumping",
+          "passed": true
+        },
+        {
+          "name": "wall-limited unreachable dive is rejected",
+          "passed": true
+        },
+        {
+          "name": "airborne high carrier can select jump then dive",
+          "passed": true
+        },
+        {
+          "name": "close airborne QB allows jump-grab with diving disabled",
+          "passed": true
+        },
+        {
+          "name": "far head-on carrier triggers one brief diagonal fake per possession",
+          "passed": true
+        },
+        {
+          "name": "closing into tackle range cancels fake before native grab",
+          "passed": true
+        },
+        {
+          "name": "near-endzone and advanced runs skip defensive fake",
+          "passed": true
+        },
+        {
+          "name": "identical tackle inputs always choose the same robust ground dive",
+          "passed": true
+        },
+        {
+          "name": "jump dive rechecks a changed carrier before committing",
+          "passed": true
+        },
+        {
+          "name": "required jump dives only after airborne confirmation and a fresh contact witness",
+          "passed": true
+        },
+        {
+          "name": "near goal keeps an immediately reachable dive instead of spending a jump",
+          "passed": true
+        },
+        {
+          "name": "unavailable jump and wall clipping cannot create a new tackle path",
+          "passed": true
+        }
+      ],
+      "total": 18
+    },
+    "wr-repeat": {
+      "failed": 0,
+      "offlineSeconds": 0.0014115420053713024,
+      "passed": 22,
+      "results": [
+        {
+          "name": "off by default and no cross-server enabled restore",
+          "passed": true
+        },
+        {
+          "name": "same-server restore keeps enabled but reselects the nearest pad",
+          "passed": true
+        },
+        {
+          "name": "enable cancels autoplay and settles before ordinary forward input",
+          "passed": true
+        },
+        {
+          "name": "per-play Result never walks; full match reset resumes",
+          "passed": true
+        },
+        {
+          "name": "match start releases immediately before another render",
+          "passed": true
+        },
+        {
+          "name": "pad arrival hysteresis does not twitch",
+          "passed": true
+        },
+        {
+          "name": "background input taper does not overshoot target",
+          "passed": true
+        },
+        {
+          "name": "off B-off and unload each release movement",
+          "passed": true
+        },
+        {
+          "name": "text and game menu pause then settle again",
+          "passed": true
+        },
+        {
+          "name": "pending or manual queue prevents movement while autoplay off",
+          "passed": true
+        },
+        {
+          "name": "phase arriving before return teleport cannot cross map",
+          "passed": true
+        },
+        {
+          "name": "no-progress timeout pauses without endlessly moving",
+          "passed": true
+        },
+        {
+          "name": "character replacement stops and requires re-enable",
+          "passed": true
+        },
+        {
+          "name": "native field packet cannot override the nearest lobby pad",
+          "passed": true
+        },
+        {
+          "name": "turning on beside another field discards the prior pad",
+          "passed": true
+        },
+        {
+          "name": "each full lobby return chooses from the new character position",
+          "passed": true
+        },
+        {
+          "name": "equal-distance WR pads consistently choose the lower field number",
+          "passed": true
+        },
+        {
+          "name": "only nearby same-floor WR parts are candidates",
+          "passed": true
+        },
+        {
+          "name": "a removed WR pad is replaced with the next nearest valid pad",
+          "passed": true
+        },
+        {
+          "name": "a lobby position jump selects a nearby pad instead of chasing the old field",
+          "passed": true
+        },
+        {
+          "name": "synthetic test packets cannot replace native field",
+          "passed": true
+        },
+        {
+          "name": "MatchServer is never allowed to walk a local pad",
+          "passed": true
+        }
+      ],
+      "total": 22
+    }
+  }
+}

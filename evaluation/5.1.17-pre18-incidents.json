@@ -1,0 +1,94 @@
+{
+  "schemaVersion": 1,
+  "release": "5.1.17",
+  "buildId": "00edfd316f0cb63c525ad8b61160dddf1d3d8a09739cdff1d4fea7b9af9893dd",
+  "window": {
+    "start": 1795148385.710808,
+    "endExclusive": 1795148685.710808,
+    "activeSeconds": 300,
+    "observerStopped": true,
+    "stopReason": "deadline"
+  },
+  "plays": {
+    "total": 15,
+    "roles": {
+      "WR": {
+        "Catch": 6,
+        "Incomplete": 1
+      },
+      "DB": {
+        "Intercepted": 5,
+        "Incomplete": 1,
+        "Swatted": 2
+      }
+    },
+    "unresolved": []
+  },
+  "matches": {
+    "terminalScoresObserved": [
+      {
+        "time": 1795148414.012123,
+        "you": 4,
+        "them": 0,
+        "toWin": 4,
+        "result": "Intercepted",
+        "point": "You",
+        "fullAuto": true
+      },
+      {
+        "time": 1795148534.659143,
+        "you": 4,
+        "them": 0,
+        "toWin": 4,
+        "result": "Intercepted",
+        "point": "You",
+        "fullAuto": true
+      },
+      {
+        "time": 1795148636.317331,
+        "you": 4,
+        "them": 0,
+        "toWin": 4,
+        "result": "Intercepted",
+        "point": "You",
+        "fullAuto": true
+      }
+    ],
+    "initialPartialMatchExcluded": {
+      "time": 1795148414.012123,
+      "you": 4,
+      "them": 0,
+      "toWin": 4,
+      "result": "Intercepted",
+      "point": "You",
+      "fullAuto": true
+    },
+    "fullyObservedCompleted": 2
+  },
+  "runtimeErrors": 0,
+  "incidents": [
+    {
+      "index": 5,
+      "role": "WR",
+      "pass": "Floater",
+      "nativeOutcome": "Incomplete",
+      "terminal": {
+        "time": 1795148476.24836,
+        "result": "Incomplete",
+        "you": 2,
+        "them": 0,
+        "toWin": 4,
+        "round": 3,
+        "down": 2
+      },
+      "reachablePlans": 0,
+      "planCount": 18,
+      "actions": []
+    }
+  ],
+  "limits": [
+    "The first match began before the window; its terminal score is excluded from fully observed game count.",
+    "No version transition occurred within this bounded window.",
+    "Native outcomes, local contact claims, and action requests remain distinct."
+  ]
+}

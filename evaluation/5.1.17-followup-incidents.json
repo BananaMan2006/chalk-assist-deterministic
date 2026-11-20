@@ -1,0 +1,464 @@
+{
+  "schemaVersion": 1,
+  "release": "5.1.17",
+  "buildId": "00edfd316f0cb63c525ad8b61160dddf1d3d8a09739cdff1d4fea7b9af9893dd",
+  "label": "Separate bounded 5.1.17 follow-up after reported WR incompletes",
+  "window": {
+    "start": 1795147665.992772,
+    "endExclusive": 1795148298.629028,
+    "durationSeconds": 632.636255979538,
+    "collectorSeconds": 299.9997591972351,
+    "backlogSeconds": 332.63649678230286,
+    "closedReason": "bounded_observer_deadline",
+    "observerStopped": true,
+    "nativeResultTailLimitSeconds": 8,
+    "tailResultsIncluded": 0,
+    "partialAtCutoff": []
+  },
+  "matches": {
+    "terminalScoresObserved": 9,
+    "completedNonForfeit": 5,
+    "wins": 5,
+    "losses": 0,
+    "scores": {
+      "4-0": 4,
+      "4-1": 1
+    },
+    "forfeitsExcluded": 3,
+    "partialInitialMatch": {
+      "score": {
+        "you": 4,
+        "them": 0
+      },
+      "includedInCompletedTotals": false,
+      "description": "Match started in the previous observation window; its remaining plays are included here but the terminal score is excluded from fully observed game totals."
+    },
+    "fullyObservedNonForfeit": 5,
+    "forfeitScoresExcluded": [
+      {
+        "you": 2,
+        "them": 0
+      },
+      {
+        "you": 0,
+        "them": 0
+      },
+      {
+        "you": 0,
+        "them": 0
+      }
+    ]
+  },
+  "plays": {
+    "total": 29,
+    "roles": {
+      "WR": {
+        "total": 15,
+        "nativeOutcomes": {
+          "Catch": 13,
+          "Incomplete": 2
+        },
+        "passTypes": {
+          "Floater": 15
+        },
+        "actions": {
+          "jumpRequest": 13,
+          "jump": 13,
+          "diveAttempt": 3,
+          "dive": 3
+        }
+      },
+      "DB": {
+        "total": 14,
+        "nativeOutcomes": {
+          "Intercepted": 12,
+          "Incomplete": 1,
+          "Catch": 1
+        },
+        "passTypes": {
+          "Bullet": 8,
+          "Floater": 6
+        },
+        "actions": {
+          "jumpRequest": 12,
+          "jump": 12,
+          "diveAttempt": 9,
+          "dive": 9
+        }
+      }
+    }
+  },
+  "execution": {
+    "runtimeErrors": 0,
+    "solveMs": {
+      "count": 298,
+      "median": 11.782958332332782,
+      "p95": 39.77641667006537,
+      "max": 52.63729166472331
+    },
+    "exactBuildRecords": {
+      "ciu_auto_events.jsonl": {
+        "includedExactBuildRecords": 2001,
+        "excludedOtherVersionOrWindowRecords": 0
+      },
+      "ciu_deterministic_events.jsonl": {
+        "includedExactBuildRecords": 1278,
+        "excludedOtherVersionOrWindowRecords": 0
+      },
+      "ciu_failures.jsonl": {
+        "includedExactBuildRecords": 0,
+        "excludedOtherVersionOrWindowRecords": 3
+      }
+    }
+  },
+  "liveExercise": {
+    "wrAvoidanceRows": 116,
+    "wrActivePermissionRows": 12,
+    "wrActivePermissionSprintRetainedRows": 6,
+    "wrActivePursueNoArrivalPermissionRows": 7,
+    "wrActivePursueNoArrivalSprintRetainedRows": 4,
+    "wrActivePursueNoArrivalDetails": [
+      {
+        "role": "WR",
+        "active": true,
+        "permission": true,
+        "retained": false,
+        "requested": true,
+        "blocked": false,
+        "planAction": "pursue",
+        "reachable": false,
+        "arrivalAbsent": true,
+        "nativeSpeed": 27
+      },
+      {
+        "role": "WR",
+        "active": true,
+        "permission": true,
+        "retained": false,
+        "requested": true,
+        "blocked": false,
+        "planAction": "pursue",
+        "reachable": false,
+        "arrivalAbsent": true,
+        "nativeSpeed": 20
+      },
+      {
+        "role": "WR",
+        "active": true,
+        "permission": true,
+        "retained": true,
+        "requested": true,
+        "blocked": false,
+        "planAction": "pursue",
+        "reachable": false,
+        "arrivalAbsent": true,
+        "nativeSpeed": 20
+      },
+      {
+        "role": "WR",
+        "active": true,
+        "permission": true,
+        "retained": true,
+        "requested": true,
+        "blocked": false,
+        "planAction": "pursue",
+        "reachable": false,
+        "arrivalAbsent": true,
+        "nativeSpeed": 27
+      },
+      {
+        "role": "WR",
+        "active": true,
+        "permission": true,
+        "retained": true,
+        "requested": true,
+        "blocked": false,
+        "planAction": "pursue",
+        "reachable": false,
+        "arrivalAbsent": true,
+        "nativeSpeed": 27
+      },
+      {
+        "role": "WR",
+        "active": true,
+        "permission": true,
+        "retained": false,
+        "requested": true,
+        "blocked": false,
+        "planAction": "pursue",
+        "reachable": false,
+        "arrivalAbsent": true,
+        "nativeSpeed": 20
+      },
+      {
+        "role": "WR",
+        "active": true,
+        "permission": true,
+        "retained": true,
+        "requested": true,
+        "blocked": false,
+        "planAction": "pursue",
+        "reachable": false,
+        "arrivalAbsent": true,
+        "nativeSpeed": 20
+      }
+    ],
+    "nativeSprintSequences": [
+      {
+        "role": "DB",
+        "pendingObservedSpeed": 20,
+        "pendingForecastSpeed": 20,
+        "restoredObservedSpeed": 27,
+        "restoredForecastSpeed": 27,
+        "elapsedMs": 66.741943359375
+      },
+      {
+        "role": "WR",
+        "pendingObservedSpeed": 20,
+        "pendingForecastSpeed": 20,
+        "restoredObservedSpeed": 27,
+        "restoredForecastSpeed": 27,
+        "elapsedMs": 66.98298454284668
+      },
+      {
+        "role": "DB",
+        "pendingObservedSpeed": 20,
+        "pendingForecastSpeed": 20,
+        "restoredObservedSpeed": 27,
+        "restoredForecastSpeed": 27,
+        "elapsedMs": 40.23289680480957
+      },
+      {
+        "role": "DB",
+        "pendingObservedSpeed": 20,
+        "pendingForecastSpeed": 20,
+        "restoredObservedSpeed": 20,
+        "restoredForecastSpeed": 27,
+        "elapsedMs": 51.13506317138672
+      },
+      {
+        "role": "DB",
+        "pendingObservedSpeed": 20,
+        "pendingForecastSpeed": 20,
+        "restoredObservedSpeed": 27,
+        "restoredForecastSpeed": 27,
+        "elapsedMs": 43.34092140197754
+      },
+      {
+        "role": "DB",
+        "pendingObservedSpeed": 20,
+        "pendingForecastSpeed": 20,
+        "restoredObservedSpeed": 27,
+        "restoredForecastSpeed": 27,
+        "elapsedMs": 33.357858657836914
+      },
+      {
+        "role": "DB",
+        "pendingObservedSpeed": 20,
+        "pendingForecastSpeed": 20,
+        "restoredObservedSpeed": 27,
+        "restoredForecastSpeed": 27,
+        "elapsedMs": 62.304019927978516
+      },
+      {
+        "role": "WR",
+        "pendingObservedSpeed": 20,
+        "pendingForecastSpeed": 20,
+        "restoredObservedSpeed": 20,
+        "restoredForecastSpeed": 27,
+        "elapsedMs": 7.652044296264648
+      },
+      {
+        "role": "WR",
+        "pendingObservedSpeed": 20,
+        "pendingForecastSpeed": 20,
+        "restoredObservedSpeed": 27,
+        "restoredForecastSpeed": 27,
+        "elapsedMs": 83.02783966064453
+      },
+      {
+        "role": "WR",
+        "pendingObservedSpeed": 20,
+        "pendingForecastSpeed": 20,
+        "restoredObservedSpeed": 27,
+        "restoredForecastSpeed": 27,
+        "elapsedMs": 99.40981864929199
+      },
+      {
+        "role": "DB",
+        "pendingObservedSpeed": 20,
+        "pendingForecastSpeed": 20,
+        "restoredObservedSpeed": 27,
+        "restoredForecastSpeed": 27,
+        "elapsedMs": 133.1961154937744
+      },
+      {
+        "role": "WR",
+        "pendingObservedSpeed": 20,
+        "pendingForecastSpeed": 20,
+        "restoredObservedSpeed": 27,
+        "restoredForecastSpeed": 27,
+        "elapsedMs": 47.91998863220215
+      },
+      {
+        "role": "DB",
+        "pendingObservedSpeed": 20,
+        "pendingForecastSpeed": 20,
+        "restoredObservedSpeed": 27,
+        "restoredForecastSpeed": 27,
+        "elapsedMs": 83.57691764831543
+      },
+      {
+        "role": "DB",
+        "pendingObservedSpeed": 20,
+        "pendingForecastSpeed": 20,
+        "restoredObservedSpeed": 27,
+        "restoredForecastSpeed": 27,
+        "elapsedMs": 43.24698448181152
+      },
+      {
+        "role": "DB",
+        "pendingObservedSpeed": 20,
+        "pendingForecastSpeed": 20,
+        "restoredObservedSpeed": 27,
+        "restoredForecastSpeed": 27,
+        "elapsedMs": 50.03714561462402
+      },
+      {
+        "role": "DB",
+        "pendingObservedSpeed": 20,
+        "pendingForecastSpeed": 20,
+        "restoredObservedSpeed": 27,
+        "restoredForecastSpeed": 27,
+        "elapsedMs": 83.0228328704834
+      },
+      {
+        "role": "DB",
+        "pendingObservedSpeed": 20,
+        "pendingForecastSpeed": 20,
+        "restoredObservedSpeed": 27,
+        "restoredForecastSpeed": 27,
+        "elapsedMs": 67.08621978759766
+      },
+      {
+        "role": "DB",
+        "pendingObservedSpeed": 20,
+        "pendingForecastSpeed": 20,
+        "restoredObservedSpeed": 27,
+        "restoredForecastSpeed": 27,
+        "elapsedMs": 38.47217559814453
+      },
+      {
+        "role": "DB",
+        "pendingObservedSpeed": 20,
+        "pendingForecastSpeed": 20,
+        "restoredObservedSpeed": 27,
+        "restoredForecastSpeed": 27,
+        "elapsedMs": 33.63513946533203
+      },
+      {
+        "role": "WR",
+        "pendingObservedSpeed": 20,
+        "pendingForecastSpeed": 20,
+        "restoredObservedSpeed": 27,
+        "restoredForecastSpeed": 27,
+        "elapsedMs": 34.09099578857422
+      },
+      {
+        "role": "DB",
+        "pendingObservedSpeed": 20,
+        "pendingForecastSpeed": 20,
+        "restoredObservedSpeed": 27,
+        "restoredForecastSpeed": 27,
+        "elapsedMs": 70.66488265991211
+      },
+      {
+        "role": "DB",
+        "pendingObservedSpeed": 20,
+        "pendingForecastSpeed": 20,
+        "restoredObservedSpeed": 27,
+        "restoredForecastSpeed": 27,
+        "elapsedMs": 66.37287139892578
+      }
+    ],
+    "interpretation": "Absence of arriveBy is joined with the latest same-flight pursue plan. Permission does not by itself establish sprint eligibility. Native speed observations remain separate from requested sprint and forecast speed; candidate ranking is not logged, so no optimizer-causality claim is made."
+  },
+  "incidents": [
+    {
+      "playIndex": 4,
+      "role": "WR",
+      "pass": "Floater",
+      "nativeOutcome": "Incomplete",
+      "terminal": {
+        "time": 1795147760.843647,
+        "result": "Incomplete",
+        "you": 0,
+        "them": 0,
+        "toWin": 4,
+        "round": 1,
+        "down": 2
+      },
+      "reachablePlans": 0,
+      "planCount": 20,
+      "actions": [],
+      "localContactClaims": 0,
+      "review": {
+        "status": "detailed_review_pending",
+        "finding": "No local contact callback is recorded; detailed review is pending."
+      }
+    },
+    {
+      "playIndex": 13,
+      "role": "WR",
+      "pass": "Floater",
+      "nativeOutcome": "Incomplete",
+      "terminal": {
+        "time": 1795147941.482835,
+        "result": "Incomplete",
+        "you": 0,
+        "them": 0,
+        "toWin": 4,
+        "round": 1,
+        "down": 2
+      },
+      "reachablePlans": 3,
+      "planCount": 17,
+      "actions": [],
+      "localContactClaims": 0,
+      "review": {
+        "status": "detailed_review_pending",
+        "finding": "No local contact callback is recorded; detailed review is pending."
+      }
+    },
+    {
+      "playIndex": 22,
+      "role": "DB",
+      "pass": "Floater",
+      "nativeOutcome": "Catch",
+      "terminal": {
+        "time": 1795148143.056483,
+        "result": "Touchdown",
+        "point": "Opp",
+        "you": 1,
+        "them": 1,
+        "toWin": 4,
+        "round": 2,
+        "down": 1
+      },
+      "reachablePlans": 15,
+      "planCount": 25,
+      "actions": [],
+      "localContactClaims": 0,
+      "review": {
+        "status": "detailed_review_pending",
+        "finding": "No local contact callback is recorded; detailed review is pending."
+      }
+    }
+  ],
+  "limitations": [
+    "Native outcomes are distinguished from local contact callbacks and requested/observed inputs.",
+    "A bounded successful sample does not establish zero future incompletes or touchdowns conceded.",
+    "Detailed incident reviews are maintained separately from raw observations; pending reviews are not treated as established causes.",
+    "Only exact release and build records in this observation window contribute to the totals."
+  ]
+}

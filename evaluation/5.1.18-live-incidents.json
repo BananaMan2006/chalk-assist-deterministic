@@ -1,0 +1,592 @@
+{
+  "schemaVersion": 1,
+  "release": "5.1.18",
+  "buildId": "965226d3d58be1a6d2168b13b5f3dd176906cc9c236d5e74008f986a008b3d9f",
+  "label": "Bounded live verification after 5.1.18 update",
+  "window": {
+    "start": 1795148833.3032,
+    "endExclusive": 1795149133.3032,
+    "durationSeconds": 300,
+    "closedReason": "bounded_observer_deadline",
+    "observerStopped": true,
+    "nativeResultTailLimitSeconds": 8,
+    "tailResultsIncluded": 2,
+    "partialAtCutoff": []
+  },
+  "matches": {
+    "terminalScoresObserved": 3,
+    "completedNonForfeit": 3,
+    "wins": 3,
+    "losses": 0,
+    "scores": {
+      "4-0": 3
+    },
+    "forfeitsExcluded": 0,
+    "partialAtCutoff": {
+      "count": 1,
+      "includedInCompletedTotals": false,
+      "lastObservedScore": {
+        "you": 1,
+        "them": 0
+      }
+    }
+  },
+  "plays": {
+    "total": 15,
+    "roles": {
+      "WR": {
+        "total": 8,
+        "nativeOutcomes": {
+          "Catch": 7,
+          "Incomplete": 1
+        },
+        "passTypes": {
+          "Floater": 8
+        },
+        "actions": {
+          "jumpRequest": 8,
+          "jump": 8,
+          "diveAttempt": 2,
+          "dive": 2
+        }
+      },
+      "DB": {
+        "total": 7,
+        "nativeOutcomes": {
+          "Intercepted": 6,
+          "Incomplete": 1
+        },
+        "passTypes": {
+          "Bullet": 4,
+          "Floater": 3
+        },
+        "actions": {
+          "jumpRequest": 6,
+          "jump": 6,
+          "diveAttempt": 4,
+          "dive": 4
+        }
+      }
+    }
+  },
+  "execution": {
+    "runtimeErrors": 0,
+    "solveMs": {
+      "count": 145,
+      "median": 12.36475000041537,
+      "p95": 36.84191667707637,
+      "max": 48.51466664695181
+    },
+    "exactBuildRecords": {
+      "ciu_auto_events.jsonl": {
+        "includedExactBuildRecords": 945,
+        "excludedOtherVersionOrWindowRecords": 29
+      },
+      "ciu_deterministic_events.jsonl": {
+        "includedExactBuildRecords": 627,
+        "excludedOtherVersionOrWindowRecords": 13
+      },
+      "ciu_failures.jsonl": {
+        "includedExactBuildRecords": 0,
+        "excludedOtherVersionOrWindowRecords": 2
+      }
+    }
+  },
+  "liveExercise": {
+    "wrAvoidanceRows": 45,
+    "wrActivePermissionRows": 0,
+    "wrActivePermissionSprintRetainedRows": 0,
+    "wrActivePursueNoArrivalPermissionRows": 0,
+    "wrActivePursueNoArrivalSprintRetainedRows": 0,
+    "wrActivePursueNoArrivalDetails": [],
+    "nativeSprintSequences": [
+      {
+        "role": "WR",
+        "pendingObservedSpeed": 20,
+        "pendingForecastSpeed": 20,
+        "restoredObservedSpeed": 27,
+        "restoredForecastSpeed": 27,
+        "elapsedMs": 119.33207511901855
+      },
+      {
+        "role": "DB",
+        "pendingObservedSpeed": 20,
+        "pendingForecastSpeed": 20,
+        "restoredObservedSpeed": 27,
+        "restoredForecastSpeed": 27,
+        "elapsedMs": 131.72602653503418
+      },
+      {
+        "role": "WR",
+        "pendingObservedSpeed": 20,
+        "pendingForecastSpeed": 20,
+        "restoredObservedSpeed": 27,
+        "restoredForecastSpeed": 27,
+        "elapsedMs": 33.65182876586914
+      },
+      {
+        "role": "DB",
+        "pendingObservedSpeed": 20,
+        "pendingForecastSpeed": 20,
+        "restoredObservedSpeed": 27,
+        "restoredForecastSpeed": 27,
+        "elapsedMs": 144.7291374206543
+      },
+      {
+        "role": "WR",
+        "pendingObservedSpeed": 20,
+        "pendingForecastSpeed": 20,
+        "restoredObservedSpeed": 27,
+        "restoredForecastSpeed": 27,
+        "elapsedMs": 30.878067016601562
+      },
+      {
+        "role": "DB",
+        "pendingObservedSpeed": 20,
+        "pendingForecastSpeed": 20,
+        "restoredObservedSpeed": 27,
+        "restoredForecastSpeed": 27,
+        "elapsedMs": 36.53979301452637
+      },
+      {
+        "role": "DB",
+        "pendingObservedSpeed": 20,
+        "pendingForecastSpeed": 20,
+        "restoredObservedSpeed": 27,
+        "restoredForecastSpeed": 27,
+        "elapsedMs": 32.984018325805664
+      },
+      {
+        "role": "DB",
+        "pendingObservedSpeed": 20,
+        "pendingForecastSpeed": 20,
+        "restoredObservedSpeed": 27,
+        "restoredForecastSpeed": 27,
+        "elapsedMs": 121.9930648803711
+      },
+      {
+        "role": "DB",
+        "pendingObservedSpeed": 20,
+        "pendingForecastSpeed": 20,
+        "restoredObservedSpeed": 27,
+        "restoredForecastSpeed": 27,
+        "elapsedMs": 67.15989112854004
+      },
+      {
+        "role": "WR",
+        "pendingObservedSpeed": 20,
+        "pendingForecastSpeed": 20,
+        "restoredObservedSpeed": 27,
+        "restoredForecastSpeed": 27,
+        "elapsedMs": 52.08015441894531
+      },
+      {
+        "role": "DB",
+        "pendingObservedSpeed": 20,
+        "pendingForecastSpeed": 20,
+        "restoredObservedSpeed": 27,
+        "restoredForecastSpeed": 27,
+        "elapsedMs": 66.72096252441406
+      }
+    ],
+    "interpretation": "Absence of arriveBy is joined with the latest same-flight pursue plan. Permission does not by itself establish sprint eligibility. Native speed observations remain separate from requested sprint and forecast speed; candidate ranking is not logged, so no optimizer-causality claim is made."
+  },
+  "incidents": [
+    {
+      "playIndex": 7,
+      "role": "WR",
+      "pass": "Floater",
+      "nativeOutcome": "Incomplete",
+      "terminal": {
+        "time": 1795148962.732906,
+        "result": "Incomplete",
+        "you": 2,
+        "them": 0,
+        "toWin": 4,
+        "round": 3,
+        "down": 2
+      },
+      "reachablePlans": 10,
+      "planCount": 11,
+      "actions": [
+        "jumpRequest",
+        "jump",
+        "diveAttempt",
+        "dive"
+      ],
+      "localContactClaims": 1,
+      "review": {
+        "status": "detailed_review_pending",
+        "finding": "One local contact callback was observed, but the native result remained Incomplete. The jump and dive were both requested and observed. A local callback is not authoritative possession confirmation."
+      }
+    }
+  ],
+  "limitations": [
+    "Native outcomes are distinguished from local contact callbacks and requested/observed inputs.",
+    "A bounded successful sample does not establish zero future incompletes or touchdowns conceded.",
+    "A reduction in failures during a small sample does not by itself prove each change caused the improvement.",
+    "Only exact release and build records in this observation window contribute to the totals."
+  ],
+  "startupBudget": {
+    "observations": [
+      {
+        "setupStamina": 100,
+        "planningStamina": 75,
+        "observedStartStamina": 75,
+        "updatedPlanningBudget": 75,
+        "matchMinimum": 75,
+        "elapsedAtObservation": 0.1135709285736084,
+        "earlyStemSprintSeconds": 0.9,
+        "allowanceFraction": 0.25,
+        "empiricalAllowance": true
+      },
+      {
+        "setupStamina": 100,
+        "planningStamina": 75,
+        "observedStartStamina": 75,
+        "updatedPlanningBudget": 75,
+        "matchMinimum": 75,
+        "elapsedAtObservation": 0.0902109146118164,
+        "earlyStemSprintSeconds": 0.9,
+        "allowanceFraction": 0.25,
+        "empiricalAllowance": true
+      },
+      {
+        "setupStamina": 100,
+        "planningStamina": 75,
+        "observedStartStamina": 75,
+        "updatedPlanningBudget": 75,
+        "matchMinimum": 75,
+        "elapsedAtObservation": 0.12395501136779785,
+        "earlyStemSprintSeconds": 0.9,
+        "allowanceFraction": 0.25,
+        "empiricalAllowance": true
+      },
+      {
+        "setupStamina": 100,
+        "planningStamina": 75,
+        "observedStartStamina": 75,
+        "updatedPlanningBudget": 75,
+        "matchMinimum": 75,
+        "elapsedAtObservation": 0.11555790901184082,
+        "earlyStemSprintSeconds": 0.9,
+        "allowanceFraction": 0.25,
+        "empiricalAllowance": true
+      },
+      {
+        "setupStamina": 100,
+        "planningStamina": 75,
+        "observedStartStamina": 75,
+        "updatedPlanningBudget": 75,
+        "matchMinimum": 75,
+        "elapsedAtObservation": 0.15148615837097168,
+        "earlyStemSprintSeconds": 0.9,
+        "allowanceFraction": 0.25,
+        "empiricalAllowance": true
+      },
+      {
+        "setupStamina": 100,
+        "planningStamina": 75,
+        "observedStartStamina": 75,
+        "updatedPlanningBudget": 75,
+        "matchMinimum": 75,
+        "elapsedAtObservation": 0.06830286979675293,
+        "earlyStemSprintSeconds": 0.9,
+        "allowanceFraction": 0.25,
+        "empiricalAllowance": true
+      },
+      {
+        "setupStamina": 100,
+        "planningStamina": 75,
+        "observedStartStamina": 75,
+        "updatedPlanningBudget": 75,
+        "matchMinimum": 75,
+        "elapsedAtObservation": 0.07683587074279785,
+        "earlyStemSprintSeconds": 0.9,
+        "allowanceFraction": 0.25,
+        "empiricalAllowance": true
+      },
+      {
+        "setupStamina": 100,
+        "planningStamina": 75,
+        "observedStartStamina": 75,
+        "updatedPlanningBudget": 75,
+        "matchMinimum": 75,
+        "elapsedAtObservation": 0.13572096824645996,
+        "earlyStemSprintSeconds": 0.9,
+        "allowanceFraction": 0.25,
+        "empiricalAllowance": true
+      }
+    ],
+    "planningMatchesObservedStartCount": 8,
+    "note": "Setup allowance is an empirical conservative planning adjustment, not a claim about a server rule. Native start observations are logged separately.",
+    "observedEarlyNativeSprint": [
+      {
+        "playIndex": 1,
+        "result": "Catch",
+        "elapsed": 0.5155878067016602,
+        "walkSpeed": 27,
+        "horizontalVelocity": 27.0,
+        "nativeSprintOn": true,
+        "stamina": 74,
+        "sampleCount": 2
+      },
+      {
+        "playIndex": 3,
+        "result": "Catch",
+        "elapsed": 0.5067689418792725,
+        "walkSpeed": 27,
+        "horizontalVelocity": 27.0,
+        "nativeSprintOn": true,
+        "stamina": 72,
+        "sampleCount": 3
+      },
+      {
+        "playIndex": 5,
+        "result": "Catch",
+        "elapsed": 0.7658219337463379,
+        "walkSpeed": 27,
+        "horizontalVelocity": 27.00000119150984,
+        "nativeSprintOn": true,
+        "stamina": 72,
+        "sampleCount": 1
+      },
+      {
+        "playIndex": 8,
+        "result": "Catch",
+        "elapsed": 0.5515851974487305,
+        "walkSpeed": 27,
+        "horizontalVelocity": 27.0,
+        "nativeSprintOn": true,
+        "stamina": 72,
+        "sampleCount": 2
+      },
+      {
+        "playIndex": 12,
+        "result": "Catch",
+        "elapsed": 0.4858558177947998,
+        "walkSpeed": 27,
+        "horizontalVelocity": 27.0,
+        "nativeSprintOn": true,
+        "stamina": 70,
+        "sampleCount": 1
+      },
+      {
+        "playIndex": 14,
+        "result": "Catch",
+        "elapsed": 0.49352097511291504,
+        "walkSpeed": 27,
+        "horizontalVelocity": 27.0,
+        "nativeSprintOn": true,
+        "stamina": 70,
+        "sampleCount": 3
+      },
+      {
+        "playIndex": 15,
+        "result": "Catch",
+        "elapsed": 0.5683770179748535,
+        "walkSpeed": 27,
+        "horizontalVelocity": 27.0,
+        "nativeSprintOn": true,
+        "stamina": 70,
+        "sampleCount": 2
+      }
+    ]
+  },
+  "nearContactObservations": {
+    "plays": [
+      {
+        "playIndex": 1,
+        "role": "WR",
+        "result": "Catch",
+        "lastReachableAction": "jump",
+        "nearContactSprintTransitions": [],
+        "actionRejections": []
+      },
+      {
+        "playIndex": 2,
+        "role": "DB",
+        "result": "Intercepted",
+        "lastReachableAction": "jumpDive",
+        "nearContactSprintTransitions": [
+          {
+            "secondsBeforeContact": 0.22333025932312012,
+            "sprintOn": false,
+            "observedSpeed": 27,
+            "sourceKind": "sample"
+          }
+        ],
+        "actionRejections": []
+      },
+      {
+        "playIndex": 3,
+        "role": "WR",
+        "result": "Catch",
+        "lastReachableAction": "jump",
+        "nearContactSprintTransitions": [],
+        "actionRejections": []
+      },
+      {
+        "playIndex": 4,
+        "role": "DB",
+        "result": "Intercepted",
+        "lastReachableAction": "jumpDive",
+        "nearContactSprintTransitions": [
+          {
+            "secondsBeforeContact": 0.21885895729064941,
+            "sprintOn": false,
+            "observedSpeed": 27,
+            "sourceKind": "sample"
+          }
+        ],
+        "actionRejections": []
+      },
+      {
+        "playIndex": 5,
+        "role": "WR",
+        "result": "Catch",
+        "lastReachableAction": "jump",
+        "nearContactSprintTransitions": [],
+        "actionRejections": []
+      },
+      {
+        "playIndex": 6,
+        "role": "DB",
+        "result": "Intercepted",
+        "lastReachableAction": "jump",
+        "nearContactSprintTransitions": [],
+        "actionRejections": []
+      },
+      {
+        "playIndex": 7,
+        "role": "WR",
+        "result": "Incomplete",
+        "lastReachableAction": "jumpDive",
+        "nearContactSprintTransitions": [],
+        "actionRejections": []
+      },
+      {
+        "playIndex": 8,
+        "role": "WR",
+        "result": "Catch",
+        "lastReachableAction": "jump",
+        "nearContactSprintTransitions": [],
+        "actionRejections": []
+      },
+      {
+        "playIndex": 9,
+        "role": "DB",
+        "result": "Incomplete",
+        "lastReachableAction": "jumpDive",
+        "nearContactSprintTransitions": [],
+        "actionRejections": []
+      },
+      {
+        "playIndex": 10,
+        "role": "DB",
+        "result": "Intercepted",
+        "lastReachableAction": "jumpDive",
+        "nearContactSprintTransitions": [
+          {
+            "secondsBeforeContact": 0.058030128479003906,
+            "sprintOn": false,
+            "observedSpeed": 0,
+            "sourceKind": "sample"
+          }
+        ],
+        "actionRejections": []
+      },
+      {
+        "playIndex": 11,
+        "role": "DB",
+        "result": "Intercepted",
+        "lastReachableAction": "jumpDive",
+        "nearContactSprintTransitions": [
+          {
+            "secondsBeforeContact": 0.19238948822021484,
+            "sprintOn": false,
+            "observedSpeed": 27,
+            "sourceKind": "sample"
+          }
+        ],
+        "actionRejections": []
+      },
+      {
+        "playIndex": 12,
+        "role": "WR",
+        "result": "Catch",
+        "lastReachableAction": "jumpDive",
+        "nearContactSprintTransitions": [
+          {
+            "secondsBeforeContact": 0.10102105140686035,
+            "sprintOn": false,
+            "observedSpeed": 0,
+            "sourceKind": "sample"
+          }
+        ],
+        "actionRejections": []
+      },
+      {
+        "playIndex": 13,
+        "role": "DB",
+        "result": "Intercepted",
+        "lastReachableAction": "move",
+        "nearContactSprintTransitions": [
+          {
+            "secondsBeforeContact": 0.05945992469787598,
+            "sprintOn": false,
+            "observedSpeed": 27,
+            "sourceKind": "plan"
+          },
+          {
+            "secondsBeforeContact": 0.05884194374084473,
+            "sprintOn": true,
+            "observedSpeed": 27,
+            "sourceKind": "sample"
+          }
+        ],
+        "actionRejections": []
+      },
+      {
+        "playIndex": 14,
+        "role": "WR",
+        "result": "Catch",
+        "lastReachableAction": "jump",
+        "nearContactSprintTransitions": [],
+        "actionRejections": []
+      },
+      {
+        "playIndex": 15,
+        "role": "WR",
+        "result": "Catch",
+        "lastReachableAction": "jump",
+        "nearContactSprintTransitions": [],
+        "actionRejections": []
+      }
+    ],
+    "note": "Sprint state changes are sampled native attributes and are not automatically errors; parking or stopping can be part of the checked plan. A same-frame sprint OFF/ON observation at unchanged native speed does not establish actual speed loss. Several OFF observations occur during committed dives."
+  },
+  "savedSettingsVerification": {
+    "time": 1795149025.446637,
+    "version": "5.1.18",
+    "buildId": "965226d3d58be1a6d2168b13b5f3dd176906cc9c236d5e74008f986a008b3d9f",
+    "revision": 4,
+    "runtime": {
+      "master": true,
+      "assist": true,
+      "fullAuto": true,
+      "autoplay": true,
+      "autoLeave": true,
+      "matchAlerts": false,
+      "wrRepeat": false
+    },
+    "allRuntimeMatchSaved": true,
+    "diskMatchesMemory": true,
+    "modeMatches": true,
+    "saveRestoreErrors": {
+      "saveError": null,
+      "restoreError": null,
+      "recoveryWarning": null
+    }
+  }
+}

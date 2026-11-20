@@ -1,0 +1,129 @@
+{
+  "schema": 1,
+  "version": "5.1.18",
+  "scope": "Deterministic DB collision-avoidance review; no training, speed changes, or catch-validator changes.",
+  "privacy": "No player names, account IDs, raw timestamps, machine paths, or extracted game source are included.",
+  "defect": {
+    "previousSprintProjectedClearanceStuds": 3.75,
+    "existingImmediateSprintReleaseDistanceStuds": 4.25,
+    "problem": "A projected path could pass the collision check while entering the larger band that forces sprint off on the next update. The same motion model could therefore approve and immediately revoke sprint.",
+    "change": "Opted-in requested sprint now anticipates and validates the existing near-contact band at both current and prospective native speeds. Ordinary walking uses its existing collision radius.",
+    "preserved": [
+      "bounded turns",
+      "same-side preference",
+      "physical overlap and blocked-movement gates",
+      "legal field bounds",
+      "current stamina ownership at the controller",
+      "native catch timing and contact validation"
+    ]
+  },
+  "liveObservation": {
+    "build": "5.1.17",
+    "incident": "follow-up DB Floater 22",
+    "nativeOutcome": "opponent Catch followed by Touchdown",
+    "planCount": 25,
+    "reachablePlanCount": 15,
+    "catchJumpOrDiveRequests": 0,
+    "lastReachablePlanAtSecondsAfterLaunch": 2.139445,
+    "lastReachableJumpDueSecondsAfterLaunch": 2.657606,
+    "lastReachableMarginStuds": 0.084325,
+    "nextNearContactSprintReleaseSecondsAfterLaunch": 2.143,
+    "firstSubsequentUnreachablePlanSecondsAfterLaunch": 2.162946,
+    "nativeRestoredSprintReplanSecondsAfterLaunch": 2.227,
+    "finding": "The plan became unreachable before jump execution was due. Earlier lateral avoidance and later native sprint interruptions consumed the movement margin.",
+    "causalLimit": "Sparse logs do not contain every heartbeat obstacle pose. This identifies a reach-loss sequence, not proof that the changed helper would have won this live catch."
+  },
+  "constantVelocityRegression": {
+    "classification": "Exact helper geometry simulation with authored constant-velocity opponent; not Roblox physics.",
+    "frequencyHz": 60,
+    "durationSeconds": 2,
+    "frames": 120,
+    "mirrorsTested": [
+      "left",
+      "right"
+    ],
+    "initialPlayerPositionStuds": {
+      "x": 10,
+      "z": 0
+    },
+    "initialOpponentRelativePositionStuds": {
+      "x": -4,
+      "z": 2
+    },
+    "opponentVelocityStudsPerSecond": {
+      "x": 0,
+      "z": 25
+    },
+    "targetStuds": {
+      "x": 0,
+      "z": 80
+    },
+    "nativeSpeedModel": "Current 20 or 27 applied this frame; requested state takes effect on the next frame.",
+    "before": {
+      "nonSprintFrames": 22,
+      "minimumSeparationStuds": 4.220802,
+      "endZStuds": 49.165715,
+      "endXStuds": 9.198778,
+      "passingSideChanges": 0
+    },
+    "after": {
+      "nonSprintFrames": 1,
+      "minimumSeparationStuds": 4.40698,
+      "endZStuds": 53.73888,
+      "endXStuds": 10.213114,
+      "passingSideChanges": 0
+    },
+    "assertions": [
+      "Every approved sprint preserves the 4.25-stud band at both checked speeds.",
+      "The mirrored bypasses retain the selected side and bounded turn rate.",
+      "The path stays within 0.8 studs laterally of its starting lane.",
+      "At most one initial bounded-turn frame releases sprint, with more than 53.5 studs forward travel."
+    ]
+  },
+  "liveDataDrivenModel": {
+    "classification": "Interpolated recorded opponent motion with independently integrated helper-controlled position; not an exact replay or counterfactual catch proof.",
+    "frequencyHz": 60,
+    "frames": 171,
+    "assumptions": [
+      "Opponent positions and velocities are linearly interpolated between recorded samples.",
+      "Observed planner targets and deadlines are reused; the planner is not coupled to the changed simulated position.",
+      "Current speed applies during each frame; a requested speed change applies on the following frame.",
+      "No native collision physics, replication latency, jump/dive execution, or server possession arbitration is simulated."
+    ],
+    "before": {
+      "nonSprintFrames": 34,
+      "minimumSeparationStuds": 3.422936,
+      "endXStuds": 5.08293,
+      "endZStuds": 88.812645
+    },
+    "after": {
+      "nonSprintFrames": 0,
+      "minimumSeparationStuds": 4.344644,
+      "endXStuds": 6.247617,
+      "endZStuds": 93.003942
+    },
+    "interpretation": "The consistency change removes sprint chatter and preserves more forward travel in this model. It does not establish an interception or live improvement rate."
+  },
+  "tradeoffs": [
+    "The wider prospective band can require a slightly wider turn. It does not guarantee greater forward progress against every opponent motion.",
+    "An additional fast lateral-crossing synthetic probe produced 33 rather than 31 non-sprint frames and 42.803 rather than 44.383 forward studs. This is a consistency/safety fix, not a globally optimal route solver.",
+    "Already touching, blocked, or unsafe bounded turns still release sprint."
+  ],
+  "validation": {
+    "updatedHelperTests": {
+      "passed": 50,
+      "total": 50
+    },
+    "previousHelperAgainstUpdatedTests": {
+      "passed": 47,
+      "total": 50
+    },
+    "newRegressionFailsPreviousHelper": true,
+    "nonOptInBehavior": "Explicitly tested ordinary movement and non-requested sprint preserve their exact clear-path vectors.",
+    "controllerIntegration": "One old frozen-heading expectation requires checking bounded safe steering instead; release owner runs full suite."
+  },
+  "remainingWork": [
+    "Check the updated live movement and outcomes after installation.",
+    "Investigate later missed possessions individually; geometry validation alone cannot promise server possession."
+  ]
+}

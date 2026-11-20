@@ -1,0 +1,306 @@
+{
+  "schema": 1,
+  "scope": "One frozen, deduplicated read of available bounded5.1.16/5.1.17/5.1.18 logs containing completed WR jump-dive attempts with a fresh native local-contact callback. This is a descriptive case comparison, not a population sample or success-rate estimate.",
+  "cases": [
+    {
+      "case": "WR01",
+      "version": "5.1.16",
+      "miss7": false,
+      "nativeOutcome": "Catch",
+      "confirmedOwnCatch": true,
+      "ballMode": "Floater",
+      "divingAtCallback": true,
+      "airborneAtCallback": true,
+      "upY": 0.964802,
+      "radius": 3.75,
+      "callbackMarginStuds": 0.515685,
+      "diveAgeAtCallbackSeconds": 0.051134,
+      "jumpAgeAtCallbackSeconds": 0.148937,
+      "claimFlightSeconds": 2.88025,
+      "networkPingMs": 77.189997,
+      "callbackToResultMs": 186.194181,
+      "controlClass": "historical accepted control",
+      "sourceBuildIds": [
+        "0279bce5f6e750358c3aab6dac4d19020d35285b40f89a21a9aaa72ec37c6633"
+      ]
+    },
+    {
+      "case": "WR02",
+      "version": "5.1.16",
+      "miss7": false,
+      "nativeOutcome": "Incomplete",
+      "confirmedOwnCatch": false,
+      "ballMode": "Floater",
+      "divingAtCallback": true,
+      "airborneAtCallback": true,
+      "upY": 0.965213,
+      "radius": 3.75,
+      "callbackMarginStuds": 0.177246,
+      "diveAgeAtCallbackSeconds": 0.050913,
+      "jumpAgeAtCallbackSeconds": 0.134428,
+      "claimFlightSeconds": 2.886937,
+      "networkPingMs": 15.606,
+      "callbackToResultMs": 519.032001,
+      "controlClass": "historical incomplete",
+      "sourceBuildIds": [
+        "0279bce5f6e750358c3aab6dac4d19020d35285b40f89a21a9aaa72ec37c6633"
+      ]
+    },
+    {
+      "case": "WR03",
+      "version": "5.1.16",
+      "miss7": false,
+      "nativeOutcome": "Catch",
+      "confirmedOwnCatch": true,
+      "ballMode": "Floater",
+      "divingAtCallback": true,
+      "airborneAtCallback": true,
+      "upY": 0.183171,
+      "radius": 2.5,
+      "callbackMarginStuds": 0.494331,
+      "diveAgeAtCallbackSeconds": 0.166924,
+      "jumpAgeAtCallbackSeconds": 0.251191,
+      "claimFlightSeconds": 2.942176,
+      "networkPingMs": 116.163,
+      "callbackToResultMs": 400.808096,
+      "controlClass": "historical accepted control",
+      "sourceBuildIds": [
+        "0279bce5f6e750358c3aab6dac4d19020d35285b40f89a21a9aaa72ec37c6633"
+      ]
+    },
+    {
+      "case": "WR04",
+      "version": "5.1.16",
+      "miss7": false,
+      "nativeOutcome": "Catch",
+      "confirmedOwnCatch": true,
+      "ballMode": "Floater",
+      "divingAtCallback": true,
+      "airborneAtCallback": true,
+      "upY": 0.90692,
+      "radius": 3.75,
+      "callbackMarginStuds": 0.130919,
+      "diveAgeAtCallbackSeconds": 0.066774,
+      "jumpAgeAtCallbackSeconds": 0.144889,
+      "claimFlightSeconds": 2.87287,
+      "networkPingMs": 82.001999,
+      "callbackToResultMs": 318.988085,
+      "controlClass": "historical accepted control",
+      "sourceBuildIds": [
+        "0279bce5f6e750358c3aab6dac4d19020d35285b40f89a21a9aaa72ec37c6633"
+      ]
+    },
+    {
+      "case": "WR05",
+      "version": "5.1.17",
+      "miss7": false,
+      "nativeOutcome": "Catch",
+      "confirmedOwnCatch": true,
+      "ballMode": "Floater",
+      "divingAtCallback": true,
+      "airborneAtCallback": true,
+      "upY": 0.968941,
+      "radius": 3.75,
+      "callbackMarginStuds": 0.783394,
+      "diveAgeAtCallbackSeconds": 0.05029,
+      "jumpAgeAtCallbackSeconds": 0.191407,
+      "claimFlightSeconds": 2.881785,
+      "networkPingMs": 110.921003,
+      "callbackToResultMs": 565.631151,
+      "controlClass": "historical accepted control",
+      "sourceBuildIds": [
+        "00edfd316f0cb63c525ad8b61160dddf1d3d8a09739cdff1d4fea7b9af9893dd"
+      ]
+    },
+    {
+      "case": "WR06",
+      "version": "5.1.17",
+      "miss7": false,
+      "nativeOutcome": "Catch",
+      "confirmedOwnCatch": true,
+      "ballMode": "Floater",
+      "divingAtCallback": true,
+      "airborneAtCallback": true,
+      "upY": 0.965963,
+      "radius": 3.75,
+      "callbackMarginStuds": 0.627744,
+      "diveAgeAtCallbackSeconds": 0.05124,
+      "jumpAgeAtCallbackSeconds": 0.135541,
+      "claimFlightSeconds": 2.896817,
+      "networkPingMs": 71.089998,
+      "callbackToResultMs": 268.058062,
+      "controlClass": "historical accepted control",
+      "sourceBuildIds": [
+        "00edfd316f0cb63c525ad8b61160dddf1d3d8a09739cdff1d4fea7b9af9893dd"
+      ]
+    },
+    {
+      "case": "WR07",
+      "version": "5.1.17",
+      "miss7": false,
+      "nativeOutcome": "Catch",
+      "confirmedOwnCatch": true,
+      "ballMode": "Floater",
+      "divingAtCallback": true,
+      "airborneAtCallback": true,
+      "upY": 0.79378,
+      "radius": 3.75,
+      "callbackMarginStuds": 0.829434,
+      "diveAgeAtCallbackSeconds": 0.084531,
+      "jumpAgeAtCallbackSeconds": 0.184262,
+      "claimFlightSeconds": 2.882139,
+      "networkPingMs": 41.871,
+      "callbackToResultMs": 282.93395,
+      "controlClass": "historical accepted control",
+      "sourceBuildIds": [
+        "00edfd316f0cb63c525ad8b61160dddf1d3d8a09739cdff1d4fea7b9af9893dd"
+      ]
+    },
+    {
+      "case": "WR08",
+      "version": "5.1.17",
+      "miss7": false,
+      "nativeOutcome": "Catch",
+      "confirmedOwnCatch": true,
+      "ballMode": "Floater",
+      "divingAtCallback": true,
+      "airborneAtCallback": true,
+      "upY": 0.664618,
+      "radius": 3.75,
+      "callbackMarginStuds": 0.363411,
+      "diveAgeAtCallbackSeconds": 0.099672,
+      "jumpAgeAtCallbackSeconds": 0.183014,
+      "claimFlightSeconds": 2.876898,
+      "networkPingMs": 42.091001,
+      "callbackToResultMs": 269.906998,
+      "controlClass": "historical accepted control",
+      "sourceBuildIds": [
+        "00edfd316f0cb63c525ad8b61160dddf1d3d8a09739cdff1d4fea7b9af9893dd"
+      ]
+    },
+    {
+      "case": "WR09",
+      "version": "5.1.17",
+      "miss7": false,
+      "nativeOutcome": "Catch",
+      "confirmedOwnCatch": true,
+      "ballMode": "Floater",
+      "divingAtCallback": true,
+      "airborneAtCallback": true,
+      "upY": 0.965612,
+      "radius": 3.75,
+      "callbackMarginStuds": 0.300377,
+      "diveAgeAtCallbackSeconds": 0.051013,
+      "jumpAgeAtCallbackSeconds": 0.134477,
+      "claimFlightSeconds": 2.886563,
+      "networkPingMs": 27.249999,
+      "callbackToResultMs": 301.117182,
+      "controlClass": "historical accepted control",
+      "sourceBuildIds": [
+        "00edfd316f0cb63c525ad8b61160dddf1d3d8a09739cdff1d4fea7b9af9893dd"
+      ]
+    },
+    {
+      "case": "WR10",
+      "version": "5.1.17",
+      "miss7": false,
+      "nativeOutcome": "Catch",
+      "confirmedOwnCatch": true,
+      "ballMode": "Floater",
+      "divingAtCallback": true,
+      "airborneAtCallback": true,
+      "upY": 0.819473,
+      "radius": 3.75,
+      "callbackMarginStuds": 0.340494,
+      "diveAgeAtCallbackSeconds": 0.082962,
+      "jumpAgeAtCallbackSeconds": 0.184268,
+      "claimFlightSeconds": 2.877486,
+      "networkPingMs": 21.335,
+      "callbackToResultMs": 235.172987,
+      "controlClass": "historical accepted control",
+      "sourceBuildIds": [
+        "00edfd316f0cb63c525ad8b61160dddf1d3d8a09739cdff1d4fea7b9af9893dd"
+      ]
+    },
+    {
+      "case": "WR11",
+      "version": "5.1.18",
+      "miss7": true,
+      "nativeOutcome": "Incomplete",
+      "confirmedOwnCatch": false,
+      "ballMode": "Floater",
+      "divingAtCallback": true,
+      "airborneAtCallback": true,
+      "upY": 0.966549,
+      "radius": 3.75,
+      "callbackMarginStuds": 0.154517,
+      "diveAgeAtCallbackSeconds": 0.050863,
+      "jumpAgeAtCallbackSeconds": 0.135031,
+      "claimFlightSeconds": 2.884471,
+      "networkPingMs": 28.883999,
+      "callbackToResultMs": 533.574104,
+      "controlClass": "current-build miss under review",
+      "sourceBuildIds": [
+        "965226d3d58be1a6d2168b13b5f3dd176906cc9c236d5e74008f986a008b3d9f"
+      ]
+    },
+    {
+      "case": "WR12",
+      "version": "5.1.18",
+      "miss7": false,
+      "nativeOutcome": "Catch",
+      "confirmedOwnCatch": true,
+      "ballMode": "Floater",
+      "divingAtCallback": true,
+      "airborneAtCallback": true,
+      "upY": 0.652147,
+      "radius": 3.75,
+      "callbackMarginStuds": 0.327404,
+      "diveAgeAtCallbackSeconds": 0.101924,
+      "jumpAgeAtCallbackSeconds": 0.185759,
+      "claimFlightSeconds": 2.880128,
+      "networkPingMs": 19.902,
+      "callbackToResultMs": 283.267021,
+      "controlClass": "same-build accepted control",
+      "sourceBuildIds": [
+        "965226d3d58be1a6d2168b13b5f3dd176906cc9c236d5e74008f986a008b3d9f"
+      ]
+    }
+  ],
+  "limitations": [
+    "Logged local capsule and current ball are not exact native Reach packet arguments.",
+    "Own catches require an adjacent deterministic routeOutcome catchSuccess confirmation.",
+    "No server catch validator, rejection reason, or server-authoritative character pose is available.",
+    "Historical controls are explicitly distinguished from the current-build failure and current-build accepted control; builds and opponents may differ.",
+    "The local callback uses a current ball/root snapshot; the exact native Reach substep timestamp and arguments were not captured.",
+    "Native BallView uses current pose while scanning older ball substeps, so logged current-ball margin does not reconstruct the precise historical claim.",
+    "Nominal planner contact margin describes a later robust window, not the earliest native boundary intersection; increasing it alone cannot guarantee first-claim acceptance.",
+    "No withheld/rejected Reach requests, server-authoritative character history, or causal network experiment is available.",
+    "The case list is frozen at12 extracted attempts. Later monitoring may contain additional outcomes."
+  ],
+  "privacy": "No player names, account IDs, tokens, match keys, absolute server timestamps, raw world positions, machine paths, or extracted game source.",
+  "version": "5.1.18",
+  "sourceVersionsAndBuilds": {
+    "5.1.16": [
+      "0279bce5f6e750358c3aab6dac4d19020d35285b40f89a21a9aaa72ec37c6633"
+    ],
+    "5.1.17": [
+      "00edfd316f0cb63c525ad8b61160dddf1d3d8a09739cdff1d4fea7b9af9893dd"
+    ],
+    "5.1.18": [
+      "965226d3d58be1a6d2168b13b5f3dd176906cc9c236d5e74008f986a008b3d9f"
+    ]
+  },
+  "nativeMechanism": [
+    "Native BallView tests ball substeps against the current hand/waist segment, then emits one native Reach request at the first local intersection.",
+    "BallTouched confirms a local request only; subsequent animation or local held-ball visuals do not certify server possession.",
+    "The logged upright-while-tipping capsule in incident7 matches the inspected native hand/waist rule."
+  ],
+  "conclusions": [
+    "Incident7 had both jump and dive execution, a fresh local claim, and positive current-ball capsule margin; its server outcome was Incomplete.",
+    "Accepted5.1.17 claims at nearly identical tilt/radius and dive/jump age contradict a blanket active-dive versus upright-capsule mismatch.",
+    "A historical accepted claim had a smaller logged margin than incident7, so these cases do not justify a universal margin threshold.",
+    "The same-build accepted jump-dive confirms that this release can complete a diving catch, but its later dive phase does not isolate the exact cause of incident7.",
+    "No broad timing, radius, native-claim, or fresh-validator change is supported by this comparison."
+  ]
+}
