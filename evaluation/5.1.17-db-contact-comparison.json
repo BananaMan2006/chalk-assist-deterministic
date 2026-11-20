@@ -1,0 +1,306 @@
+{
+  "schemaVersion": 1,
+  "version": "5.1.17",
+  "scope": "One frozen read of completed same-build DB Bullet native outcomes with a local callback; descriptive comparison only, no general rate or causal estimate.",
+  "sourceSha256": "b5d3b845c0aa54803b729c4ed8a03e8efd9dd4cec0f6d52a2d74cace812761d6",
+  "cases": [
+    {
+      "case": "B01",
+      "incident008": false,
+      "nativeOutcome": "Swatted",
+      "callbackAtFlightSeconds": 0.906505,
+      "plannedContactAtFlightSeconds": 0.908709,
+      "callbackVsPlannedContactMs": -2.204418,
+      "callbackAgeMs": 0.15175,
+      "localCapsuleMarginStuds": 1.91086,
+      "callbackRadius": 2.5,
+      "upY": 0.173648,
+      "diving": true,
+      "airborne": true,
+      "networkPingMs": 86.797997,
+      "jumpDispatchDelayMs": 7.051706,
+      "diveDispatchDelayMs": 3.903627,
+      "diveAgeAtCallbackSeconds": 0.183892,
+      "diveOriginDriftStuds": 0.24839,
+      "callbackToResultMs": 167.244196,
+      "nativeResultArcElapsedFromPosition": 0.866824,
+      "nativeResultArcPositionResidualStuds": 1e-06,
+      "opponentHorizontalDistanceAtCallbackStuds": [
+        5.697255
+      ]
+    },
+    {
+      "case": "B02",
+      "incident008": false,
+      "nativeOutcome": "Intercepted",
+      "callbackAtFlightSeconds": 0.823626,
+      "plannedContactAtFlightSeconds": 0.835899,
+      "callbackVsPlannedContactMs": -12.273312,
+      "callbackAgeMs": 0.285083,
+      "localCapsuleMarginStuds": 0.531066,
+      "callbackRadius": 2.5,
+      "upY": 0.173648,
+      "diving": true,
+      "airborne": true,
+      "networkPingMs": 73.891997,
+      "jumpDispatchDelayMs": 16.37888,
+      "diveDispatchDelayMs": 3.505707,
+      "diveAgeAtCallbackSeconds": 0.234221,
+      "diveOriginDriftStuds": 0.202273,
+      "callbackToResultMs": 251.563072,
+      "nativeResultArcElapsedFromPosition": 0.823163,
+      "nativeResultArcPositionResidualStuds": 2e-06,
+      "opponentHorizontalDistanceAtCallbackStuds": [
+        18.072667
+      ]
+    },
+    {
+      "case": "B03",
+      "incident008": false,
+      "nativeOutcome": "Intercepted",
+      "callbackAtFlightSeconds": 0.891484,
+      "plannedContactAtFlightSeconds": 0.880282,
+      "callbackVsPlannedContactMs": 11.201859,
+      "callbackAgeMs": 0.570417,
+      "localCapsuleMarginStuds": 0.146338,
+      "callbackRadius": 2.5,
+      "upY": 0.173648,
+      "diving": true,
+      "airborne": true,
+      "networkPingMs": 203.061,
+      "jumpDispatchDelayMs": 6.061077,
+      "diveDispatchDelayMs": 6.180048,
+      "diveAgeAtCallbackSeconds": 0.285022,
+      "diveOriginDriftStuds": 0.562378,
+      "callbackToResultMs": 249.869108,
+      "nativeResultArcElapsedFromPosition": 0.883177,
+      "nativeResultArcPositionResidualStuds": 1e-06,
+      "opponentHorizontalDistanceAtCallbackStuds": [
+        17.694311
+      ]
+    },
+    {
+      "case": "B04",
+      "incident008": false,
+      "nativeOutcome": "Swatted",
+      "callbackAtFlightSeconds": 1.020746,
+      "plannedContactAtFlightSeconds": 1.031873,
+      "callbackVsPlannedContactMs": -11.127234,
+      "callbackAgeMs": 0.242292,
+      "localCapsuleMarginStuds": 1.234256,
+      "callbackRadius": 2.5,
+      "upY": 0.490066,
+      "diving": true,
+      "airborne": true,
+      "networkPingMs": 16.921001,
+      "jumpDispatchDelayMs": null,
+      "diveDispatchDelayMs": 0.318766,
+      "diveAgeAtCallbackSeconds": 0.118554,
+      "diveOriginDriftStuds": 0.008164,
+      "callbackToResultMs": 100.390911,
+      "nativeResultArcElapsedFromPosition": 1.012972,
+      "nativeResultArcPositionResidualStuds": 1e-06,
+      "opponentHorizontalDistanceAtCallbackStuds": [
+        5.393389
+      ]
+    },
+    {
+      "case": "B05",
+      "incident008": true,
+      "nativeOutcome": "Catch",
+      "callbackAtFlightSeconds": 0.716708,
+      "plannedContactAtFlightSeconds": 0.716403,
+      "callbackVsPlannedContactMs": 0.305176,
+      "callbackAgeMs": 0.262333,
+      "localCapsuleMarginStuds": 1.697437,
+      "callbackRadius": 2.5,
+      "upY": 0.173648,
+      "diving": true,
+      "airborne": true,
+      "networkPingMs": 34.665,
+      "jumpDispatchDelayMs": 10.967016,
+      "diveDispatchDelayMs": 5.384207,
+      "diveAgeAtCallbackSeconds": 0.184921,
+      "diveOriginDriftStuds": 0.234219,
+      "callbackToResultMs": 582.051039,
+      "nativeResultArcElapsedFromPosition": 1.043838,
+      "nativeResultArcPositionResidualStuds": 2e-06,
+      "opponentHorizontalDistanceAtCallbackStuds": [
+        51.273465
+      ]
+    },
+    {
+      "case": "B06",
+      "incident008": false,
+      "nativeOutcome": "Intercepted",
+      "callbackAtFlightSeconds": 0.835093,
+      "plannedContactAtFlightSeconds": 0.832796,
+      "callbackVsPlannedContactMs": 2.297163,
+      "callbackAgeMs": 0.393625,
+      "localCapsuleMarginStuds": 2.957456,
+      "callbackRadius": 3.75,
+      "upY": 1,
+      "diving": false,
+      "airborne": true,
+      "networkPingMs": 22.279,
+      "jumpDispatchDelayMs": 10.638952,
+      "diveDispatchDelayMs": null,
+      "diveAgeAtCallbackSeconds": null,
+      "diveOriginDriftStuds": null,
+      "callbackToResultMs": 266.382933,
+      "nativeResultArcElapsedFromPosition": 0.827773,
+      "nativeResultArcPositionResidualStuds": 1e-06,
+      "opponentHorizontalDistanceAtCallbackStuds": [
+        36.441023
+      ]
+    },
+    {
+      "case": "B07",
+      "incident008": false,
+      "nativeOutcome": "Intercepted",
+      "callbackAtFlightSeconds": 0.60124,
+      "plannedContactAtFlightSeconds": 0.616571,
+      "callbackVsPlannedContactMs": -15.330791,
+      "callbackAgeMs": 0.269625,
+      "localCapsuleMarginStuds": 0.365523,
+      "callbackRadius": 3.75,
+      "upY": 0.964288,
+      "diving": true,
+      "airborne": true,
+      "networkPingMs": 17.266,
+      "jumpDispatchDelayMs": 13.177156,
+      "diveDispatchDelayMs": 2.984285,
+      "diveAgeAtCallbackSeconds": 0.051685,
+      "diveOriginDriftStuds": 0.223861,
+      "callbackToResultMs": 317.067146,
+      "nativeResultArcElapsedFromPosition": 0.600804,
+      "nativeResultArcPositionResidualStuds": 0.0,
+      "opponentHorizontalDistanceAtCallbackStuds": [
+        38.386994
+      ]
+    },
+    {
+      "case": "B08",
+      "incident008": false,
+      "nativeOutcome": "Intercepted",
+      "callbackAtFlightSeconds": 0.647801,
+      "plannedContactAtFlightSeconds": 0.66451,
+      "callbackVsPlannedContactMs": -16.708851,
+      "callbackAgeMs": 0.139,
+      "localCapsuleMarginStuds": 0.080302,
+      "callbackRadius": 3.75,
+      "upY": 1,
+      "diving": false,
+      "airborne": true,
+      "networkPingMs": 27.665,
+      "jumpDispatchDelayMs": 1.11413,
+      "diveDispatchDelayMs": null,
+      "diveAgeAtCallbackSeconds": null,
+      "diveOriginDriftStuds": null,
+      "callbackToResultMs": 320.801973,
+      "nativeResultArcElapsedFromPosition": 0.647539,
+      "nativeResultArcPositionResidualStuds": 0.0,
+      "opponentHorizontalDistanceAtCallbackStuds": [
+        26.437468
+      ]
+    },
+    {
+      "case": "B09",
+      "incident008": false,
+      "nativeOutcome": "Intercepted",
+      "callbackAtFlightSeconds": 0.788967,
+      "plannedContactAtFlightSeconds": 0.798687,
+      "callbackVsPlannedContactMs": -9.720325,
+      "callbackAgeMs": 0.273375,
+      "localCapsuleMarginStuds": 0.710815,
+      "callbackRadius": 3.75,
+      "upY": 0.965492,
+      "diving": true,
+      "airborne": true,
+      "networkPingMs": 55.275999,
+      "jumpDispatchDelayMs": 7.897615,
+      "diveDispatchDelayMs": 5.777836,
+      "diveAgeAtCallbackSeconds": 0.054502,
+      "diveOriginDriftStuds": 0.804179,
+      "callbackToResultMs": 335.589886,
+      "nativeResultArcElapsedFromPosition": 0.788484,
+      "nativeResultArcPositionResidualStuds": 1e-06,
+      "opponentHorizontalDistanceAtCallbackStuds": [
+        32.423363
+      ]
+    }
+  ],
+  "limitations": [
+    "Local callback geometry uses current logged ball/root, not exact historical native Reach substep arguments.",
+    "Native result position inferred arc time is a geometric comparison, not a server rejection explanation.",
+    "Only one opponent-Catch failure is present; observed separation cannot establish a threshold.",
+    "No server code, acceptance reasons, replicated server character pose, or exact native Reach packet is available."
+  ],
+  "privacy": "No names, account IDs, timestamps, raw positions or tokens.",
+  "interceptionComparison": {
+    "callbackAtFlightSeconds": {
+      "interceptionMin": 0.60124,
+      "interceptionMax": 0.891484,
+      "incident008": 0.716708,
+      "incidentInsideObservedInterceptionRange": true
+    },
+    "localCapsuleMarginStuds": {
+      "interceptionMin": 0.080302,
+      "interceptionMax": 2.957456,
+      "incident008": 1.697437,
+      "incidentInsideObservedInterceptionRange": true
+    },
+    "networkPingMs": {
+      "interceptionMin": 17.266,
+      "interceptionMax": 203.061,
+      "incident008": 34.665,
+      "incidentInsideObservedInterceptionRange": true
+    },
+    "jumpDispatchDelayMs": {
+      "interceptionMin": 1.11413,
+      "interceptionMax": 16.37888,
+      "incident008": 10.967016,
+      "incidentInsideObservedInterceptionRange": true
+    },
+    "diveDispatchDelayMs": {
+      "interceptionMin": 2.984285,
+      "interceptionMax": 6.180048,
+      "incident008": 5.384207,
+      "incidentInsideObservedInterceptionRange": true
+    },
+    "callbackVsPlannedContactMs": {
+      "interceptionMin": -16.708851,
+      "interceptionMax": 11.201859,
+      "incident008": 0.305176,
+      "incidentInsideObservedInterceptionRange": true
+    },
+    "callbackAgeMs": {
+      "interceptionMin": 0.139,
+      "interceptionMax": 0.570417,
+      "incident008": 0.262333,
+      "incidentInsideObservedInterceptionRange": true
+    },
+    "diveOriginDriftStuds": {
+      "interceptionMin": 0.202273,
+      "interceptionMax": 0.804179,
+      "incident008": 0.234219,
+      "incidentInsideObservedInterceptionRange": true
+    },
+    "callbackToResultMs": {
+      "interceptionMin": 249.869108,
+      "interceptionMax": 335.589886,
+      "incident008": 582.051039,
+      "incidentInsideObservedInterceptionRange": false
+    }
+  },
+  "findings": [
+    "The observed set contains six Intercepted, two Swatted, and one opponent Catch. These counts describe the retained window, not general performance rates.",
+    "The failed contact occurred at flight+0.716708s. Successful interceptions occurred earlier at+0.601240s and+0.647801s, so an assumed minimum contact time would conflict with successes.",
+    "Failure margin+1.697437stud exceeds several accepted margins, including+0.080302 and+0.146338. A blanket larger margin cannot explain this observation.",
+    "The failed fully tipped dive UpY0.173648 and2.5radius also appear in two interceptions. Full dive tilt is not uniquely associated with this failure.",
+    "Failure ping34.665ms, jump delay10.967ms and dive delay5.384ms are inside observed successful ranges. No generic timing or ping cutoff is established.",
+    "The failed contact-to-result interval582.051ms is longer than all six interceptions249.869\u2013335.590ms. Result position corresponds to a later ball time1.043838s, whereas successful result positions correspond closely to their local contacts. This identifies different resolution afterward; it does not explain rejection or supply a valid action-time threshold.",
+    "Opponent distance at failed contact51.273stud exceeds this small interception cohort26.437\u201338.387stud except two closer accepted dives17.694/18.073stud; with one failure and different trajectories this is insufficient to infer a game-rule threshold.",
+    "No single generic timing, local margin, ping, or tilt distinction separates this failure from accepted contacts. Preserve valid geometry and input timing until native claim evidence supports a change."
+  ]
+}

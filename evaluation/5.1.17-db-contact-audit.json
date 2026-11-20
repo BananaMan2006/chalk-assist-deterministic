@@ -1,0 +1,27 @@
+{
+  "incident": 8,
+  "version": "5.1.17",
+  "role": "DB",
+  "pass": "Bullet",
+  "nativeOutcome": "Catch",
+  "terminal": "opponent Touchdown",
+  "plans": 4,
+  "allPlansReachable": true,
+  "jumpRequestDelayMs": 10.967016220092773,
+  "diveRequestDelayMs": 5.384206771850586,
+  "diveOriginDriftStuds": 0.23421928597244993,
+  "callbackAtFlightSeconds": 0.7167079448699951,
+  "plannedContactAtFlightSeconds": 0.7164027690887451,
+  "callbackAgeMs": 0.26233334210701287,
+  "localCapsuleMargin": 1.6974374296056793,
+  "callbackRadius": 2.5,
+  "callbackUpY": 0.17364822328090668,
+  "nativeResultAtFlightSeconds": 1.2987589836120605,
+  "nativeResultArcElapsedInferredFromPosition": 1.043838092825712,
+  "nativeResultArcPositionResidualStuds": 1.5861401495675424e-06,
+  "opponentHorizontalDistanceAtClaim": [
+    51.27346543636867
+  ],
+  "conclusion": "Observed local contact without server possession, followed by a later opponent catch. No missed input, late dive rejection, collision restriction during flight, or planner-vs-local contact timing failure is established. Exact native Reach substep T/Hands/Waist and server rejection reason are not logged; native result timing is not an acceptance diagnostic. No further code change justified by this incident alone.",
+  "safeFollowup": "Capture existing native Reach argument metadata through an explicitly scoped passive diagnostic if root elects to, without resending claims or changing native rules. Compare successful/failed contacts before selecting a gameplay change."
+}

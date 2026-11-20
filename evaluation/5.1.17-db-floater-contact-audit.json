@@ -1,0 +1,49 @@
+{
+  "schemaVersion": 1,
+  "incident": 27,
+  "version": "5.1.17",
+  "role": "DB",
+  "pass": "Floater",
+  "nativeOutcome": "Catch",
+  "terminal": "opponent Touchdown",
+  "plans": 13,
+  "allPlansReachable": true,
+  "normalMarginPlans": 12,
+  "jumpRequestDelayMs": 2.9244422912597656,
+  "jumpObserved": true,
+  "diveObserved": false,
+  "callbackAtFlightSeconds": 2.863037109375,
+  "plannedContactAtFlightSeconds": 2.873931884765625,
+  "callbackVsPlannedContactMs": -10.894775390625,
+  "callbackAgeMs": 0.4330000083427876,
+  "localCapsuleMarginStuds": 0.7354958201493274,
+  "callbackRadius": 3.75,
+  "callbackUpY": 1,
+  "networkPingMs": 75.05299896001816,
+  "callbackToNativeResultMs": 148.8778591156006,
+  "nativeResultArcElapsedInferredFromPosition": 2.844197909181934,
+  "nativeResultArcPositionResidualStuds": 3.4638813160799506e-06,
+  "nativeResultArcTimeVsOwnCallbackMs": -18.839200193065953,
+  "opponentHorizontalDistanceAtClaimStuds": [
+    6.645426839438358
+  ],
+  "pendingClaimPoseMargins": [
+    {
+      "millisecondsAfterClaim": 63.832998275756836,
+      "marginStuds": 1.8500004770767886
+    },
+    {
+      "millisecondsAfterClaim": 130.3389072418213,
+      "marginStuds": -1.4707641264464604
+    }
+  ],
+  "classification": "Local upright claim followed by native opponent catch at an earlier point on the ball arc; contested ordering or acceptance remains unresolved.",
+  "findings": [
+    "Movement detours and sprint changes occurred, but normal reach recovered and the selected upright jump was observed.",
+    "No observed missing jump, rejected dive, or final travel deficit explains this result. No dive was scheduled in the final selected reachable plan.",
+    "Unlike incident008, result position lies earlier on the arc than our local callback, rather than near the endpoint much later. This is consistent with an earlier opponent claim but does not reveal the server arbitration rule.",
+    "Opponent replicated pose is not a reliable reconstruction of the server catch pose. Exact native Reach substep arguments and acceptance/rejection reason remain unavailable."
+  ],
+  "recommendation": "Do not shift all jump times or loosen contact checks from this single contested outcome. Preserve as a separate unresolved native-possession incident for future exact claim diagnostics.",
+  "privacy": "No names, account IDs, absolute timestamps, raw coordinates or credentials."
+}

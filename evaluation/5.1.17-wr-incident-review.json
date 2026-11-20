@@ -1,0 +1,58 @@
+{
+  "releaseUnderReview": "5.1.16",
+  "scope": "Three freshly captured WR Floater incompletes from the resumed session; targeted offline review, not all session plays.",
+  "cases": [
+    {
+      "caseId": "WR-A",
+      "result": "Incomplete",
+      "group": "local_airborne_dive_claim_not_server_accepted",
+      "plans": 11,
+      "normalMarginPlans": 11,
+      "jumpRequests": 1,
+      "observedJumps": 1,
+      "observedDives": 1,
+      "localClaim": true,
+      "evidence": "Jump request 3.78 ms after schedule and dive 3.74 ms after schedule. Fresh numeric local contact occurred 50 ms after dive with capsule margin +0.177 studs; 66 ms later margin was +2.495, then 132 ms later +0.479. Native result remained Incomplete. No avoidance event or withheld action.",
+      "changedByPermissionFix": false,
+      "uncertainty": "Server acceptance and historical catch validation remain unknown; this local claim is not possession and changing timing without a reproduced rejection is unjustified."
+    },
+    {
+      "caseId": "WR-B",
+      "result": "Incomplete",
+      "group": "collision_detour_lost_travel",
+      "plans": 21,
+      "normalMarginPlans": 11,
+      "jumpRequests": 0,
+      "observedJumps": 0,
+      "observedDives": 0,
+      "localClaim": false,
+      "evidence": "Last normal plans were lost around 1.188 seconds after throw while passing the defender. Three logged requested-sprint rejections retained permission; these are separate helper clearance decisions. The side path returned toward the ball after 1.3 seconds; no later reachable action was found.",
+      "changedByPermissionFix": false,
+      "uncertainty": "The permission change does not remove collision checks; no safe achieved alternate trajectory or catch rescue is demonstrated."
+    },
+    {
+      "caseId": "WR-C",
+      "result": "Incomplete",
+      "group": "wr_pending_sprint_permission_loop",
+      "plans": 52,
+      "normalMarginPlans": 16,
+      "jumpRequests": 0,
+      "observedJumps": 0,
+      "observedDives": 0,
+      "localClaim": false,
+      "evidence": "Pending native speed 20 produced temporary pursuit plans with no arrival witness, turning WR sprint-detour permission off. Four logged sprint-off decisions had permission false. At +0.669 seconds, reachable jumpDive requested safe sprint; +0.674 seconds, pending-speed pursuit cancelled it; +0.698 seconds, jumpDive requested again; +0.706 seconds, pursuit cancelled again. Each logged snapshot had 86 stamina.",
+      "changedByPermissionFix": true,
+      "fix": "Keep the existing Live and WR catch-intent gates; an existing live ball permits a clearance-checked sprint through temporary pursue plans even without a catch-arrival witness. No speed, reach, catch or timing threshold is altered.",
+      "regression": "Translated +0.674-second recorded geometry through the actual controller movement block and real helper. Published 5.1.16 source fails the new permission assertion. Fixed source passes 34/34 controller checks and 9/9 pending-sprint checks. Actual 20 and prospective 27 path clearance and bounded turning remain checked.",
+      "uncertainty": "Offline replay proves the erroneous cancellation and new permitted behavior, not a recovered catch or causal win-rate improvement."
+    }
+  ],
+  "diagnosticsAdded": "Airborne-dive rejection now retains actual check time/root/velocity, scheduled action times, expected pose, direction, native movement/reach state, field bounds and contact margins for exact subsequent replay. No dispatch validation was weakened.",
+  "deferred": "Fresh jump rejection currently calls full cancellation and waits 45 ms, which can cost travel; old F008 showed horizontal speed falling from 27 to 0.80 before the replacement plan. Preserving unchecked movement near a scheduled action needs additional bounded safety design; no speculative behavior change is included.",
+  "privacy": "No usernames, player/account IDs, raw coordinates, credentials, or native source.",
+  "limitations": [
+    "This review selects failures; it does not estimate the full session catch rate.",
+    "Native possession results remain authoritative.",
+    "Offline fixtures do not simulate replication, physics or server arbitration."
+  ]
+}

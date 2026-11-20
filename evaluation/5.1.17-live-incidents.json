@@ -1,0 +1,344 @@
+{
+  "schemaVersion": 1,
+  "release": "5.1.17",
+  "buildId": "00edfd316f0cb63c525ad8b61160dddf1d3d8a09739cdff1d4fea7b9af9893dd",
+  "label": "Bounded live verification after 5.1.17 update",
+  "window": {
+    "start": 1795147065.992772,
+    "endExclusive": 1795147665.992772,
+    "durationSeconds": 600,
+    "closedReason": "bounded_observer_deadline",
+    "observerStopped": true,
+    "nativeResultTailLimitSeconds": 8,
+    "tailResultsIncluded": 2,
+    "unresolvedPlaysAfterTail": [],
+    "tailResultsIncludedDescription": "Two result events for the one WR play already in flight at cutoff: ball outcome and terminal outcome."
+  },
+  "matches": {
+    "terminalScoresObserved": 6,
+    "completedNonForfeit": 6,
+    "wins": 6,
+    "losses": 0,
+    "scores": {
+      "4-0": 4,
+      "4-1": 2
+    },
+    "forfeitsExcluded": 0,
+    "partialAtCutoff": {
+      "count": 1,
+      "includedInCompletedTotals": false,
+      "scoreAfterBoundedTail": {
+        "you": 1,
+        "them": 0
+      },
+      "description": "Next match had one WR play already in flight at cutoff; its result was collected in the bounded tail and the match is excluded from completed-game totals."
+    }
+  },
+  "plays": {
+    "total": 29,
+    "roles": {
+      "WR": {
+        "total": 15,
+        "nativeOutcomes": {
+          "Catch": 15
+        },
+        "passTypes": {
+          "Floater": 15
+        },
+        "actions": {
+          "jumpRequest": 15,
+          "jump": 15,
+          "diveAttempt": 2,
+          "dive": 2
+        }
+      },
+      "DB": {
+        "total": 14,
+        "nativeOutcomes": {
+          "Swatted": 2,
+          "Intercepted": 10,
+          "Catch": 2
+        },
+        "passTypes": {
+          "Bullet": 10,
+          "Floater": 4
+        },
+        "actions": {
+          "jumpRequest": 13,
+          "jump": 13,
+          "diveAttempt": 8,
+          "dive": 8
+        }
+      }
+    }
+  },
+  "execution": {
+    "runtimeErrors": 0,
+    "solveMs": {
+      "count": 262,
+      "median": 12.175833326182328,
+      "p95": 33.02812497713603,
+      "max": 52.32441666885279
+    },
+    "exactBuildRecords": {
+      "ciu_auto_events.jsonl": {
+        "includedExactBuildRecords": 1740,
+        "excludedOtherVersionOrWindowRecords": 21
+      },
+      "ciu_deterministic_events.jsonl": {
+        "includedExactBuildRecords": 1232,
+        "excludedOtherVersionOrWindowRecords": 16
+      },
+      "ciu_failures.jsonl": {
+        "includedExactBuildRecords": 0,
+        "excludedOtherVersionOrWindowRecords": 4
+      }
+    }
+  },
+  "liveExercise": {
+    "wrAvoidanceRows": 61,
+    "wrActivePermissionRows": 4,
+    "wrActivePermissionSprintRetainedRows": 0,
+    "wrActivePursueNoArrivalPermissionRows": 0,
+    "wrActivePursueNoArrivalSprintRetainedRows": 0,
+    "wrActivePursueNoArrivalDetails": [],
+    "nativeSprintSequences": [
+      {
+        "role": "DB",
+        "pendingObservedSpeed": 20,
+        "pendingForecastSpeed": 20,
+        "restoredObservedSpeed": 27,
+        "restoredForecastSpeed": 27,
+        "elapsedMs": 96.58694267272949
+      },
+      {
+        "role": "DB",
+        "pendingObservedSpeed": 20,
+        "pendingForecastSpeed": 20,
+        "restoredObservedSpeed": 27,
+        "restoredForecastSpeed": 27,
+        "elapsedMs": 155.38811683654785
+      },
+      {
+        "role": "DB",
+        "pendingObservedSpeed": 20,
+        "pendingForecastSpeed": 20,
+        "restoredObservedSpeed": 27,
+        "restoredForecastSpeed": 27,
+        "elapsedMs": 49.97611045837402
+      },
+      {
+        "role": "DB",
+        "pendingObservedSpeed": 20,
+        "pendingForecastSpeed": 20,
+        "restoredObservedSpeed": 27,
+        "restoredForecastSpeed": 27,
+        "elapsedMs": 49.82709884643555
+      },
+      {
+        "role": "DB",
+        "pendingObservedSpeed": 20,
+        "pendingForecastSpeed": 20,
+        "restoredObservedSpeed": 27,
+        "restoredForecastSpeed": 27,
+        "elapsedMs": 50.67610740661621
+      },
+      {
+        "role": "DB",
+        "pendingObservedSpeed": 20,
+        "pendingForecastSpeed": 20,
+        "restoredObservedSpeed": 27,
+        "restoredForecastSpeed": 27,
+        "elapsedMs": 133.41903686523438
+      },
+      {
+        "role": "WR",
+        "pendingObservedSpeed": 20,
+        "pendingForecastSpeed": 20,
+        "restoredObservedSpeed": 27,
+        "restoredForecastSpeed": 27,
+        "elapsedMs": 33.73098373413086
+      },
+      {
+        "role": "DB",
+        "pendingObservedSpeed": 20,
+        "pendingForecastSpeed": 20,
+        "restoredObservedSpeed": 27,
+        "restoredForecastSpeed": 27,
+        "elapsedMs": 88.29498291015625
+      },
+      {
+        "role": "DB",
+        "pendingObservedSpeed": 20,
+        "pendingForecastSpeed": 20,
+        "restoredObservedSpeed": 27,
+        "restoredForecastSpeed": 27,
+        "elapsedMs": 60.67490577697754
+      },
+      {
+        "role": "DB",
+        "pendingObservedSpeed": 20,
+        "pendingForecastSpeed": 20,
+        "restoredObservedSpeed": 27,
+        "restoredForecastSpeed": 27,
+        "elapsedMs": 46.64897918701172
+      },
+      {
+        "role": "DB",
+        "pendingObservedSpeed": 20,
+        "pendingForecastSpeed": 20,
+        "restoredObservedSpeed": 27,
+        "restoredForecastSpeed": 27,
+        "elapsedMs": 99.93100166320801
+      },
+      {
+        "role": "DB",
+        "pendingObservedSpeed": 20,
+        "pendingForecastSpeed": 20,
+        "restoredObservedSpeed": 27,
+        "restoredForecastSpeed": 27,
+        "elapsedMs": 99.57289695739746
+      },
+      {
+        "role": "WR",
+        "pendingObservedSpeed": 20,
+        "pendingForecastSpeed": 20,
+        "restoredObservedSpeed": 27,
+        "restoredForecastSpeed": 27,
+        "elapsedMs": 16.520977020263672
+      }
+    ],
+    "interpretation": "Absence of arriveBy is joined with the latest same-flight pursue plan. Permission does not by itself establish sprint eligibility. Native speed observations remain separate from requested sprint and forecast speed; candidate ranking is not logged, so no optimizer-causality claim is made."
+  },
+  "incidents": [
+    {
+      "playIndex": 8,
+      "role": "DB",
+      "pass": "Bullet",
+      "nativeOutcome": "Catch",
+      "terminal": {
+        "time": 1795147228.070931,
+        "result": "Touchdown",
+        "point": "Opp",
+        "you": 1,
+        "them": 1,
+        "toWin": 4,
+        "round": 2,
+        "down": 2
+      },
+      "reachablePlans": 4,
+      "planCount": 4,
+      "actions": [
+        "jumpRequest",
+        "jump",
+        "diveAttempt",
+        "dive"
+      ],
+      "localContactClaims": 1,
+      "review": {
+        "incident": 8,
+        "version": "5.1.17",
+        "role": "DB",
+        "pass": "Bullet",
+        "nativeOutcome": "Catch",
+        "terminal": "opponent Touchdown",
+        "plans": 4,
+        "allPlansReachable": true,
+        "jumpRequestDelayMs": 10.967016220092773,
+        "diveRequestDelayMs": 5.384206771850586,
+        "diveOriginDriftStuds": 0.23421928597244993,
+        "callbackAtFlightSeconds": 0.7167079448699951,
+        "plannedContactAtFlightSeconds": 0.7164027690887451,
+        "callbackAgeMs": 0.26233334210701287,
+        "localCapsuleMargin": 1.6974374296056793,
+        "callbackRadius": 2.5,
+        "callbackUpY": 0.17364822328090668,
+        "nativeResultAtFlightSeconds": 1.2987589836120605,
+        "nativeResultArcElapsedInferredFromPosition": 1.043838092825712,
+        "nativeResultArcPositionResidualStuds": 1.5861401495675424e-06,
+        "opponentHorizontalDistanceAtClaim": [
+          51.27346543636867
+        ],
+        "conclusion": "Observed local contact without server possession, followed by a later opponent catch. No missed input, late dive rejection, collision restriction during flight, or planner-vs-local contact timing failure is established. Exact native Reach substep T/Hands/Waist and server rejection reason are not logged; native result timing is not an acceptance diagnostic. No further code change justified by this incident alone."
+      }
+    },
+    {
+      "playIndex": 27,
+      "role": "DB",
+      "pass": "Floater",
+      "nativeOutcome": "Catch",
+      "terminal": {
+        "time": 1795147620.326635,
+        "result": "Touchdown",
+        "point": "Opp",
+        "you": 3,
+        "them": 1,
+        "toWin": 4,
+        "round": 4,
+        "down": 1
+      },
+      "reachablePlans": 13,
+      "planCount": 13,
+      "actions": [
+        "jumpRequest",
+        "jump"
+      ],
+      "localContactClaims": 1,
+      "review": {
+        "schemaVersion": 1,
+        "incident": 27,
+        "version": "5.1.17",
+        "role": "DB",
+        "pass": "Floater",
+        "nativeOutcome": "Catch",
+        "terminal": "opponent Touchdown",
+        "plans": 13,
+        "allPlansReachable": true,
+        "normalMarginPlans": 12,
+        "jumpRequestDelayMs": 2.9244422912597656,
+        "jumpObserved": true,
+        "diveObserved": false,
+        "callbackAtFlightSeconds": 2.863037109375,
+        "plannedContactAtFlightSeconds": 2.873931884765625,
+        "callbackVsPlannedContactMs": -10.894775390625,
+        "callbackAgeMs": 0.4330000083427876,
+        "localCapsuleMarginStuds": 0.7354958201493274,
+        "callbackRadius": 3.75,
+        "callbackUpY": 1,
+        "networkPingMs": 75.05299896001816,
+        "callbackToNativeResultMs": 148.8778591156006,
+        "nativeResultArcElapsedInferredFromPosition": 2.844197909181934,
+        "nativeResultArcPositionResidualStuds": 3.4638813160799506e-06,
+        "nativeResultArcTimeVsOwnCallbackMs": -18.839200193065953,
+        "opponentHorizontalDistanceAtClaimStuds": [
+          6.645426839438358
+        ],
+        "pendingClaimPoseMargins": [
+          {
+            "millisecondsAfterClaim": 63.832998275756836,
+            "marginStuds": 1.8500004770767886
+          },
+          {
+            "millisecondsAfterClaim": 130.3389072418213,
+            "marginStuds": -1.4707641264464604
+          }
+        ],
+        "classification": "Local upright claim followed by native opponent catch at an earlier point on the ball arc; contested ordering or acceptance remains unresolved.",
+        "findings": [
+          "Movement detours and sprint changes occurred, but normal reach recovered and the selected upright jump was observed.",
+          "No observed missing jump, rejected dive, or final travel deficit explains this result. No dive was scheduled in the final selected reachable plan.",
+          "Unlike incident008, result position lies earlier on the arc than our local callback, rather than near the endpoint much later. This is consistent with an earlier opponent claim but does not reveal the server arbitration rule.",
+          "Opponent replicated pose is not a reliable reconstruction of the server catch pose. Exact native Reach substep arguments and acceptance/rejection reason remain unavailable."
+        ],
+        "recommendation": "Do not shift all jump times or loosen contact checks from this single contested outcome. Preserve as a separate unresolved native-possession incident for future exact claim diagnostics.",
+        "privacy": "No names, account IDs, absolute timestamps, raw coordinates or credentials."
+      }
+    }
+  ],
+  "limitations": [
+    "Native outcomes are distinguished from local contact callbacks and requested/observed inputs.",
+    "A bounded successful sample does not establish zero future incompletes or touchdowns conceded.",
+    "Opponent catch in incident 8 remains an unresolved native possession outcome despite timely observed local contact; no speculative reach or collision relaxation was applied.",
+    "Only exact release and build records in this observation window contribute to the totals."
+  ]
+}
