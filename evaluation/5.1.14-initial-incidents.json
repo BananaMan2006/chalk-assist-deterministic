@@ -1,0 +1,340 @@
+{
+  "schemaVersion": 1,
+  "release": "5.1.14",
+  "buildId": "e37ab7fc7d65538a316bcb1b7b4be554b2994033f8840dd60c262b13a3c87ce0",
+  "label": "Initial 5.1.14 build; superseded by final build",
+  "window": {
+    "start": 1795139295.987395,
+    "endExclusive": 1795140131.961732,
+    "closedReason": "next_build_loaded"
+  },
+  "matches": {
+    "completed": 8,
+    "wins": 8,
+    "losses": 0,
+    "scores": {
+      "4-0": 8
+    },
+    "forfeits": {
+      "count": 2,
+      "winner": "unknown; excluded from win/loss totals",
+      "scoresAtExit": {
+        "2-0": 1,
+        "3-0": 1
+      }
+    }
+  },
+  "plays": {
+    "total": 41,
+    "roles": {
+      "WR": {
+        "total": 23,
+        "passTypes": {
+          "Floater": 23
+        },
+        "nativeOutcomes": {
+          "Incomplete": 4,
+          "Catch": 19
+        },
+        "actions": {
+          "jumpRequest": 19,
+          "jump": 19,
+          "diveAttempt": 9,
+          "dive": 9
+        }
+      },
+      "DB": {
+        "total": 18,
+        "passTypes": {
+          "Floater": 7,
+          "Bullet": 11
+        },
+        "nativeOutcomes": {
+          "Intercepted": 18
+        },
+        "actions": {
+          "jumpRequest": 18,
+          "jump": 18,
+          "diveAttempt": 9,
+          "dive": 9
+        }
+      }
+    },
+    "opponentPoints": 0
+  },
+  "execution": {
+    "runtimeErrors": 0,
+    "normalSolveMs": {
+      "count": 395,
+      "median": 12.858416652306914,
+      "p95": 35.47229166724719,
+      "max": 59.039916668552905
+    },
+    "nativeJammedNotices": 11,
+    "localCatchCallbacks": 37,
+    "callbackTypes": {
+      "number": 37
+    },
+    "numericCallbackAgeMs": {
+      "count": 37,
+      "min": 0.11816667392849922,
+      "median": 0.35954167833551764,
+      "max": 0.7682083523832262
+    },
+    "failedNativeOutcomeWithCallback": 0,
+    "recoveryAllowanceObservations": [
+      {
+        "seconds": 0.3453125000000023,
+        "nativeOutcome": "Incomplete",
+        "observedNativeSprintSample": true
+      },
+      {
+        "seconds": 0.3077734375000023,
+        "nativeOutcome": "Catch",
+        "observedNativeSprintSample": true
+      },
+      {
+        "seconds": 0.3077734375000023,
+        "nativeOutcome": "Intercepted",
+        "observedNativeSprintSample": false
+      },
+      {
+        "seconds": 0.6,
+        "nativeOutcome": "Incomplete",
+        "observedNativeSprintSample": true
+      },
+      {
+        "seconds": 0.27291015625000337,
+        "nativeOutcome": "Catch",
+        "observedNativeSprintSample": true
+      },
+      {
+        "seconds": 0.6,
+        "nativeOutcome": "Catch",
+        "observedNativeSprintSample": false
+      },
+      {
+        "seconds": 0.27304687500000224,
+        "nativeOutcome": "Catch",
+        "observedNativeSprintSample": true
+      },
+      {
+        "seconds": 0.27304687500000224,
+        "nativeOutcome": "Intercepted",
+        "observedNativeSprintSample": false
+      },
+      {
+        "seconds": 0.13645507812500057,
+        "nativeOutcome": "Catch",
+        "observedNativeSprintSample": false
+      },
+      {
+        "seconds": 0.13645507812500057,
+        "nativeOutcome": "Intercepted",
+        "observedNativeSprintSample": false
+      },
+      {
+        "seconds": 0.6,
+        "nativeOutcome": "Catch",
+        "observedNativeSprintSample": true
+      },
+      {
+        "seconds": 0.6,
+        "nativeOutcome": "Intercepted",
+        "observedNativeSprintSample": false
+      },
+      {
+        "seconds": 0.5359965705871598,
+        "nativeOutcome": "Incomplete",
+        "observedNativeSprintSample": false
+      },
+      {
+        "seconds": 0.6,
+        "nativeOutcome": "Catch",
+        "observedNativeSprintSample": true
+      },
+      {
+        "seconds": 0.6,
+        "nativeOutcome": "Intercepted",
+        "observedNativeSprintSample": false
+      },
+      {
+        "seconds": 0.2700390625000023,
+        "nativeOutcome": "Catch",
+        "observedNativeSprintSample": false
+      },
+      {
+        "seconds": 0.6,
+        "nativeOutcome": "Catch",
+        "observedNativeSprintSample": true
+      },
+      {
+        "seconds": 0.6,
+        "nativeOutcome": "Intercepted",
+        "observedNativeSprintSample": false
+      },
+      {
+        "seconds": 0.35185861587524564,
+        "nativeOutcome": "Catch",
+        "observedNativeSprintSample": true
+      },
+      {
+        "seconds": 0.5286364746093778,
+        "nativeOutcome": "Catch",
+        "observedNativeSprintSample": true
+      },
+      {
+        "seconds": 0.5286364746093778,
+        "nativeOutcome": "Intercepted",
+        "observedNativeSprintSample": false
+      },
+      {
+        "seconds": 0.6,
+        "nativeOutcome": "Catch",
+        "observedNativeSprintSample": true
+      },
+      {
+        "seconds": 0.6,
+        "nativeOutcome": "Intercepted",
+        "observedNativeSprintSample": false
+      },
+      {
+        "seconds": 0.5879258918762228,
+        "nativeOutcome": "Catch",
+        "observedNativeSprintSample": true
+      },
+      {
+        "seconds": 0.5879258918762228,
+        "nativeOutcome": "Intercepted",
+        "observedNativeSprintSample": false
+      },
+      {
+        "seconds": 0.6,
+        "nativeOutcome": "Catch",
+        "observedNativeSprintSample": false
+      },
+      {
+        "seconds": 0.6,
+        "nativeOutcome": "Intercepted",
+        "observedNativeSprintSample": false
+      },
+      {
+        "seconds": 0.3895450101579923,
+        "nativeOutcome": "Catch",
+        "observedNativeSprintSample": true
+      },
+      {
+        "seconds": 0.34256152153015396,
+        "nativeOutcome": "Catch",
+        "observedNativeSprintSample": true
+      },
+      {
+        "seconds": 0.34256152153015396,
+        "nativeOutcome": "Intercepted",
+        "observedNativeSprintSample": false
+      },
+      {
+        "seconds": 0.6,
+        "nativeOutcome": "Catch",
+        "observedNativeSprintSample": true
+      }
+    ],
+    "defensiveCarrierChaseBelow40Observed": false
+  },
+  "coverage": {
+    "retainedEvents": 4200,
+    "malformedLines": 0,
+    "fileResets": 0
+  },
+  "reviewedIncidentCount": 4,
+  "cases": [
+    {
+      "caseId": "F001",
+      "role": "WR",
+      "pass": "Floater",
+      "nativeOutcome": "Incomplete",
+      "terminalOutcome": "Incomplete",
+      "pointAwarded": null,
+      "group": "prethrow_jam_then_avoidance_reach_loss",
+      "evidence": "Native Jammed preceded a 19.046-stud middle-stem capacity deficit. Two normal jump-dive forecasts survived through +354ms, then the crossing-player detour and native speed changes lost the window before any action. Partial recovery bursts totaling .345313s executed, including observed native27.",
+      "uncertainty": "A funded partial burst was exercised, but did not rescue this play. A safe collision-free alternate path has not been demonstrated; no catch callback was emitted.",
+      "planCount": 19,
+      "normalMarginForecastCount": 2,
+      "actions": {},
+      "localClaim": false,
+      "callbackProvenance": {
+        "touchType": null,
+        "touchAge": null
+      },
+      "postClaimSamples": []
+    },
+    {
+      "caseId": "F002",
+      "role": "WR",
+      "pass": "Floater",
+      "nativeOutcome": "Incomplete",
+      "terminalOutcome": "Incomplete",
+      "pointAwarded": null,
+      "group": "prethrow_jam_then_avoidance_reach_loss",
+      "evidence": "Native Jammed preceded a 17.142-stud middle-stem capacity deficit. Three normal jump-dive forecasts through +300ms were lost amid passing detours and native27\u219220 transitions. No jump, dive or contact callback. Full .6s recovery allowance was spent.",
+      "uncertainty": "Do not remove collision clearance merely to preserve forecast speed. No demonstrated safe alternate path or late-action remedy.",
+      "planCount": 19,
+      "normalMarginForecastCount": 3,
+      "actions": {},
+      "localClaim": false,
+      "callbackProvenance": {
+        "touchType": null,
+        "touchAge": null
+      },
+      "postClaimSamples": []
+    },
+    {
+      "caseId": "F003",
+      "role": "WR",
+      "pass": "Floater",
+      "nativeOutcome": "Incomplete",
+      "terminalOutcome": "Incomplete",
+      "pointAwarded": null,
+      "group": "prethrow_jam_then_avoidance_reach_loss",
+      "evidence": "Native Jammed preceded an 18.876-stud middle-stem capacity deficit. Two brief normal forecasts during sprint transitions were lost amid three passing/return episodes; native27 thereafter could not recover. No catch action or callback; .535997s recovery allowance spent.",
+      "uncertainty": "The observed prethrow and detour loss explains why no later timely action was scheduled, but does not establish a safe route that would have caught the pass.",
+      "planCount": 15,
+      "normalMarginForecastCount": 2,
+      "actions": {},
+      "localClaim": false,
+      "callbackProvenance": {
+        "touchType": null,
+        "touchAge": null
+      },
+      "postClaimSamples": []
+    },
+    {
+      "caseId": "F004",
+      "role": "WR",
+      "pass": "Floater",
+      "nativeOutcome": "Incomplete",
+      "terminalOutcome": "Incomplete",
+      "pointAwarded": null,
+      "group": "avoidance_reach_loss",
+      "evidence": "The continued middle stem relinquished after about581ms when actual remaining capacity fell short. Eight normal catch forecasts through+1.150s were subsequently lost during nine passing/return decisions and nineteen position-drift replans, with native27/20 changes. No jump, dive or local callback; no native Jam notice.",
+      "uncertainty": "Actual path loss is observed, but no safe faster alternative is demonstrated. A delayed first catch solve followed active stem control, not a proved late Throw delivery.",
+      "planCount": 29,
+      "normalMarginForecastCount": 8,
+      "actions": {},
+      "localClaim": false,
+      "callbackProvenance": {
+        "touchType": null,
+        "touchAge": null
+      },
+      "postClaimSamples": []
+    }
+  ],
+  "limitations": [
+    "This is an uncontrolled exact-build observation, not a general win-rate estimate or a causal comparison.",
+    "A localCatch callback or recent numeric BallTouched value does not establish server acceptance. Native results decide possession.",
+    "The absence of a failed numeric callback leaves the reset-versus-claim hypothesis untested for failures.",
+    "Partial recovery executing does not prove it repairs jam or collision losses.",
+    "Forfeit winner is unknown and is excluded. Wins do not establish perfect passes."
+  ],
+  "privacy": "No names, account/player/installation IDs, raw coordinates/states, credentials or native source."
+}

@@ -1,0 +1,544 @@
+{
+  "schemaVersion": 1,
+  "release": "5.1.14",
+  "buildId": "a6dd99d2c4368fd77dfd0040d9a2135412980753a34344abce229dffb503acd7",
+  "label": "Final public 5.1.14 build",
+  "window": {
+    "start": 1795140131.961732,
+    "endExclusive": 1795140777.521686,
+    "closedReason": "next_build_loaded"
+  },
+  "matches": {
+    "completed": 5,
+    "wins": 4,
+    "losses": 1,
+    "scores": {
+      "3-4": 1,
+      "4-0": 4
+    },
+    "forfeits": {
+      "count": 1,
+      "winner": "unknown; excluded from win/loss totals",
+      "scoresAtExit": {
+        "3-0": 1
+      }
+    }
+  },
+  "plays": {
+    "total": 32,
+    "roles": {
+      "WR": {
+        "total": 16,
+        "passTypes": {
+          "Floater": 16
+        },
+        "nativeOutcomes": {
+          "Catch": 12,
+          "Swatted": 4
+        },
+        "actions": {
+          "jumpRequest": 16,
+          "jump": 16,
+          "diveAttempt": 2,
+          "dive": 2
+        }
+      },
+      "DB": {
+        "total": 16,
+        "passTypes": {
+          "Bullet": 11,
+          "Floater": 5
+        },
+        "nativeOutcomes": {
+          "Intercepted": 9,
+          "Swatted": 2,
+          "Catch": 5
+        },
+        "actions": {
+          "jumpRequest": 14,
+          "jump": 14,
+          "diveAttempt": 9,
+          "dive": 9
+        }
+      }
+    },
+    "opponentPoints": 4
+  },
+  "execution": {
+    "runtimeErrors": 0,
+    "normalSolveMs": {
+      "count": 276,
+      "median": 12.822187505662441,
+      "p95": 25.04854166181758,
+      "max": 51.94341667811386
+    },
+    "nativeJammedNotices": 0,
+    "localCatchCallbacks": 31,
+    "callbackTypes": {
+      "number": 31
+    },
+    "numericCallbackAgeMs": {
+      "count": 31,
+      "min": 0.12962499749846756,
+      "median": 0.3809583140537143,
+      "max": 0.7570416491944343
+    },
+    "nonPossessionOutcomeWithCallback": 10,
+    "recoveryAllowanceObservations": [
+      {
+        "seconds": 0.31332031250000114,
+        "nativeOutcome": "Catch",
+        "observedNativeSprintSample": true
+      },
+      {
+        "seconds": 0.31332031250000114,
+        "nativeOutcome": "Intercepted",
+        "observedNativeSprintSample": false
+      },
+      {
+        "seconds": 0.13556640625000055,
+        "nativeOutcome": "Catch",
+        "observedNativeSprintSample": false
+      },
+      {
+        "seconds": 0.2554309626987996,
+        "nativeOutcome": "Swatted",
+        "observedNativeSprintSample": false
+      },
+      {
+        "seconds": 0.48827764511108634,
+        "nativeOutcome": "Swatted",
+        "observedNativeSprintSample": true
+      },
+      {
+        "seconds": 0.48827764511108634,
+        "nativeOutcome": "Catch",
+        "observedNativeSprintSample": false
+      },
+      {
+        "seconds": 0.34853515625000225,
+        "nativeOutcome": "Swatted",
+        "observedNativeSprintSample": true
+      },
+      {
+        "seconds": 0.30367187500000115,
+        "nativeOutcome": "Swatted",
+        "observedNativeSprintSample": true
+      },
+      {
+        "seconds": 0.6,
+        "nativeOutcome": "Catch",
+        "observedNativeSprintSample": false
+      },
+      {
+        "seconds": 0.6,
+        "nativeOutcome": "Catch",
+        "observedNativeSprintSample": true
+      },
+      {
+        "seconds": 0.3971432590484639,
+        "nativeOutcome": "Catch",
+        "observedNativeSprintSample": true
+      },
+      {
+        "seconds": 0.3971432590484639,
+        "nativeOutcome": "Intercepted",
+        "observedNativeSprintSample": false
+      },
+      {
+        "seconds": 0.45551757812500343,
+        "nativeOutcome": "Catch",
+        "observedNativeSprintSample": true
+      },
+      {
+        "seconds": 0.6,
+        "nativeOutcome": "Catch",
+        "observedNativeSprintSample": true
+      },
+      {
+        "seconds": 0.6,
+        "nativeOutcome": "Intercepted",
+        "observedNativeSprintSample": false
+      },
+      {
+        "seconds": 0.6,
+        "nativeOutcome": "Catch",
+        "observedNativeSprintSample": false
+      },
+      {
+        "seconds": 0.6,
+        "nativeOutcome": "Intercepted",
+        "observedNativeSprintSample": false
+      }
+    ],
+    "defensiveCarrierChaseBelow40Observed": false
+  },
+  "coverage": {
+    "retainedEvents": 3263,
+    "malformedLines": 0,
+    "fileResets": 0
+  },
+  "reviewedIncidentCount": 9,
+  "cases": [
+    {
+      "caseId": "F001",
+      "role": "DB",
+      "pass": "Floater",
+      "nativeOutcome": "Catch",
+      "terminalOutcome": "Touchdown",
+      "pointAwarded": "Opp",
+      "group": "recent_numeric_contact_not_awarded",
+      "evidence": "Ten of fourteen forecasts retained normal margin. Confirmed jump/dive and positive numeric BallTouched callback about0.130ms old; native opponent Floater Catch and Touchdown.",
+      "uncertainty": "A stale or zero/reset callback does not explain this observed signal. Numeric native claim provenance still does not disclose server acceptance or ordering.",
+      "planCount": 14,
+      "normalMarginForecastCount": 10,
+      "actions": {
+        "jumpRequest": 1,
+        "jump": 1,
+        "diveAttempt": 1,
+        "dive": 1
+      },
+      "localClaim": true,
+      "callbackProvenance": {
+        "touchType": "number",
+        "touchAge": 0.00012962499749846756
+      },
+      "postClaimSamples": [
+        {
+          "sinceClaim": 0,
+          "localCapsuleMargin": 0.3988193419745154,
+          "radius": 3.75,
+          "upY": 0.9928169846534729,
+          "diving": true
+        },
+        {
+          "sinceClaim": 0.06499910354614258,
+          "localCapsuleMargin": 2.2864994360710207,
+          "radius": 3.75,
+          "upY": 0.8030686974525452,
+          "diving": true
+        },
+        {
+          "sinceClaim": 0.11591720581054688,
+          "localCapsuleMargin": -1.0469374408101908,
+          "radius": 2.5,
+          "upY": 0.3555658161640167,
+          "diving": true
+        }
+      ]
+    },
+    {
+      "caseId": "F002",
+      "role": "WR",
+      "pass": "Floater",
+      "nativeOutcome": "Swatted",
+      "terminalOutcome": "Swatted",
+      "pointAwarded": null,
+      "group": "recent_numeric_contact_not_awarded",
+      "evidence": "All sixteen forecasts retained normal margin; confirmed upright jump and positive numeric callback about0.217ms old. Native WR Swatted, no point on this down.",
+      "uncertainty": "The input and recent local claim occurred. No authoritative contest cause is exposed.",
+      "planCount": 16,
+      "normalMarginForecastCount": 16,
+      "actions": {
+        "jumpRequest": 1,
+        "jump": 1
+      },
+      "localClaim": true,
+      "callbackProvenance": {
+        "touchType": "number",
+        "touchAge": 0.00021658334298990667
+      },
+      "postClaimSamples": [
+        {
+          "sinceClaim": 0,
+          "localCapsuleMargin": 0.2599180234312968,
+          "radius": 3.75,
+          "upY": 1,
+          "diving": false
+        },
+        {
+          "sinceClaim": 0.06589508056640625,
+          "localCapsuleMargin": -0.7251769489726074,
+          "radius": 3.75,
+          "upY": 1,
+          "diving": false
+        },
+        {
+          "sinceClaim": 0.11627793312072754,
+          "localCapsuleMargin": -1.4068467015347519,
+          "radius": 3.75,
+          "upY": 1,
+          "diving": false
+        },
+        {
+          "sinceClaim": 0.18263697624206543,
+          "localCapsuleMargin": -4.8847202897918045,
+          "radius": 3.75,
+          "upY": 1,
+          "diving": false
+        }
+      ]
+    },
+    {
+      "caseId": "F003",
+      "role": "WR",
+      "pass": "Floater",
+      "nativeOutcome": "Swatted",
+      "terminalOutcome": "Swatted",
+      "pointAwarded": "Opp",
+      "group": "recent_numeric_contact_not_awarded",
+      "evidence": "All sixteen forecasts retained normal margin; confirmed jump/dive and positive numeric callback about0.323ms old. Native WR Swatted awarded opponent point on second down.",
+      "uncertainty": "Recent numeric provenance weakens the reset-callback explanation; no accepted-versus-rejected local geometry separator has been established.",
+      "planCount": 16,
+      "normalMarginForecastCount": 16,
+      "actions": {
+        "jumpRequest": 1,
+        "jump": 1,
+        "diveAttempt": 1,
+        "dive": 1
+      },
+      "localClaim": true,
+      "callbackProvenance": {
+        "touchType": "number",
+        "touchAge": 0.0003232916642446071
+      },
+      "postClaimSamples": [
+        {
+          "sinceClaim": 0,
+          "localCapsuleMargin": 0.6272743151420133,
+          "radius": 3.75,
+          "upY": 0.7955355048179626,
+          "diving": true
+        },
+        {
+          "sinceClaim": 0.06487703323364258,
+          "localCapsuleMargin": -0.24970701499082848,
+          "radius": 2.5,
+          "upY": 0.35526975989341736,
+          "diving": true
+        },
+        {
+          "sinceClaim": 0.11601901054382324,
+          "localCapsuleMargin": 2.1493071524383494,
+          "radius": 2.5,
+          "upY": 0.17364820837974548,
+          "diving": true
+        }
+      ]
+    },
+    {
+      "caseId": "F004",
+      "role": "DB",
+      "pass": "Bullet",
+      "nativeOutcome": "Catch",
+      "terminalOutcome": "Tackled",
+      "pointAwarded": null,
+      "group": "recent_numeric_contact_not_awarded",
+      "evidence": "Three of four forecasts retained normal margin; actual ground dive and positive numeric callback about0.303ms old. Native opponent Bullet Catch, then Tackled, no point.",
+      "uncertainty": "Local native claim did not produce possession. Later defensive tackle is separate from interception; server claim ordering remains unknown.",
+      "planCount": 4,
+      "normalMarginForecastCount": 3,
+      "actions": {
+        "diveAttempt": 1,
+        "dive": 1
+      },
+      "localClaim": true,
+      "callbackProvenance": {
+        "touchType": "number",
+        "touchAge": 0.0003029999788850546
+      },
+      "postClaimSamples": [
+        {
+          "sinceClaim": 0,
+          "localCapsuleMargin": 1.4307714742988507,
+          "radius": 2.5,
+          "upY": 0.17364823818206787,
+          "diving": true
+        },
+        {
+          "sinceClaim": 0.06542801856994629,
+          "localCapsuleMargin": -3.9558880791819995,
+          "radius": 2.5,
+          "upY": 0.17364822328090668,
+          "diving": true
+        }
+      ]
+    },
+    {
+      "caseId": "F005",
+      "role": "DB",
+      "pass": "Bullet",
+      "nativeOutcome": "Catch",
+      "terminalOutcome": "Touchdown",
+      "pointAwarded": "Opp",
+      "group": "no_reachable_window",
+      "evidence": "No normal reachable forecast in four solves; no catch action or local callback. Initial snapshot at+108ms already required about40.41stud planar travel with .91s to forecast contact, at native27 with3.64s sprint budget; predicted miss12.11stud. Native opponent Bullet Catch/Touchdown.",
+      "uncertainty": "No flight avoidance, unavailable jump/dive gate or reserve exhaustion was observed. Safer closer prethrow positioning is not demonstrated by this snapshot; a late jump alone is not shown to recover it.",
+      "planCount": 4,
+      "normalMarginForecastCount": 0,
+      "actions": {},
+      "localClaim": false,
+      "callbackProvenance": {
+        "touchType": null,
+        "touchAge": null
+      },
+      "postClaimSamples": []
+    },
+    {
+      "caseId": "F006",
+      "role": "WR",
+      "pass": "Floater",
+      "nativeOutcome": "Swatted",
+      "terminalOutcome": "Swatted",
+      "pointAwarded": null,
+      "group": "recent_numeric_contact_not_awarded",
+      "evidence": "All twelve forecasts retained normal margin; confirmed jump/dive and positive numeric callback about0.557ms old. Native WR Swatted without point on first down.",
+      "uncertainty": "The attempt occurred; numeric callback provenance does not establish server acceptance.",
+      "planCount": 12,
+      "normalMarginForecastCount": 12,
+      "actions": {
+        "jumpRequest": 1,
+        "jump": 1,
+        "diveAttempt": 1,
+        "dive": 1
+      },
+      "localClaim": true,
+      "callbackProvenance": {
+        "touchType": "number",
+        "touchAge": 0.0005567500193137676
+      },
+      "postClaimSamples": [
+        {
+          "sinceClaim": 0,
+          "localCapsuleMargin": 0.652654045167397,
+          "radius": 3.75,
+          "upY": 0.8013966679573059,
+          "diving": true
+        },
+        {
+          "sinceClaim": 0.06480002403259277,
+          "localCapsuleMargin": -0.21228451881757504,
+          "radius": 2.5,
+          "upY": 0.35281112790107727,
+          "diving": true
+        }
+      ]
+    },
+    {
+      "caseId": "F007",
+      "role": "WR",
+      "pass": "Floater",
+      "nativeOutcome": "Swatted",
+      "terminalOutcome": "Swatted",
+      "pointAwarded": "Opp",
+      "group": "recent_numeric_contact_not_awarded",
+      "evidence": "Twelve of thirteen forecasts retained normal margin; confirmed upright jump and positive numeric callback about0.447ms old. Native WR Swatted awarded the opponent the final match point.",
+      "uncertainty": "The explicit native final score was3\u20134. No causal release regression or specific server rejection reason can be inferred from an uncontrolled match.",
+      "planCount": 13,
+      "normalMarginForecastCount": 12,
+      "actions": {
+        "jumpRequest": 1,
+        "jump": 1
+      },
+      "localClaim": true,
+      "callbackProvenance": {
+        "touchType": "number",
+        "touchAge": 0.00044670834904536605
+      },
+      "postClaimSamples": [
+        {
+          "sinceClaim": 0,
+          "localCapsuleMargin": 0.1608637543122966,
+          "radius": 3.75,
+          "upY": 1,
+          "diving": false
+        },
+        {
+          "sinceClaim": 0.06524491310119629,
+          "localCapsuleMargin": 1.791609566386146,
+          "radius": 3.75,
+          "upY": 1,
+          "diving": false
+        }
+      ]
+    },
+    {
+      "caseId": "F008",
+      "role": "DB",
+      "pass": "Floater",
+      "nativeOutcome": "Catch",
+      "terminalOutcome": "Tackled",
+      "pointAwarded": null,
+      "group": "recent_numeric_contact_not_awarded",
+      "evidence": "All ten forecasts retained normal margin; confirmed upright jump and recent positive numeric callback about0.465ms old. Native opponent Floater Catch then Tackled about51ms later, no point.",
+      "uncertainty": "Early sprint transitions did not remove the normal catch forecast. No zero/string/stale reset value or missing attempt was observed; server claim ordering remains unknown.",
+      "planCount": 10,
+      "normalMarginForecastCount": 10,
+      "actions": {
+        "jumpRequest": 1,
+        "jump": 1
+      },
+      "localClaim": true,
+      "callbackProvenance": {
+        "touchType": "number",
+        "touchAge": 0.000465124991023913
+      },
+      "postClaimSamples": [
+        {
+          "sinceClaim": 0,
+          "localCapsuleMargin": 0.28162153375129595,
+          "radius": 3.75,
+          "upY": 1,
+          "diving": false
+        }
+      ]
+    },
+    {
+      "caseId": "F009",
+      "role": "DB",
+      "pass": "Floater",
+      "nativeOutcome": "Catch",
+      "terminalOutcome": "Tackled",
+      "pointAwarded": null,
+      "group": "recent_numeric_contact_not_awarded",
+      "evidence": "All four forecasts retained normal margin; confirmed upright jump and recent numeric callback about0.189ms old. Native opponent Floater Catch then Tackled about117ms later, no point; no flight avoidance.",
+      "uncertainty": "No absent input or zero/string/stale reset was observed. Native server possession cause remains unknown.",
+      "planCount": 4,
+      "normalMarginForecastCount": 4,
+      "actions": {
+        "jumpRequest": 1,
+        "jump": 1
+      },
+      "localClaim": true,
+      "callbackProvenance": {
+        "touchType": "number",
+        "touchAge": 0.00018866665777750313
+      },
+      "postClaimSamples": [
+        {
+          "sinceClaim": 0,
+          "localCapsuleMargin": 0.03005799053710856,
+          "radius": 3.75,
+          "upY": 1,
+          "diving": false
+        },
+        {
+          "sinceClaim": 0.06671905517578125,
+          "localCapsuleMargin": 1.593714097868208,
+          "radius": 3.75,
+          "upY": 1,
+          "diving": false
+        }
+      ]
+    }
+  ],
+  "limitations": [
+    "This is an uncontrolled exact-build observation, not a general win-rate estimate or a causal comparison.",
+    "A localCatch callback or recent numeric BallTouched value does not establish server acceptance. Native results decide possession.",
+    "Recent positive numeric callbacks also occurred before native non-possession outcomes; zero/string/stale reset values were not observed in that sampled cohort. This does not disclose server acceptance or rejection.",
+    "Partial recovery executing does not prove it repairs jam or collision losses.",
+    "Forfeit winner is unknown and is excluded. Wins do not establish perfect passes."
+  ],
+  "privacy": "No names, account/player/installation IDs, raw coordinates/states, credentials or native source.",
+  "relatedClaimCohort": "Independent read-only comparison found overlapping accepted and non-possession callback ages and capsule margins; no simple global margin/timing correction was supported."
+}

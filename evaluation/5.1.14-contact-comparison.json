@@ -1,0 +1,586 @@
+{
+  "build": "a6dd99d2c4368fd77dfd0040d9a2135412980753a34344abce229dffb503acd7",
+  "recordedPlayCount": 16,
+  "callbackCount": 15,
+  "acceptedCount": 6,
+  "opponentOrFailedCatchCount": 7,
+  "sameBuild": {
+    "accepted": {
+      "touchAgeMs": {
+        "min": 0.27529167709872127,
+        "median": 0.5073541688034311,
+        "max": 0.7570416491944343
+      },
+      "capsuleMargin": {
+        "min": 0.26045431643495753,
+        "median": 0.6776752864518056,
+        "max": 1.8118348505818453
+      },
+      "claimMinusLatestPlannedFirstTouchMs": {
+        "min": 0.39649009704589844,
+        "median": 7.012486457824707,
+        "max": 12.544631958007812
+      },
+      "networkPingMs": {
+        "min": 25.53500048816204,
+        "median": 61.96550093591213,
+        "max": 98.44899922609329
+      }
+    },
+    "failed": {
+      "touchAgeMs": {
+        "min": 0.12962499749846756,
+        "median": 0.3232916642446071,
+        "max": 0.5567500193137676
+      },
+      "capsuleMargin": {
+        "min": 0.1608637543122966,
+        "median": 0.3988193419745154,
+        "max": 1.4307714742988507
+      },
+      "claimMinusLatestPlannedFirstTouchMs": {
+        "min": 0.4584789276123047,
+        "median": 4.534602165222168,
+        "max": 11.300325393676758
+      },
+      "networkPingMs": {
+        "min": 24.33899976313114,
+        "median": 107.79599845409393,
+        "max": 147.92400598526
+      }
+    }
+  },
+  "earlierDiagnosticIdenticalBuild": {
+    "build": "e37ab7fc7d65538a316bcb1b7b4be554b2994033f8840dd60c262b13a3c87ce0",
+    "acceptedCount": 9,
+    "touchAgeMs": {
+      "min": 0.1471666619181633,
+      "median": 0.3330000035930425,
+      "max": 0.6604999944102019
+    },
+    "capsuleMargin": {
+      "min": 0.042454884784793645,
+      "median": 0.37563898446547395,
+      "max": 0.6767612300833088
+    }
+  },
+  "rows": [
+    {
+      "playIndex": 1,
+      "role": "WR",
+      "pass": "Floater",
+      "cohort": "accepted",
+      "nativeResult": "Catch",
+      "touchType": "number",
+      "positiveNumericTouch": true,
+      "touchAgeMs": 0.4517916531767696,
+      "ageMatchesClockValue": true,
+      "claimElapsed": 2.864466905593872,
+      "airborne": true,
+      "diving": false,
+      "upY": 1,
+      "radius": 3.75,
+      "capsuleMargin": 0.7361378623230275,
+      "networkPingMs": 88.09000253677368,
+      "humanoidState": "Freefall",
+      "jumpHeld": false,
+      "knownGoalExcess": 8.016700744628906,
+      "claimMinusLatestPlannedFirstTouchMs": 12.544631958007812,
+      "pendingMargins": [
+        {
+          "afterClaimMs": 65.91200828552246,
+          "margin": 1.2726784743583015,
+          "diving": false,
+          "upY": 1
+        }
+      ],
+      "nativeResultAfterClaimMs": 268.2991027832031
+    },
+    {
+      "playIndex": 2,
+      "role": "DB",
+      "pass": "Bullet",
+      "cohort": "accepted",
+      "nativeResult": "Intercepted",
+      "touchType": "number",
+      "positiveNumericTouch": true,
+      "touchAgeMs": 0.7570416491944343,
+      "ageMatchesClockValue": true,
+      "claimElapsed": 0.8578059673309326,
+      "airborne": true,
+      "diving": false,
+      "upY": 1,
+      "radius": 3.75,
+      "capsuleMargin": 1.8118348505818453,
+      "networkPingMs": 98.44899922609329,
+      "humanoidState": "Freefall",
+      "jumpHeld": false,
+      "knownGoalExcess": -27.18628692626953,
+      "claimMinusLatestPlannedFirstTouchMs": null,
+      "pendingMargins": [
+        {
+          "afterClaimMs": 63.95292282104492,
+          "margin": -4.658054060958481,
+          "diving": false,
+          "upY": 1
+        },
+        {
+          "afterClaimMs": 114.26210403442383,
+          "margin": -12.440811369389529,
+          "diving": false,
+          "upY": 1
+        }
+      ],
+      "nativeResultAfterClaimMs": 282.0169925689697
+    },
+    {
+      "playIndex": 3,
+      "role": "WR",
+      "pass": "Floater",
+      "cohort": "accepted",
+      "nativeResult": "Catch",
+      "touchType": "number",
+      "positiveNumericTouch": true,
+      "touchAgeMs": 0.5204166809562594,
+      "ageMatchesClockValue": true,
+      "claimElapsed": 2.8629581928253174,
+      "airborne": true,
+      "diving": false,
+      "upY": 1,
+      "radius": 3.75,
+      "capsuleMargin": 0.6192127105805838,
+      "networkPingMs": 90.42099863290787,
+      "humanoidState": "Freefall",
+      "jumpHeld": false,
+      "knownGoalExcess": 8.065040588378906,
+      "claimMinusLatestPlannedFirstTouchMs": 10.666131973266602,
+      "pendingMargins": [
+        {
+          "afterClaimMs": 65.80305099487305,
+          "margin": 1.229867781677557,
+          "diving": false,
+          "upY": 1
+        },
+        {
+          "afterClaimMs": 131.14213943481445,
+          "margin": -1.9017067908123257,
+          "diving": false,
+          "upY": 1
+        }
+      ],
+      "nativeResultAfterClaimMs": 167.12379455566406
+    },
+    {
+      "playIndex": 4,
+      "role": "DB",
+      "pass": "Bullet",
+      "cohort": "other",
+      "nativeResult": "Swatted",
+      "touchType": "number",
+      "positiveNumericTouch": true,
+      "touchAgeMs": 0.14945832663215697,
+      "ageMatchesClockValue": true,
+      "claimElapsed": 0.9808788299560547,
+      "airborne": true,
+      "diving": true,
+      "upY": 0.17364823818206787,
+      "radius": 2.5,
+      "capsuleMargin": 0.8900621072774586,
+      "networkPingMs": 135.03499329090118,
+      "humanoidState": "PlatformStanding",
+      "jumpHeld": false,
+      "knownGoalExcess": -80.36463928222656,
+      "claimMinusLatestPlannedFirstTouchMs": null,
+      "pendingMargins": [
+        {
+          "afterClaimMs": 66.12205505371094,
+          "margin": -0.37077194573801897,
+          "diving": true,
+          "upY": 0.1736442595720291
+        },
+        {
+          "afterClaimMs": 116.2559986114502,
+          "margin": -4.616080995675931,
+          "diving": true,
+          "upY": 0.15903066098690033
+        }
+      ],
+      "nativeResultAfterClaimMs": 318.3910846710205
+    },
+    {
+      "playIndex": 5,
+      "role": "DB",
+      "pass": "Floater",
+      "cohort": "opponent_catch",
+      "nativeResult": "Catch",
+      "touchType": "number",
+      "positiveNumericTouch": true,
+      "touchAgeMs": 0.12962499749846756,
+      "ageMatchesClockValue": true,
+      "claimElapsed": 2.85659122467041,
+      "airborne": true,
+      "diving": true,
+      "upY": 0.9928169846534729,
+      "radius": 3.75,
+      "capsuleMargin": 0.3988193419745154,
+      "networkPingMs": 147.92400598526,
+      "humanoidState": "PlatformStanding",
+      "jumpHeld": false,
+      "knownGoalExcess": 16.769142150878906,
+      "claimMinusLatestPlannedFirstTouchMs": null,
+      "pendingMargins": [
+        {
+          "afterClaimMs": 64.99910354614258,
+          "margin": 2.2864994360710207,
+          "diving": true,
+          "upY": 0.8030686974525452
+        },
+        {
+          "afterClaimMs": 115.91720581054688,
+          "margin": -1.0469374408101908,
+          "diving": true,
+          "upY": 0.3555658161640167
+        }
+      ],
+      "nativeResultAfterClaimMs": 201.246976852417
+    },
+    {
+      "playIndex": 6,
+      "role": "WR",
+      "pass": "Floater",
+      "cohort": "failed_WR_catch",
+      "nativeResult": "Swatted",
+      "touchType": "number",
+      "positiveNumericTouch": true,
+      "touchAgeMs": 0.21658334298990667,
+      "ageMatchesClockValue": true,
+      "claimElapsed": 2.852489948272705,
+      "airborne": true,
+      "diving": false,
+      "upY": 1,
+      "radius": 3.75,
+      "capsuleMargin": 0.2599180234312968,
+      "networkPingMs": 107.79599845409393,
+      "humanoidState": "Freefall",
+      "jumpHeld": false,
+      "knownGoalExcess": 7.4773406982421875,
+      "claimMinusLatestPlannedFirstTouchMs": 0.8792877197265625,
+      "pendingMargins": [
+        {
+          "afterClaimMs": 65.89508056640625,
+          "margin": -0.7251769489726074,
+          "diving": false,
+          "upY": 1
+        },
+        {
+          "afterClaimMs": 116.27793312072754,
+          "margin": -1.4068467015347519,
+          "diving": false,
+          "upY": 1
+        },
+        {
+          "afterClaimMs": 182.63697624206543,
+          "margin": -4.8847202897918045,
+          "diving": false,
+          "upY": 1
+        }
+      ],
+      "nativeResultAfterClaimMs": 201.62510871887207
+    },
+    {
+      "playIndex": 7,
+      "role": "WR",
+      "pass": "Floater",
+      "cohort": "failed_WR_catch",
+      "nativeResult": "Swatted",
+      "touchType": "number",
+      "positiveNumericTouch": true,
+      "touchAgeMs": 0.3232916642446071,
+      "ageMatchesClockValue": true,
+      "claimElapsed": 2.878467082977295,
+      "airborne": true,
+      "diving": true,
+      "upY": 0.7955355048179626,
+      "radius": 3.75,
+      "capsuleMargin": 0.6272743151420133,
+      "networkPingMs": 120.55499851703644,
+      "humanoidState": "PlatformStanding",
+      "jumpHeld": false,
+      "knownGoalExcess": 11.526069641113281,
+      "claimMinusLatestPlannedFirstTouchMs": 8.189916610717773,
+      "pendingMargins": [
+        {
+          "afterClaimMs": 64.87703323364258,
+          "margin": -0.24970701499082848,
+          "diving": true,
+          "upY": 0.35526975989341736
+        },
+        {
+          "afterClaimMs": 116.01901054382324,
+          "margin": 2.1493071524383494,
+          "diving": true,
+          "upY": 0.17364820837974548
+        }
+      ],
+      "nativeResultAfterClaimMs": 183.2270622253418
+    },
+    {
+      "playIndex": 8,
+      "role": "DB",
+      "pass": "Bullet",
+      "cohort": "opponent_catch",
+      "nativeResult": "Catch",
+      "touchType": "number",
+      "positiveNumericTouch": true,
+      "touchAgeMs": 0.3029999788850546,
+      "ageMatchesClockValue": true,
+      "claimElapsed": 1.0763330459594727,
+      "airborne": true,
+      "diving": true,
+      "upY": 0.17364823818206787,
+      "radius": 2.5,
+      "capsuleMargin": 1.4307714742988507,
+      "networkPingMs": 123.98099899291992,
+      "humanoidState": "PlatformStanding",
+      "jumpHeld": false,
+      "knownGoalExcess": -48.3913688659668,
+      "claimMinusLatestPlannedFirstTouchMs": null,
+      "pendingMargins": [
+        {
+          "afterClaimMs": 65.42801856994629,
+          "margin": -3.9558880791819995,
+          "diving": true,
+          "upY": 0.17364822328090668
+        }
+      ],
+      "nativeResultAfterClaimMs": 251.32989883422852
+    },
+    {
+      "playIndex": 10,
+      "role": "WR",
+      "pass": "Floater",
+      "cohort": "failed_WR_catch",
+      "nativeResult": "Swatted",
+      "touchType": "number",
+      "positiveNumericTouch": true,
+      "touchAgeMs": 0.5567500193137676,
+      "ageMatchesClockValue": true,
+      "claimElapsed": 2.8831369876861572,
+      "airborne": true,
+      "diving": true,
+      "upY": 0.8013966679573059,
+      "radius": 3.75,
+      "capsuleMargin": 0.652654045167397,
+      "networkPingMs": 93.25399994850159,
+      "humanoidState": "PlatformStanding",
+      "jumpHeld": false,
+      "knownGoalExcess": 10.922012329101562,
+      "claimMinusLatestPlannedFirstTouchMs": 11.300325393676758,
+      "pendingMargins": [
+        {
+          "afterClaimMs": 64.80002403259277,
+          "margin": -0.21228451881757504,
+          "diving": true,
+          "upY": 0.35281112790107727
+        }
+      ],
+      "nativeResultAfterClaimMs": 184.47303771972656
+    },
+    {
+      "playIndex": 11,
+      "role": "WR",
+      "pass": "Floater",
+      "cohort": "failed_WR_catch",
+      "nativeResult": "Swatted",
+      "touchType": "number",
+      "positiveNumericTouch": true,
+      "touchAgeMs": 0.44670834904536605,
+      "ageMatchesClockValue": true,
+      "claimElapsed": 2.8526971340179443,
+      "airborne": true,
+      "diving": false,
+      "upY": 1,
+      "radius": 3.75,
+      "capsuleMargin": 0.1608637543122966,
+      "networkPingMs": 91.0239964723587,
+      "humanoidState": "Freefall",
+      "jumpHeld": false,
+      "knownGoalExcess": 13.626838684082031,
+      "claimMinusLatestPlannedFirstTouchMs": 0.4584789276123047,
+      "pendingMargins": [
+        {
+          "afterClaimMs": 65.24491310119629,
+          "margin": 1.791609566386146,
+          "diving": false,
+          "upY": 1
+        }
+      ],
+      "nativeResultAfterClaimMs": 118.70002746582031
+    },
+    {
+      "playIndex": 12,
+      "role": "DB",
+      "pass": "Bullet",
+      "cohort": "accepted",
+      "nativeResult": "Intercepted",
+      "touchType": "number",
+      "positiveNumericTouch": true,
+      "touchAgeMs": 0.27529167709872127,
+      "ageMatchesClockValue": true,
+      "claimElapsed": 0.7730700969696045,
+      "airborne": true,
+      "diving": true,
+      "upY": 0.17364822328090668,
+      "radius": 2.5,
+      "capsuleMargin": 1.789587927763415,
+      "networkPingMs": 25.53500048816204,
+      "humanoidState": "PlatformStanding",
+      "jumpHeld": false,
+      "knownGoalExcess": -62.9463996887207,
+      "claimMinusLatestPlannedFirstTouchMs": null,
+      "pendingMargins": [
+        {
+          "afterClaimMs": 52.14095115661621,
+          "margin": -1.1927713723635351,
+          "diving": true,
+          "upY": 0.1736469715833664
+        }
+      ],
+      "nativeResultAfterClaimMs": 273.9260196685791
+    },
+    {
+      "playIndex": 13,
+      "role": "WR",
+      "pass": "Floater",
+      "cohort": "accepted",
+      "nativeResult": "Catch",
+      "touchType": "number",
+      "positiveNumericTouch": true,
+      "touchAgeMs": 0.6078333244659007,
+      "ageMatchesClockValue": true,
+      "claimElapsed": 2.852437973022461,
+      "airborne": true,
+      "diving": false,
+      "upY": 1,
+      "radius": 3.75,
+      "capsuleMargin": 0.39088131018355465,
+      "networkPingMs": 35.84099933505058,
+      "humanoidState": "Freefall",
+      "jumpHeld": false,
+      "knownGoalExcess": 10.862220764160156,
+      "claimMinusLatestPlannedFirstTouchMs": 0.39649009704589844,
+      "pendingMargins": [],
+      "nativeResultAfterClaimMs": 268.54610443115234
+    },
+    {
+      "playIndex": 14,
+      "role": "DB",
+      "pass": "Floater",
+      "cohort": "opponent_catch",
+      "nativeResult": "Catch",
+      "touchType": "number",
+      "positiveNumericTouch": true,
+      "touchAgeMs": 0.465124991023913,
+      "ageMatchesClockValue": true,
+      "claimElapsed": 2.854893922805786,
+      "airborne": true,
+      "diving": false,
+      "upY": 1,
+      "radius": 3.75,
+      "capsuleMargin": 0.28162153375129595,
+      "networkPingMs": 24.33899976313114,
+      "humanoidState": "Freefall",
+      "jumpHeld": false,
+      "knownGoalExcess": -56.574649810791016,
+      "claimMinusLatestPlannedFirstTouchMs": null,
+      "pendingMargins": [],
+      "nativeResultAfterClaimMs": 101.42397880554199
+    },
+    {
+      "playIndex": 15,
+      "role": "DB",
+      "pass": "Floater",
+      "cohort": "other",
+      "nativeResult": "Swatted",
+      "touchType": "number",
+      "positiveNumericTouch": true,
+      "touchAgeMs": 0.3202499938197434,
+      "ageMatchesClockValue": true,
+      "claimElapsed": 2.8513169288635254,
+      "airborne": true,
+      "diving": false,
+      "upY": 1,
+      "radius": 3.75,
+      "capsuleMargin": 0.2026987119027992,
+      "networkPingMs": 32.06799924373627,
+      "humanoidState": "Freefall",
+      "jumpHeld": false,
+      "knownGoalExcess": 27.482025146484375,
+      "claimMinusLatestPlannedFirstTouchMs": null,
+      "pendingMargins": [
+        {
+          "afterClaimMs": 64.67509269714355,
+          "margin": 0.9082925188175088,
+          "diving": false,
+          "upY": 1
+        }
+      ],
+      "nativeResultAfterClaimMs": 150.25591850280762
+    },
+    {
+      "playIndex": 16,
+      "role": "WR",
+      "pass": "Floater",
+      "cohort": "accepted",
+      "nativeResult": "Catch",
+      "touchType": "number",
+      "positiveNumericTouch": true,
+      "touchAgeMs": 0.4942916566506028,
+      "ageMatchesClockValue": true,
+      "claimElapsed": 2.855714797973633,
+      "airborne": true,
+      "diving": false,
+      "upY": 1,
+      "radius": 3.75,
+      "capsuleMargin": 0.26045431643495753,
+      "networkPingMs": 29.71399948000908,
+      "humanoidState": "Freefall",
+      "jumpHeld": false,
+      "knownGoalExcess": 9.37353515625,
+      "claimMinusLatestPlannedFirstTouchMs": 3.3588409423828125,
+      "pendingMargins": [
+        {
+          "afterClaimMs": 64.42117691040039,
+          "margin": 1.6896198793394133,
+          "diving": false,
+          "upY": 1
+        }
+      ],
+      "nativeResultAfterClaimMs": 346.26221656799316
+    }
+  ],
+  "conclusions": [
+    "Every captured callback is a fresh positive numeric timestamp with exact clock-minus-value age, including failures. This rejects a zero/nil/string reset or stale timestamp as the observed cause; an unknown writer producing the same fresh timestamp is not ruled out by client logs.",
+    "Current capsule overlap exists in accepted and failed claims; native client claim is not authoritative possession. No server catch rules are available in authorized client copies.",
+    "WR Swatted outcomes demonstrate actual contest/breakup, not solely missed geometry. Current sampled local margin and callback provenance alone do not identify a safe corrective action."
+  ],
+  "limits": [
+    "Snapshots are callback samples; actual native Reach payload time and historical ball substep are not intercepted.",
+    "Failed/opponent cohort includes both WR Swatted and DB opponent Catch; these are distinct outcomes, not presumed one server cause.",
+    "Comparisons are descriptive, not randomized. Raw logs and identities remain private."
+  ],
+  "excludedOtherCallbackCount": 2,
+  "excludedOtherCallbacks": [
+    {
+      "playIndex": 4,
+      "role": "DB",
+      "nativeResult": "Swatted"
+    },
+    {
+      "playIndex": 15,
+      "role": "DB",
+      "nativeResult": "Swatted"
+    }
+  ],
+  "noCallbackPlayCount": 1
+}
