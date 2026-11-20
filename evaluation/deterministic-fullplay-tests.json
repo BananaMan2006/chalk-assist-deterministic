@@ -6,7 +6,28 @@
   ],
   "suites": {
     "defensive-cuts": {
+      "total": 12,
       "results": [
+        {
+          "name": "recorded opening diagonal sprint gets a burst before the old three-yard forecast gate",
+          "passed": true
+        },
+        {
+          "name": "nearby opening coverage and walking matched or retreating runs do not start a range burst",
+          "passed": true
+        },
+        {
+          "name": "range recovery retains85-start70-stop and does not stop merely because speed matches",
+          "passed": true
+        },
+        {
+          "name": "range recovery releases when the receiver slows or runs back toward the defender",
+          "passed": true
+        },
+        {
+          "name": "range recovery is symmetric and unchanged by translated field coordinates",
+          "passed": true
+        },
         {
           "name": "recorded outward cut starts lateral follow before the old1.5-yard gate",
           "passed": true
@@ -36,95 +57,105 @@
           "passed": true
         }
       ],
-      "failed": 0,
-      "passed": 7,
-      "total": 7
+      "passed": 12,
+      "failed": 0
     },
     "scheduled-route-mix": {
+      "total": 21,
       "results": [
         {
-          "name": "fixed five-play schedule defaults to four middle stems and one quarter stem",
+          "name": "automatic WR keeps Floaters at every cycle without observed camping",
           "passed": true
         },
         {
-          "name": "ordinary center DB two yards ahead retains the four-to-one default schedule",
+          "name": "third qualifying play responds immediately with a funded moving Bullet before goal",
           "passed": true
         },
         {
-          "name": "reachable middle routes use three Floaters and one Bullet with ordinary center coverage",
+          "name": "camping evidence must cover two distinct recent plays and the opponent must still wait",
           "passed": true
         },
         {
-          "name": "middle Floater preference falls back when its final sprint cannot be funded",
+          "name": "used or missing session allowance cannot be revived by the old cycle slot",
           "passed": true
         },
         {
-          "name": "a deep defender waiting on the preferred Floater lane changes that route",
+          "name": "unfunded or parked Bullet counter-route preserves the Floater fallback",
           "passed": true
         },
         {
-          "name": "actual close center jam may override the scheduled middle family",
+          "name": "both sharp-cut sides remain available without changing the middle start",
           "passed": true
         },
         {
-          "name": "a slow defender deep on a tight middle stem selects a clear alternative",
+          "name": "post-throw stem survives native sanitation and has a funded jump witness",
           "passed": true
         },
         {
-          "name": "quarter starts occupy actual quarter width and never finish straight",
+          "name": "missing contact planner fails closed instead of restoring Bullets",
           "passed": true
         },
         {
-          "name": "every scheduled final sprint is funded through native arrival plus dispatch",
+          "name": "low and unknown stamina mark legal deep Floater attempts as unverified",
           "passed": true
         },
         {
-          "name": "repeated actual contests override the preferred route family",
+          "name": "explicit failed lane changes side; unknown outcomes do not invent failure",
           "passed": true
         },
         {
-          "name": "explicit incompletes change the failed lane then repeated failures change family",
+          "name": "stationary deep middle blocker is included in travel budget",
           "passed": true
         },
         {
-          "name": "a defender waiting in the intended lane changes the route or family",
+          "name": "spawn gap and world offset remain part of the forecast",
           "passed": true
         },
         {
-          "name": "schedule uses field coordinates consistently across translated arenas",
+          "name": "live ball never grants route control without fresh explicit stem permission",
           "passed": true
         },
         {
-          "name": "setup steering moves to submitted start through normal unsprinted movement",
+          "name": "stem sprint is scheduled and retains the forecast final reserve",
           "passed": true
         },
         {
-          "name": "live stem slows before a blocker while retaining the final sprint deadline",
+          "name": "long opening sprint reallocates the late burst and later spending needs current stamina",
           "passed": true
         },
         {
-          "name": "the three observed late stem states do not spend more deadline time slowing to seven",
+          "name": "hard cut is a one-time movement directive and catch position uses first touch",
           "passed": true
         },
         {
-          "name": "body pacing can still slow when actual remaining distance leaves spare time",
+          "name": "measured stem debt permits a bounded funded burst and counts scheduled sprint",
           "passed": true
         },
         {
-          "name": "stem deception uses only reachable spare walking time and never moves into the defender",
+          "name": "short remaining downs use a paced side Floater with no parked first contact",
           "passed": true
         },
         {
-          "name": "DB holds a small flexible live cushion without sprinting to chase an offset",
+          "name": "opening reallocation retains funded Floaters across remaining field lengths",
+          "passed": true
+        },
+        {
+          "name": "regeneration forecast is bounded to spent opening sprint and needs native constants",
+          "passed": true
+        },
+        {
+          "name": "new deep stem does not use the legacy opposite-side feint",
           "passed": true
         }
       ],
-      "failed": 0,
-      "passed": 19,
-      "fixture": "Authored geometry and local native/approximate route timing. No server catch or win guarantee.",
-      "total": 19
+      "passed": 21,
+      "failed": 0
     },
     "deterministic-isolation": {
+      "total": 35,
+      "fixture": "Authored offline services and geometry; locally supplied RouteMath is not copied or published. No server outcome claim.",
+      "failed": 0,
+      "passed": 35,
       "results": [
         {
           "name": "logs carry injected release identity and exact native final scores",
@@ -132,6 +163,14 @@
         },
         {
           "name": "terminal lobby packet preserves unknown scores without inferring a winner",
+          "passed": true
+        },
+        {
+          "name": "native contact notices log only local observations without enabling control or copying packet identities",
+          "passed": true
+        },
+        {
+          "name": "native contact diagnostics filter unknown types and bound repeated notifications",
           "passed": true
         },
         {
@@ -199,7 +238,15 @@
           "passed": true
         },
         {
-          "name": "unreachable cut request never submits a straight route or advances the schedule",
+          "name": "catchIntent before navigation preserves exactly one hard cut and absolute stem timing",
+          "passed": true
+        },
+        {
+          "name": "unfunded legal Floater is explicitly best effort instead of native default Bullet",
+          "passed": true
+        },
+        {
+          "name": "near-goal next down submits an airborne Floater before native default timeout",
           "passed": true
         },
         {
@@ -209,12 +256,48 @@
         {
           "name": "unload stops callbacks and releases control",
           "passed": true
+        },
+        {
+          "name": "two completed camping observations are ephemeral, bounded and frozen at the throw",
+          "passed": true
+        },
+        {
+          "name": "following, transient deep alignment and out-and-back travel do not qualify as camping",
+          "passed": true
+        },
+        {
+          "name": "insufficient progress, short windows, missing observations and pauses stay unknown",
+          "passed": true
+        },
+        {
+          "name": "camping evidence uses the world goal offset and completed following resets the recent pair",
+          "passed": true
+        },
+        {
+          "name": "explicit off, changed opponent and unload revoke camping evidence",
+          "passed": true
+        },
+        {
+          "name": "continuous Bullet catch intent is restricted to an explicitly selected rare camping Bullet",
+          "passed": true
+        },
+        {
+          "name": "rare camping Bullet preserves its move reserve only until confirmed own possession",
+          "passed": true
+        },
+        {
+          "name": "only WR route navigation forwards an absolute observed avoidance arrival deadline",
+          "passed": true
+        },
+        {
+          "name": "one successfully submitted camping counter remains spent across OFF and the next round",
+          "passed": true
+        },
+        {
+          "name": "unavailable candidates and failed submissions do not consume the camping counter",
+          "passed": true
         }
-      ],
-      "failed": 0,
-      "passed": 21,
-      "fixture": "Authored offline services and geometry; locally supplied RouteMath is not copied or published. No server outcome claim.",
-      "total": 21
+      ]
     }
   }
 }
