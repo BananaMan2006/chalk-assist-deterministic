@@ -1,6 +1,34 @@
-# Evaluation scope · 5.1.15
+# Evaluation scope · 5.1.16
 
 This release continues the authored, deterministic controller. Its checks establish local rule behavior and packaging properties. **They do not demonstrate a live win rate, a winning streak, perfect catching, or improvement through training.** The release has no training system or shared model.
+
+## 5.1.16 scope
+
+A conceded DB Floater exposed an unnecessary dependency between a catch forecast and movement permission. While a sprint request was awaiting observed native speed, a temporarily unreachable plan became pursuit without a catch arrival deadline. That removed the DB sprint-detour permission and could turn sprint OFF again, even where the same actual bounded heading passed both normal-speed and sprint-speed clearance checks. The correction allows checked sprint detours for DB pursuit of an observed live ball, without requiring a currently reachable catch witness. It does not invent an arrival deadline or give a pursuit plan reach credit.
+
+A bounded private reconstruction of one recorded held-heading sample changes sprint OFF to ON without changing direction. The near-synchronous opponent sample and reconstructed previous heading are explicitly recorded as replay assumptions. Seven nearby planner replays reproduce the recorded action, margin and miss distance within numerical tolerance. This demonstrates the permission defect; it does not simulate the whole collision path or establish that the conceded touchdown becomes an interception. Setup phases, missing ball arcs, stamina, touching/blocked states, actual and prospective speed clearance checks and committed-action priorities remain unchanged.
+
+Validation passed 510 rule checks and 26 build/preferences/install checks. The focused independent run passed 120 checks across controller integration, the actual avoidance helper, pending sprint and motion. The new two-frame regression keeps the same safe heading and sprint request at observed normal speed without fabricating a catch deadline; overlap and insufficient budget still release sprint.
+
+## Bounded 5.1.16 live review
+
+The [frozen observation](evaluation/5.1.16-live-incidents.json) retains 34 throws and all eight problem plays. Six explicit completed matches were wins: four at 4–0 and two at 4–1. A separate 1–0 Forfeit has an unknown winner and is excluded. Winning scores do not erase missed catches, defensive incompletes or conceded points, and these observations do not establish a controlled release effect.
+
+The new DB pursuit permission was exercised. Several same-tick unreachable pursuit plans retained a checked sprint on active passing/held-side headings; those balls still remained unreachable, so this verifies the control condition rather than a recovered interception. On a separate conceded Floater, permission was enabled but the prospective sprint path failed the existing 3.75-stud clearance requirement in two reconstructed samples. Walking passed the later check while sprinting failed. No unsupported relaxation was applied.
+
+The first WR incomplete lost reachable forecasts during a required bypass. The initial full-speed heading failed the existing escape checks; reduced movement passed. Later withholding was within the close-contact band. Prethrow travel was already behind the stem budget, and the available records cannot isolate how much delay came from the earlier overlap correction. Another WR breakup followed a confirmed upright jump and fresh local contact with continued local overlap; the authoritative contest result remains distinct from that client claim.
+
+The final WR incomplete had a reproducible fresh-position jump rejection: its recorded timing was inside the allowance, but horizontal position differed by about 0.577 studs; substituting only the expected position at the same time restored validation. A replacement jump-and-dive plan was selected and the jump occurred. A later fresh dive check rejected the attempt after further position drift. The exact rejected-dive snapshot was not logged precisely enough for an exact replay, so this is not evidence of a faulty validator or a reason to force a blind dive. No source change was made from these unresolved cases.
+
+The collector stopped at its fixed deadline. No additional active monitoring is implied after this report; the script's ordinary local event logging is separate.
+
+## Continued 5.1.15 live review
+
+The [bounded observation](evaluation/5.1.15-live-incidents.json) spans about eleven minutes twenty seconds, including roughly 74 seconds of startup backlog before the ten-minute collector. It contained 26 throws and five completed wins: four at 4–0 and one at 4–2. One partial match at 2–0 is excluded from win counts. WR caught all twelve receiving passes for touchdowns; DB recorded nine interceptions, three breakups and two allowed catches for touchdowns across fourteen throws. A rejoin/search gap has no recorded plays and is not counted as games. No runtime errors were recorded. These results are a bounded observation, not a reliability guarantee or a controlled release comparison.
+
+The first conceded touchdown followed a confirmed upright jump and fresh numeric native contact. Local capsule overlap remained positive for another 66.7 ms. Same-build accepted DB Floater contacts include a smaller margin, so a generic margin increase or timing shift is not supported. Server possession ordering remains unknown. The second conceded touchdown lost its normal and then narrow catch witnesses before their jump deadlines; it did not miss an already-due jump. The safe-sprint permission defect described above was demonstrated during that play. Both failures remain in the evaluation despite winning the match.
+
+A [separate continuation](evaluation/5.1.15-followup-incidents.json) retained nineteen further throws with no overlap in events: nine WR catches, eight DB interceptions, one defensive breakup and one allowed Bullet catch for a touchdown. Three fully observed matches ended twice at 4–0 and once at 4–1. Another 4–0 completed the prior window's partial match and is excluded from that fully observed count; a 3–0 Forfeit has an unknown winner. The conceded play had a fresh diving contact claim, followed by a roughly 35-stud post-dive pursuit gap and no recorded close tackle opportunity. There was no sprint-reserve cutoff or runtime error. It remains unresolved.
 
 ## 5.1.15 scope
 

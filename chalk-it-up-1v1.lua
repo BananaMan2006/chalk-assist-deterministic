@@ -1,4 +1,4 @@
--- Chalk-Release: 5.1.15
+-- Chalk-Release: 5.1.16
 -- Chalk-Product: deterministic
 -- Chalk It Up DB/WR ball assist using normal sprint/jump/dive controls.
 -- Cyan: replicated route (when supplied). Yellow: movement estimate.
@@ -47,7 +47,7 @@ assert(matchEvent and fxEvent and matchEvent:IsA("RemoteEvent") and fxEvent:IsA(
     "Chalk It Up Match/Fx events were not found")
 
 local api = {}
-local RELEASE_VERSION="5.1.15"
+local RELEASE_VERSION="5.1.16"
 local loadedGameId,loadedPlaceId,loadedJobId=game.GameId,game.PlaceId,game.JobId
 env.ChalkDB = api
 local alive, enabled = true, true
@@ -967,7 +967,7 @@ end
 function api.status()
     local ch = characterOf(opponent)
     local holder,isEnemy,holderRole=carrierContext()
-    return {product="deterministic",version=RELEASE_VERSION,buildId="14914e08403ef1d80bb81f50aca8f554a693dd003868c0424506d54e2d05b2be",policyMode="deterministic", enabled=enabled, role=role or "unknown",rawRole=rawRole or "unknown", phase=phase,
+    return {product="deterministic",version=RELEASE_VERSION,buildId="0279bce5f6e750358c3aab6dac4d19020d35285b40f89a21a9aaa72ec37c6633",policyMode="deterministic", enabled=enabled, role=role or "unknown",rawRole=rawRole or "unknown", phase=phase,
         ui={visible=windowVisible,minimized=minimized,x=panel.Position.X.Offset,y=panel.Position.Y.Offset},
         matchAlerts={enabled=alertSettings.enabled,saveError=alertSettings.saveError},
         preferences=preferences and preferences.status() or nil,
@@ -4498,12 +4498,14 @@ return function(ctx, Planner, createTackle, WRApproach, Motion, createCarrierMov
         local bounds=geo and {minX=geo.MinX+.5,maxX=geo.MaxX-.5,minZ=geo.BackZ+.5,maxZ=geo.EndZ-.5}
             or {minX=Field.MinX+offset.X+.5,maxX=Field.MaxX+offset.X-.5,
                 minZ=Field.BackZ+offset.Z+.5,maxZ=Field.EndZ+offset.Z-.5}
-        -- A reachable live interception has the same deadline as a WR
-        -- catch. Prethrow coverage still conserves its reserve.
+        -- Live-ball DB pursuit may retain a collision-checked sprint even
+        -- while native sprint speed is pending and no catch is reachable.
+        -- A catch deadline is supplied only when a real witness exists.
+        -- Prethrow coverage still conserves its reserve.
         local allowSprintDetour=s.phase=="Live" and (
             s.role=="WR" and s.catchIntent~=nil
                 and (s.catchIntent.continuousSprint==true or s.arc~=nil and arrival~=nil)
-            or s.role=="DB" and s.arc~=nil and arrival~=nil)
+            or s.role=="DB" and s.arc~=nil)
         local decision
         avoidanceState,decision=PlayerAvoidance.update(avoidanceState,{now=now,dt=dt,
             position=root.Position,velocity=root.AssemblyLinearVelocity,desiredDirection=direction,
@@ -9477,7 +9479,7 @@ end
 end)()
 
 api.initializePreferences(createPreferences)
-assist = createAssist({snapshot=api.context,version=RELEASE_VERSION,buildId="14914e08403ef1d80bb81f50aca8f554a693dd003868c0424506d54e2d05b2be",fullplay=function(s,root,h,now,dt)
+assist = createAssist({snapshot=api.context,version=RELEASE_VERSION,buildId="0279bce5f6e750358c3aab6dac4d19020d35285b40f89a21a9aaa72ec37c6633",fullplay=function(s,root,h,now,dt)
     if fullplay then return fullplay.navigate(s,root,h,now,dt) end
 end},Planner,createTackle,WRApproach,Motion,createCarrierMoves,PlayerAvoidance)
 assist.setEnabled(false)
@@ -9493,7 +9495,7 @@ repeatWR = createWRRepeat({snapshot=api.context,
     autoplay=function() return autoplay.status() end,
     disableAutoplay=function() return api.setAutoplay(false) end})
 repeatWR.setEnabled(false)
-fullplay = createFullplay({Planner=Planner,snapshot=api.context,version=RELEASE_VERSION,buildId="14914e08403ef1d80bb81f50aca8f554a693dd003868c0424506d54e2d05b2be",
+fullplay = createFullplay({Planner=Planner,snapshot=api.context,version=RELEASE_VERSION,buildId="0279bce5f6e750358c3aab6dac4d19020d35285b40f89a21a9aaa72ec37c6633",
     assistEnabled=function() return assist.status().enabled end,
     release=function() if assist.releaseFullplay then assist.releaseFullplay() end end},FullplayPolicy)
 matchSkip = createMatchSkip({snapshot=api.context,startDisabled=true,preferencesManaged=true,
@@ -9516,7 +9518,7 @@ local GAME_ID,PLACE_ID=10770281752,116097127629859
 local MAIN_URL="https://raw.githubusercontent.com/BananaMan2006/chalk-assist-deterministic/main/chalk-it-up-1v1.lua"
 local CACHE_FILE="chalk-deterministic-cache.lua"
 local MAIN_FILE="chalk-it-up-1v1.lua"
-local MIN_RELEASE="5.1.15"
+local MIN_RELEASE="5.1.16"
 local MARKER="__ChalkDeterministicAutoBoot"
 local env=type(getgenv)=="function" and getgenv() or _G
 local boot

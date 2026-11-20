@@ -93,7 +93,7 @@ def main(argv=None):
             elif suite == 'autoplay':
                 result = load(HERE / 'chalk-autoplay-selftest.lua')(load(HERE / 'chalk-autoplay-policy.lua'))
             elif suite == 'avoidance-controller':
-                result = load(HERE / 'chalk-player-avoidance-controller-selftest.lua')((HERE / 'chalk-intercept-controller.lua').read_text())
+                result = load(HERE / 'chalk-player-avoidance-controller-selftest.lua')((HERE / 'chalk-intercept-controller.lua').read_text(), load(HERE / 'chalk-player-avoidance.lua'))
             elif suite == 'avoidance':
                 result = load(HERE / 'chalk-player-avoidance-selftest.lua')(load(HERE / 'chalk-player-avoidance.lua'))
             elif suite == 'autoload':

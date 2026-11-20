@@ -1,6 +1,7 @@
 -- Executes the real controller's helper/navigation/catch movement blocks.
 -- Avoidance decisions and Humanoid calls are fixtures, not native physics.
-return function(source)
+return function(source,Avoidance)
+    assert(type(Avoidance)=="table" and type(Avoidance.update)=="function","real Avoidance helper required")
     local helpers=assert(source:match("(    local function smoothDirection.-)    local function moveWRApproach"))
     local navigation=assert(source:match("(    local function updateFullplay.-)    local function updateWRReturn"))
     local catch=assert(source:match("            if moving then\n(.-)            else\n                h:Move%(Vector3.zero"))
@@ -49,7 +50,10 @@ return function(f)
     local navigationIdleSince,navigationIdleRoot
     local jumped,dived,jumpRequest
     local trackedSprintRoot,sprintTracking
-    local avoidanceState,avoidanceRoot,avoidancePhase,lastAvoidanceReason
+    local avoidanceState=f.initialAvoidance
+    local avoidanceRoot=f.initialAvoidance and f.root
+    local avoidancePhase=f.initialAvoidance and f.context.phase
+    local lastAvoidanceReason
     local avoidanceStatus={active=false,blocked=false}
     local lastAvoidanceLog=0
     local Field={MinX=-30,MaxX=30,BackZ=0,EndZ=120}
@@ -71,6 +75,7 @@ return function(f)
     local function log(kind,data) f.logs[#f.logs+1]={kind=kind,data=data} end
     local PlayerAvoidance={update=function(previous,input)
         f.helperCalls[#f.helperCalls+1]={previous=previous,input=input}
+        if f.realAvoidance then return f.realAvoidance.update(previous,input) end
         local decision=f.decision or {}
         return {token=#f.helperCalls},{direction=decision.direction or input.desiredDirection,
             sprint=decision.sprint==nil and input.requestedSprint or decision.sprint,
@@ -138,6 +143,58 @@ end
         f.plan.kind="pursue";f.api.catch(f.context)
         equal(f.helperCalls[#f.helperCalls].input.arriveBy,nil)
         equal(f.helperCalls[#f.helperCalls].input.targetPosition,nil)
+    end)
+    test("live DB pursuit retains a safe pending sprint without inventing a catch deadline",function()
+        local f=fixture();f.realAvoidance=Avoidance;f.sprinting=true
+        f.context.arc={};f.plan.kind="pursue";f.plan.reachable=false
+        f.plan.approachTarget=f.root.Position+Vector3.new(-.736,0,37.085)
+        f.plan.direction=(f.plan.approachTarget-f.root.Position).Unit
+        local held=Vector3.new(-.113,0,.993595).Unit
+        f.initialAvoidance={now=f.now-1/60,active=true,side=-1,clearSince=f.now,
+            heading=held,desiredHeading=f.plan.direction}
+        local other={Position=f.root.Position+Vector3.new(2.08,0,4.04),
+            AssemblyLinearVelocity=Vector3.new(-7.22,0,26.01)}
+        f.context.opponent={FindFirstChild=function() return other end,
+            FindFirstChildOfClass=function() return {Health=100} end}
+        f.api=factory(f)
+        for _=1,2 do
+            f.api.catch(f.context)
+            local input=f.helperCalls[#f.helperCalls].input
+            equal(input.allowSprintDetour,true)
+            equal(input.targetPosition,nil);equal(input.arriveBy,nil)
+            equal(input.walkSpeed,20);equal(f.h.WalkSpeed,20)
+            equal(f.sprinting,true,"safe pending request was cancelled")
+            assert((f.moves[#f.moves]-held).Magnitude<1e-6,"safe held path unexpectedly changed")
+            f.now=f.now+1/60
+        end
+        equal(#f.sprintCalls,0,"pending request chattered off and on")
+        equal(f.plan.reachable,false);equal(f.plan.jumpAt,nil);equal(f.plan.diveAt,nil)
+    end)
+    test("pursuit permission still obeys real overlap clearance and current stamina budget",function()
+        for _,gate in ipairs({"overlap","budget"}) do
+            local f=fixture();f.realAvoidance=Avoidance;f.sprinting=true
+            f.context.arc={};f.plan.kind="pursue";f.plan.reachable=false
+            if gate=="overlap" then
+                local other={Position=f.root.Position+Vector3.new(.25,0,3.1),AssemblyLinearVelocity=Vector3.zero}
+                f.context.opponent={FindFirstChild=function() return other end,
+                    FindFirstChildOfClass=function() return {Health=100} end}
+            else f.canSprint=false end
+            f.api.catch(f.context)
+            equal(f.helperCalls[#f.helperCalls].input.allowSprintDetour,true)
+            equal(f.sprinting,false,gate.." failed to release sprint")
+            equal(f.sprintCalls[#f.sprintCalls],false)
+            if gate=="overlap" then close(f.moves[#f.moves],Vector3.zero) end
+        end
+    end)
+    test("live pursuit opt-in does not extend to prethrow other phases or WR without catch intent",function()
+        for _,case in ipairs({{role="DB",phase="Live"},{role="DB",phase="PreSnap",arc={}},
+            {role="DB",phase="Hike",arc={}},{role="DB",phase="RAC",arc={}},
+            {role="DB",phase="Run",arc={}},{role="WR",phase="Live",arc={}}}) do
+            local f=fixture();f.context.role=case.role;f.context.phase=case.phase;f.context.arc=case.arc
+            f.plan.kind="pursue";f.api.catch(f.context)
+            equal(f.helperCalls[#f.helperCalls].input.allowSprintDetour,false,
+                case.role.."/"..case.phase.." received a new sprint opt-in")
+        end
     end)
     test("clear navigation preserves directive strength and an already-on sprint",function()
         local f=fixture();f.sprinting=true
@@ -315,13 +372,14 @@ end
         f.context.catchIntent=nil;f.api.catch(f.context)
         equal(f.helperCalls[5].input.allowSprintDetour,false)
     end)
-    test("DB interception permits a checked sprint only with a live ball and reachable arrival",function()
+    test("DB catch and pursuit permit a checked sprint only with a live ball",function()
         local f=fixture();f.context.arc={};f.plan.kind="jumpDive"
         f.api.catch(f.context)
         equal(f.helperCalls[1].input.allowSprintDetour,true)
         equal(f.helperCalls[1].input.sprintSpeed,27)
         f.plan.kind="pursue";f.api.catch(f.context)
-        equal(f.helperCalls[2].input.allowSprintDetour,false)
+        equal(f.helperCalls[2].input.allowSprintDetour,true)
+        equal(f.helperCalls[2].input.arriveBy,nil)
         f.plan.kind="jump";f.context.arc=nil;f.api.catch(f.context)
         equal(f.helperCalls[3].input.allowSprintDetour,false)
         f.context.arc={};f.context.phase="RAC";f.api.catch(f.context)
