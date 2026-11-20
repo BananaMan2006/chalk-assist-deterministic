@@ -1,6 +1,18 @@
-# Evaluation scope · 5.1.18
+# Evaluation scope · 5.1.19
 
 This release continues the authored, deterministic controller. Its checks establish local rule behavior and packaging properties. **They do not demonstrate a live win rate, a winning streak, perfect catching, or improvement through training.** The release has no training system or shared model.
+
+## 5.1.19 scope
+
+A further receiving incomplete occurred after a confirmed jump, dive and fresh local contact claim. That client claim is distinct from the game's Incomplete result; the available trace does not establish the server's rejection reason. Earlier in the same play, the prethrow route controller requested a funded opening sprint, but the avoidance handoff lacked permission to retain sprint through a checked bypass. That was an independent route execution defect, not proof of the later rejection's cause.
+
+The new prethrow permission is restricted to an already-requested, currently funded WR sprint on the current submitted reachable route, with an observed start time and finite future waypoint deadline. Invalid, stale, expired, best-effort and defensive setup inputs remain ineligible. This adds no speed, stamina, reach credit or unchecked path. Regression and live evidence are recorded separately from authoritative possession outcomes. Validation passed 520 rule checks, 84 Full Auto checks and the 20 build checks; the unchanged installer/preferences checks had already passed. The [prethrow review](evaluation/5.1.19-wr-prethrow-review.json) records the failing published-controller regression and the bounded corrected geometry.
+
+## Bounded 5.1.18 live review
+
+The [five-minute window](evaluation/5.1.18-live-incidents.json) contains fifteen resolved throws: WR had seven catches and one incomplete, while DB had six interceptions and one incomplete with no opposing touchdowns. Three completed matches ended 4–0; a partial next game is excluded. All eight observed WR starts used planning stamina 75 and reported native stamina 75. Seven WR plays showed measured opening sprint movement at native speed 27; the incomplete did not. Saved settings matched the runtime and disk journals, with no runtime errors recorded.
+
+The incomplete still had confirmed jump/dive actions and a fresh local contact claim. The [contact comparison](evaluation/5.1.18-wr-contact-comparison.json) includes an accepted same-build diving catch and historical accepted contacts with similar tipping poses or smaller margins. It does not support a universal dive prohibition, larger contact threshold or blind timing change. The server rejection reason remains unresolved. The separate prethrow permission defect is addressed in 5.1.19; no result is rewritten as a catch.
 
 ## 5.1.18 scope
 

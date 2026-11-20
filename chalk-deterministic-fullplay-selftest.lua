@@ -613,6 +613,34 @@ return function(Policy,create,routeSource,Planner)
         end)
         Policy.movement=old;assert(ok,err)
     end)
+    test("only a submitted reachable current route marks prethrow sprint eligibility",function()
+        local old=Policy.movement
+        Policy.movement=function(input)
+            return {kind="route",target=Vector3.new(0,3,90),routeDeadline=5,sprint=true}
+        end
+        local ok,err=pcall(function()
+            local f=harness();f.api.setEnabled(true);f:settle()
+            f.snapshot.phase="Live";f.snapshot.snapAt=f.time-.1
+            local a=assert(f:navigate().avoidanceArrival)
+            assert(a.routeRoundKey==f.snapshot.roundKey and a.snapAt==f.snapshot.snapAt)
+            for _,gate in ipairs({"staleRound","preSnap","ball","passStarted"}) do
+                local round,phase=f.snapshot.roundKey,f.snapshot.phase
+                if gate=="staleRound" then f.snapshot.roundKey="different-route"
+                elseif gate=="preSnap" then f.snapshot.phase="PreSnap"
+                elseif gate=="ball" then f.snapshot.arc={}
+                else f.snapshot.passStarted=true end
+                assert(f:navigate().avoidanceArrival.routeRoundKey==nil,gate.." got a current route marker")
+                f.snapshot.roundKey=round;f.snapshot.phase=phase;f.snapshot.arc=nil;f.snapshot.passStarted=nil
+            end
+            local fresh=harness();fresh.api.setEnabled(true);fresh.snapshot.phase="Live";fresh.snapshot.snapAt=-.1
+            assert(fresh:navigate().avoidanceArrival.routeRoundKey==nil,"unsubmitted route got a marker")
+            local low=harness();low.attrs.Stamina=0;low.api.setEnabled(true);low:settle()
+            low.snapshot.phase="Live";low.snapshot.snapAt=low.time-.1
+            assert(low.api.status().activeRoute.bestEffort)
+            assert(low:navigate().avoidanceArrival.routeRoundKey==nil,"unfunded best effort got a marker")
+        end)
+        Policy.movement=old;assert(ok,err)
+    end)
     test("one successfully submitted camping counter remains spent across OFF and the next round",function()
         observedRoute(function()
             local selected=Policy.chooseScheduledRoute

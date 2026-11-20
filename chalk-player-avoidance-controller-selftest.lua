@@ -263,6 +263,73 @@ end
                 case.role.."/"..case.phase.." received a new sprint opt-in")
         end
     end)
+    local function fundedRouteFixture()
+        local f=fixture();f.realAvoidance=Avoidance;f.sprinting=true
+        f.h.WalkSpeed=27;f.root.AssemblyLinearVelocity=Vector3.new(0,0,27)
+        f.context.role="WR";f.context.roundKey="authored-route";f.context.snapAt=9.5
+        f.directive={direction=Vector3.new(0,0,1),sprint=true,
+            avoidanceArrival={targetPosition=Vector3.new(0,3,35),arriveBy=11.2,
+                routeRoundKey="authored-route",snapAt=9.5}}
+        local other={Position=Vector3.new(0,3,15),AssemblyLinearVelocity=Vector3.zero}
+        f.context.opponent={FindFirstChild=function() return other end,
+            FindFirstChildOfClass=function() return {Health=100} end}
+        return f,other
+    end
+    test("funded current WR route retains a checked sprint before the ball exists",function()
+        -- Authored geometry reproduces the recorded permission defect, not
+        -- the opponent trajectory: an already-funded opening request was
+        -- unconditionally converted to walking during a prethrow bypass.
+        local f,other=fundedRouteFixture()
+        f.api.navigate(f.context,.1)
+        local input=f.helperCalls[#f.helperCalls].input
+        equal(input.allowSprintDetour,true);equal(input.requestedSprint,true)
+        equal(f.sprinting,true,"funded prethrow sprint was cancelled")
+        equal(f.h.WalkSpeed,27);equal(#f.sprintCalls,0)
+        local output=f.moves[#f.moves]
+        assert(output.Z*27>24,"checked prethrow bypass lost avoidable forward progress")
+        assert(output.Unit:Dot(Vector3.new(0,0,1))>=math.cos(.8)-1e-8,"prethrow turn exceeded native bound")
+        for _,speed in ipairs({20,27}) do
+            local relative=other.Position-f.root.Position
+            local relativeVelocity=other.AssemblyLinearVelocity-output*speed
+            local at=math.max(0,math.min(.25,-relative:Dot(relativeVelocity)/relativeVelocity:Dot(relativeVelocity)))
+            assert((relative+relativeVelocity*at).Magnitude>=4.25-1e-8,"prethrow sprint weakened clearance")
+        end
+    end)
+    test("prethrow route permission needs a current observed identity deadline target and funded request",function()
+        for _,gate in ipairs({"DB","PreSnap","passStarted","notRequested","budget","missingRound",
+            "staleRound","missingSnap","staleSnap","futureSnap","expired","infinite","nan","target"}) do
+            local f=fundedRouteFixture();local a=f.directive.avoidanceArrival
+            if gate=="DB" then f.context.role="DB"
+            elseif gate=="PreSnap" then f.context.phase="PreSnap"
+            elseif gate=="passStarted" then f.context.passStarted=true
+            elseif gate=="notRequested" then f.directive.sprint=false
+            elseif gate=="budget" then f.canSprint=false
+            elseif gate=="missingRound" then f.context.roundKey=nil
+            elseif gate=="staleRound" then a.routeRoundKey="previous-route"
+            elseif gate=="missingSnap" then f.context.snapAt=nil
+            elseif gate=="staleSnap" then a.snapAt=9
+            elseif gate=="futureSnap" then a.snapAt=11;f.context.snapAt=11
+            elseif gate=="expired" then a.arriveBy=f.now
+            elseif gate=="infinite" then a.arriveBy=math.huge
+            elseif gate=="nan" then a.arriveBy=0/0
+            elseif gate=="target" then a.targetPosition=Vector3.new(0/0,3,35) end
+            f.api.navigate(f.context,.1)
+            equal(f.helperCalls[#f.helperCalls].input.allowSprintDetour,false,gate.." unlocked route sprint")
+            equal(f.h.WalkSpeed,27,gate.." mutated native speed")
+        end
+    end)
+    test("funded route sprint still yields to actual overlap and native action ownership",function()
+        for _,gate in ipairs({"overlap","airborne","platform"}) do
+            local f,other=fundedRouteFixture()
+            if gate=="overlap" then other.Position=f.root.Position+Vector3.new(.25,0,3.1)
+            elseif gate=="airborne" then f.h.FloorMaterial="Air"
+            else f.h.PlatformStand=true end
+            local active=f.api.navigate(f.context,.1)
+            if gate=="overlap" then equal(f.sprinting,false);close(f.moves[#f.moves],Vector3.zero)
+            elseif gate=="platform" then equal(active,false);equal(#f.helperCalls,0)
+            else equal(f.helperCalls[#f.helperCalls].input.canDetour,false) end
+        end
+    end)
     test("clear navigation preserves directive strength and an already-on sprint",function()
         local f=fixture();f.sprinting=true
         f.directive={direction=Vector3.new(0,0,.35),sprint=true,preserveDepth=true}

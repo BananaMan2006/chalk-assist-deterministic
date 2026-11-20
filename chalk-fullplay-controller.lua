@@ -785,6 +785,14 @@ return function(ctx,Policy,services)
         local avoidanceArrival
         if input.role=="WR" and choice.kind=="route" and finite(choice.routeDeadline) and finite(input.elapsed) then
             avoidanceArrival={targetPosition=choice.target,arriveBy=now+choice.routeDeadline-input.elapsed}
+            -- Retaining a scheduled sprint around a body must belong to a
+            -- funded route in this exact live round, not a stale deadline.
+            if submitted and activeRoute and activeRoute.reachable==true and not activeRoute.bestEffort
+                and activeRoute.roundKey==roundIdentity(s) and s.phase=="Live"
+                and not s.arc and not s.passStarted and finite(s.snapAt) then
+                avoidanceArrival.routeRoundKey=activeRoute.roundKey
+                avoidanceArrival.snapAt=s.snapAt
+            end
         end
         return {direction=direction,sprint=moving and choice.sprint==true,message=message,
             hardCut=hardCut,

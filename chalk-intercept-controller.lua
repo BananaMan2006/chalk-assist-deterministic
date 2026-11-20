@@ -445,9 +445,21 @@ return function(ctx, Planner, createTackle, WRApproach, Motion, createCarrierMov
         -- WR route intent survives an abandoned postthrow stem; a missing
         -- arrival witness must not cancel its already requested safe sprint.
         -- A catch deadline is supplied only when a real witness exists.
-        -- Prethrow coverage still conserves its reserve.
-        local allowSprintDetour=s.phase=="Live" and (
-            s.role=="WR" and s.catchIntent~=nil
+        -- A funded route can also retain a sprint it already requested before
+        -- the throw. Its observed round/snap and deadline must still be current.
+        -- Prethrow DB coverage and ordinary walking conserve their reserve.
+        local function finite(value)
+            return type(value)=="number" and value==value and math.abs(value)<math.huge
+        end
+        local target=arrival and arrival.targetPosition
+        local routeIdentity=s.roundKey or s.preSnapEnds
+        local fundedRouteSprint=s.role=="WR" and requestedSprint==true and not s.arc and not s.passStarted
+            and routeIdentity~=nil and arrival~=nil and arrival.routeRoundKey==tostring(routeIdentity)
+            and finite(s.snapAt) and arrival.snapAt==s.snapAt and s.snapAt<=now
+            and finite(arrival.arriveBy) and arrival.arriveBy>now
+            and typeof(target)=="Vector3" and finite(target.X) and finite(target.Y) and finite(target.Z)
+        local allowSprintDetour=s.phase=="Live" and (fundedRouteSprint
+            or s.role=="WR" and s.catchIntent~=nil
                 and (s.catchIntent.continuousSprint==true or s.arc~=nil)
             or s.role=="DB" and s.arc~=nil)
         local decision

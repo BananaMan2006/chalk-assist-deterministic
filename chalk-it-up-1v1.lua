@@ -1,4 +1,4 @@
--- Chalk-Release: 5.1.18
+-- Chalk-Release: 5.1.19
 -- Chalk-Product: deterministic
 -- Chalk It Up DB/WR ball assist using normal sprint/jump/dive controls.
 -- Cyan: replicated route (when supplied). Yellow: movement estimate.
@@ -47,7 +47,7 @@ assert(matchEvent and fxEvent and matchEvent:IsA("RemoteEvent") and fxEvent:IsA(
     "Chalk It Up Match/Fx events were not found")
 
 local api = {}
-local RELEASE_VERSION="5.1.18"
+local RELEASE_VERSION="5.1.19"
 local loadedGameId,loadedPlaceId,loadedJobId=game.GameId,game.PlaceId,game.JobId
 env.ChalkDB = api
 local alive, enabled = true, true
@@ -967,7 +967,7 @@ end
 function api.status()
     local ch = characterOf(opponent)
     local holder,isEnemy,holderRole=carrierContext()
-    return {product="deterministic",version=RELEASE_VERSION,buildId="965226d3d58be1a6d2168b13b5f3dd176906cc9c236d5e74008f986a008b3d9f",policyMode="deterministic", enabled=enabled, role=role or "unknown",rawRole=rawRole or "unknown", phase=phase,
+    return {product="deterministic",version=RELEASE_VERSION,buildId="2b4be0d7a548602fb871132a022fd7beb80097a342c91b9fa7310e24a54eb0e0",policyMode="deterministic", enabled=enabled, role=role or "unknown",rawRole=rawRole or "unknown", phase=phase,
         ui={visible=windowVisible,minimized=minimized,x=panel.Position.X.Offset,y=panel.Position.Y.Offset},
         matchAlerts={enabled=alertSettings.enabled,saveError=alertSettings.saveError},
         preferences=preferences and preferences.status() or nil,
@@ -4518,9 +4518,21 @@ return function(ctx, Planner, createTackle, WRApproach, Motion, createCarrierMov
         -- WR route intent survives an abandoned postthrow stem; a missing
         -- arrival witness must not cancel its already requested safe sprint.
         -- A catch deadline is supplied only when a real witness exists.
-        -- Prethrow coverage still conserves its reserve.
-        local allowSprintDetour=s.phase=="Live" and (
-            s.role=="WR" and s.catchIntent~=nil
+        -- A funded route can also retain a sprint it already requested before
+        -- the throw. Its observed round/snap and deadline must still be current.
+        -- Prethrow DB coverage and ordinary walking conserve their reserve.
+        local function finite(value)
+            return type(value)=="number" and value==value and math.abs(value)<math.huge
+        end
+        local target=arrival and arrival.targetPosition
+        local routeIdentity=s.roundKey or s.preSnapEnds
+        local fundedRouteSprint=s.role=="WR" and requestedSprint==true and not s.arc and not s.passStarted
+            and routeIdentity~=nil and arrival~=nil and arrival.routeRoundKey==tostring(routeIdentity)
+            and finite(s.snapAt) and arrival.snapAt==s.snapAt and s.snapAt<=now
+            and finite(arrival.arriveBy) and arrival.arriveBy>now
+            and typeof(target)=="Vector3" and finite(target.X) and finite(target.Y) and finite(target.Z)
+        local allowSprintDetour=s.phase=="Live" and (fundedRouteSprint
+            or s.role=="WR" and s.catchIntent~=nil
                 and (s.catchIntent.continuousSprint==true or s.arc~=nil)
             or s.role=="DB" and s.arc~=nil)
         local decision
@@ -8715,6 +8727,14 @@ return function(ctx,Policy,services)
         local avoidanceArrival
         if input.role=="WR" and choice.kind=="route" and finite(choice.routeDeadline) and finite(input.elapsed) then
             avoidanceArrival={targetPosition=choice.target,arriveBy=now+choice.routeDeadline-input.elapsed}
+            -- Retaining a scheduled sprint around a body must belong to a
+            -- funded route in this exact live round, not a stale deadline.
+            if submitted and activeRoute and activeRoute.reachable==true and not activeRoute.bestEffort
+                and activeRoute.roundKey==roundIdentity(s) and s.phase=="Live"
+                and not s.arc and not s.passStarted and finite(s.snapAt) then
+                avoidanceArrival.routeRoundKey=activeRoute.roundKey
+                avoidanceArrival.snapAt=s.snapAt
+            end
         end
         return {direction=direction,sprint=moving and choice.sprint==true,message=message,
             hardCut=hardCut,
@@ -9581,7 +9601,7 @@ end
 end)()
 
 api.initializePreferences(createPreferences)
-assist = createAssist({snapshot=api.context,version=RELEASE_VERSION,buildId="965226d3d58be1a6d2168b13b5f3dd176906cc9c236d5e74008f986a008b3d9f",fullplay=function(s,root,h,now,dt)
+assist = createAssist({snapshot=api.context,version=RELEASE_VERSION,buildId="2b4be0d7a548602fb871132a022fd7beb80097a342c91b9fa7310e24a54eb0e0",fullplay=function(s,root,h,now,dt)
     if fullplay then return fullplay.navigate(s,root,h,now,dt) end
 end},Planner,createTackle,WRApproach,Motion,createCarrierMoves,PlayerAvoidance)
 assist.setEnabled(false)
@@ -9597,7 +9617,7 @@ repeatWR = createWRRepeat({snapshot=api.context,
     autoplay=function() return autoplay.status() end,
     disableAutoplay=function() return api.setAutoplay(false) end})
 repeatWR.setEnabled(false)
-fullplay = createFullplay({Planner=Planner,snapshot=api.context,version=RELEASE_VERSION,buildId="965226d3d58be1a6d2168b13b5f3dd176906cc9c236d5e74008f986a008b3d9f",
+fullplay = createFullplay({Planner=Planner,snapshot=api.context,version=RELEASE_VERSION,buildId="2b4be0d7a548602fb871132a022fd7beb80097a342c91b9fa7310e24a54eb0e0",
     assistEnabled=function() return assist.status().enabled end,
     release=function() if assist.releaseFullplay then assist.releaseFullplay() end end},FullplayPolicy)
 matchSkip = createMatchSkip({snapshot=api.context,startDisabled=true,preferencesManaged=true,
@@ -9620,7 +9640,7 @@ local GAME_ID,PLACE_ID=10770281752,116097127629859
 local MAIN_URL="https://raw.githubusercontent.com/BananaMan2006/chalk-assist-deterministic/main/chalk-it-up-1v1.lua"
 local CACHE_FILE="chalk-deterministic-cache.lua"
 local MAIN_FILE="chalk-it-up-1v1.lua"
-local MIN_RELEASE="5.1.18"
+local MIN_RELEASE="5.1.19"
 local MARKER="__ChalkDeterministicAutoBoot"
 local env=type(getgenv)=="function" and getgenv() or _G
 local boot
