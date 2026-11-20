@@ -1,0 +1,1061 @@
+{
+  "schemaVersion": 1,
+  "release": "5.1.12",
+  "buildId": "19f53bf03953c0b826483b1cf00d510931e6720b17905a68acce7e30bc961d34",
+  "window": {
+    "start": 1795134238.8317108,
+    "endExclusive": 1795137857.571014,
+    "observedSpanSeconds": 3607.1741898059845,
+    "backlogIncluded": true,
+    "closedReason": "next_release_loaded"
+  },
+  "scope": "One exact-build window, including retained backlog since the prior observer ended; not a controlled comparison or a general win-rate estimate. Complete game outcomes and play failures are reported separately.",
+  "matches": {
+    "completed": 29,
+    "wins": 29,
+    "losses": 0,
+    "scores": {
+      "4-0": 21,
+      "4-1": 7,
+      "4-2": 1
+    },
+    "forfeits": {
+      "count": 6,
+      "winner": "unknown; excluded from win/loss totals",
+      "scoresAtExit": {
+        "3-0": 3,
+        "2-0": 1,
+        "0-0": 2
+      }
+    }
+  },
+  "plays": {
+    "total": 169,
+    "WR": {
+      "total": 75,
+      "passTypes": {
+        "Floater": 75
+      },
+      "nativeOutcomes": {
+        "Catch": 59,
+        "Incomplete": 10,
+        "Intercepted": 1,
+        "Swatted": 5
+      },
+      "nativeTouchdowns": 59
+    },
+    "DB": {
+      "total": 94,
+      "passTypes": {
+        "Bullet": 53,
+        "Floater": 41
+      },
+      "nativeOutcomes": {
+        "Intercepted": 64,
+        "Catch": 10,
+        "Swatted": 15,
+        "Incomplete": 5
+      },
+      "opponentCatchThenTackled": 5,
+      "opponentCatchThenTouchdown": 5
+    },
+    "opponentPoints": 9
+  },
+  "execution": {
+    "actionsByRole": {
+      "WR": {
+        "jumpRequest": 65,
+        "jump": 65,
+        "diveAttempt": 9,
+        "dive": 9
+      },
+      "DB": {
+        "jumpRequest": 87,
+        "jump": 86,
+        "diveAttempt": 52,
+        "dive": 52,
+        "jumpRetry": 1
+      }
+    },
+    "localClaims": 150,
+    "claimsAreAuthoritative": false,
+    "runtimeErrors": 0,
+    "nativeJammedNotices": 13,
+    "normalSolveMs": {
+      "count": 1693,
+      "median": 10.329708340577781,
+      "p95": 40.30129167949781,
+      "max": 66.89708333578892
+    },
+    "postthrowStemContinuedPlays": 11,
+    "earlierAirborneGuardReleases": 1,
+    "extraComparisonSolveMs": {
+      "count": 59,
+      "median": 14.385666669113562,
+      "max": 25.752291665412486
+    }
+  },
+  "coverage": {
+    "retainedEventCount": 18665,
+    "malformedLines": 0,
+    "fileResets": 0,
+    "discardedRetainedEvents": 0,
+    "firstObservedPhase": "Lobby",
+    "lastNativeCompletedGameIncluded": true
+  },
+  "reviewedIncidentCount": 31,
+  "incidentSelection": "Every WR Incomplete/Swatted/Intercepted, every DB opponent Catch or Incomplete, and every opponent point linked to a thrown play. Ordinary DB Swatted is separately counted as a defensive stop.",
+  "groupCounts": {
+    "contact_not_awarded": 9,
+    "avoidance_speed_loss": 1,
+    "reach_lost_during_avoidance": 7,
+    "no_margin_qualified_window": 5,
+    "prethrow_position_debt": 3,
+    "opponent_contact_before_planned_dive": 1,
+    "fresh_jump_geometry_rejection": 1,
+    "jump_without_local_contact": 1,
+    "diving_contact_not_awarded": 3
+  },
+  "cases": [
+    {
+      "caseId": "F001",
+      "role": "DB",
+      "pass": "Floater",
+      "nativeOutcome": "Catch",
+      "terminalOutcome": "Tackled",
+      "pointAwarded": "none_observed",
+      "group": "contact_not_awarded",
+      "evidence": "Confirmed jump and local airborne contact claim; native opponent Catch followed by Tackled. No opponent point.",
+      "uncertaintyOrNextCheck": "Server ordering/acceptance is not observable; do not label it a missed jump.",
+      "measurements": {
+        "planCount": 14,
+        "normalMarginForecastCount": 14,
+        "weakFallbackForecastCount": 0,
+        "actionCounts": {
+          "jumpRequest": 1,
+          "jump": 1
+        },
+        "localContactClaim": true,
+        "postClaimPoseCount": 2,
+        "replanReasons": {
+          "sprint awaiting native speed": 3,
+          "native sprint forecast restored": 3,
+          "position drift": 1,
+          "refresh": 6
+        },
+        "loggedActiveAvoidanceDecisions": 8,
+        "minimumObservedNativeWalkSpeed": 20,
+        "minimumObservedStamina": 51,
+        "maximumSolveMs": 5.470166652230546
+      }
+    },
+    {
+      "caseId": "F002",
+      "role": "DB",
+      "pass": "Floater",
+      "nativeOutcome": "Catch",
+      "terminalOutcome": "Touchdown",
+      "pointAwarded": "Opp",
+      "group": "avoidance_speed_loss",
+      "evidence": "Repeated active DB bypasses explicitly disabled requested sprint with 21\u201362 stamina remaining; actual 20/27 toggles preceded loss of .4+ contact forecasts, then no jump. Opponent scored.",
+      "uncertaintyOrNextCheck": "Proposed 5.1.13 fix permits checked DB sprint detours only during Live observed arc with a reachable arrival; collision/touching/stamina/action safeguards remain. Two recorded F 002 poses pass actual-turn sprint clearance at stamina 41/39; old permission withheld sprint. Not a full path or native interception proof.",
+      "measurements": {
+        "planCount": 19,
+        "normalMarginForecastCount": 7,
+        "weakFallbackForecastCount": 2,
+        "actionCounts": {},
+        "localContactClaim": false,
+        "postClaimPoseCount": 0,
+        "replanReasons": {
+          "sprint awaiting native speed": 5,
+          "native sprint forecast restored": 5,
+          "refresh": 7,
+          "position drift": 1
+        },
+        "loggedActiveAvoidanceDecisions": 9,
+        "minimumObservedNativeWalkSpeed": 20,
+        "minimumObservedStamina": 21,
+        "maximumSolveMs": 42.59087500395253
+      }
+    },
+    {
+      "caseId": "F003",
+      "role": "WR",
+      "pass": "Floater",
+      "nativeOutcome": "Incomplete",
+      "terminalOutcome": "Incomplete",
+      "pointAwarded": "none_observed",
+      "group": "reach_lost_during_avoidance",
+      "evidence": "Three .4+ forecasts through+.433 s, followed by none; repeated bypasses, seven position-drift replans and native sprint transitions. No action or local contact.",
+      "uncertaintyOrNextCheck": "Actual path diverged from the direct reach forecast; not proof that bypassing the moving player was unnecessary.",
+      "measurements": {
+        "planCount": 21,
+        "normalMarginForecastCount": 3,
+        "weakFallbackForecastCount": 0,
+        "actionCounts": {},
+        "localContactClaim": false,
+        "postClaimPoseCount": 0,
+        "replanReasons": {
+          "sprint awaiting native speed": 2,
+          "native sprint forecast restored": 2,
+          "refresh": 10,
+          "position drift": 7
+        },
+        "loggedActiveAvoidanceDecisions": 7,
+        "minimumObservedNativeWalkSpeed": 20,
+        "minimumObservedStamina": 39,
+        "maximumSolveMs": 49.87904167501256
+      }
+    },
+    {
+      "caseId": "F004",
+      "role": "DB",
+      "pass": "Floater",
+      "nativeOutcome": "Incomplete",
+      "terminalOutcome": "Incomplete",
+      "pointAwarded": "none_observed",
+      "group": "no_margin_qualified_window",
+      "evidence": "No reachable forecast in 16 solves from the first snapshot; jump/dive were available and sprint budget remained. No action; native Incomplete.",
+      "uncertaintyOrNextCheck": "Coverage/route reach is the limitation observed. No evidence that pressing jump earlier from the same state would intercept.",
+      "measurements": {
+        "planCount": 16,
+        "normalMarginForecastCount": 0,
+        "weakFallbackForecastCount": 0,
+        "actionCounts": {},
+        "localContactClaim": false,
+        "postClaimPoseCount": 0,
+        "replanReasons": {
+          "refresh": 11,
+          "sprint awaiting native speed": 2,
+          "native sprint forecast restored": 2,
+          "position drift": 1
+        },
+        "loggedActiveAvoidanceDecisions": 6,
+        "minimumObservedNativeWalkSpeed": 20,
+        "minimumObservedStamina": 21,
+        "maximumSolveMs": 59.94816665770486
+      }
+    },
+    {
+      "caseId": "F005",
+      "role": "WR",
+      "pass": "Floater",
+      "nativeOutcome": "Incomplete",
+      "terminalOutcome": "Incomplete",
+      "pointAwarded": "none_observed",
+      "group": "prethrow_position_debt",
+      "evidence": "No reachable forecast in 12 solves. Stem was 13.587 stud short of its remaining travel capacity including slack. Postthrow native speed stayed 27 with no logged bypass.",
+      "uncertaintyOrNextCheck": "The catch was already outside the modeled reachable set at launch; prethrow path feasibility needs review, not late jump dispatch.",
+      "measurements": {
+        "planCount": 12,
+        "normalMarginForecastCount": 0,
+        "weakFallbackForecastCount": 0,
+        "actionCounts": {},
+        "localContactClaim": false,
+        "postClaimPoseCount": 0,
+        "replanReasons": {
+          "refresh": 12
+        },
+        "loggedActiveAvoidanceDecisions": 0,
+        "minimumObservedNativeWalkSpeed": 27,
+        "minimumObservedStamina": 13,
+        "maximumSolveMs": 28.292458329815418
+      }
+    },
+    {
+      "caseId": "F006",
+      "role": "DB",
+      "pass": "Bullet",
+      "nativeOutcome": "Catch",
+      "terminalOutcome": "Tackled",
+      "pointAwarded": "none_observed",
+      "group": "opponent_contact_before_planned_dive",
+      "evidence": "Ground dive dispatched 5.44 ms after schedule with observed motion, but no local claim. Native opponent contact position maps to arc+.99368 s; planned own contact was+1.13944 s. Opponent later Tackled.",
+      "uncertaintyOrNextCheck": "The positional arc time suggests the opponent reached the ball earlier. It does not reveal server arbitration or prove a feasible earlier own catch.",
+      "measurements": {
+        "planCount": 5,
+        "normalMarginForecastCount": 4,
+        "weakFallbackForecastCount": 0,
+        "actionCounts": {
+          "diveAttempt": 1,
+          "dive": 1
+        },
+        "localContactClaim": false,
+        "postClaimPoseCount": 0,
+        "replanReasons": {
+          "sprint awaiting native speed": 1,
+          "native sprint forecast restored": 1,
+          "refresh": 2
+        },
+        "loggedActiveAvoidanceDecisions": 0,
+        "minimumObservedNativeWalkSpeed": 0,
+        "minimumObservedStamina": 80,
+        "maximumSolveMs": 17.11516667273827
+      }
+    },
+    {
+      "caseId": "F007",
+      "role": "DB",
+      "pass": "Bullet",
+      "nativeOutcome": "Incomplete",
+      "terminalOutcome": "Incomplete",
+      "pointAwarded": "You",
+      "group": "no_margin_qualified_window",
+      "evidence": "No reachable forecast in 6 solves; no action/contact. Native second-down Incomplete awarded our point.",
+      "uncertaintyOrNextCheck": "It was a defensive stop, but not an interception. Reach from the observed position was unavailable.",
+      "measurements": {
+        "planCount": 6,
+        "normalMarginForecastCount": 0,
+        "weakFallbackForecastCount": 0,
+        "actionCounts": {},
+        "localContactClaim": false,
+        "postClaimPoseCount": 0,
+        "replanReasons": {
+          "sprint awaiting native speed": 1,
+          "native sprint forecast restored": 1,
+          "refresh": 3,
+          "position drift": 1
+        },
+        "loggedActiveAvoidanceDecisions": 0,
+        "minimumObservedNativeWalkSpeed": 20,
+        "minimumObservedStamina": 76,
+        "maximumSolveMs": 6.656208337517455
+      }
+    },
+    {
+      "caseId": "F008",
+      "role": "WR",
+      "pass": "Floater",
+      "nativeOutcome": "Incomplete",
+      "terminalOutcome": "Incomplete",
+      "pointAwarded": "none_observed",
+      "group": "reach_lost_during_avoidance",
+      "evidence": "Four .4+ forecasts through+.250 s; subsequent no-room stop/bypasses, seven drift replans and lost reach. No action/contact.",
+      "uncertaintyOrNextCheck": "Moving-obstacle path loss is observed; safe alternative motion is not established.",
+      "measurements": {
+        "planCount": 19,
+        "normalMarginForecastCount": 4,
+        "weakFallbackForecastCount": 0,
+        "actionCounts": {},
+        "localContactClaim": false,
+        "postClaimPoseCount": 0,
+        "replanReasons": {
+          "position drift": 7,
+          "refresh": 10,
+          "sprint awaiting native speed": 1,
+          "native sprint forecast restored": 1
+        },
+        "loggedActiveAvoidanceDecisions": 6,
+        "minimumObservedNativeWalkSpeed": 20,
+        "minimumObservedStamina": 32,
+        "maximumSolveMs": 54.16587501531467
+      }
+    },
+    {
+      "caseId": "F009",
+      "role": "DB",
+      "pass": "Bullet",
+      "nativeOutcome": "Catch",
+      "terminalOutcome": "Tackled",
+      "pointAwarded": "none_observed",
+      "group": "fresh_jump_geometry_rejection",
+      "evidence": "Initial ground-dive forecasts existed, then a weak jump-dive fallback. Fresh jump geometry rejected twice; no action/contact. Active passing-side recovery and sprint transitions occurred. Opponent Tackled.",
+      "uncertaintyOrNextCheck": "Do not remove the fresh-pose check. Test safer approach/sprint continuity before treating dispatch denial as the cause.",
+      "measurements": {
+        "planCount": 8,
+        "normalMarginForecastCount": 3,
+        "weakFallbackForecastCount": 1,
+        "actionCounts": {},
+        "localContactClaim": false,
+        "postClaimPoseCount": 0,
+        "replanReasons": {
+          "sprint awaiting native speed": 3,
+          "native sprint forecast restored": 2,
+          "Jump no longer reaches the planned ball contact": 2
+        },
+        "loggedActiveAvoidanceDecisions": 2,
+        "minimumObservedNativeWalkSpeed": 20,
+        "minimumObservedStamina": 74,
+        "maximumSolveMs": 51.1454583320301
+      }
+    },
+    {
+      "caseId": "F010",
+      "role": "DB",
+      "pass": "Floater",
+      "nativeOutcome": "Catch",
+      "terminalOutcome": "Tackled",
+      "pointAwarded": "none_observed",
+      "group": "contact_not_awarded",
+      "evidence": "Confirmed jump and local airborne contact claim; native opponent Catch then Tackled. No opponent point.",
+      "uncertaintyOrNextCheck": "Client contact and native possession disagree; server reason unknown.",
+      "measurements": {
+        "planCount": 15,
+        "normalMarginForecastCount": 15,
+        "weakFallbackForecastCount": 0,
+        "actionCounts": {
+          "jumpRequest": 1,
+          "jump": 1
+        },
+        "localContactClaim": true,
+        "postClaimPoseCount": 1,
+        "replanReasons": {
+          "sprint awaiting native speed": 3,
+          "native sprint forecast restored": 3,
+          "refresh": 8
+        },
+        "loggedActiveAvoidanceDecisions": 7,
+        "minimumObservedNativeWalkSpeed": 20,
+        "minimumObservedStamina": 48,
+        "maximumSolveMs": 12.841374991694465
+      }
+    },
+    {
+      "caseId": "F011",
+      "role": "DB",
+      "pass": "Floater",
+      "nativeOutcome": "Catch",
+      "terminalOutcome": "Touchdown",
+      "pointAwarded": "Opp",
+      "group": "contact_not_awarded",
+      "evidence": "Confirmed jump and local airborne contact claim; native opponent Catch and Touchdown. Jump request was 7.02 ms after schedule, confirmation 16.04 ms later.",
+      "uncertaintyOrNextCheck": "Confirmation delay is not physical takeoff delay; no missing jump or definite arbitration cause established.",
+      "measurements": {
+        "planCount": 20,
+        "normalMarginForecastCount": 15,
+        "weakFallbackForecastCount": 0,
+        "actionCounts": {
+          "jumpRequest": 1,
+          "jump": 1
+        },
+        "localContactClaim": true,
+        "postClaimPoseCount": 1,
+        "replanReasons": {
+          "sprint awaiting native speed": 5,
+          "native sprint forecast restored": 5,
+          "refresh": 6,
+          "position drift": 3
+        },
+        "loggedActiveAvoidanceDecisions": 10,
+        "minimumObservedNativeWalkSpeed": 20,
+        "minimumObservedStamina": 45,
+        "maximumSolveMs": 49.90779169020243
+      }
+    },
+    {
+      "caseId": "F012",
+      "role": "WR",
+      "pass": "Floater",
+      "nativeOutcome": "Incomplete",
+      "terminalOutcome": "Incomplete",
+      "pointAwarded": "none_observed",
+      "group": "prethrow_position_debt",
+      "evidence": "No reachable forecast from launch. Stem deficit 11.411 stud; later bypass/drift and native speed changes could not recover it. No action/contact.",
+      "uncertaintyOrNextCheck": "Prethrow travel already exceeded modeled remaining capacity; no demonstrated catch-preserving alternate route yet.",
+      "measurements": {
+        "planCount": 16,
+        "normalMarginForecastCount": 0,
+        "weakFallbackForecastCount": 0,
+        "actionCounts": {},
+        "localContactClaim": false,
+        "postClaimPoseCount": 0,
+        "replanReasons": {
+          "position drift": 4,
+          "sprint awaiting native speed": 1,
+          "native sprint forecast restored": 1,
+          "refresh": 10
+        },
+        "loggedActiveAvoidanceDecisions": 4,
+        "minimumObservedNativeWalkSpeed": 20,
+        "minimumObservedStamina": 31,
+        "maximumSolveMs": 47.569208341883495
+      }
+    },
+    {
+      "caseId": "F013",
+      "role": "WR",
+      "pass": "Floater",
+      "nativeOutcome": "Intercepted",
+      "terminalOutcome": "Intercepted",
+      "pointAwarded": "Opp",
+      "group": "reach_lost_during_avoidance",
+      "evidence": "Eighteen .4+ forecasts through+1.335 s,22 position-drift replans and repeated bypasses; then no action/contact and native Intercepted.",
+      "uncertaintyOrNextCheck": "Independent replay did not demonstrate a forced passing-side remedy. Loss of moving-obstacle path progress is observed; no catch-preserving safe alternative has been established.",
+      "measurements": {
+        "planCount": 29,
+        "normalMarginForecastCount": 18,
+        "weakFallbackForecastCount": 0,
+        "actionCounts": {},
+        "localContactClaim": false,
+        "postClaimPoseCount": 0,
+        "replanReasons": {
+          "position drift": 22,
+          "sprint awaiting native speed": 1,
+          "native sprint forecast restored": 1,
+          "refresh": 5
+        },
+        "loggedActiveAvoidanceDecisions": 8,
+        "minimumObservedNativeWalkSpeed": 20,
+        "minimumObservedStamina": 24,
+        "maximumSolveMs": 36.07570833992213
+      }
+    },
+    {
+      "caseId": "F014",
+      "role": "WR",
+      "pass": "Floater",
+      "nativeOutcome": "Incomplete",
+      "terminalOutcome": "Incomplete",
+      "pointAwarded": "none_observed",
+      "group": "reach_lost_during_avoidance",
+      "evidence": "Five .4+ forecasts through+.371 s, then repeated bypasses/six drift replans and no reachable catch. No action/contact.",
+      "uncertaintyOrNextCheck": "Loss of approach progress observed; safe alternative unproven.",
+      "measurements": {
+        "planCount": 18,
+        "normalMarginForecastCount": 5,
+        "weakFallbackForecastCount": 0,
+        "actionCounts": {},
+        "localContactClaim": false,
+        "postClaimPoseCount": 0,
+        "replanReasons": {
+          "position drift": 6,
+          "refresh": 10,
+          "sprint awaiting native speed": 1,
+          "native sprint forecast restored": 1
+        },
+        "loggedActiveAvoidanceDecisions": 6,
+        "minimumObservedNativeWalkSpeed": 20,
+        "minimumObservedStamina": 38,
+        "maximumSolveMs": 45.86504166945815
+      }
+    },
+    {
+      "caseId": "F015",
+      "role": "WR",
+      "pass": "Floater",
+      "nativeOutcome": "Incomplete",
+      "terminalOutcome": "Incomplete",
+      "pointAwarded": "Opp",
+      "group": "reach_lost_during_avoidance",
+      "evidence": "Two .4+ forecasts through+.199 s,24 drift replans and five sprint pending/restored cycles amid bypasses. No action/contact; second-down Incomplete awarded opponent point.",
+      "uncertaintyOrNextCheck": "Avoidance/sprint interaction is a candidate mechanism, not evidence to disable collision safeguards.",
+      "measurements": {
+        "planCount": 40,
+        "normalMarginForecastCount": 2,
+        "weakFallbackForecastCount": 0,
+        "actionCounts": {},
+        "localContactClaim": false,
+        "postClaimPoseCount": 0,
+        "replanReasons": {
+          "position drift": 24,
+          "sprint awaiting native speed": 5,
+          "native sprint forecast restored": 5,
+          "refresh": 6
+        },
+        "loggedActiveAvoidanceDecisions": 8,
+        "minimumObservedNativeWalkSpeed": 20,
+        "minimumObservedStamina": 55,
+        "maximumSolveMs": 30.88612499414012
+      }
+    },
+    {
+      "caseId": "F016",
+      "role": "DB",
+      "pass": "Floater",
+      "nativeOutcome": "Catch",
+      "terminalOutcome": "Touchdown",
+      "pointAwarded": "Opp",
+      "group": "jump_without_local_contact",
+      "evidence": "Confirmed jump, no local contact. Native opponent contact position maps to arc+2.85547 s; planned center contacts+2.87950 s initially/+2.89529 s finally. Opponent scored.",
+      "uncertaintyOrNextCheck": "First capsule contact may precede planned center time. Samples do not prove whether opponent timing or final body-position error determined the result.",
+      "measurements": {
+        "planCount": 14,
+        "normalMarginForecastCount": 13,
+        "weakFallbackForecastCount": 0,
+        "actionCounts": {
+          "jumpRequest": 1,
+          "jump": 1
+        },
+        "localContactClaim": false,
+        "postClaimPoseCount": 0,
+        "replanReasons": {
+          "sprint awaiting native speed": 1,
+          "native sprint forecast restored": 1,
+          "refresh": 9,
+          "position drift": 2
+        },
+        "loggedActiveAvoidanceDecisions": 0,
+        "minimumObservedNativeWalkSpeed": 20,
+        "minimumObservedStamina": 32,
+        "maximumSolveMs": 9.03308333363384
+      }
+    },
+    {
+      "caseId": "F017",
+      "role": "WR",
+      "pass": "Floater",
+      "nativeOutcome": "Swatted",
+      "terminalOutcome": "Swatted",
+      "pointAwarded": "none_observed",
+      "group": "contact_not_awarded",
+      "evidence": "All 10 forecasts retained .4+ margin, confirmed jump and local airborne contact; native Swatted, no point on this down.",
+      "uncertaintyOrNextCheck": "Contested server outcome; not an absent catch attempt.",
+      "measurements": {
+        "planCount": 10,
+        "normalMarginForecastCount": 10,
+        "weakFallbackForecastCount": 0,
+        "actionCounts": {
+          "jumpRequest": 1,
+          "jump": 1
+        },
+        "localContactClaim": true,
+        "postClaimPoseCount": 1,
+        "replanReasons": {
+          "refresh": 9
+        },
+        "loggedActiveAvoidanceDecisions": 0,
+        "minimumObservedNativeWalkSpeed": 27,
+        "minimumObservedStamina": 15,
+        "maximumSolveMs": 22.39491665386595
+      }
+    },
+    {
+      "caseId": "F018",
+      "role": "WR",
+      "pass": "Floater",
+      "nativeOutcome": "Swatted",
+      "terminalOutcome": "Swatted",
+      "pointAwarded": "none_observed",
+      "group": "contact_not_awarded",
+      "evidence": "Fresh jump rejection triggered replan, then a confirmed jump and local airborne contact; native Swatted, no point on this down.",
+      "uncertaintyOrNextCheck": "The eventual action/contact happened; server contest cause unknown.",
+      "measurements": {
+        "planCount": 12,
+        "normalMarginForecastCount": 12,
+        "weakFallbackForecastCount": 0,
+        "actionCounts": {
+          "jumpRequest": 1,
+          "jump": 1
+        },
+        "localContactClaim": true,
+        "postClaimPoseCount": 0,
+        "replanReasons": {
+          "refresh": 9,
+          "Jump no longer reaches the planned ball contact": 1,
+          "sprint awaiting native speed": 1
+        },
+        "loggedActiveAvoidanceDecisions": 0,
+        "minimumObservedNativeWalkSpeed": 20,
+        "minimumObservedStamina": 19,
+        "maximumSolveMs": 22.167666669702157
+      }
+    },
+    {
+      "caseId": "F019",
+      "role": "WR",
+      "pass": "Floater",
+      "nativeOutcome": "Incomplete",
+      "terminalOutcome": "Incomplete",
+      "pointAwarded": "none_observed",
+      "group": "reach_lost_during_avoidance",
+      "evidence": "Six .4+ forecasts through+.385 s,20 drift replans and repeated bypasses; no action/contact.",
+      "uncertaintyOrNextCheck": "Need controlled obstacle-path replay, not a timing-only patch.",
+      "measurements": {
+        "planCount": 30,
+        "normalMarginForecastCount": 6,
+        "weakFallbackForecastCount": 0,
+        "actionCounts": {},
+        "localContactClaim": false,
+        "postClaimPoseCount": 0,
+        "replanReasons": {
+          "position drift": 20,
+          "sprint awaiting native speed": 1,
+          "native sprint forecast restored": 1,
+          "refresh": 8
+        },
+        "loggedActiveAvoidanceDecisions": 9,
+        "minimumObservedNativeWalkSpeed": 20,
+        "minimumObservedStamina": 43,
+        "maximumSolveMs": 47.57812499883585
+      }
+    },
+    {
+      "caseId": "F020",
+      "role": "DB",
+      "pass": "Floater",
+      "nativeOutcome": "Incomplete",
+      "terminalOutcome": "Incomplete",
+      "pointAwarded": "none_observed",
+      "group": "no_margin_qualified_window",
+      "evidence": "Only two weak DB fallback forecasts (.160/.051 margin), no .4+ window in 14 solves; no action/contact. Native Incomplete.",
+      "uncertaintyOrNextCheck": "Do not count weak fallback flags as a normal-margin reachable interception.",
+      "measurements": {
+        "planCount": 14,
+        "normalMarginForecastCount": 0,
+        "weakFallbackForecastCount": 2,
+        "actionCounts": {},
+        "localContactClaim": false,
+        "postClaimPoseCount": 0,
+        "replanReasons": {
+          "sprint awaiting native speed": 1,
+          "native sprint forecast restored": 1,
+          "refresh": 11,
+          "position drift": 1
+        },
+        "loggedActiveAvoidanceDecisions": 3,
+        "minimumObservedNativeWalkSpeed": 20,
+        "minimumObservedStamina": 24,
+        "maximumSolveMs": 58.02841667900793
+      }
+    },
+    {
+      "caseId": "F021",
+      "role": "WR",
+      "pass": "Floater",
+      "nativeOutcome": "Incomplete",
+      "terminalOutcome": "Incomplete",
+      "pointAwarded": "none_observed",
+      "group": "diving_contact_not_awarded",
+      "evidence": "Confirmed jump/dive and local airborne contact; native Incomplete. Four postclaim body/ball poses preserved.",
+      "uncertaintyOrNextCheck": "Actual diving contact and later upright-to-prone samples are preserved. Other dives succeeded; these local data do not establish server acceptance, ordering or rejection cause. No claim/tilt heuristic was justified.",
+      "measurements": {
+        "planCount": 12,
+        "normalMarginForecastCount": 9,
+        "weakFallbackForecastCount": 0,
+        "actionCounts": {
+          "jumpRequest": 1,
+          "jump": 1,
+          "diveAttempt": 1,
+          "dive": 1
+        },
+        "localContactClaim": true,
+        "postClaimPoseCount": 4,
+        "replanReasons": {
+          "refresh": 8,
+          "native sprint forecast restored": 1,
+          "Jump no longer reaches the planned ball contact": 1,
+          "sprint awaiting native speed": 1
+        },
+        "loggedActiveAvoidanceDecisions": 0,
+        "minimumObservedNativeWalkSpeed": 20,
+        "minimumObservedStamina": 50,
+        "maximumSolveMs": 20.59366667526774
+      }
+    },
+    {
+      "caseId": "F022",
+      "role": "DB",
+      "pass": "Bullet",
+      "nativeOutcome": "Catch",
+      "terminalOutcome": "Touchdown",
+      "pointAwarded": "Opp",
+      "group": "diving_contact_not_awarded",
+      "evidence": "Jump dispatched.22 ms late, dive 6.94 ms late; local diving contact and four later poses; native opponent Catch and later Touchdown.",
+      "uncertaintyOrNextCheck": "Actual diving contact and later upright-to-prone samples are preserved. Other dives succeeded; these local data do not establish server acceptance, ordering or rejection cause. No claim/tilt heuristic was justified.",
+      "measurements": {
+        "planCount": 3,
+        "normalMarginForecastCount": 3,
+        "weakFallbackForecastCount": 0,
+        "actionCounts": {
+          "jumpRequest": 1,
+          "jump": 1,
+          "diveAttempt": 1,
+          "dive": 1
+        },
+        "localContactClaim": true,
+        "postClaimPoseCount": 4,
+        "replanReasons": {
+          "sprint awaiting native speed": 1,
+          "native sprint forecast restored": 1
+        },
+        "loggedActiveAvoidanceDecisions": 0,
+        "minimumObservedNativeWalkSpeed": 20,
+        "minimumObservedStamina": 94,
+        "maximumSolveMs": 16.728875023545697
+      }
+    },
+    {
+      "caseId": "F023",
+      "role": "WR",
+      "pass": "Floater",
+      "nativeOutcome": "Incomplete",
+      "terminalOutcome": "Incomplete",
+      "pointAwarded": "none_observed",
+      "group": "reach_lost_during_avoidance",
+      "evidence": "Four .4+ forecasts through+.445 s,12 drift replans, five sprint cycles and repeated bypasses; then no action/contact.",
+      "uncertaintyOrNextCheck": "Same measured loss-of-progress pattern; alternative safe motion unproven.",
+      "measurements": {
+        "planCount": 29,
+        "normalMarginForecastCount": 4,
+        "weakFallbackForecastCount": 0,
+        "actionCounts": {},
+        "localContactClaim": false,
+        "postClaimPoseCount": 0,
+        "replanReasons": {
+          "position drift": 12,
+          "sprint awaiting native speed": 5,
+          "native sprint forecast restored": 5,
+          "refresh": 7
+        },
+        "loggedActiveAvoidanceDecisions": 17,
+        "minimumObservedNativeWalkSpeed": 20,
+        "minimumObservedStamina": 53,
+        "maximumSolveMs": 57.89670834201388
+      }
+    },
+    {
+      "caseId": "F024",
+      "role": "WR",
+      "pass": "Floater",
+      "nativeOutcome": "Swatted",
+      "terminalOutcome": "Swatted",
+      "pointAwarded": "Opp",
+      "group": "contact_not_awarded",
+      "evidence": "Confirmed jump and local airborne contact; native Swatted awarded opponent point on second down.",
+      "uncertaintyOrNextCheck": "No automatic attribution to timing, jam or server delay.",
+      "measurements": {
+        "planCount": 11,
+        "normalMarginForecastCount": 10,
+        "weakFallbackForecastCount": 0,
+        "actionCounts": {
+          "jumpRequest": 1,
+          "jump": 1
+        },
+        "localContactClaim": true,
+        "postClaimPoseCount": 1,
+        "replanReasons": {
+          "native sprint forecast restored": 1,
+          "refresh": 9
+        },
+        "loggedActiveAvoidanceDecisions": 0,
+        "minimumObservedNativeWalkSpeed": 20,
+        "minimumObservedStamina": 34,
+        "maximumSolveMs": 43.801833322504535
+      }
+    },
+    {
+      "caseId": "F025",
+      "role": "DB",
+      "pass": "Floater",
+      "nativeOutcome": "Catch",
+      "terminalOutcome": "Tackled",
+      "pointAwarded": "none_observed",
+      "group": "contact_not_awarded",
+      "evidence": "Confirmed jump and local airborne contact; native opponent Catch followed by Tackled, no point.",
+      "uncertaintyOrNextCheck": "Server acceptance/order remains unobserved.",
+      "measurements": {
+        "planCount": 9,
+        "normalMarginForecastCount": 9,
+        "weakFallbackForecastCount": 0,
+        "actionCounts": {
+          "jumpRequest": 1,
+          "jump": 1
+        },
+        "localContactClaim": true,
+        "postClaimPoseCount": 1,
+        "replanReasons": {
+          "sprint awaiting native speed": 1,
+          "native sprint forecast restored": 1,
+          "refresh": 6
+        },
+        "loggedActiveAvoidanceDecisions": 2,
+        "minimumObservedNativeWalkSpeed": 20,
+        "minimumObservedStamina": 23,
+        "maximumSolveMs": 7.272916671354324
+      }
+    },
+    {
+      "caseId": "F026",
+      "role": "WR",
+      "pass": "Floater",
+      "nativeOutcome": "Swatted",
+      "terminalOutcome": "Swatted",
+      "pointAwarded": "none_observed",
+      "group": "contact_not_awarded",
+      "evidence": "Confirmed jump and local airborne contact; native Swatted without point on this down.",
+      "uncertaintyOrNextCheck": "Client contact versus native contest result; no missed action demonstrated.",
+      "measurements": {
+        "planCount": 12,
+        "normalMarginForecastCount": 11,
+        "weakFallbackForecastCount": 0,
+        "actionCounts": {
+          "jumpRequest": 1,
+          "jump": 1
+        },
+        "localContactClaim": true,
+        "postClaimPoseCount": 1,
+        "replanReasons": {
+          "sprint awaiting native speed": 1,
+          "native sprint forecast restored": 1,
+          "refresh": 9
+        },
+        "loggedActiveAvoidanceDecisions": 1,
+        "minimumObservedNativeWalkSpeed": 20,
+        "minimumObservedStamina": 30,
+        "maximumSolveMs": 41.762041655601934
+      }
+    },
+    {
+      "caseId": "F027",
+      "role": "WR",
+      "pass": "Floater",
+      "nativeOutcome": "Swatted",
+      "terminalOutcome": "Swatted",
+      "pointAwarded": "Opp",
+      "group": "contact_not_awarded",
+      "evidence": "Confirmed jump and local airborne contact; native Swatted awarded opponent point on second down.",
+      "uncertaintyOrNextCheck": "Server contest cause remains unknown.",
+      "measurements": {
+        "planCount": 10,
+        "normalMarginForecastCount": 9,
+        "weakFallbackForecastCount": 0,
+        "actionCounts": {
+          "jumpRequest": 1,
+          "jump": 1
+        },
+        "localContactClaim": true,
+        "postClaimPoseCount": 1,
+        "replanReasons": {
+          "native sprint forecast restored": 1,
+          "refresh": 8
+        },
+        "loggedActiveAvoidanceDecisions": 1,
+        "minimumObservedNativeWalkSpeed": 20,
+        "minimumObservedStamina": 27,
+        "maximumSolveMs": 46.15995835047215
+      }
+    },
+    {
+      "caseId": "F028",
+      "role": "DB",
+      "pass": "Bullet",
+      "nativeOutcome": "Incomplete",
+      "terminalOutcome": "Incomplete",
+      "pointAwarded": "You",
+      "group": "no_margin_qualified_window",
+      "evidence": "No reachable forecast in 6 solves; no action or local claim. Native second-down Bullet Incomplete awarded our point.",
+      "uncertaintyOrNextCheck": "It was a defensive stop, not an interception; no safe same-position catch was demonstrated.",
+      "measurements": {
+        "planCount": 6,
+        "normalMarginForecastCount": 0,
+        "weakFallbackForecastCount": 0,
+        "actionCounts": {},
+        "localContactClaim": false,
+        "postClaimPoseCount": 0,
+        "replanReasons": {
+          "sprint awaiting native speed": 1,
+          "native sprint forecast restored": 1,
+          "refresh": 3,
+          "position drift": 1
+        },
+        "loggedActiveAvoidanceDecisions": 0,
+        "minimumObservedNativeWalkSpeed": 20,
+        "minimumObservedStamina": 77,
+        "maximumSolveMs": 59.421250014565885
+      }
+    },
+    {
+      "caseId": "F029",
+      "role": "WR",
+      "pass": "Floater",
+      "nativeOutcome": "Incomplete",
+      "terminalOutcome": "Incomplete",
+      "pointAwarded": "none_observed",
+      "group": "prethrow_position_debt",
+      "evidence": "Throw was observed 209.7 ms after LaunchAt; first solve at +227 ms already had no reachable catch. Stem travel deficit 17.52 stud; observed speed 27 throughout later flight. No action or local claim.",
+      "uncertaintyOrNextCheck": "Receive delay and late initial position are measured; do not attribute their cause to network or engine without evidence. Prethrow opponent interaction remains unproven.",
+      "measurements": {
+        "planCount": 12,
+        "normalMarginForecastCount": 0,
+        "weakFallbackForecastCount": 0,
+        "actionCounts": {},
+        "localContactClaim": false,
+        "postClaimPoseCount": 0,
+        "replanReasons": {
+          "refresh": 11,
+          "position drift": 1
+        },
+        "loggedActiveAvoidanceDecisions": 0,
+        "minimumObservedNativeWalkSpeed": 27,
+        "minimumObservedStamina": 12,
+        "maximumSolveMs": 29.455833340762183
+      }
+    },
+    {
+      "caseId": "F030",
+      "role": "DB",
+      "pass": "Floater",
+      "nativeOutcome": "Incomplete",
+      "terminalOutcome": "Incomplete",
+      "pointAwarded": "none_observed",
+      "group": "no_margin_qualified_window",
+      "evidence": "Deep Floater had no reachable forecast in 13 solves from launch, no action/contact. Sprint reserve was spent down to 3 stamina; no 40 stamina cutoff occurred.",
+      "uncertaintyOrNextCheck": "Unreachable from the observed initial position, not evidence of failure to spend available sprint.",
+      "measurements": {
+        "planCount": 13,
+        "normalMarginForecastCount": 0,
+        "weakFallbackForecastCount": 0,
+        "actionCounts": {},
+        "localContactClaim": false,
+        "postClaimPoseCount": 0,
+        "replanReasons": {
+          "refresh": 12,
+          "position drift": 1
+        },
+        "loggedActiveAvoidanceDecisions": 0,
+        "minimumObservedNativeWalkSpeed": 20,
+        "minimumObservedStamina": 3,
+        "maximumSolveMs": 47.79554167180322
+      }
+    },
+    {
+      "caseId": "F031",
+      "role": "DB",
+      "pass": "Bullet",
+      "nativeOutcome": "Catch",
+      "terminalOutcome": "Touchdown",
+      "pointAwarded": "Opp",
+      "group": "diving_contact_not_awarded",
+      "evidence": "Seven normal-margin forecasts; jump request 14.51 ms after schedule, confirmation 16.06 ms later and airborne dive 4.12 ms after schedule. Local contact claim and four subsequent poses, but native opponent Catch then Touchdown.",
+      "uncertaintyOrNextCheck": "Actual diving contact and later upright-to-prone samples are preserved. Other dives succeeded; these local data do not establish server acceptance, ordering or rejection cause. No claim/tilt heuristic was justified.",
+      "measurements": {
+        "planCount": 7,
+        "normalMarginForecastCount": 7,
+        "weakFallbackForecastCount": 0,
+        "actionCounts": {
+          "jumpRequest": 1,
+          "jump": 1,
+          "diveAttempt": 1,
+          "dive": 1
+        },
+        "localContactClaim": true,
+        "postClaimPoseCount": 4,
+        "replanReasons": {
+          "position drift": 6
+        },
+        "loggedActiveAvoidanceDecisions": 0,
+        "minimumObservedNativeWalkSpeed": 0,
+        "minimumObservedStamina": 59,
+        "maximumSolveMs": 9.901416691718623
+      }
+    }
+  ],
+  "F002ProposedFixValidation": {
+    "release": "5.1.13",
+    "helperTestsPassed": 42,
+    "controllerTestsPassed": 29,
+    "recordedSafePoseWitnesses": 2,
+    "nativeInterceptionValidated": false
+  },
+  "limitations": [
+    "Exact release/build and native throw/result linkage. Every WR incomplete/swatted/intercepted, DB incomplete/opponent catch, and native opponent point is included.",
+    "Normal-margin forecast means logged reachable with margin>=.4; this is not a proof of physical success or server acceptance. Weak DB fallback flags are counted separately.",
+    "Local BallTouched and delayed client pose samples are not authoritative possession. Native Catch/Intercepted/Swatted/Incomplete and Match result decide outcomes.",
+    "Timing/position correlations are evidence; unknown server causes remain unknown.",
+    "Recorded successes do not imply perfect defense: five opponent touchdowns and sixteen failed WR passes occurred in this window.",
+    "Forfeit winner is not inferred from the current score.",
+    "Native Jam notices establish the event occurred, but their timing alone does not assign the cause of each failed play.",
+    "No general monotonic improvement or causal release effect can be inferred from this uncontrolled session."
+  ],
+  "privacy": "No names, account/player/installation IDs, credentials, raw coordinates, raw states or native source code."
+}
