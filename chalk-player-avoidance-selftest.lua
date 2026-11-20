@@ -616,5 +616,78 @@ return function(Avoidance)
         -- This fixture integrates requested movement directly. It does not
         -- claim Roblox inertia, latency, or a catch outcome is reproduced.
     end)
+    local function projectedGap(relative,velocity,direction,speed)
+        local v=velocity-direction*speed
+        local t=v:Dot(v)>.000001 and math.clamp(-relative:Dot(v)/v:Dot(v),0,.25) or 0
+        return (relative+v*t).Magnitude
+    end
+    test("timed sprint bypass selects a slightly wider faster safe path",function()
+        local p=fixture({dt=.1,walkSpeed=27,allowSprintDetour=true,sprintSpeed=27,
+            targetPosition=Vector3.new(0,0,30),arriveBy=1.2,
+            opponents={{position=Vector3.new(0,0,10),velocity=Vector3.zero}}})
+        local state,d=Avoidance.update(nil,p)
+        assert(d.active and d.sprint and state.side==1)
+        local angle=math.acos(math.clamp(d.direction.Unit:Dot(p.desiredDirection),-1,1))
+        assert(math.abs(angle-math.rad(15))<1e-6,
+            "did not choose the smallest safe faster bypass")
+        for _,speed in ipairs({20,27}) do
+            assert(projectedGap(p.opponents[1].position,Vector3.zero,d.direction,speed)>=3.75-1e-6)
+        end
+        p.allowSprintDetour=false
+        local _,walking=Avoidance.update(nil,p)
+        assert(not walking.sprint and d.direction.Z*27>walking.direction.Z*27+6,
+            "wider sprint path did not improve progress over walking")
+        assert(math.abs(math.acos(walking.direction.Unit.Z)-math.rad(5))<1e-6,
+            "opt-out changed the original shortest walking path")
+    end)
+    test("sprint ranking does not choose a wide slow sideways path just to sprint",function()
+        local relative,velocity=Vector3.new(-1,0,5),Vector3.new(20,0,10)
+        local p=fixture({dt=.1,walkSpeed=20,allowSprintDetour=true,sprintSpeed=27,
+            targetPosition=Vector3.new(0,0,30),arriveBy=1.2,
+            opponents={{position=relative,velocity=velocity}}})
+        local _,d=Avoidance.update(nil,p)
+        local wide=Vector3.new(math.sin(math.rad(55)),0,math.cos(math.rad(55)))
+        assert(projectedGap(relative,velocity,wide,20)>=3.75
+            and projectedGap(relative,velocity,wide,27)>=3.75,
+            "fixture did not offer a safe wide sprint")
+        assert(d.active and not d.sprint and math.abs(math.acos(d.direction.Unit.Z)-math.rad(5))<1e-6)
+        assert(d.direction.Z*20>wide.Z*27+.5,"walking was not the faster forward choice")
+    end)
+    test("recorded floater detour brackets admit a faster checked same-side heading",function()
+        -- Relative observations bracket the historical decision by -17/+53ms.
+        -- These are separate geometry fixtures, not a replay of unlogged
+        -- per-frame opponent state or proof of a recovered interception.
+        local heading=Vector3.new(-.051954127848148346,0,.9986494779586792).Unit
+        local oldHeading=Vector3.new(.03528160974383354,0,.999377429485321).Unit
+        for _,observed in ipairs({
+            {position=Vector3.new(-2.810562133789063,0,3.3375396728515625),
+                velocity=Vector3.new(5.512195587158203,0,19.231538772583008)},
+            {position=Vector3.new(-2.423643112182617,0,4.6597137451171875),
+                velocity=Vector3.new(5.627748012542725,0,19.19687271118164)},
+        }) do
+            local p=fixture({walkSpeed=20,allowSprintDetour=true,sprintSpeed=27,
+                desiredDirection=heading,currentDirection=oldHeading,
+                targetPosition=Vector3.new(-.786735534667969,0,15.1224365234375),arriveBy=.540291,
+                opponents={observed}})
+            local state={active=true,heading=oldHeading,side=1,desiredHeading=heading}
+            local d
+            for _=1,3 do
+                local before=state.heading
+                state,d=Avoidance.update(state,p)
+                assert(state.side==1 and math.acos(math.clamp(before:Dot(state.heading),-1,1))<=8*p.dt+1e-6,
+                    "ranking skipped the bounded same-side turn")
+                if d.sprint then
+                    for _,speed in ipairs({20,27}) do
+                        assert(projectedGap(observed.position,observed.velocity,d.direction,speed)>=3.75-1e-6,
+                            "ranked sprint bypass failed actual-heading clearance")
+                    end
+                end
+                p.now=p.now+p.dt;p.currentDirection=state.heading
+            end
+            assert(d.sprint and math.abs(math.acos(math.clamp(d.direction.Unit:Dot(heading),-1,1))-math.rad(20))<1e-6)
+            assert(d.direction:Dot(heading)*27>20,
+                "recorded bracket failed to retain better forward progress")
+        end
+    end)
     return report
 end

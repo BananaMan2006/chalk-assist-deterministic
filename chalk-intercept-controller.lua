@@ -440,13 +440,15 @@ return function(ctx, Planner, createTackle, WRApproach, Motion, createCarrierMov
         local bounds=geo and {minX=geo.MinX+.5,maxX=geo.MaxX-.5,minZ=geo.BackZ+.5,maxZ=geo.EndZ-.5}
             or {minX=Field.MinX+offset.X+.5,maxX=Field.MaxX+offset.X-.5,
                 minZ=Field.BackZ+offset.Z+.5,maxZ=Field.EndZ+offset.Z-.5}
-        -- Live-ball DB pursuit may retain a collision-checked sprint even
+        -- Live-ball pursuit may retain a collision-checked sprint even
         -- while native sprint speed is pending and no catch is reachable.
+        -- WR route intent survives an abandoned postthrow stem; a missing
+        -- arrival witness must not cancel its already requested safe sprint.
         -- A catch deadline is supplied only when a real witness exists.
         -- Prethrow coverage still conserves its reserve.
         local allowSprintDetour=s.phase=="Live" and (
             s.role=="WR" and s.catchIntent~=nil
-                and (s.catchIntent.continuousSprint==true or s.arc~=nil and arrival~=nil)
+                and (s.catchIntent.continuousSprint==true or s.arc~=nil)
             or s.role=="DB" and s.arc~=nil)
         local decision
         avoidanceState,decision=PlayerAvoidance.update(avoidanceState,{now=now,dt=dt,
@@ -1149,7 +1151,19 @@ return function(ctx, Planner, createTackle, WRApproach, Motion, createCarrierMov
                 local actual=snapshot(s,root,h,actionNow)
                 local valid,why=Planner.validateAirborneDive(actual,plan)
                 if not valid then
-                    log("replan",{role=s.role,reason=why,action="airborneDive"})
+                    local expected=lastSnapshot and Planner.pose(lastSnapshot,plan,actual.now)
+                    log("replan",{role=s.role,reason=why,action="airborneDive",
+                        checkedAt=actual.now,scheduledJump=plan.jumpAt,scheduledDive=plan.diveAt,
+                        contactAt=plan.contactAt,position=xyz(actual.position),velocity=xyz(actual.velocity),
+                        expected=expected and xyz(expected.Position),direction=xyz(plan.direction),
+                        speed=actual.walkSpeed,runSpeed=actual.runSpeed,sprintSeconds=actual.sprintSeconds,
+                        grounded=actual.grounded,nativeAirborne=actual.nativeAirborne,
+                        physicalAirborne=actual.physicalAirborne,reachAirborne=actual.reachAirborne,
+                        canDive=actual.canDive,wrDiveGoalZ=actual.wrDiveGoalZ,bounds=actual.bounds,
+                        jumpSpeed=actual.jumpSpeed,gravity=actual.gravity,
+                        groundRootY=actual.groundRootY,turfY=actual.turfY,diveTurfY=actual.diveTurfY,
+                        requiredMargin=plan.requiredMargin,timingMargin=plan.timingMargin,
+                        jumpTimingBudget=plan.jumpTimingBudget,diveTimingBudget=plan.diveTimingBudget})
                     cancel();nextSolve=now
                     message="Aerial catch window changed · recalculating"
                     return

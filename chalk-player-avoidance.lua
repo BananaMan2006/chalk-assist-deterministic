@@ -249,10 +249,17 @@ function Avoidance.update(previous,input)
             local direction=rotate(heading,side*math.rad(degrees))
             local safe,gap,bounded=evaluate(direction,walkSpeed*strength)
             if safe then
-                -- Prefer the shortest safe turn on a timed catch path. Keep
-                -- the same passing side rather than alternating around the
-                -- defender as each new catch forecast changes slightly.
-                local score=direction:Dot(heading)+(catchPath and 0 or math.min(gap,radius+3)*.015)
+                -- A shallow walking-only bypass can repeatedly release sprint
+                -- even when a slightly wider same-side path is safe at both
+                -- native speeds and makes more forward progress. Compare that
+                -- progress only for the caller's explicit sprint opt-in. The
+                -- bounded turn below still has to pass both speed checks.
+                local alignment=direction:Dot(heading)
+                local score=alignment+(catchPath and 0 or math.min(gap,radius+3)*.015)
+                if sprintEligible then
+                    local usableSpeed=keepSprint(direction) and sprintSpeed or walkSpeed
+                    score=alignment*usableSpeed/math.max(.001,walkSpeed)
+                end
                 if not best or score>best.score then best={direction=direction,score=score,side=side} end
             elseif bounded and nearest<radius then
                 -- Once overlapping, a sideways exit may initially touch the

@@ -186,6 +186,64 @@ end
             if gate=="overlap" then close(f.moves[#f.moves],Vector3.zero) end
         end
     end)
+    test("recorded WR pending-speed pursuit preserves checked sprint without a catch deadline",function()
+        -- Translation of a 5.1.16 incomplete's +0.674s snapshot. Native20
+        -- speed was pending after a valid request; selecting pursue removed
+        -- the old arrival-dependent permission and cancelled sprint again.
+        -- No achieved alternate trajectory or catch is asserted by this replay.
+        local f=fixture();f.realAvoidance=Avoidance;f.sprinting=true;f.stamina=86
+        f.context.role="WR";f.context.arc={};f.context.catchIntent={continuousSprint=false}
+        f.plan.kind="pursue";f.plan.reachable=false
+        f.plan.approachTarget=f.root.Position+Vector3.new(49.96179962158203,0,40.954925537109375)
+        f.plan.direction=Vector3.new(.7733721733093262,0,.6339523196220398)
+        local held=Vector3.new(-.13787434995174408,0,.9904497861862183).Unit
+        f.root.AssemblyLinearVelocity=Vector3.new(-2.7574868202209473,0,19.80899429321289)
+        f.initialAvoidance={now=f.now-1/60,active=true,side=-1,clearSince=f.now,
+            heading=held,desiredHeading=f.plan.direction}
+        local other={Position=f.root.Position+Vector3.new(4.9097900390625,0,2.09271240234375),
+            AssemblyLinearVelocity=Vector3.new(10.490530967712402,0,17.020532608032227)}
+        f.context.opponent={FindFirstChild=function() return other end,
+            FindFirstChildOfClass=function() return {Health=100} end}
+        f.api=factory(f)
+        local previousHeading=held
+        for _=1,2 do
+            f.api.catch(f.context)
+            local input=f.helperCalls[#f.helperCalls].input
+            equal(input.allowSprintDetour,true)
+            equal(input.arriveBy,nil);equal(input.targetPosition,nil)
+            equal(input.walkSpeed,20);equal(f.h.WalkSpeed,20)
+            equal(f.sprinting,true,"WR pending sprint was cancelled by pursue fallback")
+            local output=f.moves[#f.moves]
+            assert(output:Dot(previousHeading)>=math.cos(8/60)-1e-8,"checked turn exceeded its bound")
+            for _,speed in ipairs({20,27}) do
+                local relative=other.Position-f.root.Position
+                local relativeVelocity=other.AssemblyLinearVelocity-output*speed
+                local at=math.max(0,math.min(.25,-relative:Dot(relativeVelocity)/relativeVelocity:Dot(relativeVelocity)))
+                assert((relative+relativeVelocity*at).Magnitude>=3.75,"pending sprint weakened clearance")
+            end
+            previousHeading=output.Unit
+            f.now=f.now+1/60
+        end
+        equal(#f.sprintCalls,0,"WR pending sprint chattered off and on")
+        equal(f.plan.reachable,false);equal(f.plan.jumpAt,nil);equal(f.plan.diveAt,nil)
+    end)
+    test("WR pursuit still stops sprint for real overlap or an exhausted budget",function()
+        for _,gate in ipairs({"overlap","budget"}) do
+            local f=fixture();f.realAvoidance=Avoidance;f.sprinting=true
+            f.context.role="WR";f.context.arc={};f.context.catchIntent={continuousSprint=false}
+            f.plan.kind="pursue";f.plan.reachable=false
+            if gate=="overlap" then
+                local other={Position=f.root.Position+Vector3.new(.25,0,3.1),AssemblyLinearVelocity=Vector3.zero}
+                f.context.opponent={FindFirstChild=function() return other end,
+                    FindFirstChildOfClass=function() return {Health=100} end}
+            else f.canSprint=false end
+            f.api.catch(f.context)
+            equal(f.helperCalls[#f.helperCalls].input.allowSprintDetour,true)
+            equal(f.sprinting,false,gate.." failed to release WR sprint")
+            equal(f.sprintCalls[#f.sprintCalls],false)
+            if gate=="overlap" then close(f.moves[#f.moves],Vector3.zero) end
+        end
+    end)
     test("live pursuit opt-in does not extend to prethrow other phases or WR without catch intent",function()
         for _,case in ipairs({{role="DB",phase="Live"},{role="DB",phase="PreSnap",arc={}},
             {role="DB",phase="Hike",arc={}},{role="DB",phase="RAC",arc={}},
@@ -415,7 +473,9 @@ end
         f.canSprint=false;f.api.catch(f.context)
         equal(f.helperCalls[2].input.requestedSprint,false)
         f.plan.kind="pursue";f.api.catch(f.context)
-        equal(f.helperCalls[3].input.allowSprintDetour,false)
+        equal(f.helperCalls[3].input.allowSprintDetour,true)
+        equal(f.helperCalls[3].input.arriveBy,nil)
+        equal(f.helperCalls[3].input.targetPosition,nil)
     end)
     test("committed WR navigation retains a helper-approved active sprint",function()
         local f=fixture();f.context.role="WR";f.context.catchIntent={continuousSprint=true}

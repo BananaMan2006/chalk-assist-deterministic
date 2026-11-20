@@ -1,4 +1,4 @@
--- Chalk-Release: 5.1.16
+-- Chalk-Release: 5.1.17
 -- Chalk-Product: deterministic
 -- Chalk It Up DB/WR ball assist using normal sprint/jump/dive controls.
 -- Cyan: replicated route (when supplied). Yellow: movement estimate.
@@ -47,7 +47,7 @@ assert(matchEvent and fxEvent and matchEvent:IsA("RemoteEvent") and fxEvent:IsA(
     "Chalk It Up Match/Fx events were not found")
 
 local api = {}
-local RELEASE_VERSION="5.1.16"
+local RELEASE_VERSION="5.1.17"
 local loadedGameId,loadedPlaceId,loadedJobId=game.GameId,game.PlaceId,game.JobId
 env.ChalkDB = api
 local alive, enabled = true, true
@@ -967,7 +967,7 @@ end
 function api.status()
     local ch = characterOf(opponent)
     local holder,isEnemy,holderRole=carrierContext()
-    return {product="deterministic",version=RELEASE_VERSION,buildId="0279bce5f6e750358c3aab6dac4d19020d35285b40f89a21a9aaa72ec37c6633",policyMode="deterministic", enabled=enabled, role=role or "unknown",rawRole=rawRole or "unknown", phase=phase,
+    return {product="deterministic",version=RELEASE_VERSION,buildId="00edfd316f0cb63c525ad8b61160dddf1d3d8a09739cdff1d4fea7b9af9893dd",policyMode="deterministic", enabled=enabled, role=role or "unknown",rawRole=rawRole or "unknown", phase=phase,
         ui={visible=windowVisible,minimized=minimized,x=panel.Position.X.Offset,y=panel.Position.Y.Offset},
         matchAlerts={enabled=alertSettings.enabled,saveError=alertSettings.saveError},
         preferences=preferences and preferences.status() or nil,
@@ -3647,10 +3647,17 @@ function Avoidance.update(previous,input)
             local direction=rotate(heading,side*math.rad(degrees))
             local safe,gap,bounded=evaluate(direction,walkSpeed*strength)
             if safe then
-                -- Prefer the shortest safe turn on a timed catch path. Keep
-                -- the same passing side rather than alternating around the
-                -- defender as each new catch forecast changes slightly.
-                local score=direction:Dot(heading)+(catchPath and 0 or math.min(gap,radius+3)*.015)
+                -- A shallow walking-only bypass can repeatedly release sprint
+                -- even when a slightly wider same-side path is safe at both
+                -- native speeds and makes more forward progress. Compare that
+                -- progress only for the caller's explicit sprint opt-in. The
+                -- bounded turn below still has to pass both speed checks.
+                local alignment=direction:Dot(heading)
+                local score=alignment+(catchPath and 0 or math.min(gap,radius+3)*.015)
+                if sprintEligible then
+                    local usableSpeed=keepSprint(direction) and sprintSpeed or walkSpeed
+                    score=alignment*usableSpeed/math.max(.001,walkSpeed)
+                end
                 if not best or score>best.score then best={direction=direction,score=score,side=side} end
             elseif bounded and nearest<radius then
                 -- Once overlapping, a sideways exit may initially touch the
@@ -4498,13 +4505,15 @@ return function(ctx, Planner, createTackle, WRApproach, Motion, createCarrierMov
         local bounds=geo and {minX=geo.MinX+.5,maxX=geo.MaxX-.5,minZ=geo.BackZ+.5,maxZ=geo.EndZ-.5}
             or {minX=Field.MinX+offset.X+.5,maxX=Field.MaxX+offset.X-.5,
                 minZ=Field.BackZ+offset.Z+.5,maxZ=Field.EndZ+offset.Z-.5}
-        -- Live-ball DB pursuit may retain a collision-checked sprint even
+        -- Live-ball pursuit may retain a collision-checked sprint even
         -- while native sprint speed is pending and no catch is reachable.
+        -- WR route intent survives an abandoned postthrow stem; a missing
+        -- arrival witness must not cancel its already requested safe sprint.
         -- A catch deadline is supplied only when a real witness exists.
         -- Prethrow coverage still conserves its reserve.
         local allowSprintDetour=s.phase=="Live" and (
             s.role=="WR" and s.catchIntent~=nil
-                and (s.catchIntent.continuousSprint==true or s.arc~=nil and arrival~=nil)
+                and (s.catchIntent.continuousSprint==true or s.arc~=nil)
             or s.role=="DB" and s.arc~=nil)
         local decision
         avoidanceState,decision=PlayerAvoidance.update(avoidanceState,{now=now,dt=dt,
@@ -5207,7 +5216,19 @@ return function(ctx, Planner, createTackle, WRApproach, Motion, createCarrierMov
                 local actual=snapshot(s,root,h,actionNow)
                 local valid,why=Planner.validateAirborneDive(actual,plan)
                 if not valid then
-                    log("replan",{role=s.role,reason=why,action="airborneDive"})
+                    local expected=lastSnapshot and Planner.pose(lastSnapshot,plan,actual.now)
+                    log("replan",{role=s.role,reason=why,action="airborneDive",
+                        checkedAt=actual.now,scheduledJump=plan.jumpAt,scheduledDive=plan.diveAt,
+                        contactAt=plan.contactAt,position=xyz(actual.position),velocity=xyz(actual.velocity),
+                        expected=expected and xyz(expected.Position),direction=xyz(plan.direction),
+                        speed=actual.walkSpeed,runSpeed=actual.runSpeed,sprintSeconds=actual.sprintSeconds,
+                        grounded=actual.grounded,nativeAirborne=actual.nativeAirborne,
+                        physicalAirborne=actual.physicalAirborne,reachAirborne=actual.reachAirborne,
+                        canDive=actual.canDive,wrDiveGoalZ=actual.wrDiveGoalZ,bounds=actual.bounds,
+                        jumpSpeed=actual.jumpSpeed,gravity=actual.gravity,
+                        groundRootY=actual.groundRootY,turfY=actual.turfY,diveTurfY=actual.diveTurfY,
+                        requiredMargin=plan.requiredMargin,timingMargin=plan.timingMargin,
+                        jumpTimingBudget=plan.jumpTimingBudget,diveTimingBudget=plan.diveTimingBudget})
                     cancel();nextSolve=now
                     message="Aerial catch window changed · recalculating"
                     return
@@ -9479,7 +9500,7 @@ end
 end)()
 
 api.initializePreferences(createPreferences)
-assist = createAssist({snapshot=api.context,version=RELEASE_VERSION,buildId="0279bce5f6e750358c3aab6dac4d19020d35285b40f89a21a9aaa72ec37c6633",fullplay=function(s,root,h,now,dt)
+assist = createAssist({snapshot=api.context,version=RELEASE_VERSION,buildId="00edfd316f0cb63c525ad8b61160dddf1d3d8a09739cdff1d4fea7b9af9893dd",fullplay=function(s,root,h,now,dt)
     if fullplay then return fullplay.navigate(s,root,h,now,dt) end
 end},Planner,createTackle,WRApproach,Motion,createCarrierMoves,PlayerAvoidance)
 assist.setEnabled(false)
@@ -9495,7 +9516,7 @@ repeatWR = createWRRepeat({snapshot=api.context,
     autoplay=function() return autoplay.status() end,
     disableAutoplay=function() return api.setAutoplay(false) end})
 repeatWR.setEnabled(false)
-fullplay = createFullplay({Planner=Planner,snapshot=api.context,version=RELEASE_VERSION,buildId="0279bce5f6e750358c3aab6dac4d19020d35285b40f89a21a9aaa72ec37c6633",
+fullplay = createFullplay({Planner=Planner,snapshot=api.context,version=RELEASE_VERSION,buildId="00edfd316f0cb63c525ad8b61160dddf1d3d8a09739cdff1d4fea7b9af9893dd",
     assistEnabled=function() return assist.status().enabled end,
     release=function() if assist.releaseFullplay then assist.releaseFullplay() end end},FullplayPolicy)
 matchSkip = createMatchSkip({snapshot=api.context,startDisabled=true,preferencesManaged=true,
@@ -9518,7 +9539,7 @@ local GAME_ID,PLACE_ID=10770281752,116097127629859
 local MAIN_URL="https://raw.githubusercontent.com/BananaMan2006/chalk-assist-deterministic/main/chalk-it-up-1v1.lua"
 local CACHE_FILE="chalk-deterministic-cache.lua"
 local MAIN_FILE="chalk-it-up-1v1.lua"
-local MIN_RELEASE="5.1.16"
+local MIN_RELEASE="5.1.17"
 local MARKER="__ChalkDeterministicAutoBoot"
 local env=type(getgenv)=="function" and getgenv() or _G
 local boot

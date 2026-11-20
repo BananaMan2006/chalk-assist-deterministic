@@ -1,6 +1,18 @@
-# Evaluation scope · 5.1.16
+# Evaluation scope · 5.1.17
 
 This release continues the authored, deterministic controller. Its checks establish local rule behavior and packaging properties. **They do not demonstrate a live win rate, a winning streak, perfect catching, or improvement through training.** The release has no training system or shared model.
+
+## 5.1.17 scope
+
+A fresh receiving incomplete reproduced an unstable sprint request: while native sprint speed was pending, a reachable jump-and-dive plan became pursuit with no arrival deadline. WR collision avoidance then removed its sprint permission, which could reverse the request before sprint speed arrived. Live WR route intent now retains permission to use a checked sprint during pursuit. No catch deadline or extra reach is invented, and prethrow behavior is unchanged.
+
+Collision bypass selection also compared only walking-safe angles. A slightly wider same-side direction can be safe at sprint speed and make more progress toward the target than the shallow walking-only path. Candidate ranking now uses forward progress at the speed each candidate can safely retain, only when the caller already permits sprint detours. The chosen bounded turn is checked again before movement. Touching, blocked, bounds and stamina gates remain.
+
+Fresh dive rejection diagnostics retain actual position, velocity, timing, direction and motion state for replay. The fresh geometry validators remain unchanged. A separate brief movement stop after a rejected jump remains under investigation; preserving an unchecked heading near an action deadline was not included without sufficient evidence.
+
+Validation passed 515 rule checks, 76 Full Auto checks, 57 airborne geometry checks and 36 Python build/installer/preferences checks. The [receiving incident review](evaluation/5.1.17-wr-incident-review.json) distinguishes the fixed permission loop from collision travel loss and an unresolved native contact result.
+
+Offline regressions establish the specific permission and bypass-selection defects. They do not simulate an entire missed play or establish that server possession would change. Live before/after observations are recorded separately from those tests.
 
 ## 5.1.16 scope
 
