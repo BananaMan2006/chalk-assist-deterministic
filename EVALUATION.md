@@ -8,7 +8,17 @@ A defensive coverage review reproduced a numerical steering edge case: an exactl
 
 The same review found a large sideways gap after the receiver had already turned upfield. Existing recovery gates depended on an even larger lateral distance or a fast outward lateral velocity, leaving normal-speed coverage despite full stamina. The correction is limited to 0.4–1.5 seconds after the snap, with the receiver moving upfield, a diminished depth cushion and a substantial lateral gap. It retains the existing 85/70 sprint thresholds and is checked against the logged policy inputs. The [defense coverage review](evaluation/5.1.21-defense-coverage-review.json) keeps exact policy replay separate from the unobserved steering-state inference.
 
-Validation passed 534 rule checks, 86 deterministic Full Auto checks and 36 build, installer and preference checks. The new steering and alignment cases fail against the preceding production functions and pass against this release. Live verification is recorded separately below when complete.
+Validation passed 534 rule checks, 86 deterministic Full Auto checks and 36 build, installer and preference checks. The new steering and alignment cases fail against the preceding production functions and pass against this release. The matching [GitHub check run](https://github.com/BananaMan2006/chalk-assist-deterministic/actions/runs/44679033885) also passed, including the airborne suite.
+
+## Bounded 5.1.21 live review
+
+The [five-minute exact-build window](evaluation/5.1.21-live-incidents.json) retained fifteen throws, with an eight-second bounded result tail for throws already observed. WR recorded six catches and one incomplete; DB recorded seven interceptions and one opposing catch that became a touchdown. Two completed matches ended 4–0. A 3–0 forfeit and a partial game are excluded from completed-match totals. That partial game stood 1–1 at cutoff and reached 2–1 when an already-observed throw resolved in the bounded result tail. No runtime errors were recorded; all seven runtime switches and the selected mode matched saved preferences, with no save or restore errors.
+
+The [receiving miss review](evaluation/5.1.21-wr4-travel-review.json) found that a defender detour consumed the reachable travel margin before jump time. No omitted reachable jump was demonstrated. Turning the opposite way after the bypass began required substantial slowing or failed current clearance checks. A different initial side improved a short offline path under a fixed recorded opponent response, but that is not a demonstrated safe catch rescue. Initial passing-side selection remains an improvement area.
+
+The [opposing touchdown review](evaluation/5.1.21-db13-review.json) found a marginal interception plan invalidated before jump time while the character was still turning. The initial solve took about 56 ms; subsequent observed drift exceeded the existing validity gate, and later plans were unreachable. A native tackle dive then started, but the available records do not establish whether its request was accepted. These are remaining motion-prediction and native-outcome limits, not evidence to disable the validity checks.
+
+The new opening alignment branch was not exercised in this window: observed lateral gaps stayed below its start threshold. Successful defense in these matches therefore does not prove the new branch improves live outcomes. The opposing touchdown remains a recorded failure, not a reason to discard the partial match. These outcomes are observational and do not establish a win rate or perfect catching.
 
 ## Bounded 5.1.20 live review
 
