@@ -19,6 +19,7 @@ return function(createSession,coreSource)
         end
         h.api=createSession({entry={entryKind=entry or "autoexec"},snapshot=function() return h.s end,
             modeAvailable=function(mode) return h.s.modeAvailable and mode=="1v1" end,
+            canResume=function() return h.savedAllows~=false end,
             apply=function(fullAuto,mode)
                 h.applies=h.applies+1
                 if h.beforeApply then h.beforeApply() end
@@ -109,6 +110,14 @@ return function(createSession,coreSource)
         local a=fixture();a:enable();a:found();a.s.autoplay=false;a.api.onChoice("autoplay",false)
         local b=fixture(a.shared,"match","teleport",true)
         eq(b.api.resume("origin"),false);eq(b.applies,0)
+    end)
+    test("saved OFF rejects stale ON lease even when platform revocation failed",function()
+        local a=fixture();a:enable();a:found();a.failWrite=true
+        a.s.autoplay=false;a.api.onChoice("autoplay",false)
+        eq(type(a.shared.value),"table")
+        local b=fixture(a.shared,"match","teleport",true);b.savedAllows=false
+        eq(b.api.resume("origin"),false);eq(b.applies,0);eq(b.stops,0)
+        eq(a.shared.value,false)
     end)
     test("failed platform revocation is reported without claiming stale lease was cancelled",function()
         local a=fixture();a:enable();a:found();a.failWrite=true

@@ -7,6 +7,7 @@ import re
 ROOT = Path(__file__).resolve().parent
 # Order matters: every dependency is declared before its consumer.
 MODULES = (
+    ("createPreferences", "chalk-preferences.lua"),
     ("Planner", "chalk-intercept-planner.lua"),
     ("createTackle", "chalk-tackle-controller.lua"),
     ("WRApproach", "chalk-wr-approach.lua"),
@@ -25,16 +26,16 @@ MODULES = (
     ("createAutoload", "chalk-autoload-controller.lua"),
 )
 
-# All input-producing constructors start off, including after a same-job reload.
-# Prior UI geometry, selected queue mode and username preferences can survive;
-# an old enabled flag cannot silently opt a new installation into gameplay.
-# Only a validated current-session teleport handoff can restore opted-in play.
+# Hydrate preferences first, construct inert features, then restore once. Runtime
+# teardown and queue errors do not replace the user's durable ON/OFF choices.
 INITIALIZE = r'''
+api.initializePreferences(createPreferences)
 assist = createAssist({snapshot=api.context,version=RELEASE_VERSION,buildId="CHALK_BUNDLED_BUILD_ID",fullplay=function(s,root,h,now,dt)
     if fullplay then return fullplay.navigate(s,root,h,now,dt) end
 end},Planner,createTackle,WRApproach,Motion,createCarrierMoves,PlayerAvoidance)
 assist.setEnabled(false)
-autoplay = createAutoplay({snapshot=api.context,startDisabled=true,
+autoplay = createAutoplay({snapshot=api.context,startDisabled=true,preferencesManaged=true,
+    previousState=previousState and previousState.autoplay,
     onQueue=function(packet,before)
         if sessionContinuity then sessionContinuity.onQueue(packet,before) end
     end,
@@ -48,8 +49,8 @@ repeatWR.setEnabled(false)
 fullplay = createFullplay({Planner=Planner,snapshot=api.context,version=RELEASE_VERSION,buildId="CHALK_BUNDLED_BUILD_ID",
     assistEnabled=function() return assist.status().enabled end,
     release=function() if assist.releaseFullplay then assist.releaseFullplay() end end},FullplayPolicy)
-fullplay.setEnabled(false)
-matchSkip = createMatchSkip({snapshot=api.context,startDisabled=true})
+matchSkip = createMatchSkip({snapshot=api.context,startDisabled=true,preferencesManaged=true,
+    previousState=previousState and previousState.matchSkip})
 -- Idle protection sends input. Start it only after the user enables gameplay.
 function api.updateIdleGuard()
     local active = alive and enabled and (
@@ -58,6 +59,7 @@ function api.updateIdleGuard()
     if active and not idleGuard then idleGuard=createIdleGuard()
     elseif not active and idleGuard then idleGuard.unload();idleGuard=nil end
 end
+api.restorePreferences()
 api.initializeSessionContinuity(createSessionContinuity)
 autoload = createAutoload({bootstrapSource=BOOTSTRAP_SOURCE,
     onTeleport=function(state,placeId)

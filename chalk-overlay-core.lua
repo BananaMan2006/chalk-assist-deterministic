@@ -50,6 +50,7 @@ local loadedGameId,loadedPlaceId,loadedJobId=game.GameId,game.PlaceId,game.JobId
 env.ChalkDB = api
 local alive, enabled = true, true
 local assist,autoplay,repeatWR,idleGuard,fullplay,matchSkip,autoload,sessionContinuity
+local preferences,restoringPreferences
 local alertSettingsFile="ciu_match_alert_settings.json"
 local alertSettings={enabled=not (previousState and previousState.matchAlerts
     and previousState.matchAlerts.enabled==false)}
@@ -106,6 +107,13 @@ end
 local trail, previousPosition, previousTime, smoothVelocity = {}, nil, nil, Vector3.zero
 local lastError, routeKind, drawnCount = nil, "Waiting for next round", 0
 local testing, testToken, restoreTest = false, 0, nil
+local function savePreferences(patch)
+    if preferences and not restoringPreferences and not testing then return preferences.update(patch) end
+    return true
+end
+local function choice(kind,value)
+    if sessionContinuity and not restoringPreferences and not testing then sessionContinuity.onChoice(kind,value) end
+end
 local cyan = Color3.fromRGB(66, 230, 235)
 local yellow = Color3.fromRGB(255, 208, 69)
 local pink = Color3.fromRGB(255, 110, 198)
@@ -338,11 +346,15 @@ local function placeWindow(x,y)
         math.clamp(x,0,math.max(0,size.X-390)),
         math.clamp(y,0,math.max(0,size.Y-height)))
 end
+local function saveWindow()
+    savePreferences({ui={visible=windowVisible,minimized=minimized,x=panel.Position.X.Offset,y=panel.Position.Y.Offset}})
+end
 function api.setWindowVisible(value)
     windowVisible=value==true
     cancelDrag()
     modeMenu.Visible=false
     gui.Enabled=windowVisible
+    saveWindow()
     return windowVisible
 end
 function api.setMinimized(value)
@@ -353,6 +365,7 @@ function api.setMinimized(value)
     minimizeButton.Text=minimized and "+" or "−"
     panel.Size=UDim2.fromOffset(390,minimized and 36 or expandedHeight)
     placeWindow(panel.Position.X.Offset,panel.Position.Y.Offset)
+    saveWindow()
     return minimized
 end
 connect(minimizeButton.Activated,function() api.setMinimized(not minimized) end)
@@ -374,13 +387,15 @@ connect(UIS.InputChanged,function(input)
 end)
 connect(UIS.InputEnded,function(input)
     if input==dragInput or (dragInput and input.UserInputType==Enum.UserInputType.MouseButton1) then
+        saveWindow()
         cancelDrag()
     end
 end)
-connect(UIS.WindowFocusReleased,cancelDrag)
+connect(UIS.WindowFocusReleased,function() if dragInput then saveWindow() end;cancelDrag() end)
 connect(bounds:GetPropertyChangedSignal("AbsoluteSize"),function()
     cancelDrag()
     placeWindow(panel.Position.X.Offset,panel.Position.Y.Offset)
+    saveWindow()
 end)
 task.defer(function()
     if not alive then return end
@@ -437,6 +452,7 @@ function api.setMatchSkipUsernames(value)
     if ok then
         matchSkipEditing=false;matchSkipInputError=nil
         matchSkip.setEditing(false)
+        savePreferences({usernames=matchSkip.status().username})
     else matchSkipInputError=reason end
     updateMatchSkipUI()
     return ok,reason
@@ -445,6 +461,7 @@ api.setMatchSkipUsername=api.setMatchSkipUsernames
 function api.setMatchSkip(value)
     if not matchSkip then return false,"Auto leave is starting" end
     local ok,reason=matchSkip.setEnabled(value)
+    if ok then savePreferences({autoLeave=value==true}) end
     updateMatchSkipUI()
     return ok,reason
 end
@@ -465,7 +482,7 @@ function api.setMatchAlerts(value)
             assert(type(saved)=="table" and saved.enabled==wanted,"Setting could not be verified")
         end
     end)
-    if good then alertSettings.enabled=wanted;alertSettings.saveError=nil
+    if good then alertSettings.enabled=wanted;alertSettings.saveError=nil;savePreferences({matchAlerts=wanted})
     else alertSettings.saveError=tostring(err) end
     updateAlertsUI()
     return good,alertSettings.saveError
@@ -494,7 +511,7 @@ local function buildAutoplayOptions()
         c.Parent=choice
         connect(choice.MouseButton1Click,function()
             if not available then return end
-            autoplay.selectMode(key)
+            api.setAutoplayMode(key)
             modeMenu.Visible=false
             updateAutoplayUI()
         end)
@@ -897,6 +914,10 @@ local function render()
         testing and " [LOCAL TEST]" or "", role or "role unknown", phase,
         routeKind, lastError and ("Error: "..lastError) or "Gold: pass target · pink: turf if untouched",
         autoStatus and (autoStatus.error or autoStatus.message) or "Auto starting")
+    local settingsStatus=preferences and preferences.status()
+    if settingsStatus and (settingsStatus.saveError or settingsStatus.restoreError) then
+        text.Text=text.Text.."\nSettings: "..(settingsStatus.saveError or settingsStatus.restoreError)
+    end
     if autoStatus then autoButton.Text=autoStatus.enabled and "ASSIST ON · V" or "ASSIST OFF · V" end
     updateAutoplayUI()
     updateWRRepeatUI()
@@ -908,6 +929,7 @@ end
 function api.unload(preserveAutoplay,automaticDestinationJob)
     if not alive then return end
     if sessionContinuity then sessionContinuity.unload(automaticDestinationJob) end
+    if dragInput then saveWindow() end
     cancelDrag()
     if autoload then autoload.unload(preserveAutoplay) end
     if matchSkip then
@@ -918,7 +940,7 @@ function api.unload(preserveAutoplay,automaticDestinationJob)
     if idleGuard then idleGuard.unload() end
     if repeatWR then repeatWR.unload() end
     if autoplay then
-        if preserveAutoplay~=true then autoplay.setEnabled(false) end
+        if preserveAutoplay~=true then autoplay.setEnabled(false,true) end
         autoplay.unload()
     end
     alive = false
@@ -931,7 +953,8 @@ function api.unload(preserveAutoplay,automaticDestinationJob)
 end
 function api.setEnabled(value)
     enabled = value == true
-    if sessionContinuity then sessionContinuity.onChoice("master",enabled) end
+    savePreferences({master=enabled})
+    choice("master",enabled)
     toggle.Text = enabled and "ON · B" or "OFF · B"
     if not enabled then
         hide()
@@ -945,6 +968,7 @@ function api.status()
     return {product="deterministic",version=RELEASE_VERSION,buildId="CHALK_BUNDLED_BUILD_ID",policyMode="deterministic", enabled=enabled, role=role or "unknown",rawRole=rawRole or "unknown", phase=phase,
         ui={visible=windowVisible,minimized=minimized,x=panel.Position.X.Offset,y=panel.Position.Y.Offset},
         matchAlerts={enabled=alertSettings.enabled,saveError=alertSettings.saveError},
+        preferences=preferences and preferences.status() or nil,
         idleGuard=idleGuard and idleGuard.status() or nil,
         fullplay=fullplay and fullplay.status() or nil,
         matchSkip=matchSkip and matchSkip.status() or nil,
@@ -1095,17 +1119,23 @@ function api.syncFromGame()
 end
 function api.setAuto(value)
     if assist then assist.setEnabled(value) end
-    if sessionContinuity then sessionContinuity.onChoice("assist",value==true) end
+    savePreferences({assist=value==true})
+    choice("assist",value==true)
     if api.updateIdleGuard then api.updateIdleGuard() end
 end
 function api.setFullplay(value)
     if not fullplay then return false,"Full auto is starting" end
-    if value==true then
+    if value==true and not restoringPreferences then
         api.setEnabled(true)
         if assist then assist.setEnabled(true) end
     end
     local ok,reason=fullplay.setEnabled(value)
-    if sessionContinuity then sessionContinuity.onChoice("fullplay",value==true and ok==true) end
+    if ok then
+        local patch={fullAuto=value==true}
+        if value==true and not restoringPreferences then patch.master=true;patch.assist=true end
+        savePreferences(patch)
+    end
+    choice("fullplay",value==true and ok==true)
     updateFullplayUI()
     if api.updateIdleGuard then api.updateIdleGuard() end
     return ok,reason
@@ -1114,7 +1144,8 @@ function api.setAutoplay(value)
     if not autoplay then return false,"Autoplay is starting" end
     if value==true and repeatWR then repeatWR.setEnabled(false);updateWRRepeatUI() end
     local ok,reason=autoplay.setEnabled(value)
-    if sessionContinuity then sessionContinuity.onChoice("autoplay",ok==true) end
+    if value~=true or ok==true then savePreferences({autoplay=value==true,wrRepeat=value==true and false or repeatWR.status().enabled==true}) end
+    choice("autoplay",ok==true)
     updateAutoplayUI()
     if api.updateIdleGuard then api.updateIdleGuard() end
     return ok,reason
@@ -1122,6 +1153,7 @@ end
 function api.setWRRepeat(value)
     if not repeatWR then return false,"WR repeat is starting" end
     local ok,reason=repeatWR.setEnabled(value)
+    if value~=true or ok==true then savePreferences({wrRepeat=value==true,autoplay=value==true and false or autoplay.status().enabled==true}) end
     updateWRRepeatUI()
     updateAutoplayUI()
     if api.updateIdleGuard then api.updateIdleGuard() end
@@ -1130,12 +1162,56 @@ end
 function api.setAutoplayMode(value)
     if not autoplay then return false,"Autoplay is starting" end
     local ok,reason=autoplay.selectMode(value)
-    if sessionContinuity then sessionContinuity.onChoice("mode",ok==true) end
+    if ok then savePreferences({selectedMode=value}) end
+    choice("mode",ok==true)
     updateAutoplayUI()
     if api.updateIdleGuard then api.updateIdleGuard() end
     return ok,reason
 end
 function api.autoplayModes() return autoplay and autoplay.modes() or {} end
+function api.initializePreferences(create)
+    preferences=create({previousState=previousState,
+        sameJob=previousContext and previousContext.jobId==game.JobId})
+    -- No input-producing feature may run while the others are being built.
+    restoringPreferences=true
+    enabled=false
+end
+function api.restorePreferences()
+    if not preferences then return end
+    restoringPreferences=true
+    local saved=preferences.get()
+    local failures={}
+    local function apply(label,fn)
+        local ok,result,reason=pcall(fn)
+        if not ok or result==false and reason~=nil then failures[#failures+1]=label..": "..tostring(ok and reason or result) end
+        return ok and result~=false
+    end
+    local modeOK=true
+    if saved.selectedMode then modeOK=apply("Mode",function() return api.setAutoplayMode(saved.selectedMode) end) end
+    if saved.usernames~=nil then apply("Auto leave names",function() return api.setMatchSkipUsernames(saved.usernames) end) end
+    alertSettings.enabled=saved.matchAlerts
+    updateAlertsUI()
+    savedUI=saved.ui
+    api.setWindowVisible(saved.ui.visible)
+    api.setMinimized(saved.ui.minimized)
+    placeWindow(saved.ui.x,saved.ui.y)
+    api.setEnabled(saved.master)
+    api.setAuto(saved.assist)
+    apply("Full auto",function() return api.setFullplay(saved.fullAuto) end)
+    apply("Win farm",function() return api.setWRRepeat(saved.wrRepeat) end)
+    if modeOK then apply("Autoplay",function() return api.setAutoplay(saved.autoplay) end)
+    else autoplay.setEnabled(false,true);updateAutoplayUI() end
+    apply("Auto leave",function() return api.setMatchSkip(saved.autoLeave) end)
+    restoringPreferences=false
+    preferences.setRestoreError(#failures>0 and table.concat(failures,"; ") or nil)
+    -- Complete optional selector/name defaults once, without taking runtime
+    -- pauses or constructor OFF values as a replacement for saved switches.
+    local patch={}
+    if not saved.selectedMode then patch.selectedMode=autoplay.status().selectedMode end
+    if saved.usernames==nil then patch.usernames=matchSkip.status().username end
+    if next(patch) and preferences.status().source~="invalid" then preferences.update(patch) end
+    if api.updateIdleGuard then api.updateIdleGuard() end
+end
 function api.initializeSessionContinuity(createSession)
     local function modeAvailable(key)
         for _,entry in ipairs(api.autoplayModes()) do
@@ -1144,6 +1220,12 @@ function api.initializeSessionContinuity(createSession)
         return false
     end
     sessionContinuity=createSession({entry=launchOptions,modeAvailable=modeAvailable,
+        canResume=function(ticket)
+            local wanted=preferences and preferences.get()
+            return wanted and wanted.master and wanted.autoplay and not wanted.wrRepeat
+                and wanted.selectedMode==ticket.selectedMode
+                and (not ticket.fullAuto or wanted.fullAuto and wanted.assist)
+        end,
         snapshot=function()
             local a=autoplay and autoplay.status() or {}
             return {alive=alive,enabled=enabled,testing=testing,
@@ -1154,11 +1236,15 @@ function api.initializeSessionContinuity(createSession)
                 matchServer=workspace:GetAttribute("MatchServer")==true}
         end,
         apply=function(fullAuto,selectedMode)
-            if not api.setAutoplayMode(selectedMode) then return false end
-            if fullAuto and not api.setFullplay(true) then return false end
-            return api.setAutoplay(true)==true
+            -- Preferences were restored already. A one-hop lease transfers
+            -- queue ownership, never overrides an explicit saved OFF/mode.
+            local a=autoplay.status()
+            return enabled and a.enabled and a.selectedMode==selectedMode
+                and (not fullAuto or fullplay.status().enabled and assist.status().enabled)
         end,
-        stop=function() api.setFullplay(false);api.setAuto(false);api.setAutoplay(false) end})
+        stop=function()
+            fullplay.setEnabled(false);assist.setEnabled(false);autoplay.setEnabled(false,true)
+        end})
     if launchOptions.entryKind=="teleport" then
         sessionContinuity.resume(launchOptions.teleportSourceJob)
     end
@@ -1289,4 +1375,4 @@ if type(writefile)=="function" then
         end
     end)
 end
-print("Chalk Assist "..RELEASE_VERSION.." loaded. Automation starts OFF. Drag / minimize / Right Shift hide. V assist / B all / F8 unload.")
+print("Chalk Assist "..RELEASE_VERSION.." loaded. Saved settings restored. Drag / minimize / Right Shift hide. V assist / B all / F8 unload.")

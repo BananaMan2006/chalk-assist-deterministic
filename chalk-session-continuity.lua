@@ -11,7 +11,7 @@ return function(ctx,services)
     local supported=runtime.GameId==10770281752 and runtime.PlaceId==116097127629859
     local alive,untouched,applying=true,true,false
     local ownedMatch,outbound,completed=false,nil,false
-    local status={available=false,resumed=false,message="Fresh launch · automation starts off"}
+    local status={available=false,resumed=false,message="Saved settings control automation"}
     local transport=services.teleport
     if not transport then pcall(function() transport=runtime:GetService("TeleportService") end) end
     local function text(v) return type(v)=="string" and #v>0 and #v<=128 end
@@ -145,6 +145,10 @@ return function(ctx,services)
         end
         local good,allowed=pcall(ctx.modeAvailable,v.selectedMode)
         if not good or allowed~=true then revoke("Previous queue mode is unavailable");return false end
+        if type(ctx.canResume)=="function" then
+            local checked,accepted=pcall(ctx.canResume,v)
+            if not checked or accepted~=true then revoke("Saved settings take priority over session handoff");return false end
+        end
         -- If consumption cannot be recorded, do not enable anything.
         if not write(false) then return false end
         applying=true
@@ -175,6 +179,6 @@ return function(ctx,services)
         end
         api.cancel("Session continuation cancelled by unload");alive=false
     end
-    if not automatic then revoke("Manual launch · automation starts off") end
+    if not automatic then revoke("Manual launch · previous handoff cleared") end
     return api
 end

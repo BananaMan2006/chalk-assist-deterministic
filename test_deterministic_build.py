@@ -8,6 +8,7 @@ import unittest
 ROOT = Path(__file__).resolve().parent
 sys.path.insert(0, '/private/tmp/chalk-replay-deps')
 from lupa import LuaRuntime
+from test_chalk_preferences import PreferencesTests
 
 spec = importlib.util.spec_from_file_location('chalk_builder', ROOT / 'build-chalk-script.py')
 builder = importlib.util.module_from_spec(spec)
@@ -34,7 +35,7 @@ class DeterministicBuildTests(unittest.TestCase):
 
     def test_only_explicit_rule_modules_are_bundled(self):
         names = [name for name, _ in builder.MODULES]
-        self.assertEqual(names, ['Planner', 'createTackle', 'WRApproach', 'Motion', 'PlayerAvoidance',
+        self.assertEqual(names, ['createPreferences', 'Planner', 'createTackle', 'WRApproach', 'Motion', 'PlayerAvoidance',
             'createCarrierMoves', 'createAssist', 'AutoplayPolicy', 'createAutoplay', 'createWRRepeat',
             'createIdleGuard', 'FullplayPolicy', 'createFullplay', 'createMatchSkip',
             'createSessionContinuity', 'createAutoload'])
@@ -178,9 +179,27 @@ class DeterministicBuildTests(unittest.TestCase):
             now=104;heartbeat:Fire(.25);assert(#requests==1 and requests[1][1]=="Join" and requests[1][2]=="1v1")
             subject.setEnabled(false)
             assert(#requests==2 and requests[2][1]=="Leave")
+            subject.unload()
+            context.preferencesManaged=true
+            context.previousState={jobId="current",enabled=true,selectedMode="1v1",queueStatus="Requesting",
+                owned=true,pending="Join",queuedMode="1v1",requestAt=now}
+        ''')
+        lua.globals().subject = constructor(lua.globals().context, policy)
+        lua.execute(r'''
+            assert(not subject.status().enabled and subject.status().owned and subject.status().pending=="Join")
+            assert(writes[#writes][2]=="true:1v1")
+            local before=#requests
+            heartbeat:Fire(.25);assert(#requests==before) -- inert until preference restore
+            subject.setEnabled(true);heartbeat:Fire(.25)
+            assert(#requests==before) -- the existing owned Join is not duplicated
+            subject.setEnabled(false,true)
+            assert(#requests==before+1 and requests[#requests][1]=="Leave")
+            assert(writes[#writes][2]=="true:1v1") -- F8 stops input, preserves requested ON
+            subject.setEnabled(false)
+            assert(writes[#writes][2]=="false:1v1") -- explicit OFF replaces preference
         ''')
 
-    def test_enabled_previous_snapshot_cannot_enable_new_automation(self):
+    def test_features_construct_inert_then_restore_once_before_session_handoff(self):
         lua = LuaRuntime(unpack_returned_tuples=True)
         lua.execute(r'''
             alive,enabled=true,true
@@ -188,7 +207,12 @@ class DeterministicBuildTests(unittest.TestCase):
             previousState={enabled=true,auto={enabled=true},autoplay={enabled=true},
                 wrRepeat={enabled=true},fullplay={enabled=true},matchSkip={enabled=true}}
             api={context=function()return {}end,setAutoplay=function()error("No startup queue request")end,
-                initializeSessionContinuity=function()end}
+                initializePreferences=function()enabled=false end,
+                initializeSessionContinuity=function()assert(restored==true)end,
+                restorePreferences=function()
+                    for _,feature in pairs(created)do assert(feature.status().enabled==false)end
+                    assert(idleStarts==0);restored=true
+                end}
             created={};idleStarts,idleStops=0,0
             local function feature(name,initial)
                 local state={enabled=initial}
@@ -203,7 +227,7 @@ class DeterministicBuildTests(unittest.TestCase):
                 return feature("assist",true)
             end
             createAutoplay=function(ctx)
-                assert(ctx.startDisabled==true and ctx.previousState==nil)
+                assert(ctx.startDisabled==true and ctx.preferencesManaged==true and ctx.previousState==previousState.autoplay)
                 return feature("autoplay",false)
             end
             createWRRepeat=function(ctx)
@@ -213,10 +237,10 @@ class DeterministicBuildTests(unittest.TestCase):
             createFullplay=function(ctx,policy,services)
                 assert(ctx.previousState==nil and services==nil)
                 assert(ctx.version=="authored-release" and ctx.buildId=="CHALK_BUNDLED_BUILD_ID")
-                return feature("fullplay",true)
+                return feature("fullplay",false)
             end
             createMatchSkip=function(ctx)
-                assert(ctx.startDisabled==true and ctx.previousState==nil)
+                assert(ctx.startDisabled==true and ctx.preferencesManaged==true and ctx.previousState==previousState.matchSkip)
                 return feature("matchSkip",false)
             end
             createIdleGuard=function()
@@ -233,7 +257,7 @@ class DeterministicBuildTests(unittest.TestCase):
             for _,feature in pairs(created)do assert(feature.status().enabled==false)end
             assert(idleStarts==0)
             api.updateIdleGuard();assert(idleStarts==0)
-            assist.setEnabled(true);api.updateIdleGuard();assert(idleStarts==1)
+            enabled=true;assist.setEnabled(true);api.updateIdleGuard();assert(idleStarts==1)
             api.updateIdleGuard();assert(idleStarts==1)
             enabled=false;api.updateIdleGuard();assert(idleStops==1 and idleGuard==nil)
             enabled=true;assist.setEnabled(false);api.updateIdleGuard();assert(idleStarts==1)

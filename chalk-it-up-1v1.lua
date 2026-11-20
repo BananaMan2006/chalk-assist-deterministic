@@ -1,4 +1,4 @@
--- Chalk-Release: 5.1.12
+-- Chalk-Release: 5.1.13
 -- Chalk-Product: deterministic
 -- Chalk It Up DB/WR ball assist using normal sprint/jump/dive controls.
 -- Cyan: replicated route (when supplied). Yellow: movement estimate.
@@ -47,11 +47,12 @@ assert(matchEvent and fxEvent and matchEvent:IsA("RemoteEvent") and fxEvent:IsA(
     "Chalk It Up Match/Fx events were not found")
 
 local api = {}
-local RELEASE_VERSION="5.1.12"
+local RELEASE_VERSION="5.1.13"
 local loadedGameId,loadedPlaceId,loadedJobId=game.GameId,game.PlaceId,game.JobId
 env.ChalkDB = api
 local alive, enabled = true, true
 local assist,autoplay,repeatWR,idleGuard,fullplay,matchSkip,autoload,sessionContinuity
+local preferences,restoringPreferences
 local alertSettingsFile="ciu_match_alert_settings.json"
 local alertSettings={enabled=not (previousState and previousState.matchAlerts
     and previousState.matchAlerts.enabled==false)}
@@ -108,6 +109,13 @@ end
 local trail, previousPosition, previousTime, smoothVelocity = {}, nil, nil, Vector3.zero
 local lastError, routeKind, drawnCount = nil, "Waiting for next round", 0
 local testing, testToken, restoreTest = false, 0, nil
+local function savePreferences(patch)
+    if preferences and not restoringPreferences and not testing then return preferences.update(patch) end
+    return true
+end
+local function choice(kind,value)
+    if sessionContinuity and not restoringPreferences and not testing then sessionContinuity.onChoice(kind,value) end
+end
 local cyan = Color3.fromRGB(66, 230, 235)
 local yellow = Color3.fromRGB(255, 208, 69)
 local pink = Color3.fromRGB(255, 110, 198)
@@ -340,11 +348,15 @@ local function placeWindow(x,y)
         math.clamp(x,0,math.max(0,size.X-390)),
         math.clamp(y,0,math.max(0,size.Y-height)))
 end
+local function saveWindow()
+    savePreferences({ui={visible=windowVisible,minimized=minimized,x=panel.Position.X.Offset,y=panel.Position.Y.Offset}})
+end
 function api.setWindowVisible(value)
     windowVisible=value==true
     cancelDrag()
     modeMenu.Visible=false
     gui.Enabled=windowVisible
+    saveWindow()
     return windowVisible
 end
 function api.setMinimized(value)
@@ -355,6 +367,7 @@ function api.setMinimized(value)
     minimizeButton.Text=minimized and "+" or "−"
     panel.Size=UDim2.fromOffset(390,minimized and 36 or expandedHeight)
     placeWindow(panel.Position.X.Offset,panel.Position.Y.Offset)
+    saveWindow()
     return minimized
 end
 connect(minimizeButton.Activated,function() api.setMinimized(not minimized) end)
@@ -376,13 +389,15 @@ connect(UIS.InputChanged,function(input)
 end)
 connect(UIS.InputEnded,function(input)
     if input==dragInput or (dragInput and input.UserInputType==Enum.UserInputType.MouseButton1) then
+        saveWindow()
         cancelDrag()
     end
 end)
-connect(UIS.WindowFocusReleased,cancelDrag)
+connect(UIS.WindowFocusReleased,function() if dragInput then saveWindow() end;cancelDrag() end)
 connect(bounds:GetPropertyChangedSignal("AbsoluteSize"),function()
     cancelDrag()
     placeWindow(panel.Position.X.Offset,panel.Position.Y.Offset)
+    saveWindow()
 end)
 task.defer(function()
     if not alive then return end
@@ -439,6 +454,7 @@ function api.setMatchSkipUsernames(value)
     if ok then
         matchSkipEditing=false;matchSkipInputError=nil
         matchSkip.setEditing(false)
+        savePreferences({usernames=matchSkip.status().username})
     else matchSkipInputError=reason end
     updateMatchSkipUI()
     return ok,reason
@@ -447,6 +463,7 @@ api.setMatchSkipUsername=api.setMatchSkipUsernames
 function api.setMatchSkip(value)
     if not matchSkip then return false,"Auto leave is starting" end
     local ok,reason=matchSkip.setEnabled(value)
+    if ok then savePreferences({autoLeave=value==true}) end
     updateMatchSkipUI()
     return ok,reason
 end
@@ -467,7 +484,7 @@ function api.setMatchAlerts(value)
             assert(type(saved)=="table" and saved.enabled==wanted,"Setting could not be verified")
         end
     end)
-    if good then alertSettings.enabled=wanted;alertSettings.saveError=nil
+    if good then alertSettings.enabled=wanted;alertSettings.saveError=nil;savePreferences({matchAlerts=wanted})
     else alertSettings.saveError=tostring(err) end
     updateAlertsUI()
     return good,alertSettings.saveError
@@ -496,7 +513,7 @@ local function buildAutoplayOptions()
         c.Parent=choice
         connect(choice.MouseButton1Click,function()
             if not available then return end
-            autoplay.selectMode(key)
+            api.setAutoplayMode(key)
             modeMenu.Visible=false
             updateAutoplayUI()
         end)
@@ -899,6 +916,10 @@ local function render()
         testing and " [LOCAL TEST]" or "", role or "role unknown", phase,
         routeKind, lastError and ("Error: "..lastError) or "Gold: pass target · pink: turf if untouched",
         autoStatus and (autoStatus.error or autoStatus.message) or "Auto starting")
+    local settingsStatus=preferences and preferences.status()
+    if settingsStatus and (settingsStatus.saveError or settingsStatus.restoreError) then
+        text.Text=text.Text.."\nSettings: "..(settingsStatus.saveError or settingsStatus.restoreError)
+    end
     if autoStatus then autoButton.Text=autoStatus.enabled and "ASSIST ON · V" or "ASSIST OFF · V" end
     updateAutoplayUI()
     updateWRRepeatUI()
@@ -910,6 +931,7 @@ end
 function api.unload(preserveAutoplay,automaticDestinationJob)
     if not alive then return end
     if sessionContinuity then sessionContinuity.unload(automaticDestinationJob) end
+    if dragInput then saveWindow() end
     cancelDrag()
     if autoload then autoload.unload(preserveAutoplay) end
     if matchSkip then
@@ -920,7 +942,7 @@ function api.unload(preserveAutoplay,automaticDestinationJob)
     if idleGuard then idleGuard.unload() end
     if repeatWR then repeatWR.unload() end
     if autoplay then
-        if preserveAutoplay~=true then autoplay.setEnabled(false) end
+        if preserveAutoplay~=true then autoplay.setEnabled(false,true) end
         autoplay.unload()
     end
     alive = false
@@ -933,7 +955,8 @@ function api.unload(preserveAutoplay,automaticDestinationJob)
 end
 function api.setEnabled(value)
     enabled = value == true
-    if sessionContinuity then sessionContinuity.onChoice("master",enabled) end
+    savePreferences({master=enabled})
+    choice("master",enabled)
     toggle.Text = enabled and "ON · B" or "OFF · B"
     if not enabled then
         hide()
@@ -944,9 +967,10 @@ end
 function api.status()
     local ch = characterOf(opponent)
     local holder,isEnemy,holderRole=carrierContext()
-    return {product="deterministic",version=RELEASE_VERSION,buildId="19f53bf03953c0b826483b1cf00d510931e6720b17905a68acce7e30bc961d34",policyMode="deterministic", enabled=enabled, role=role or "unknown",rawRole=rawRole or "unknown", phase=phase,
+    return {product="deterministic",version=RELEASE_VERSION,buildId="e540c2eb523feaa2992a3411d7f484efe4514e4f484b1df9830ba3b3daf50a2d",policyMode="deterministic", enabled=enabled, role=role or "unknown",rawRole=rawRole or "unknown", phase=phase,
         ui={visible=windowVisible,minimized=minimized,x=panel.Position.X.Offset,y=panel.Position.Y.Offset},
         matchAlerts={enabled=alertSettings.enabled,saveError=alertSettings.saveError},
+        preferences=preferences and preferences.status() or nil,
         idleGuard=idleGuard and idleGuard.status() or nil,
         fullplay=fullplay and fullplay.status() or nil,
         matchSkip=matchSkip and matchSkip.status() or nil,
@@ -1097,17 +1121,23 @@ function api.syncFromGame()
 end
 function api.setAuto(value)
     if assist then assist.setEnabled(value) end
-    if sessionContinuity then sessionContinuity.onChoice("assist",value==true) end
+    savePreferences({assist=value==true})
+    choice("assist",value==true)
     if api.updateIdleGuard then api.updateIdleGuard() end
 end
 function api.setFullplay(value)
     if not fullplay then return false,"Full auto is starting" end
-    if value==true then
+    if value==true and not restoringPreferences then
         api.setEnabled(true)
         if assist then assist.setEnabled(true) end
     end
     local ok,reason=fullplay.setEnabled(value)
-    if sessionContinuity then sessionContinuity.onChoice("fullplay",value==true and ok==true) end
+    if ok then
+        local patch={fullAuto=value==true}
+        if value==true and not restoringPreferences then patch.master=true;patch.assist=true end
+        savePreferences(patch)
+    end
+    choice("fullplay",value==true and ok==true)
     updateFullplayUI()
     if api.updateIdleGuard then api.updateIdleGuard() end
     return ok,reason
@@ -1116,7 +1146,8 @@ function api.setAutoplay(value)
     if not autoplay then return false,"Autoplay is starting" end
     if value==true and repeatWR then repeatWR.setEnabled(false);updateWRRepeatUI() end
     local ok,reason=autoplay.setEnabled(value)
-    if sessionContinuity then sessionContinuity.onChoice("autoplay",ok==true) end
+    if value~=true or ok==true then savePreferences({autoplay=value==true,wrRepeat=value==true and false or repeatWR.status().enabled==true}) end
+    choice("autoplay",ok==true)
     updateAutoplayUI()
     if api.updateIdleGuard then api.updateIdleGuard() end
     return ok,reason
@@ -1124,6 +1155,7 @@ end
 function api.setWRRepeat(value)
     if not repeatWR then return false,"WR repeat is starting" end
     local ok,reason=repeatWR.setEnabled(value)
+    if value~=true or ok==true then savePreferences({wrRepeat=value==true,autoplay=value==true and false or autoplay.status().enabled==true}) end
     updateWRRepeatUI()
     updateAutoplayUI()
     if api.updateIdleGuard then api.updateIdleGuard() end
@@ -1132,12 +1164,56 @@ end
 function api.setAutoplayMode(value)
     if not autoplay then return false,"Autoplay is starting" end
     local ok,reason=autoplay.selectMode(value)
-    if sessionContinuity then sessionContinuity.onChoice("mode",ok==true) end
+    if ok then savePreferences({selectedMode=value}) end
+    choice("mode",ok==true)
     updateAutoplayUI()
     if api.updateIdleGuard then api.updateIdleGuard() end
     return ok,reason
 end
 function api.autoplayModes() return autoplay and autoplay.modes() or {} end
+function api.initializePreferences(create)
+    preferences=create({previousState=previousState,
+        sameJob=previousContext and previousContext.jobId==game.JobId})
+    -- No input-producing feature may run while the others are being built.
+    restoringPreferences=true
+    enabled=false
+end
+function api.restorePreferences()
+    if not preferences then return end
+    restoringPreferences=true
+    local saved=preferences.get()
+    local failures={}
+    local function apply(label,fn)
+        local ok,result,reason=pcall(fn)
+        if not ok or result==false and reason~=nil then failures[#failures+1]=label..": "..tostring(ok and reason or result) end
+        return ok and result~=false
+    end
+    local modeOK=true
+    if saved.selectedMode then modeOK=apply("Mode",function() return api.setAutoplayMode(saved.selectedMode) end) end
+    if saved.usernames~=nil then apply("Auto leave names",function() return api.setMatchSkipUsernames(saved.usernames) end) end
+    alertSettings.enabled=saved.matchAlerts
+    updateAlertsUI()
+    savedUI=saved.ui
+    api.setWindowVisible(saved.ui.visible)
+    api.setMinimized(saved.ui.minimized)
+    placeWindow(saved.ui.x,saved.ui.y)
+    api.setEnabled(saved.master)
+    api.setAuto(saved.assist)
+    apply("Full auto",function() return api.setFullplay(saved.fullAuto) end)
+    apply("Win farm",function() return api.setWRRepeat(saved.wrRepeat) end)
+    if modeOK then apply("Autoplay",function() return api.setAutoplay(saved.autoplay) end)
+    else autoplay.setEnabled(false,true);updateAutoplayUI() end
+    apply("Auto leave",function() return api.setMatchSkip(saved.autoLeave) end)
+    restoringPreferences=false
+    preferences.setRestoreError(#failures>0 and table.concat(failures,"; ") or nil)
+    -- Complete optional selector/name defaults once, without taking runtime
+    -- pauses or constructor OFF values as a replacement for saved switches.
+    local patch={}
+    if not saved.selectedMode then patch.selectedMode=autoplay.status().selectedMode end
+    if saved.usernames==nil then patch.usernames=matchSkip.status().username end
+    if next(patch) and preferences.status().source~="invalid" then preferences.update(patch) end
+    if api.updateIdleGuard then api.updateIdleGuard() end
+end
 function api.initializeSessionContinuity(createSession)
     local function modeAvailable(key)
         for _,entry in ipairs(api.autoplayModes()) do
@@ -1146,6 +1222,12 @@ function api.initializeSessionContinuity(createSession)
         return false
     end
     sessionContinuity=createSession({entry=launchOptions,modeAvailable=modeAvailable,
+        canResume=function(ticket)
+            local wanted=preferences and preferences.get()
+            return wanted and wanted.master and wanted.autoplay and not wanted.wrRepeat
+                and wanted.selectedMode==ticket.selectedMode
+                and (not ticket.fullAuto or wanted.fullAuto and wanted.assist)
+        end,
         snapshot=function()
             local a=autoplay and autoplay.status() or {}
             return {alive=alive,enabled=enabled,testing=testing,
@@ -1156,11 +1238,15 @@ function api.initializeSessionContinuity(createSession)
                 matchServer=workspace:GetAttribute("MatchServer")==true}
         end,
         apply=function(fullAuto,selectedMode)
-            if not api.setAutoplayMode(selectedMode) then return false end
-            if fullAuto and not api.setFullplay(true) then return false end
-            return api.setAutoplay(true)==true
+            -- Preferences were restored already. A one-hop lease transfers
+            -- queue ownership, never overrides an explicit saved OFF/mode.
+            local a=autoplay.status()
+            return enabled and a.enabled and a.selectedMode==selectedMode
+                and (not fullAuto or fullplay.status().enabled and assist.status().enabled)
         end,
-        stop=function() api.setFullplay(false);api.setAuto(false);api.setAutoplay(false) end})
+        stop=function()
+            fullplay.setEnabled(false);assist.setEnabled(false);autoplay.setEnabled(false,true)
+        end})
     if launchOptions.entryKind=="teleport" then
         sessionContinuity.resume(launchOptions.teleportSourceJob)
     end
@@ -1261,6 +1347,173 @@ connect(fxEvent.OnClientEvent,function(data)
     onFx(data)
 end)
 api.syncFromGame()
+local createPreferences = (function()
+-- Local deterministic preferences. Alternating verified slots retain the last
+-- complete revision if a write is interrupted. No gameplay, services or network.
+return function(ctx,services)
+    ctx=ctx or {};services=services or {}
+    local http=services.http or game:GetService("HttpService")
+    local read=services.read or readfile
+    local write=services.write or writefile
+    local exists=services.exists or isfile
+    local paths={"ciu_deterministic_preferences_v1.a.json","ciu_deterministic_preferences_v1.b.json"}
+    local switches={master=true,assist=true,fullAuto=true,autoplay=true,wrRepeat=true,autoLeave=true,matchAlerts=true}
+    local function copy(v)
+        if type(v)~="table" then return v end
+        local out={};for k,x in pairs(v) do out[k]=copy(x) end;return out
+    end
+    local function finite(v) return type(v)=="number" and v==v and math.abs(v)<100000 end
+    local function defaults()
+        return {master=true,assist=false,fullAuto=false,autoplay=false,wrRepeat=false,autoLeave=false,
+            matchAlerts=true,ui={visible=true,minimized=false,x=110,y=110}}
+    end
+    local function valid(v)
+        if type(v)~="table" then return false end
+        for k in pairs(switches) do if type(v[k])~="boolean" then return false end end
+        for k in pairs(v) do
+            if not switches[k] and k~="ui" and k~="selectedMode" and k~="usernames" then return false end
+        end
+        if v.autoplay and v.wrRepeat then return false end
+        if v.selectedMode~=nil and (type(v.selectedMode)~="string" or #v.selectedMode<1 or #v.selectedMode>64) then return false end
+        if v.usernames~=nil and (type(v.usernames)~="string" or #v.usernames>4096) then return false end
+        local u=v.ui
+        if type(u)~="table" or type(u.visible)~="boolean" or type(u.minimized)~="boolean"
+            or not finite(u.x) or not finite(u.y) then return false end
+        for k in pairs(u) do if k~="visible" and k~="minimized" and k~="x" and k~="y" then return false end end
+        return true
+    end
+    local function equal(a,b)
+        if type(a)~=type(b) then return false end
+        if type(a)~="table" then return a==b end
+        for k,v in pairs(a) do if not equal(v,b[k]) then return false end end
+        for k in pairs(b) do if a[k]==nil then return false end end
+        return true
+    end
+    local function decode(path)
+        if type(exists)=="function" then
+            local ok,present=pcall(exists,path)
+            if not ok then return nil,false end
+            if present==false then return nil,true end
+        end
+        if type(read)~="function" then return nil,false end
+        local ok,raw=pcall(read,path)
+        if not ok then
+            local message=string.lower(tostring(raw))
+            local missing=string.find(message,"no such file",1,true) or string.find(message,"not found",1,true)
+                or string.find(message,"does not exist",1,true)
+            return nil,missing~=nil
+        end
+        if type(raw)~="string" or #raw>32768 then return nil,false end
+        local good,value=pcall(function() return http:JSONDecode(raw) end)
+        return good and value or nil,false
+    end
+    local function record(v)
+        return type(v)=="table" and v.schemaVersion==1 and type(v.revision)=="number"
+            and v.revision>=1 and v.revision<1000000000 and v.revision==math.floor(v.revision) and valid(v.values)
+    end
+    local values,revision,slot=defaults(),0,nil
+    local saveError,source,restoreError,recoveryWarning=nil,"fresh",nil,nil
+    local pendingChoice=false
+    local a,missingA=decode(paths[1]);local b,missingB=decode(paths[2])
+    local va,vb=record(a),record(b)
+    if va and vb and a.revision==b.revision and not equal(a.values,b.values) then
+        saveError="Saved settings disagree; switches remain off";source="invalid"
+    elseif va or vb then
+        slot=va and (not vb or a.revision>=b.revision) and 1 or 2
+        local saved=slot==1 and a or b
+        values,revision,source=copy(saved.values),saved.revision,"saved"
+        if (not va and not missingA) or (not vb and not missingB) then
+            recoveryWarning="Recovered the last complete settings copy"
+        end
+    elseif not missingA or not missingB then
+        saveError="Saved settings could not be read; switches remain off";source="invalid"
+    else
+        -- Migrate only this product's explicit settings. Missing files never
+        -- invent an ON choice, and corrupt new journals never revive old ONs.
+        local autoplay=decode("ciu_deterministic_autoplay_v1.json")
+        if type(autoplay)=="table" then
+            if type(autoplay.enabled)=="boolean" then values.autoplay=autoplay.enabled end
+            if type(autoplay.selectedMode)=="string" and #autoplay.selectedMode>0 and #autoplay.selectedMode<=64 then
+                values.selectedMode=autoplay.selectedMode
+            end
+        end
+        local fullplay=decode("ciu_deterministic_fullplay_v1.json")
+        if type(fullplay)=="table" and fullplay.schemaVersion==1 and fullplay.policyMode=="deterministic"
+            and type(fullplay.lastRequestedEnabled)=="boolean" then values.fullAuto=fullplay.lastRequestedEnabled end
+        local skip=decode("ciu_deterministic_match_skip_v1.json")
+        if type(skip)=="table" and (skip.version==1 or skip.version==2) then
+            if type(skip.enabled)=="boolean" then values.autoLeave=skip.enabled end
+            if skip.version==1 and type(skip.username)=="string" then values.usernames=skip.username
+            elseif skip.version==2 and type(skip.usernames)=="table" then
+                local names={};for _,name in ipairs(skip.usernames) do
+                    if type(name)~="string" then names=nil;break end;names[#names+1]=name
+                end
+                if names then values.usernames=table.concat(names,", ") end
+            end
+        end
+        local alerts=decode("ciu_match_alert_settings.json")
+        if type(alerts)=="table" and type(alerts.enabled)=="boolean" then values.matchAlerts=alerts.enabled end
+        if values.fullAuto then values.master,values.assist=true,true
+        elseif values.autoplay then values.master=true end
+        local prior=ctx.previousState
+        if type(prior)=="table" and prior.product=="deterministic" and prior.testing~=true then
+            local map={assist="auto",fullAuto="fullplay",autoplay="autoplay",wrRepeat="wrRepeat",autoLeave="matchSkip",matchAlerts="matchAlerts"}
+            if type(prior.enabled)=="boolean" then values.master=prior.enabled end
+            for key,field in pairs(map) do
+                if type(prior[field])=="table" and type(prior[field].enabled)=="boolean" then values[key]=prior[field].enabled end
+            end
+            if type(prior.ui)=="table" then
+                for k in pairs(values.ui) do if type(prior.ui[k])==type(values.ui[k]) then values.ui[k]=prior.ui[k] end end
+            end
+        end
+        if values.wrRepeat then values.autoplay=false end
+        if not valid(values) then values=defaults();saveError="Previous settings were invalid; switches remain off" end
+        source="migrated"
+    end
+    local api={}
+    local function persist()
+        if type(write)~="function" or type(read)~="function" then saveError="Settings cannot be saved on this executor";return false,saveError end
+        local target=slot==1 and 2 or 1
+        local nextRevision=revision+1
+        local payload={schemaVersion=1,revision=nextRevision,values=copy(values)}
+        local ok,err=pcall(function()
+            write(paths[target],http:JSONEncode(payload))
+            local actual=decode(paths[target])
+            assert(record(actual) and actual.revision==nextRevision and equal(actual.values,values),"Settings readback did not match")
+        end)
+        if not ok then saveError="Settings were not saved: "..tostring(err);return false,saveError end
+        slot,revision,saveError,source,recoveryWarning=target,nextRevision,nil,"saved",nil
+        pendingChoice=false
+        return true
+    end
+    function api.get() return copy(values) end
+    function api.update(patch)
+        if type(patch)~="table" then return false,"Invalid settings change" end
+        local nextValues=copy(values)
+        for k,v in pairs(patch) do nextValues[k]=copy(v) end
+        if not valid(nextValues) then return false,"Invalid settings change" end
+        if equal(values,nextValues) and not saveError and revision>0 then return true end
+        values=nextValues
+        pendingChoice=true
+        return persist()
+    end
+    function api.setRestoreError(reason) restoreError=reason end
+    function api.status()
+        return {schemaVersion=1,revision=revision,source=source,saveError=saveError,restoreError=restoreError,
+            recoveryWarning=recoveryWarning,pendingChoice=pendingChoice,values=copy(values)}
+    end
+    local prior=ctx.previousState
+    if ctx.sameJob==true and type(prior)=="table" and prior.product=="deterministic"
+        and type(prior.preferences)=="table" and type(prior.preferences.saveError)=="string"
+        and prior.preferences.pendingChoice==true
+        and valid(prior.preferences.values) then
+        values=copy(prior.preferences.values);source="migrated";saveError=nil;pendingChoice=true
+    end
+    if source=="migrated" and not saveError then persist() end
+    return api
+end
+
+end)()
 local Planner = (function()
 -- Pure Chalk It Up interception planner. No services, input, remotes or mutations.
 -- solve(snapshot) returns absolute server-time action deadlines, or nil + reason.
@@ -4241,6 +4494,12 @@ return function(ctx, Planner, createTackle, WRApproach, Motion, createCarrierMov
         local bounds=geo and {minX=geo.MinX+.5,maxX=geo.MaxX-.5,minZ=geo.BackZ+.5,maxZ=geo.EndZ-.5}
             or {minX=Field.MinX+offset.X+.5,maxX=Field.MaxX+offset.X-.5,
                 minZ=Field.BackZ+offset.Z+.5,maxZ=Field.EndZ+offset.Z-.5}
+        -- A reachable live interception has the same deadline as a WR
+        -- catch. Prethrow coverage still conserves its reserve.
+        local allowSprintDetour=s.phase=="Live" and (
+            s.role=="WR" and s.catchIntent~=nil
+                and (s.catchIntent.continuousSprint==true or s.arc~=nil and arrival~=nil)
+            or s.role=="DB" and s.arc~=nil and arrival~=nil)
         local decision
         avoidanceState,decision=PlayerAvoidance.update(avoidanceState,{now=now,dt=dt,
             position=root.Position,velocity=root.AssemblyLinearVelocity,desiredDirection=direction,
@@ -4248,8 +4507,8 @@ return function(ctx, Planner, createTackle, WRApproach, Motion, createCarrierMov
             targetPosition=arrival and arrival.targetPosition,arriveBy=arrival and arrival.arriveBy,
             runSpeed=Config.RunSpeed,currentDirection=steering,
             sprintSpeed=Config.SprintSpeed,
-            allowSprintDetour=s.role=="WR" and s.phase=="Live" and s.catchIntent~=nil
-                and (s.catchIntent.continuousSprint==true or s.arc~=nil and arrival~=nil),
+            -- The helper checks the actual turn at both movement speeds.
+            allowSprintDetour=allowSprintDetour,
             canDetour=canDetour and h.FloorMaterial~=Enum.Material.Air and not h.PlatformStand})
         -- The avoidance helper already limits its turns and checks that path.
         -- A second smoother could turn back inside the checked clearance.
@@ -4264,6 +4523,8 @@ return function(ctx, Planner, createTackle, WRApproach, Motion, createCarrierMov
             log("playerAvoidance",{active=decision.active,blocked=decision.blocked,reason=decision.reason,
                 role=s.role,phase=s.phase,position=xyz(root.Position),velocity=xyz(root.AssemblyLinearVelocity),
                 requestedDirection=xyz(direction),direction=xyz(decision.direction),
+                allowSprintDetour=allowSprintDetour,walkSpeed=h.WalkSpeed,
+                approachTarget=arrival and xyz(arrival.targetPosition),arriveBy=arrival and arrival.arriveBy,
                 requestedSprint=requestedSprint,sprint=decision.sprint,stamina=me:GetAttribute("Stamina")})
             lastAvoidanceLog=now
         end
@@ -4752,6 +5013,7 @@ return function(ctx, Planner, createTackle, WRApproach, Motion, createCarrierMov
                 local distance=((plan.approachTarget-root.Position)*Vector3.new(1,0,1)).Magnitude
                 if distance>2.5 or plan.continuousCatch then atTarget,parkedPosition=false,nil end
                 log("plan", {action=plan.kind, contactAt=plan.contactAt,
+                    approachTarget=xyz(plan.approachTarget),
                     jumpAt=plan.jumpAt, diveAt=plan.diveAt,
                     jumpTimingBudget=plan.jumpTimingBudget,diveTimingBudget=plan.diveTimingBudget,
                     continuousCatch=plan.continuousCatch,movementScale=plan.movementScale,stopAt=plan.stopAt,
@@ -5455,15 +5717,20 @@ return function(ctx,Policy)
     local previous=ctx.previousState
     local sameJob=type(previous)=="table" and previous.jobId==game.JobId
     local state=Policy.new(modes,sameJob and previous or settings)
+    local managed=ctx.preferencesManaged==true
+    local preferredEnabled=state.enabled
+    local ready=not managed
     if sameJob then
         state:restore(previous,workspace:GetServerTimeNow())
     end
     if ctx.startDisabled==true then
         -- Keep the selected mode, but never inherit input/queue ownership.
         state.enabled=false
-        state.owned=false
-        state.pending=nil
-        state.cancelWanted=false
+        if not (managed and sameJob) then
+            state.owned=false
+            state.pending=nil
+            state.cancelWanted=false
+        end
         state.message="Autoplay off"
     end
     local lastMatchFoundId,lastMatchFoundAt,lastMatchFoundMode
@@ -5473,7 +5740,9 @@ return function(ctx,Policy)
     end
     local saveError,lastSaved
     local function save()
-        local encoded=Http:JSONEncode({enabled=state.enabled,selectedMode=state.selectedMode})
+        local savedEnabled=state.enabled
+        if managed then savedEnabled=preferredEnabled end
+        local encoded=Http:JSONEncode({enabled=savedEnabled,selectedMode=state.selectedMode})
         if encoded==lastSaved then return end
         if type(writefile)~="function" then saveError="Settings cannot be saved on this executor";return end
         local ok,err=pcall(writefile,SettingsFile,encoded)
@@ -5531,6 +5800,7 @@ return function(ctx,Policy)
         end
     end
     local function tick()
+        if not ready then return end
         local current=ctx.snapshot()
         current.matchServer=workspace:GetAttribute("MatchServer")==true
         current.dataLoaded=player:GetAttribute("DataLoaded")==true
@@ -5570,8 +5840,10 @@ return function(ctx,Policy)
     function api.selectMode(key)
         local ok,reason=state:selectMode(key);if ok then save() end;return ok,reason
     end
-    function api.setEnabled(value)
+    function api.setEnabled(value,transient)
+        ready=true
         local result=state:setEnabled(value)
+        if managed and transient~=true then preferredEnabled=value==true end
         -- OFF must cancel an owned lobby search before an F8 unload can
         -- disconnect the periodic tick. Active matches still fail the gate.
         if not result then pcall(tick) end
@@ -5584,6 +5856,8 @@ return function(ctx,Policy)
         result.lastMatchFoundId,result.lastMatchFoundAt,result.lastMatchFoundMode=
             lastMatchFoundId,lastMatchFoundAt,lastMatchFoundMode
         result.saveError=saveError
+        result.preferredEnabled=state.enabled
+        if managed then result.preferredEnabled=preferredEnabled end
         return result
     end
     function api.unload()
@@ -8566,6 +8840,7 @@ return function(ctx,services)
     local alive,editing=true,false
     local connections={}
     local enabled,usernames,username=false,{},""
+    local managed,preferredEnabled=ctx.preferencesManaged==true,nil
     local configured={}
     local saveError,loadError,lastSaved,message,lastError
     local requestState,attempts="idle",0
@@ -8638,14 +8913,16 @@ return function(ctx,services)
     local previousSettings=previous and validSettings({version=previous.usernames~=nil and 2 or 1,
         enabled=previous.enabled,username=previous.username,usernames=previous.usernames})
     local function save()
-        local fingerprint=tostring(enabled)..":"..username
+        local savedEnabled=enabled
+        if managed and preferredEnabled~=nil then savedEnabled=preferredEnabled end
+        local fingerprint=tostring(savedEnabled)..":"..username
         if lastSaved==fingerprint and not saveError then return true end
         if type(write)~="function" then saveError="Saving match skip settings is unavailable";return false end
         local ok,err=pcall(function()
-            write(SettingsFile,Http:JSONEncode({version=2,enabled=enabled,usernames=usernames}))
+            write(SettingsFile,Http:JSONEncode({version=2,enabled=savedEnabled,usernames=usernames}))
             if type(read)=="function" then
                 local saved=validSettings(Http:JSONDecode(read(SettingsFile)))
-                assert(saved and saved.version==2 and saved.enabled==enabled
+                assert(saved and saved.version==2 and saved.enabled==savedEnabled
                     and table.concat(saved.usernames,", ")==username,"Settings readback did not match")
             end
         end)
@@ -8688,19 +8965,20 @@ return function(ctx,services)
         saveError=loadError
         if missing then save() end
     elseif missing then
-        enabled=true;useNames({"stupieddaniel"})
+        enabled=not managed;useNames({"stupieddaniel"})
         save()
     else saveError=loadError end
 
+    preferredEnabled=enabled
     if ctx.startDisabled==true then
         enabled=false
-        save()
+        if not managed then save() end
     end
 
     local function finite(value)
         return type(value)=="number" and value==value and math.abs(value)<math.huge
     end
-    if sameJob and ctx.startDisabled~=true then
+    if sameJob and (ctx.startDisabled~=true or managed) then
         attempts=finite(previous.attempts) and math.max(0,math.min(3,math.floor(previous.attempts))) or 0
         if attempts>0 then
             requestedUsername=cleanUsername(previous.requestedUsername)
@@ -8822,6 +9100,7 @@ return function(ctx,services)
         if not alive then return false,"Match skip is unloaded" end
         if type(value)~="boolean" then return false,"Enabled must be true or false" end
         enabled=value
+        if managed then preferredEnabled=value end
         if not enabled and requestState=="retry" then block("Retries stopped while off") end
         if requestState=="idle" then message=enabled and "Waiting for an active match" or "Match skip off" end
         save()
@@ -8890,7 +9169,7 @@ return function(ctx,services)
     local supported=runtime.GameId==10770281752 and runtime.PlaceId==116097127629859
     local alive,untouched,applying=true,true,false
     local ownedMatch,outbound,completed=false,nil,false
-    local status={available=false,resumed=false,message="Fresh launch · automation starts off"}
+    local status={available=false,resumed=false,message="Saved settings control automation"}
     local transport=services.teleport
     if not transport then pcall(function() transport=runtime:GetService("TeleportService") end) end
     local function text(v) return type(v)=="string" and #v>0 and #v<=128 end
@@ -9024,6 +9303,10 @@ return function(ctx,services)
         end
         local good,allowed=pcall(ctx.modeAvailable,v.selectedMode)
         if not good or allowed~=true then revoke("Previous queue mode is unavailable");return false end
+        if type(ctx.canResume)=="function" then
+            local checked,accepted=pcall(ctx.canResume,v)
+            if not checked or accepted~=true then revoke("Saved settings take priority over session handoff");return false end
+        end
         -- If consumption cannot be recorded, do not enable anything.
         if not write(false) then return false end
         applying=true
@@ -9054,7 +9337,7 @@ return function(ctx,services)
         end
         api.cancel("Session continuation cancelled by unload");alive=false
     end
-    if not automatic then revoke("Manual launch · automation starts off") end
+    if not automatic then revoke("Manual launch · previous handoff cleared") end
     return api
 end
 
@@ -9167,11 +9450,13 @@ end
 
 end)()
 
-assist = createAssist({snapshot=api.context,version=RELEASE_VERSION,buildId="19f53bf03953c0b826483b1cf00d510931e6720b17905a68acce7e30bc961d34",fullplay=function(s,root,h,now,dt)
+api.initializePreferences(createPreferences)
+assist = createAssist({snapshot=api.context,version=RELEASE_VERSION,buildId="e540c2eb523feaa2992a3411d7f484efe4514e4f484b1df9830ba3b3daf50a2d",fullplay=function(s,root,h,now,dt)
     if fullplay then return fullplay.navigate(s,root,h,now,dt) end
 end},Planner,createTackle,WRApproach,Motion,createCarrierMoves,PlayerAvoidance)
 assist.setEnabled(false)
-autoplay = createAutoplay({snapshot=api.context,startDisabled=true,
+autoplay = createAutoplay({snapshot=api.context,startDisabled=true,preferencesManaged=true,
+    previousState=previousState and previousState.autoplay,
     onQueue=function(packet,before)
         if sessionContinuity then sessionContinuity.onQueue(packet,before) end
     end,
@@ -9182,11 +9467,11 @@ repeatWR = createWRRepeat({snapshot=api.context,
     autoplay=function() return autoplay.status() end,
     disableAutoplay=function() return api.setAutoplay(false) end})
 repeatWR.setEnabled(false)
-fullplay = createFullplay({Planner=Planner,snapshot=api.context,version=RELEASE_VERSION,buildId="19f53bf03953c0b826483b1cf00d510931e6720b17905a68acce7e30bc961d34",
+fullplay = createFullplay({Planner=Planner,snapshot=api.context,version=RELEASE_VERSION,buildId="e540c2eb523feaa2992a3411d7f484efe4514e4f484b1df9830ba3b3daf50a2d",
     assistEnabled=function() return assist.status().enabled end,
     release=function() if assist.releaseFullplay then assist.releaseFullplay() end end},FullplayPolicy)
-fullplay.setEnabled(false)
-matchSkip = createMatchSkip({snapshot=api.context,startDisabled=true})
+matchSkip = createMatchSkip({snapshot=api.context,startDisabled=true,preferencesManaged=true,
+    previousState=previousState and previousState.matchSkip})
 -- Idle protection sends input. Start it only after the user enables gameplay.
 function api.updateIdleGuard()
     local active = alive and enabled and (
@@ -9195,6 +9480,7 @@ function api.updateIdleGuard()
     if active and not idleGuard then idleGuard=createIdleGuard()
     elseif not active and idleGuard then idleGuard.unload();idleGuard=nil end
 end
+api.restorePreferences()
 api.initializeSessionContinuity(createSessionContinuity)
 autoload = createAutoload({bootstrapSource=[====[-- Portable Chalk Assist startup. Executor attachment is still required.
 -- Automatic callers pass {automatic=true}; a manual run can restart after F8.
@@ -9204,7 +9490,7 @@ local GAME_ID,PLACE_ID=10770281752,116097127629859
 local MAIN_URL="https://raw.githubusercontent.com/BananaMan2006/chalk-assist-deterministic/main/chalk-it-up-1v1.lua"
 local CACHE_FILE="chalk-deterministic-cache.lua"
 local MAIN_FILE="chalk-it-up-1v1.lua"
-local MIN_RELEASE="5.1.12"
+local MIN_RELEASE="5.1.13"
 local MARKER="__ChalkDeterministicAutoBoot"
 local env=type(getgenv)=="function" and getgenv() or _G
 local boot
@@ -9437,4 +9723,4 @@ if type(writefile)=="function" then
         end
     end)
 end
-print("Chalk Assist "..RELEASE_VERSION.." loaded. Automation starts OFF. Drag / minimize / Right Shift hide. V assist / B all / F8 unload.")
+print("Chalk Assist "..RELEASE_VERSION.." loaded. Saved settings restored. Drag / minimize / Right Shift hide. V assist / B all / F8 unload.")

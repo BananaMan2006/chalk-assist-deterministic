@@ -89,8 +89,8 @@ return function(create)
                 if h.writeError then error(h.writeError) end
                 if not h.ignoreWrite then h.storage[path]=value end
             end}
-        function h:load(previous,startDisabled)
-            self.api=create({previousState=previous,startDisabled=startDisabled,snapshot=function()
+        function h:load(previous,startDisabled,preferencesManaged)
+            self.api=create({previousState=previous,startDisabled=startDisabled,preferencesManaged=preferencesManaged,snapshot=function()
                 if self.snapshotError then error(self.snapshotError) end
                 return self.snapshot
             end},self.services)
@@ -135,6 +135,22 @@ return function(create)
         local h=harness();h:load(nil,true);h:step(10)
         assert(not h.api.status().enabled and h.api.status().username=="stupieddaniel")
         assert(#h.requests==0)
+    end)
+    test("managed startup keeps saved ON intact until a single preference restoration",function()
+        local h=harness();h:settings(true,{"stupieddaniel","AnotherAccount"})
+        h:load(nil,true,true);h:step(.25)
+        assert(not h.api.status().enabled and #h.requests==0 and h.writes==0)
+        assert(h.http:JSONDecode(h.storage[FILE]).enabled)
+        h.api.setEnabled(true);h:step(.25);assert(#h.requests==1)
+        local previous=h.api.status();h.api.unload()
+        h:load(previous,true,true);h.api.setEnabled(true);h:step(.25)
+        assert(#h.requests==1 and h.api.status().attempts==1,"same-job pending rejoin must not duplicate")
+        h.api.setEnabled(false);assert(not h.http:JSONDecode(h.storage[FILE]).enabled)
+    end)
+    test("managed missing preference defaults OFF and retains the username box",function()
+        local h=harness();h:load(nil,true,true);h:step(.25)
+        assert(not h.api.status().enabled and h.api.status().username=="stupieddaniel")
+        assert(not h.http:JSONDecode(h.storage[FILE]).enabled and #h.requests==0)
     end)
 
     test("missing settings initialize enabled exact target and verify saved version",function()

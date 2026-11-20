@@ -23,6 +23,7 @@ return function(ctx,services)
     local alive,editing=true,false
     local connections={}
     local enabled,usernames,username=false,{},""
+    local managed,preferredEnabled=ctx.preferencesManaged==true,nil
     local configured={}
     local saveError,loadError,lastSaved,message,lastError
     local requestState,attempts="idle",0
@@ -95,14 +96,16 @@ return function(ctx,services)
     local previousSettings=previous and validSettings({version=previous.usernames~=nil and 2 or 1,
         enabled=previous.enabled,username=previous.username,usernames=previous.usernames})
     local function save()
-        local fingerprint=tostring(enabled)..":"..username
+        local savedEnabled=enabled
+        if managed and preferredEnabled~=nil then savedEnabled=preferredEnabled end
+        local fingerprint=tostring(savedEnabled)..":"..username
         if lastSaved==fingerprint and not saveError then return true end
         if type(write)~="function" then saveError="Saving match skip settings is unavailable";return false end
         local ok,err=pcall(function()
-            write(SettingsFile,Http:JSONEncode({version=2,enabled=enabled,usernames=usernames}))
+            write(SettingsFile,Http:JSONEncode({version=2,enabled=savedEnabled,usernames=usernames}))
             if type(read)=="function" then
                 local saved=validSettings(Http:JSONDecode(read(SettingsFile)))
-                assert(saved and saved.version==2 and saved.enabled==enabled
+                assert(saved and saved.version==2 and saved.enabled==savedEnabled
                     and table.concat(saved.usernames,", ")==username,"Settings readback did not match")
             end
         end)
@@ -145,19 +148,20 @@ return function(ctx,services)
         saveError=loadError
         if missing then save() end
     elseif missing then
-        enabled=true;useNames({"stupieddaniel"})
+        enabled=not managed;useNames({"stupieddaniel"})
         save()
     else saveError=loadError end
 
+    preferredEnabled=enabled
     if ctx.startDisabled==true then
         enabled=false
-        save()
+        if not managed then save() end
     end
 
     local function finite(value)
         return type(value)=="number" and value==value and math.abs(value)<math.huge
     end
-    if sameJob and ctx.startDisabled~=true then
+    if sameJob and (ctx.startDisabled~=true or managed) then
         attempts=finite(previous.attempts) and math.max(0,math.min(3,math.floor(previous.attempts))) or 0
         if attempts>0 then
             requestedUsername=cleanUsername(previous.requestedUsername)
@@ -279,6 +283,7 @@ return function(ctx,services)
         if not alive then return false,"Match skip is unloaded" end
         if type(value)~="boolean" then return false,"Enabled must be true or false" end
         enabled=value
+        if managed then preferredEnabled=value end
         if not enabled and requestState=="retry" then block("Retries stopped while off") end
         if requestState=="idle" then message=enabled and "Waiting for an active match" or "Match skip off" end
         save()

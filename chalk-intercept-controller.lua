@@ -440,6 +440,12 @@ return function(ctx, Planner, createTackle, WRApproach, Motion, createCarrierMov
         local bounds=geo and {minX=geo.MinX+.5,maxX=geo.MaxX-.5,minZ=geo.BackZ+.5,maxZ=geo.EndZ-.5}
             or {minX=Field.MinX+offset.X+.5,maxX=Field.MaxX+offset.X-.5,
                 minZ=Field.BackZ+offset.Z+.5,maxZ=Field.EndZ+offset.Z-.5}
+        -- A reachable live interception has the same deadline as a WR
+        -- catch. Prethrow coverage still conserves its reserve.
+        local allowSprintDetour=s.phase=="Live" and (
+            s.role=="WR" and s.catchIntent~=nil
+                and (s.catchIntent.continuousSprint==true or s.arc~=nil and arrival~=nil)
+            or s.role=="DB" and s.arc~=nil and arrival~=nil)
         local decision
         avoidanceState,decision=PlayerAvoidance.update(avoidanceState,{now=now,dt=dt,
             position=root.Position,velocity=root.AssemblyLinearVelocity,desiredDirection=direction,
@@ -447,8 +453,8 @@ return function(ctx, Planner, createTackle, WRApproach, Motion, createCarrierMov
             targetPosition=arrival and arrival.targetPosition,arriveBy=arrival and arrival.arriveBy,
             runSpeed=Config.RunSpeed,currentDirection=steering,
             sprintSpeed=Config.SprintSpeed,
-            allowSprintDetour=s.role=="WR" and s.phase=="Live" and s.catchIntent~=nil
-                and (s.catchIntent.continuousSprint==true or s.arc~=nil and arrival~=nil),
+            -- The helper checks the actual turn at both movement speeds.
+            allowSprintDetour=allowSprintDetour,
             canDetour=canDetour and h.FloorMaterial~=Enum.Material.Air and not h.PlatformStand})
         -- The avoidance helper already limits its turns and checks that path.
         -- A second smoother could turn back inside the checked clearance.
@@ -463,6 +469,8 @@ return function(ctx, Planner, createTackle, WRApproach, Motion, createCarrierMov
             log("playerAvoidance",{active=decision.active,blocked=decision.blocked,reason=decision.reason,
                 role=s.role,phase=s.phase,position=xyz(root.Position),velocity=xyz(root.AssemblyLinearVelocity),
                 requestedDirection=xyz(direction),direction=xyz(decision.direction),
+                allowSprintDetour=allowSprintDetour,walkSpeed=h.WalkSpeed,
+                approachTarget=arrival and xyz(arrival.targetPosition),arriveBy=arrival and arrival.arriveBy,
                 requestedSprint=requestedSprint,sprint=decision.sprint,stamina=me:GetAttribute("Stamina")})
             lastAvoidanceLog=now
         end
@@ -951,6 +959,7 @@ return function(ctx, Planner, createTackle, WRApproach, Motion, createCarrierMov
                 local distance=((plan.approachTarget-root.Position)*Vector3.new(1,0,1)).Magnitude
                 if distance>2.5 or plan.continuousCatch then atTarget,parkedPosition=false,nil end
                 log("plan", {action=plan.kind, contactAt=plan.contactAt,
+                    approachTarget=xyz(plan.approachTarget),
                     jumpAt=plan.jumpAt, diveAt=plan.diveAt,
                     jumpTimingBudget=plan.jumpTimingBudget,diveTimingBudget=plan.diveTimingBudget,
                     continuousCatch=plan.continuousCatch,movementScale=plan.movementScale,stopAt=plan.stopAt,

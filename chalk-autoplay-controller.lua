@@ -19,15 +19,20 @@ return function(ctx,Policy)
     local previous=ctx.previousState
     local sameJob=type(previous)=="table" and previous.jobId==game.JobId
     local state=Policy.new(modes,sameJob and previous or settings)
+    local managed=ctx.preferencesManaged==true
+    local preferredEnabled=state.enabled
+    local ready=not managed
     if sameJob then
         state:restore(previous,workspace:GetServerTimeNow())
     end
     if ctx.startDisabled==true then
         -- Keep the selected mode, but never inherit input/queue ownership.
         state.enabled=false
-        state.owned=false
-        state.pending=nil
-        state.cancelWanted=false
+        if not (managed and sameJob) then
+            state.owned=false
+            state.pending=nil
+            state.cancelWanted=false
+        end
         state.message="Autoplay off"
     end
     local lastMatchFoundId,lastMatchFoundAt,lastMatchFoundMode
@@ -37,7 +42,9 @@ return function(ctx,Policy)
     end
     local saveError,lastSaved
     local function save()
-        local encoded=Http:JSONEncode({enabled=state.enabled,selectedMode=state.selectedMode})
+        local savedEnabled=state.enabled
+        if managed then savedEnabled=preferredEnabled end
+        local encoded=Http:JSONEncode({enabled=savedEnabled,selectedMode=state.selectedMode})
         if encoded==lastSaved then return end
         if type(writefile)~="function" then saveError="Settings cannot be saved on this executor";return end
         local ok,err=pcall(writefile,SettingsFile,encoded)
@@ -95,6 +102,7 @@ return function(ctx,Policy)
         end
     end
     local function tick()
+        if not ready then return end
         local current=ctx.snapshot()
         current.matchServer=workspace:GetAttribute("MatchServer")==true
         current.dataLoaded=player:GetAttribute("DataLoaded")==true
@@ -134,8 +142,10 @@ return function(ctx,Policy)
     function api.selectMode(key)
         local ok,reason=state:selectMode(key);if ok then save() end;return ok,reason
     end
-    function api.setEnabled(value)
+    function api.setEnabled(value,transient)
+        ready=true
         local result=state:setEnabled(value)
+        if managed and transient~=true then preferredEnabled=value==true end
         -- OFF must cancel an owned lobby search before an F8 unload can
         -- disconnect the periodic tick. Active matches still fail the gate.
         if not result then pcall(tick) end
@@ -148,6 +158,8 @@ return function(ctx,Policy)
         result.lastMatchFoundId,result.lastMatchFoundAt,result.lastMatchFoundMode=
             lastMatchFoundId,lastMatchFoundAt,lastMatchFoundMode
         result.saveError=saveError
+        result.preferredEnabled=state.enabled
+        if managed then result.preferredEnabled=preferredEnabled end
         return result
     end
     function api.unload()

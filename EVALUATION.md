@@ -1,6 +1,24 @@
-# Evaluation scope · 5.1.12
+# Evaluation scope · 5.1.13
 
 This release continues the authored, deterministic controller. Its checks establish local rule behavior and packaging properties. **They do not demonstrate a live win rate, a winning streak, perfect catching, or improvement through training.** The release has no training system or shared model.
+
+## 5.1.13 scope
+
+Saved settings now restore across rejoins, manual reloads and later Roblox launches. The former startup path overwrote Auto Leave with OFF; Autoplay also saved its temporary runtime state. A local two-slot journal now separates the user's durable choices from initialization, queue pauses and unloading. Constructors remain inert until all features exist, then restore once. The journal covers the master switch, assist, Full Auto, Autoplay, WR-pad repeat, Auto Leave, mode, usernames, alerts and window layout. A stale teleport record cannot override a saved OFF choice. Settings remain local to each device. Missing settings start gameplay OFF; an interrupted or unreadable save is reported rather than silently accepted.
+
+A DB pursuing a reachable observed live ball can now keep sprint on a checked detour. Previously only WR catching received that permission, causing unnecessary walking during some defensive bypasses. The caller still enforces stamina, phase, current ball, approach deadline and committed-action gates. The existing helper still checks the actual bounded heading at both speeds and rejects sprint for touching, blocked or unsafe paths. A private actual-pose snapshot replay of incident F002 found two safe sprint witnesses at 41 and 39 stamina where the old permission forced walking. That replay inferred its arrival point from the recorded direction and did not reconstruct every intervening frame, so it does not prove the earlier touchdown would become an interception. New diagnostics record the actual approach point and detour permission for future audits.
+
+Local checks passed **504 rules, 68 deterministic route/controller checks, 57 airborne checks, and 26 build/preferences/install checks**. The preference tests execute the real restore/setter/unload paths, including saved ON/OFF, a torn write, conflicting or corrupt records, mode removal, an existing queue and stale session records. These are offline checks, not native gameplay guarantees.
+
+The laptop naturally loaded the exact 5.1.13 candidate. A read-only in-game check found all seven saved switches equal to their active states and disk readback equal to memory, with Full Auto and 1v1 Autoplay ON and no settings error. Auto Leave was already OFF in the old saved file; the lost historical ON choice cannot be inferred. Verification of an ON Auto Leave choice in a live restart remains separate from the offline persistence checks.
+
+## Extended 5.1.12 failure audit
+
+Monitoring continued beyond the earlier two 4–0 matches. Every receiving failure, defensive incomplete, allowed catch and opponent point in the audited window is retained individually in the [incident review](evaluation/5.1.12-extended-incidents.json). Winning scores do not remove failures from that inventory. The frozen exact-build window contains 169 throws and 29 explicit completed wins: 21 at 4–0, seven at 4–1 and one at 4–2. Six Forfeit endings have unknown winners and are excluded. WR had 59 catches followed by touchdowns, ten incompletes, five breakups and one interception across 75 Floaters. DB had 64 interceptions, 15 breakups, five incompletes and ten allowed catches, five of which became touchdowns. Nine opponent points and 31 problem plays were reviewed; no runtime errors occurred. This is an observed window, not a reliability guarantee.
+
+The new post-claim traces rule out stopping the native dive as the cause of the inspected WR diving incomplete: the body continued another 2.85 studs after 52 ms and 5.68 studs after 106 ms, remained airborne and diving, and maintained positive local capsule overlap. A defensive diving claim also continued moving. Other accepted dives have overlapping contact margins, tilt and age. The inspected native client sends one Reach request; no rejection reason was exposed by the available result packet. Local contact is not authoritative possession. **These diving failures remain unresolved; this release does not claim to fix their server outcome.**
+
+Other failures had no catch action at all. Several WR forecasts lost reach during necessary blocker avoidance; two were already unreachable at the first post-launch forecast after prethrow travel loss. In the detailed F013 interception replay, the opposite passing side was collision-unsafe or worse, and all jump witnesses disappeared before the scheduled jump. Its route was initially reachable, so forcing a late jump or unsafe side flip is not a supported correction. The chooser's detour-distance allowance is an approximation rather than a commanded path; substituting one hypothetical passing side still passed the forecast and would not explain this case. Other defensive cases distinguish impossible travel, a fresh-position jump rejection, an opponent's earlier contact, and on-time local claims that were not awarded.
 
 ## 5.1.12 scope
 
@@ -221,7 +239,7 @@ git diff --exit-code -- chalk-it-up-1v1.lua chalk-autoexec-public.lua
 | Carry moves | Repeatable choices, close-threat gates, both spin paths, stamina, cooldown and observed takeoff |
 | Movement | Sprint handoffs, stationary holds, field bounds, blocker detours and avoiding steering oscillation |
 | Full Auto | Authored route selection, finite rule history, control release and startup isolation |
-| UI and packaging | Fresh/manual starts remain OFF, learner/transport modules are absent, Lua compiles, and builds are reproducible |
+| UI and packaging | New installs start automation OFF; saved choices restore after construction, learner/transport modules are absent, Lua compiles, and builds are reproducible |
 | Loading | Product/release guards, stale download rejection, failed-start fallback, F8 and verified session continuation |
 | Installation | Isolated destination checks, dry run, preserved unrelated files and rejection of unsafe destination layouts |
 
