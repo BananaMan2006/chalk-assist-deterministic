@@ -1,0 +1,39 @@
+{
+  "schemaVersion": 1,
+  "release": "5.1.28",
+  "incident": "WR10",
+  "nativeOutcome": "Incomplete",
+  "concededPointOnThisDown": false,
+  "scope": "Read-only replay of the prethrow moving-blocker decisions, separate from the live-ball side-comparison change.",
+  "findings": [
+    "The defender approached the opening route, then changed direction into the receiver\u2019s selected left bypass. The receiver moved far left of its intended route and later had insufficient travel capacity for the submitted pass.",
+    "The first observed alternative right preference released sprint. At the following three recorded states, no usable right-side candidate existed, so the unchanged helper fell back to the same left path.",
+    "A later right preference made less forward progress than the retained left path. During the captured overlap, neither side supplied a checked translational step, and both produced zero movement.",
+    "The live-ball entry comparison does not apply to these prethrow inputs and was not responsible for these decisions."
+  ],
+  "exactSnapshotReplay": {
+    "snapshots": 10,
+    "maximumLoggedDirectionError": 1.394879522743623e-07,
+    "firstAlternativeReleasesSprint": true,
+    "nextThreeAlternativeDirectionsIdenticalToOriginal": true,
+    "laterCurrentForwardSpeedStudsPerSecond": 19.31851533425601,
+    "laterAlternativeForwardSpeedStudsPerSecond": 14.86467397567333,
+    "overlapStatesWithNoCheckedTranslationEitherSide": 3
+  },
+  "handoff": {
+    "remainingStemDistanceStuds": 37.1321907043457,
+    "availableStemTravelStuds": 20.182955503463745,
+    "deficitStuds": 16.949235200881958,
+    "remainingTimeSeconds": 0.7641477584838867,
+    "observedStamina": 85,
+    "reachablePostthrowForecasts": 0,
+    "postthrowForecasts": 14
+  },
+  "decision": "No additional passing-side or collision-threshold change is justified by this comparison. Route recovery and the remaining catch feasibility are reviewed separately.",
+  "limits": [
+    "The replay uses the positions, velocities and movement state available at each logged decision. It does not use later opponent movement to select an earlier side.",
+    "The recorded blocked-state predicate is retained when reconstructing its unlogged contact-start time.",
+    "Matching a helper decision does not simulate server collision impulses or guarantee that an opponent will continue its current velocity.",
+    "This rejects a simple right-side preference as a demonstrated fix, not every possible route or escape strategy."
+  ]
+}

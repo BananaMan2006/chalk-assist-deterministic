@@ -1,0 +1,269 @@
+{
+  "schemaVersion": 1,
+  "release": "5.1.28",
+  "buildId": "217d14b313328b9a4b300382847917ee3fd27e9d6e1e7a4502bf9637105b1930",
+  "runtimeSha256": "a8fa5f5d395270cfec6efc6d61a6e30c22d9ee799165a595dcd3d64cd1efde40",
+  "scope": "Final review of all three opposing defensive catches in the observed 5.1.28 build before the monitoring cutoff. The sample is observational and does not guarantee future performance.",
+  "cases": [
+    {
+      "incident": "DB34",
+      "pass": "Floater",
+      "nativeBallOutcome": "Opponent Catch",
+      "terminal": "Tackled",
+      "concededPoint": false,
+      "reachableForecasts": 21,
+      "forecastCount": 21,
+      "jumpDiagnostics": [
+        {
+          "useJumpPower": false,
+          "jumpHeight": 6,
+          "jumpPower": 50,
+          "jumpStateEnabled": true,
+          "platformStand": false,
+          "floorMaterial": "Grass",
+          "humanoidState": "Running",
+          "jumpHeld": true,
+          "nearestOpponentGap": 1.9028018712997437,
+          "nearestOpponentHeightDifference": -0.006867408752441406,
+          "event": "jumpRequest",
+          "afterLaunchSeconds": 2.6836650371551514,
+          "dispatchLatenessMs": 10.396957397460938,
+          "requestAgeMs": null,
+          "rootHeightStuds": 4.6436567306518555,
+          "verticalVelocity": -0.09435341507196426
+        },
+        {
+          "useJumpPower": false,
+          "jumpHeight": 6,
+          "jumpPower": 50,
+          "jumpStateEnabled": true,
+          "platformStand": false,
+          "floorMaterial": "Grass",
+          "humanoidState": "Landed",
+          "jumpHeld": true,
+          "nearestOpponentGap": 1.933750867843628,
+          "nearestOpponentHeightDifference": 0.044950008392333984,
+          "event": "jumpRetry",
+          "afterLaunchSeconds": 2.7406890392303467,
+          "dispatchLatenessMs": null,
+          "requestAgeMs": 56.989192962646484,
+          "rootHeightStuds": 4.59183931350708,
+          "verticalVelocity": 1.4192341566085815
+        },
+        {
+          "useJumpPower": false,
+          "jumpHeight": 6,
+          "jumpPower": 50,
+          "jumpStateEnabled": true,
+          "platformStand": false,
+          "floorMaterial": "Grass",
+          "humanoidState": "Running",
+          "jumpHeld": true,
+          "nearestOpponentGap": 2.352975368499756,
+          "nearestOpponentHeightDifference": 0.5882329940795898,
+          "event": "jumpRequest",
+          "afterLaunchSeconds": 2.8261308670043945,
+          "dispatchLatenessMs": 2.5959014892578125,
+          "requestAgeMs": null,
+          "rootHeightStuds": 4.598556041717529,
+          "verticalVelocity": 1.7830018997192383
+        }
+      ],
+      "contact": {
+        "localContactAgeMs": 0.15466666081920266,
+        "localContactAfterLaunchSeconds": 2.957036018371582,
+        "nativeAirborneAtLocalContact": true,
+        "divingAtLocalContact": false,
+        "sampledCapsuleMarginStuds": 0.2536787518505208,
+        "sampledRootHeightStuds": 10.320352554321289,
+        "sampledVerticalVelocity": 32.163230895996094,
+        "ballisticHeightResidualStuds": 0.8230252225589982,
+        "localContactToResultNotificationMs": 66.864013671875,
+        "lastJumpDispatchLatenessMs": 2.5959014892578125,
+        "lastJumpDispatchToConfirmationMs": 12.712955474853516,
+        "nativeBallOutcome": "Catch"
+      },
+      "findings": [
+        "The first jump request and its retry did not produce a confirmed takeoff before the planned jump deadline. Both observations show enabled jumping, native height 6, UseJumpPower false, PlatformStand false, and a Grass floor; a disabled jump state or zero configured jump height is not supported by these samples.",
+        "The opponent was approximately 1.90 to 1.93 studs away during the failed request and retry. Native state changed from Running to Landed while the root remained near ground. This is consistent with body interference, but the observations do not prove its cause.",
+        "The controller discarded the expired jump-and-dive schedule instead of issuing its old dive. A new jump was requested 2.60 ms after its schedule and confirmed 12.71 ms later. The subsequent fresh local contact used native airborne reach.",
+        "The opponent received possession; a tackle then prevented a point. No local contact claim is treated as a successful interception."
+      ],
+      "response": "Preserve the native jump and airborne guards. The new diagnostics narrowed the failure class, but they do not justify forcing jump state, extending an expired dive, or adding retries without a demonstrated benefit."
+    },
+    {
+      "incident": "DB37",
+      "pass": "Floater",
+      "nativeBallOutcome": "Opponent Catch",
+      "terminal": "Touchdown",
+      "concededPoint": true,
+      "reachableForecasts": 15,
+      "forecastCount": 15,
+      "jumpDiagnostics": [
+        {
+          "useJumpPower": false,
+          "jumpHeight": 6,
+          "jumpPower": 50,
+          "jumpStateEnabled": true,
+          "platformStand": false,
+          "floorMaterial": "Grass",
+          "humanoidState": "Running",
+          "jumpHeld": true,
+          "nearestOpponentGap": 3.249720573425293,
+          "nearestOpponentHeightDifference": -7.867813110351562e-05,
+          "event": "jumpRequest",
+          "afterLaunchSeconds": 2.5819320678710938,
+          "dispatchLatenessMs": 9.190559387207031,
+          "requestAgeMs": null,
+          "rootHeightStuds": 4.636868000030518,
+          "verticalVelocity": 1.3068602129351348e-05
+        }
+      ],
+      "contact": {
+        "localContactAgeMs": 0.17379166092723608,
+        "localContactAfterLaunchSeconds": 2.8488521575927734,
+        "nativeAirborneAtLocalContact": true,
+        "divingAtLocalContact": false,
+        "sampledCapsuleMarginStuds": 0.01995903828460799,
+        "sampledRootHeightStuds": 10.709108352661133,
+        "sampledVerticalVelocity": -2.9803476333618164,
+        "ballisticHeightResidualStuds": 0.11010235592630124,
+        "localContactToResultNotificationMs": 134.67788696289062,
+        "lastJumpDispatchLatenessMs": 9.190559387207031,
+        "lastJumpDispatchToConfirmationMs": 16.798973083496094,
+        "nativeBallOutcome": "Catch"
+      },
+      "findings": [
+        "The moving jump was dispatched 9.19 ms after schedule, confirmed after 16.80 ms, and retained native airborne reach through the fresh local contact. No missing jump, rejected dive, or short-hand native reach transition was observed.",
+        "The character continued its planned approach at approximately 23.23 studs per second, with the root 6.14 studs inside the known goal at contact. This was already an end-zone contest, leaving no post-catch tackle interval before the touchdown.",
+        "The sampled current capsule overlapped the ball by approximately 0.020 stud at the local claim. The measured vertical trajectory differed from the ballistic model by approximately +0.110 stud, consistent with successful same-build upright Floater controls.",
+        "A bounded search retained the existing physical and timing margins. It found no earlier ordinary jump-and-dive contact at the first or final grounded planning snapshot. Unintegrated alternative ground launch positions offered only small modeled gains and are not a demonstrated executable or authoritative rescue."
+      ],
+      "alternativeSearch": {
+        "testedSchedules": 9416,
+        "snapshots": 2,
+        "ordinaryDispatchEarlierContacts": 0,
+        "unintegratedBestGainsMs": [
+          5.69462776184082,
+          3.857135772705078
+        ],
+        "jumpTimingMarginMs": 60,
+        "diveTimingMarginMs": 20,
+        "contactMarginStuds": 0.4,
+        "contactWindowHalfWidthMs": 12,
+        "limitations": [
+          "The search varies bounded contact times and jump/dive ages around the selected contact; it is not an exhaustive proof of optimal defense.",
+          "Alternative grounded launch-point plans are not integrated with live steering, collision, native sprint acknowledgement, or server arbitration.",
+          "Future opponent responses and wall clipping are not reproduced."
+        ]
+      },
+      "response": "Record this as an authoritative possession loss after a confirmed local attempt. No speculative timing, speed, catch-claim, or native-state override was made."
+    },
+    {
+      "incident": "DB49",
+      "pass": "Bullet",
+      "nativeBallOutcome": "Opponent Catch",
+      "terminal": "Tackled",
+      "concededPoint": false,
+      "pointAwardedTo": "Local side on second down",
+      "reachableForecasts": 4,
+      "forecastCount": 4,
+      "selectedAction": "Grounded dive",
+      "diveDispatchLatenessMs": 6.099700927734375,
+      "nativeAirborneAtDive": false,
+      "diveOriginPredictionErrorStuds": 0.22289874413496338,
+      "localContactClaimObserved": false,
+      "lastPlannedContactAfterLaunchSeconds": 1.0556423664093018,
+      "nativeResultPositionArcProjection": {
+        "elapsedSeconds": 0.9441990611227635,
+        "projectionErrorStuds": 8.507082240001914e-07,
+        "leadBeforePlannedContactMs": 111.44330528653823,
+        "interpretation": "Geometric position on the known arc only; not an authoritative time or competing claim order."
+      },
+      "findings": [
+        "The native grounded dive was dispatched 6.10 ms after its schedule, from a position only about 0.223 stud from the predicted origin. No fresh local contact claim was observed before the opposing Catch result.",
+        "The opponent result position lies earlier on the known arc than the selected local contact. This supports a spatial interception race, but it does not establish server timing or prove an omitted feasible local action.",
+        "The grounded defensive dive is permitted by the current DB action contract. No failed aerial-dive guard or missed jump is shown in this trace.",
+        "The local character resumed pursuit after the dive, and the native Tackled result awarded the point to the local side on second down. The failed interception is retained despite the recovered point."
+      ],
+      "response": "Retain the complete attempted-action and recovery trace. No unvalidated jump, speed, timing, or claim change was introduced."
+    }
+  ],
+  "successfulControls": [
+    {
+      "label": "Same-build upright Floater interception A",
+      "contact": {
+        "localContactAgeMs": 0.1814583665691316,
+        "localContactAfterLaunchSeconds": 2.863128900527954,
+        "nativeAirborneAtLocalContact": true,
+        "divingAtLocalContact": false,
+        "sampledCapsuleMarginStuds": 0.676344575055349,
+        "sampledRootHeightStuds": 10.625373840332031,
+        "sampledVerticalVelocity": -6.250348091125488,
+        "ballisticHeightResidualStuds": 0.12077662761612018,
+        "localContactToResultNotificationMs": 318.02916526794434,
+        "lastJumpDispatchLatenessMs": 6.203413009643555,
+        "lastJumpDispatchToConfirmationMs": 17.055988311767578,
+        "nativeBallOutcome": "Intercepted"
+      }
+    },
+    {
+      "label": "Same-build upright Floater interception B",
+      "contact": {
+        "localContactAgeMs": 0.15041668666526675,
+        "localContactAfterLaunchSeconds": 2.855133056640625,
+        "nativeAirborneAtLocalContact": true,
+        "divingAtLocalContact": false,
+        "sampledCapsuleMarginStuds": 0.38472736726391554,
+        "sampledRootHeightStuds": 10.709108352661133,
+        "sampledVerticalVelocity": -2.9803476333618164,
+        "ballisticHeightResidualStuds": 0.11239868705316347,
+        "localContactToResultNotificationMs": 300.2049922943115,
+        "lastJumpDispatchLatenessMs": 15.632152557373047,
+        "lastJumpDispatchToConfirmationMs": 16.417980194091797,
+        "nativeBallOutcome": "Intercepted"
+      }
+    },
+    {
+      "label": "Same-build upright Floater interception C",
+      "contact": {
+        "localContactAgeMs": 0.24958333233371377,
+        "localContactAfterLaunchSeconds": 2.854429006576538,
+        "nativeAirborneAtLocalContact": true,
+        "divingAtLocalContact": false,
+        "sampledCapsuleMarginStuds": 0.2943522080643737,
+        "sampledRootHeightStuds": 10.709108352661133,
+        "sampledVerticalVelocity": -2.9803476333618164,
+        "ballisticHeightResidualStuds": 0.11505333586893585,
+        "localContactToResultNotificationMs": 267.0159339904785,
+        "lastJumpDispatchLatenessMs": 9.324312210083008,
+        "lastJumpDispatchToConfirmationMs": 16.328096389770508,
+        "nativeBallOutcome": "Intercepted"
+      }
+    }
+  ],
+  "counts": {
+    "opposingCatchesReviewed": 3,
+    "concededTouchdowns": 1,
+    "tackledRecoveriesWithoutPointConceded": 2,
+    "tackleRecoveryAwardedLocalPoint": 1
+  },
+  "runtimeScope": "Release 5.1.28 changes the optional WR live-ball passing-side comparison. Actual DB snapshots retain role DB, so the controller does not opt these defensive plays into that comparison. Native jump, dive, and catch behavior was not changed for these incidents.",
+  "limitations": [
+    "Local BallTouched and current capsule overlap are observations, not authoritative possession or a timestamped server acceptance record.",
+    "The current local-contact sample reports the ball at the observation time. It does not expose the exact earlier frame-scan time sent in the native Reach payload.",
+    "Claim-to-result notification delay must not be interpreted as the order in which the server received or accepted competing claims.",
+    "Opponent poses are replicated client observations; they do not establish the opponent's simultaneous authoritative pose or catch eligibility.",
+    "A successful control shows that the same mechanism can work; it does not prove that an incident would have succeeded with a small timing change."
+  ],
+  "completed": true,
+  "monitoringCutoffUtc": "2026-11-22T21:30:00Z",
+  "resultTailSeconds": 8,
+  "observedDefensiveOutcomes": {
+    "Intercepted": 22,
+    "Swatted": 4,
+    "Catch": 3,
+    "Incomplete": 1
+  },
+  "observedDefensivePlays": 30
+}

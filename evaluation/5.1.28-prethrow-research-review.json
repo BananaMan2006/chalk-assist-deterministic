@@ -1,0 +1,80 @@
+{
+  "schemaVersion": 1,
+  "release": "5.1.28",
+  "scope": "Read-only investigation of receiving obstruction; no new runtime recovery was installed.",
+  "WR10": {
+    "firstSampledStemDeficitBeyondMaximumRecoveryAtSeconds": 1.110255,
+    "stemDistanceStuds": 79.781,
+    "scheduledCapacityStuds": 74.497,
+    "deficitStuds": 5.284,
+    "maximumRemainingRecoveryGainStuds": 4.2,
+    "observedStamina": 59,
+    "committedLateBurstAndFinishStamina": 82.558,
+    "actualRecoverySeconds": 0.10471058845520087,
+    "handoffDeficitStuds": 16.949235200881958,
+    "knownRouteFutureArcAvailable": true,
+    "optimisticDirectResearch": "Straight walking toward the known route catch point gave sampled contacts in some early states. This was not an executed movement witness.",
+    "checkedPrefixResearch": {
+      "statesAfterSnapSeconds": [
+        1.2124638557434082,
+        1.528228998184204
+      ],
+      "checkedWalkingPrefixSeconds": 0.2,
+      "projectedProgressStuds": [
+        0.9796255495569315,
+        3.280246947256345
+      ],
+      "minimumBodyGapStuds": [
+        5.37175165151319,
+        5.3098999849607456
+      ],
+      "extraStartupAllowanceSeconds": 0.2,
+      "flightEpochOffsetsSeconds": [
+        -0.05,
+        0,
+        0.05
+      ],
+      "sideChoicesPerState": 2,
+      "sampledSearches": 12,
+      "reachableContacts": 0,
+      "offlineOnlyPlannerHorizonSeconds": 7,
+      "productionPlannerHorizonSeconds": 4
+    },
+    "decision": "Reject this early direct fallback on current evidence. Extending planning horizon or assuming straight unblocked prefixes would not establish an executable rescue."
+  },
+  "WR25": {
+    "firstCatchHadPriorSide": false,
+    "firstCatchBodyGapStuds": 4.225,
+    "nearContactExclusionStuds": 4.25,
+    "forcedRightAtFirstCatch": "No usable alternate candidate; same zero output.",
+    "laterOverlapResearch": [
+      {
+        "currentMinimumBodyGapStuds": 2.674,
+        "alternateMinimumBodyGapStuds": 2.299
+      },
+      {
+        "currentMinimumBodyGapStuds": 2.738,
+        "alternateMinimumBodyGapStuds": 2.198
+      }
+    ],
+    "decision": "Reject a later forced escape as a clearance-preserving correction; its forward gain increases modeled body overlap."
+  },
+  "nativeControlResearch": {
+    "ordinaryJump": "The authorized cached client presents ordinary jump in Live. A prethrow jump is therefore a plausible control to investigate; no live obstacle-clearance test was performed.",
+    "freeMotionJumpHeightStuds": 6,
+    "sampleGravityStudsPerSecondSquared": 196.2,
+    "freeMotionFlightSeconds": 0.494619366829498,
+    "freeMotionApexSeconds": 0.247309683414749,
+    "jukeSpinTruck": "Cached client gates these to receiving after possession, not the prethrow route.",
+    "namedJumpRelease": "A configured named Jump release is distinct from ordinary jump. Its configuration does not establish that the current setup exposes or permits its activation.",
+    "dive": "Live-available but has recovery/cooldown and is outside current receiving dive-outside-endzone policy.",
+    "limitation": "Current avoidance plans horizontal paths; it does not test vertical obstacle clearance. Native body geometry, state permissions, jump suppression near bodies and server jam acceptance need direct validation before a vertical strategy could be enabled."
+  },
+  "limits": [
+    "Finite offline searches are not impossibility proofs.",
+    "Current and counterfactual opponent paths can differ; no reacting opponent is simulated.",
+    "Cached client rules do not reveal all server decisions.",
+    "No source extraction, game physics modification, live blind test or new production fallback was performed.",
+    "No raw client code, account identities, credentials or local paths are included."
+  ]
+}

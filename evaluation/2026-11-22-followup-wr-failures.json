@@ -1,0 +1,470 @@
+{
+  "schemaVersion": 1,
+  "window": {
+    "startEpochSeconds": 1795376336.0,
+    "endExclusiveEpochSeconds": 1795383000.0,
+    "observedThroughEpochSeconds": 1795383008.994505,
+    "completed": true
+  },
+  "countsByVersion": {
+    "5.1.24": {
+      "resolvedPasses": 19,
+      "catches": 15,
+      "noncatches": 4,
+      "nativeOutcomes": {
+        "Catch": 15,
+        "Incomplete": 4
+      }
+    },
+    "5.1.25": {
+      "resolvedPasses": 12,
+      "catches": 12,
+      "noncatches": 0,
+      "nativeOutcomes": {
+        "Catch": 12
+      }
+    },
+    "5.1.26": {
+      "resolvedPasses": 37,
+      "catches": 34,
+      "noncatches": 3,
+      "nativeOutcomes": {
+        "Catch": 34,
+        "Swatted": 1,
+        "Incomplete": 2
+      }
+    },
+    "5.1.27": {
+      "resolvedPasses": 44,
+      "catches": 40,
+      "noncatches": 4,
+      "nativeOutcomes": {
+        "Catch": 40,
+        "Swatted": 3,
+        "Intercepted": 1
+      }
+    },
+    "5.1.28": {
+      "resolvedPasses": 27,
+      "catches": 25,
+      "noncatches": 2,
+      "nativeOutcomes": {
+        "Catch": 25,
+        "Incomplete": 2
+      }
+    }
+  },
+  "countsByObservedRevision": {
+    "5.1.24 revision 1": {
+      "resolvedPasses": 19,
+      "catches": 15,
+      "noncatches": 4,
+      "nativeOutcomes": {
+        "Catch": 15,
+        "Incomplete": 4
+      }
+    },
+    "5.1.25 revision 1": {
+      "resolvedPasses": 4,
+      "catches": 4,
+      "noncatches": 0,
+      "nativeOutcomes": {
+        "Catch": 4
+      }
+    },
+    "5.1.25 revision 2": {
+      "resolvedPasses": 8,
+      "catches": 8,
+      "noncatches": 0,
+      "nativeOutcomes": {
+        "Catch": 8
+      }
+    },
+    "5.1.26 revision 1": {
+      "resolvedPasses": 37,
+      "catches": 34,
+      "noncatches": 3,
+      "nativeOutcomes": {
+        "Catch": 34,
+        "Swatted": 1,
+        "Incomplete": 2
+      }
+    },
+    "5.1.27 revision 1": {
+      "resolvedPasses": 44,
+      "catches": 40,
+      "noncatches": 4,
+      "nativeOutcomes": {
+        "Catch": 40,
+        "Swatted": 3,
+        "Intercepted": 1
+      }
+    },
+    "5.1.28 revision 1": {
+      "resolvedPasses": 27,
+      "catches": 25,
+      "noncatches": 2,
+      "nativeOutcomes": {
+        "Catch": 25,
+        "Incomplete": 2
+      }
+    }
+  },
+  "observedBuilds": {
+    "5.1.24 revision 1": {
+      "release": "5.1.24",
+      "buildId": "98d6fc36be5b287ec1f95a906a384440bf3fbbfe5ece8a009116f148c7d9ffbb"
+    },
+    "5.1.25 revision 1": {
+      "release": "5.1.25",
+      "buildId": "819f9f9da5a3bc730e23aeca583a1c526d821d4ee3fe7b91d9e8d4b6065f7bdd"
+    },
+    "5.1.25 revision 2": {
+      "release": "5.1.25",
+      "buildId": "84bb5f82ef607983caaf5b70afe56d0401998436391026e492749e418cad2137"
+    },
+    "5.1.26 revision 1": {
+      "release": "5.1.26",
+      "buildId": "09545b3b26f99ebe9853cde5251b8ea553daa16eec54abd6823658261a6891e1"
+    },
+    "5.1.27 revision 1": {
+      "release": "5.1.27",
+      "buildId": "565c77ca91aacce826d58be004c031d504a7013ea0c135ddec8f33ddfbc5dc93"
+    },
+    "5.1.28 revision 1": {
+      "release": "5.1.28",
+      "buildId": "217d14b313328b9a4b300382847917ee3fd27e9d6e1e7a4502bf9637105b1930"
+    }
+  },
+  "noncatchCount": 13,
+  "pending": [],
+  "abortedWithoutNativeOutcome": [
+    {
+      "case": "5.1.24 revision 1 WR22",
+      "buildId": "98d6fc36be5b287ec1f95a906a384440bf3fbbfe5ece8a009116f148c7d9ffbb",
+      "status": "AbortedByForfeit"
+    },
+    {
+      "case": "5.1.25 revision 2 WR7",
+      "buildId": "84bb5f82ef607983caaf5b70afe56d0401998436391026e492749e418cad2137",
+      "status": "AbortedByForfeit"
+    }
+  ],
+  "cases": [
+    {
+      "case": "5.1.24 revision 1 WR9",
+      "version": "5.1.24",
+      "buildId": "98d6fc36be5b287ec1f95a906a384440bf3fbbfe5ece8a009116f148c7d9ffbb",
+      "secondsIntoWindow": 63.667495012283325,
+      "pass": "Floater",
+      "nativeOutcome": "Incomplete",
+      "reachableForecasts": 7,
+      "totalForecasts": 34,
+      "actions": [],
+      "localClaimObserved": false,
+      "category": "postthrow_avoidance_and_lost_reach",
+      "finding": "Initially reachable catches became unreachable after repeated passing detours. No jump, dive or local contact claim was observed.",
+      "evidence": [
+        "Stem handoff distance 10.506 studs versus 9.245 capacity.",
+        "Last reachable forecast at throw +0.597 s; later movement continued pursuit."
+      ],
+      "change": "The 5.1.25 pursuit change retains fine-angle candidate search even after no catch is currently reachable. A sampled fixed-state comparison improves forward progress, not proof this play would be caught.",
+      "uncertainty": "The separate contributions of initial route loss, subsequent detours and opponent motion are not fully reconstructed."
+    },
+    {
+      "case": "5.1.24 revision 1 WR24",
+      "version": "5.1.24",
+      "buildId": "98d6fc36be5b287ec1f95a906a384440bf3fbbfe5ece8a009116f148c7d9ffbb",
+      "secondsIntoWindow": 430.6446039676666,
+      "pass": "Floater",
+      "nativeOutcome": "Incomplete",
+      "reachableForecasts": 0,
+      "totalForecasts": 17,
+      "actions": [],
+      "localClaimObserved": false,
+      "category": "opening_frame_gap_and_lost_travel",
+      "finding": "A 1.015-second frame/callback gap overlapped the opening. Forward progress during the gap was only 0.291 stud; all 17 later catch forecasts were unreachable.",
+      "evidence": [
+        "The first two route samples were at elapsed 0.453 s and 1.468 s, spanning the scheduled opening sprint.",
+        "Stem deadline deficit 38.298 studs.",
+        "Controller ticks around the gap were 1.878 ms and 1.030 ms, not a one-second planner solve."
+      ],
+      "change": "Frame-gap diagnostics identify this interruption; no runtime cure is claimed.",
+      "uncertainty": "The reason for engine cadence loss is unknown. The 5.1.25 starting-position shift does not by itself restore a missed second."
+    },
+    {
+      "case": "5.1.24 revision 1 WR25",
+      "version": "5.1.24",
+      "buildId": "98d6fc36be5b287ec1f95a906a384440bf3fbbfe5ece8a009116f148c7d9ffbb",
+      "secondsIntoWindow": 447.060870885849,
+      "pass": "Floater",
+      "nativeOutcome": "Incomplete",
+      "reachableForecasts": 11,
+      "totalForecasts": 12,
+      "actions": [
+        "jumpRequest",
+        "jump"
+      ],
+      "localClaimObserved": true,
+      "category": "local_claim_without_native_catch",
+      "finding": "Jump and fresh local contact occurred near predicted first touch, followed by native Incomplete.",
+      "evidence": [
+        "Jump dispatch 13.547 ms late; local claim 1.101 ms after forecast firstTouch, age 0.384 ms.",
+        "Local claim margin +0.148 stud and next sampled margin +1.832 studs at +65.9 ms.",
+        "Root 9.259 studs inside the goal; native Incomplete 517.926 ms after claim.",
+        "No dive or tilt discontinuity; speed 27 to 20 already represented by the 0.32 s sprint budget."
+      ],
+      "change": "No incident-specific runtime fix is claimed.",
+      "uncertainty": "The client observations do not reveal the server possession-rejection reason."
+    },
+    {
+      "case": "5.1.24 revision 1 WR36",
+      "version": "5.1.24",
+      "buildId": "98d6fc36be5b287ec1f95a906a384440bf3fbbfe5ece8a009116f148c7d9ffbb",
+      "secondsIntoWindow": 679.9150159358978,
+      "pass": "Floater",
+      "nativeOutcome": "Incomplete",
+      "reachableForecasts": 0,
+      "totalForecasts": 26,
+      "actions": [],
+      "localClaimObserved": false,
+      "category": "later_stem_obstruction_and_lost_travel",
+      "finding": "Opening movement progressed normally, but a later prethrow blocker caused stops and lateral drift. No postthrow catch forecast was reachable.",
+      "evidence": [
+        "No-room and zero-output passing decisions at roughly 2.73\u20132.80 s route elapsed.",
+        "Stem handoff position moved from the centered lane to x 10.36; remaining distance 20.175 studs versus 9.430 capacity.",
+        "No native jam or nearby frame-gap event was observed."
+      ],
+      "change": "The 5.1.25 starting-position choice may alter the meeting point but does not directly fix this later obstruction.",
+      "uncertainty": "An alternative complete route through the reactive blocker is not yet validated."
+    },
+    {
+      "case": "5.1.26 revision 1 WR8",
+      "version": "5.1.26",
+      "buildId": "09545b3b26f99ebe9853cde5251b8ea553daa16eec54abd6823658261a6891e1",
+      "secondsIntoWindow": 1827.871260881424,
+      "pass": "Floater",
+      "nativeOutcome": "Swatted",
+      "reachableForecasts": 13,
+      "totalForecasts": 14,
+      "actions": [
+        "jumpRequest",
+        "jump"
+      ],
+      "localClaimObserved": true,
+      "category": "contested_native_swat",
+      "finding": "Jump and fresh local contact occurred, but the native result was Swatted. All 13 recorded reachable forecasts were labeled contested.",
+      "evidence": [
+        "The final modeled defender arrival preceded our first contact by 55.789 ms.",
+        "Jump dispatched 8.637 ms late; local claim 3.952 ms after forecast firstTouch, with +0.333 stud local capsule margin.",
+        "The last replicated opponent sample was 4.865 studs away horizontally and rising, 1.541 ms before the claim.",
+        "The prior same-match left route caught; right was selected before a known failure, and the next left route caught."
+      ],
+      "change": "No missing-input or contact-discontinuity defect was shown. Candidate 5.1.27 removes a separate start-side/cut-side cue only when an existing same-depth route has no worse modeled coverage, stamina, history or first-contact time. This does not establish the cause of this swat or rescue it.",
+      "uncertainty": "The camping gate had no qualifying observations, so the rare Bullet counter was not justified. Replicated pose and predicted arrival do not establish server claim ordering or the opponent\u2019s intent."
+    },
+    {
+      "case": "5.1.26 revision 1 WR34",
+      "version": "5.1.26",
+      "buildId": "09545b3b26f99ebe9853cde5251b8ea553daa16eec54abd6823658261a6891e1",
+      "secondsIntoWindow": 2380.460428953171,
+      "pass": "Floater",
+      "nativeOutcome": "Incomplete",
+      "reachableForecasts": 0,
+      "totalForecasts": 12,
+      "actions": [],
+      "localClaimObserved": false,
+      "category": "reactive_stem_obstruction_and_lost_travel",
+      "finding": "The requested shifted start was applied, but repeated passing detours and stops moved the receiver far off the middle stem. All 12 catch forecasts were unreachable.",
+      "evidence": [
+        "Requested StartX 11.528017280 and first native X 11.528017044 agree within 0.000001 stud.",
+        "The defender was 1.12 studs right of center at setup, moving left; away-left setup selection applied.",
+        "First-second avoidance turned nearly sideways, then later obstruction drove root to x 31.7 while the middle target was x 18.89.",
+        "At handoff, 40.620 studs remained versus 18.810 travel capacity, a 21.811-stud deficit.",
+        "No native jam, frame gap, jump, dive, or local contact claim was observed."
+      ],
+      "change": "Four exact recorded avoidance states were replayed. Forcing the opposite passing side left the first three unchanged; the fourth gained only 0.435 stud/s of forward progress. No helper change or reversal of the 21.811-stud deficit is justified. Centered-pressure cut diversity does not change this off-center setup.",
+      "uncertainty": "Opponent reactions are not counterfactually simulated. Missing catch actions were consistent with lost reach, not a demonstrated dispatch failure."
+    },
+    {
+      "case": "5.1.26 revision 1 WR74",
+      "version": "5.1.26",
+      "buildId": "09545b3b26f99ebe9853cde5251b8ea553daa16eec54abd6823658261a6891e1",
+      "secondsIntoWindow": 3247.141051054001,
+      "pass": "Floater",
+      "nativeOutcome": "Incomplete",
+      "reachableForecasts": 0,
+      "totalForecasts": 14,
+      "actions": [],
+      "localClaimObserved": false,
+      "category": "live_cadence_gaps_and_lost_travel",
+      "finding": "Two roughly one-second render/callback and Heartbeat gaps occurred during the Live opening. All 14 catch forecasts were unreachable after the travel deficit.",
+      "evidence": [
+        "At route elapsed 0.629, 1.685 and 2.773 s, forward root positions were -13.341, -11.541 and -8.480 studs: only 4.860 studs gained across 2.145 s.",
+        "The two callback gaps were 1.007 and 1.005 s; recorded controller ticks were 0.398 and 0.750 ms. Heartbeat age was about 1.004 s in each record.",
+        "Focus was unknown at the first gap; the second explicitly recorded focused=true.",
+        "The stem handoff had 63.260 studs remaining versus 17.403 capacity, a 45.857-stud deficit.",
+        "Heading stayed centered and no passing detour, native jam, jump, dive or local claim was observed. The setup defender was beyond the bounded reach used to request a lateral start."
+      ],
+      "change": "A finite optimistic early-direct search from the first post-gap state tried 24 movement prefixes across four launch epochs: 0/96 produced a robust airborne endzone catch under native speed/stamina limits. A successful recorded control admitted 18/24 prefixes. Turning and blockers were omitted optimistically; this is not proof that every possible route is impossible. No production recovery change or restoration of the missed travel is justified.",
+      "uncertainty": "The engine/cadence interruption cause is unknown. These observations do not prove a slow controller solve or background-only throttling."
+    },
+    {
+      "case": "5.1.27 revision 1 WR10",
+      "version": "5.1.27",
+      "buildId": "565c77ca91aacce826d58be004c031d504a7013ea0c135ddec8f33ddfbc5dc93",
+      "secondsIntoWindow": 3518.6690809726715,
+      "pass": "Floater",
+      "nativeOutcome": "Swatted",
+      "reachableForecasts": 16,
+      "totalForecasts": 16,
+      "actions": [
+        "jumpRequest",
+        "jump"
+      ],
+      "localClaimObserved": true,
+      "category": "contested_native_swat_same_side_route",
+      "finding": "The existing same-side right-start/right-cut route produced a confirmed jump and fresh local contact, but native possession was Swatted. All 16 recorded reachable forecasts were contested.",
+      "evidence": [
+        "20-yard middle stem, 52.518-degree cut and ball target 1 stud inside the sideline; this was not a new cross-cut branch.",
+        "Last modeled defender arrival preceded firstTouch by 54.895 ms.",
+        "Jump dispatched 17.305 ms late and was confirmed 16.793 ms after dispatch. Actual post-input JumpHeight was 6 and the native Jumping state remained enabled.",
+        "Local claim was 5.207 ms after forecast firstTouch; the root was 7.847 studs inside goal.",
+        "Nearest observed opponent gap was 2.963 studs at jump dispatch and 1.918 studs about 35 ms before the local claim.",
+        "The stem handoff deficit was 0.729 stud; no frame gap or missing jump was observed."
+      ],
+      "change": "No incident-specific runtime fix or successful possession reversal is claimed. The route-diversity change does not establish the cause of this existing same-side swat.",
+      "uncertainty": "Client contact, replicated opponent pose and conservative arrival forecasts do not reveal server claim ordering or possession rejection. The rare-Bullet camping gate had no qualifying history."
+    },
+    {
+      "case": "5.1.27 revision 1 WR13",
+      "version": "5.1.27",
+      "buildId": "565c77ca91aacce826d58be004c031d504a7013ea0c135ddec8f33ddfbc5dc93",
+      "secondsIntoWindow": 3573.683419942856,
+      "pass": "Floater",
+      "nativeOutcome": "Swatted",
+      "reachableForecasts": 16,
+      "totalForecasts": 17,
+      "actions": [
+        "jumpRequest",
+        "jump"
+      ],
+      "localClaimObserved": true,
+      "category": "contested_native_swat_alternate_same_side_route",
+      "finding": "After the right-side swat, route selection switched left. One left route caught, then this left-start/left-cut route produced a jump and local contact but native Swatted.",
+      "evidence": [
+        "20-yard middle stem and 52.518-degree left cut; not the cross-cut branch.",
+        "All 16 reachable forecasts were contested; the last modeled defender arrival preceded firstTouch by 54.297 ms.",
+        "Jump dispatched 6.911 ms late and confirmed 16.926 ms after dispatch; native JumpHeight was 6 and Jumping remained enabled.",
+        "Local claim occurred 12.254 ms after forecast firstTouch, root 7.820 studs inside goal.",
+        "The last replicated opponent sample was 5.841 studs away horizontally and rising, 1.453 ms before the local claim. Native Swatted followed the claim by 99.350 ms.",
+        "Handoff deficit was 1.477 studs, with no frame-gap event or missing jump."
+      ],
+      "change": "No missing-action fix or server possession reversal is claimed. Selection did change sides after the earlier right-side failure; this outcome does not justify a blanket delay adjustment.",
+      "uncertainty": "No qualifying camping history was present. Client contact and replicated pose cannot establish authoritative claim ordering or explain the native award."
+    },
+    {
+      "case": "5.1.27 revision 1 WR26",
+      "version": "5.1.27",
+      "buildId": "565c77ca91aacce826d58be004c031d504a7013ea0c135ddec8f33ddfbc5dc93",
+      "secondsIntoWindow": 3857.863200902939,
+      "pass": "Floater",
+      "nativeOutcome": "Intercepted",
+      "reachableForecasts": 6,
+      "totalForecasts": 35,
+      "actions": [],
+      "localClaimObserved": false,
+      "category": "reactive_obstruction_lost_reach_and_interception",
+      "finding": "The defender followed the shifted start, then repeated passing detours moved the receiver left before a right-side throw. Six contested catch forecasts appeared briefly, then reach was lost before any scheduled jump.",
+      "evidence": [
+        "Right StartX applied within 0.000003 stud; first Live defender X 26.336 versus local X 26.260.",
+        "Handoff position X 12.132/Z 57.084 had 22.700 studs remaining versus 16.920 capacity, a 5.779-stud deficit.",
+        "Last reachable jump-dive forecast was throw +0.546 s, over two seconds before its scheduled jump.",
+        "All six reachable forecasts were contested; no jump, dive, local claim, native jam or frame gap was observed.",
+        "Native Intercepted awarded the opponent a point. This was a same-side right-start/right-cut 52.518-degree route."
+      ],
+      "change": "Exact replay reproduced thirteen avoidance decisions. The new catch encounter preferred a slightly higher instantaneous score even though the other legal side made about one additional stud of checked progress over 250 ms. Candidate 5.1.28 compares both bounded turning paths once at a new WR catch encounter, retains the side lock, and adds no future sprint speed. An approximate full approach replay yielded airborne endzone overlap in three sampled timing cases for the alternate side versus none for the original.",
+      "uncertainty": "Clearing an old side alone did not fix the choice; it was selected again from the immediate score. The full approach replay fixes the recorded opponent path and omits server arbitration, collision impulses and some native transitions. It is not proof this interception would be reversed. Live validation of the new branch is still required."
+    },
+    {
+      "case": "5.1.27 revision 1 WR41",
+      "version": "5.1.27",
+      "buildId": "565c77ca91aacce826d58be004c031d504a7013ea0c135ddec8f33ddfbc5dc93",
+      "secondsIntoWindow": 4161.778290987015,
+      "pass": "Floater",
+      "nativeOutcome": "Swatted",
+      "reachableForecasts": 10,
+      "totalForecasts": 11,
+      "actions": [
+        "jumpRequest",
+        "jump"
+      ],
+      "localClaimObserved": true,
+      "category": "contested_native_swat_same_side_left_route",
+      "finding": "A same-side left route produced a confirmed jump and fresh upright local contact, followed by native Swatted. All ten reachable forecasts were contested.",
+      "evidence": [
+        "20-yard stem and 52.518-degree left cut, with only 0.262 stud handoff deficit.",
+        "Last modeled defender arrival preceded firstTouch by 52.156 ms.",
+        "Jump dispatched 10.948 ms late and confirmed 15.577 ms later; actual JumpHeight was 6 and Jumping remained enabled.",
+        "Fresh claim age was 0.409 ms, root 7.734 studs inside the goal; claim preceded the modeled firstTouch by 1.723 ms.",
+        "Native Swatted followed the local claim by 87.302 ms. No dive or frame gap was observed."
+      ],
+      "change": "No missing-input defect or incident-specific possession fix is claimed.",
+      "uncertainty": "Client overlap does not establish server possession priority. No qualifying camping history justified the rare Bullet counter."
+    },
+    {
+      "case": "5.1.28 revision 1 WR10",
+      "version": "5.1.28",
+      "buildId": "217d14b313328b9a4b300382847917ee3fd27e9d6e1e7a4502bf9637105b1930",
+      "secondsIntoWindow": 5621.653573036194,
+      "pass": "Floater",
+      "nativeOutcome": "Incomplete",
+      "reachableForecasts": 0,
+      "totalForecasts": 14,
+      "actions": [],
+      "localClaimObserved": false,
+      "category": "prethrow_reactive_blocker_and_unrecoverable_stem_debt",
+      "finding": "The shifted start was applied, but a head-on defender reversed into the bypass. Large leftward travel and near-body stops occurred before the throw; all fourteen later catch forecasts were unreachable.",
+      "evidence": [
+        "Requested and actual start X matched within 0.000001 stud. Native sprint was observed by elapsed 0.476 s.",
+        "The receiver moved from X 26.260 to X 4.917 before returning to the middle; three logged avoidance decisions issued zero movement near the body.",
+        "At elapsed 1.110 s, middle-stem distance exceeded scheduled capacity by 5.284 studs, larger than the 4.2-stud gain from the entire remaining bounded recovery budget.",
+        "Current stamina 59 could not fund the 82.558 committed late-burst/finish cost without future regeneration. Only 0.105 s of measured recovery was later used.",
+        "Handoff distance 37.132 versus 20.183 capacity left a 16.949-stud deficit. No jump, dive, local claim, named jam or frame gap was recorded.",
+        "The 5.1.28 side-comparison branch did not apply: obstruction happened before the arc existed; afterward no reachable catch deadline was available."
+      ],
+      "change": "Ten exact avoidance decisions were reproduced. Forcing the other side lost sprint at entry, had no usable choice at the next three decisions, and worsened forward travel at a later walking state. No simple side-ranking fix or late-sprint rescue is established. An earlier direct route remains unproven: two actual 200-ms walking prefixes, both side choices, another 200-ms startup allowance and three flight epochs gave zero contacts in twelve offline searches.",
+      "uncertainty": "An optimistic straight-prefix search found sampled contacts from elapsed 1.327 s but none from elapsed 2.160 s onward. Those earlier positives did not survive the tested actual-helper prefixes. The private search extended only its offline future-flight horizon from four to seven seconds; production timing stayed unchanged."
+    },
+    {
+      "case": "5.1.28 revision 1 WR25",
+      "version": "5.1.28",
+      "buildId": "217d14b313328b9a4b300382847917ee3fd27e9d6e1e7a4502bf9637105b1930",
+      "secondsIntoWindow": 5930.16474199295,
+      "pass": "Floater",
+      "nativeOutcome": "Incomplete",
+      "reachableForecasts": 6,
+      "totalForecasts": 19,
+      "actions": [],
+      "localClaimObserved": false,
+      "category": "near_body_catch_approach_lost_reach",
+      "finding": "A modest stem deficit was followed by a blocked catch approach. Six initially reachable forecasts became unreachable after zero movement and leftward escape despite a rightward target; no jump or dive was dispatched.",
+      "evidence": [
+        "20-yard middle stem with a 52.518-degree right cut and correctly applied right start.",
+        "Handoff distance 20.902 versus 18.771 capacity: 2.130-stud deficit.",
+        "First catch approach issued zero movement at throw +0.070 s. Later requested direction (+0.686,+0.722) was changed to leftward (-0.722,+0.686) during the near-body escape.",
+        "Last reachable forecast at throw +0.504 s; the path became clear around +0.756 s.",
+        "All six reachable forecasts were contested; no local claim, native jam or frame gap was observed.",
+        "The first catch input had no retained side, but the observed body gap was 4.225 studs, inside the 4.25 near-contact exclusion. Forcing right had no usable candidate and preserved the zero output."
+      ],
+      "change": "Six exact helper decisions were reproduced within 0.00000004 vector error. The first encounter has no alternate-side rescue. A later rightward escape gained about three studs of progress in a 250-ms fixed-motion replay, but reduced minimum body separation from 2.674 to 2.299 studs and from 2.738 to 2.198 in two states. It was rejected as a clearance-preserving fix. No incident-specific rescue is claimed.",
+      "uncertainty": "Existing collision checks may leave no safe rightward path at the observed moment. Removing them or forcing sprint has not been justified."
+    }
+  ],
+  "limits": [
+    "Local claims and geometric reach forecasts are not native possession.",
+    "Sequential versions and opponents are not a controlled win-rate comparison.",
+    "Known fixes are described as related mitigations, not guaranteed reversals of historical outcomes.",
+    "No account names, account identifiers or extracted client code included."
+  ]
+}

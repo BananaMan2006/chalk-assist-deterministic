@@ -1,0 +1,208 @@
+{
+  "schemaVersion": 1,
+  "release": "5.1.27",
+  "decision": "Rejected research candidate; no runtime or timing-margin changes",
+  "incident": "5.1.26 DB48",
+  "question": "Could a snapshot-observed opponent crossing justify replacing a parked pre-jump interval with a continuous approach, without changing the contact deadline or reducing the existing robustness checks?",
+  "nativeObservation": {
+    "reachableForecasts": 19,
+    "jumpRequests": 3,
+    "jumpRetries": 3,
+    "confirmedJumps": 0,
+    "localContactClaims": 0,
+    "nativeOutcome": "Opposing catch followed by touchdown",
+    "closestObservedOpponentGapStuds": 1.146,
+    "interpretation": "The character remained near the floor and was displaced while jump input was held. Nearby body interference is a hypothesis, not a proven native rejection reason."
+  },
+  "method": {
+    "productionChanged": false,
+    "privateExperiment": "A private planner copy expanded the existing continuous Floater jump conversion to grounded early arrivals. This intentionally broad experiment is not an accepted implementation.",
+    "snapshotProjection": "For each retained solve snapshot, extrapolate only the opponent position and velocity available at that snapshot. Compare horizontal separation over the final 350 milliseconds before the candidate jump.",
+    "retrospectiveComparison": "Interpolate the opponent positions recorded during the actual play, retaining that trajectory while changing only the candidate local approach. This is a hindsight comparison, not an available runtime observation.",
+    "unchangedConstraints": [
+      "Native grounded and action eligibility",
+      "Normal contact margin and timing variants",
+      "Connected first-contact window",
+      "Movement and sprint limits",
+      "Minimum analog movement scale",
+      "Field bounds"
+    ],
+    "scope": "Fifteen grounded snapshots with native sprint already active; two successful Floater interception controls at early and late grounded snapshots."
+  },
+  "failureComparisons": [
+    {
+      "snapshotAfterLaunchSeconds": 0.004576206207275391,
+      "candidates": [
+        {
+          "variant": "released planner",
+          "action": "jump",
+          "continuousMovement": false,
+          "movementScale": null,
+          "contactAfterLaunchSeconds": 2.873326301574707,
+          "firstTouchAfterLaunchSeconds": 2.8535966873168945,
+          "marginStuds": 0.4008485129357324,
+          "recordedOpponentMinimumGapInFinal350msBeforeJumpStuds": 1.6986556347444302,
+          "snapshotLinearPredictionMinimumGapInFinal350msBeforeJumpStuds": 35.74917573040978
+        },
+        {
+          "variant": "private unconditional pacing experiment",
+          "action": "jump",
+          "continuousMovement": true,
+          "movementScale": 0.8234862399500763,
+          "contactAfterLaunchSeconds": 2.8725743293762207,
+          "firstTouchAfterLaunchSeconds": 2.85227632522583,
+          "marginStuds": 0.40149630793641533,
+          "recordedOpponentMinimumGapInFinal350msBeforeJumpStuds": 5.110616230019602,
+          "snapshotLinearPredictionMinimumGapInFinal350msBeforeJumpStuds": 36.00658495306288
+        }
+      ]
+    },
+    {
+      "snapshotAfterLaunchSeconds": 1.1285979747772217,
+      "candidates": [
+        {
+          "variant": "released planner",
+          "action": "jump",
+          "continuousMovement": false,
+          "movementScale": null,
+          "contactAfterLaunchSeconds": 2.87331485748291,
+          "firstTouchAfterLaunchSeconds": 2.854003429412842,
+          "marginStuds": 0.40032351463744176,
+          "recordedOpponentMinimumGapInFinal350msBeforeJumpStuds": 1.6984207946100267,
+          "snapshotLinearPredictionMinimumGapInFinal350msBeforeJumpStuds": 3.691562071364479
+        },
+        {
+          "variant": "private unconditional pacing experiment",
+          "action": "jump",
+          "continuousMovement": true,
+          "movementScale": 0.7174993731294778,
+          "contactAfterLaunchSeconds": 2.872631072998047,
+          "firstTouchAfterLaunchSeconds": 2.8516006469726562,
+          "marginStuds": 0.40146757188304116,
+          "recordedOpponentMinimumGapInFinal350msBeforeJumpStuds": 3.817605903205547,
+          "snapshotLinearPredictionMinimumGapInFinal350msBeforeJumpStuds": 2.252279114043155
+        }
+      ]
+    },
+    {
+      "snapshotAfterLaunchSeconds": 2.0101981163024902,
+      "candidates": [
+        {
+          "variant": "released planner",
+          "action": "jump",
+          "continuousMovement": false,
+          "movementScale": null,
+          "contactAfterLaunchSeconds": 2.873352527618408,
+          "firstTouchAfterLaunchSeconds": 2.8538153171539307,
+          "marginStuds": 0.40205166230298683,
+          "recordedOpponentMinimumGapInFinal350msBeforeJumpStuds": 1.6991939474026996,
+          "snapshotLinearPredictionMinimumGapInFinal350msBeforeJumpStuds": 0.3229887032740838
+        },
+        {
+          "variant": "private unconditional pacing experiment",
+          "action": "jump",
+          "continuousMovement": true,
+          "movementScale": 0.48349138393732194,
+          "contactAfterLaunchSeconds": 2.872805595397949,
+          "firstTouchAfterLaunchSeconds": 2.8523168563842773,
+          "marginStuds": 0.40126636921427394,
+          "recordedOpponentMinimumGapInFinal350msBeforeJumpStuds": 1.3939284321626302,
+          "snapshotLinearPredictionMinimumGapInFinal350msBeforeJumpStuds": 1.2685351350935496
+        }
+      ]
+    },
+    {
+      "snapshotAfterLaunchSeconds": 2.2610890865325928,
+      "candidates": [
+        {
+          "variant": "released planner",
+          "action": "jump",
+          "continuousMovement": false,
+          "movementScale": null,
+          "contactAfterLaunchSeconds": 2.8733644485473633,
+          "firstTouchAfterLaunchSeconds": 2.853588581085205,
+          "marginStuds": 0.402599742487157,
+          "recordedOpponentMinimumGapInFinal350msBeforeJumpStuds": 1.6994339382639185,
+          "snapshotLinearPredictionMinimumGapInFinal350msBeforeJumpStuds": 1.847550461107947
+        },
+        {
+          "variant": "private unconditional pacing experiment",
+          "action": "jump",
+          "continuousMovement": true,
+          "movementScale": 0.450140259337721,
+          "contactAfterLaunchSeconds": 2.949516773223877,
+          "firstTouchAfterLaunchSeconds": 2.884838342666626,
+          "marginStuds": 3.220948318058967,
+          "recordedOpponentMinimumGapInFinal350msBeforeJumpStuds": 0.3063007086602307,
+          "snapshotLinearPredictionMinimumGapInFinal350msBeforeJumpStuds": 0.12596424906592163
+        }
+      ]
+    }
+  ],
+  "successfulControls": [
+    {
+      "case": "25-control",
+      "nativeOutcome": "Interception",
+      "snapshotComparisons": [
+        {
+          "snapshotAfterLaunchSeconds": 0.3513510227203369,
+          "releasedAction": "jump",
+          "releasedContinuousMovement": true,
+          "privateContinuousMovement": true,
+          "privateFirstTouchLaterMs": 0.0,
+          "releasedRecordedMinimumGapStuds": 2.053587260118627,
+          "privateRecordedMinimumGapStuds": 2.053587260118627
+        },
+        {
+          "snapshotAfterLaunchSeconds": 2.264500141143799,
+          "releasedAction": "jump",
+          "releasedContinuousMovement": true,
+          "privateContinuousMovement": true,
+          "privateFirstTouchLaterMs": 0.0,
+          "releasedRecordedMinimumGapStuds": 2.9265468117431754,
+          "privateRecordedMinimumGapStuds": 2.9265468117431754
+        }
+      ]
+    },
+    {
+      "case": "26-control",
+      "nativeOutcome": "Interception",
+      "snapshotComparisons": [
+        {
+          "snapshotAfterLaunchSeconds": 0.028799057006835938,
+          "releasedAction": "jump",
+          "releasedContinuousMovement": false,
+          "privateContinuousMovement": true,
+          "privateFirstTouchLaterMs": -1.346588134765625,
+          "releasedRecordedMinimumGapStuds": 3.1415415589551916,
+          "privateRecordedMinimumGapStuds": 7.6363752748573095
+        },
+        {
+          "snapshotAfterLaunchSeconds": 2.0305891036987305,
+          "releasedAction": "jump",
+          "releasedContinuousMovement": false,
+          "privateContinuousMovement": true,
+          "privateFirstTouchLaterMs": 107.49983787536621,
+          "releasedRecordedMinimumGapStuds": 3.1414266050605955,
+          "privateRecordedMinimumGapStuds": 3.3451192429160757
+        }
+      ]
+    }
+  ],
+  "findings": [
+    "The earliest private paced approach increased retrospective pre-jump clearance from about 1.70 to 5.11 studs, but the then-observed opponent velocity predicted more than 35 studs of clearance. The proposed crossing trigger could not justify that useful early change from this observation.",
+    "At the first close snapshot-projected crossing, pacing reduced predicted clearance from about 3.69 to 2.25 studs. It therefore failed the proposed safety comparison despite a better hindsight path.",
+    "The later snapshot at about 2.01 seconds improved projected separation only from about 0.32 to 1.27 studs, while worsening retrospective minimum separation from about 1.70 to 1.39 studs. This is not an established safe replacement.",
+    "The latest private candidate delayed first contact by about 31 milliseconds and brought the retrospective approach closer to the opponent. It violates the unchanged-deadline requirement.",
+    "The successful stationary interception control demonstrates that a parked jump is not inherently invalid. Unconditional late pacing delayed its first contact by about 108 milliseconds. The existing moving-approach control retained the same action and timing."
+  ],
+  "response": "Keep the released planner unchanged. Version 5.1.27 records native jump properties and nearby-body geometry on existing request/retry events, allowing the next missed takeoff to be investigated without changing native input or retries.",
+  "limitations": [
+    "Recorded opponent paths do not simulate opponent reactions to a different local approach, native body collisions, server decisions or frame scheduling.",
+    "A constant-velocity projection is a limited baseline; this rejection does not establish that a better validated opponent-motion model is impossible.",
+    "This is a bounded rejection of one proposed trigger, not an exhaustive action search or proof that the failed play was unavoidable.",
+    "The private experiment performs the existing plan search after broadening the conversion. Small changes in contact center can occur; the accepted proposal would have required unchanged deadlines and original-plan fallback.",
+    "No server-receipt ordering or guaranteed catch is inferred from local geometry.",
+    "The two successful controls do not constitute a broad policy-regression suite; no candidate policy was accepted or installed."
+  ]
+}

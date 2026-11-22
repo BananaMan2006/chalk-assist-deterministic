@@ -1,0 +1,131 @@
+{
+  "schemaVersion": 1,
+  "release": "5.1.26",
+  "buildId": "09545b3b26f99ebe9853cde5251b8ea553daa16eec54abd6823658261a6891e1",
+  "scope": "Observed live short-stop navigation restart and moving-stop controls, separate from the offline DB14 replay.",
+  "observedRestart": {
+    "previousZeroInputAt": 1795378035.97992,
+    "resumedAt": 1795378036.047046,
+    "observedSpanMs": 67.12603569030762,
+    "role": "DB",
+    "phase": "Live",
+    "previousHorizontalSpeed": 19.215410024730055,
+    "resumedHorizontalSpeed": 0.0002635196136475916,
+    "positionDisplacementStuds": 0.14653436607433554,
+    "previousInputSteering": {
+      "y": 0,
+      "x": 0.9902616739273071,
+      "z": 0.13921931385993958
+    },
+    "resumedInputSteeringPresent": false,
+    "resumedPreviousHeadingPresent": false,
+    "resumedInputSteering": null,
+    "requestedDirection": {
+      "y": 0,
+      "x": 0.9999999403953552,
+      "z": 0
+    },
+    "outputDirection": {
+      "y": 0,
+      "x": 0.49533891677856445,
+      "z": 0.06811254471540451
+    },
+    "outputMagnitude": 0.4999999612229681,
+    "avoidanceActive": true,
+    "avoidanceReason": "passing player",
+    "requestedSprint": false,
+    "outputSprint": false
+  },
+  "interpretation": [
+    "The last zero-input log still shows coasting. A later logged resumed request has practically zero physical horizontal velocity and no stale input steering or previous avoidance heading.",
+    "The observed67ms span is shorter than the old150ms settled-stop interval. With continuous DB/Live navigation and no intervening catch or phase reset in captured events, this is strong evidence consistent with the new restart branch.",
+    "The collision helper remains active and limits movement to approximately half strength with sprint off. Clearing stale steering did not bypass body avoidance."
+  ],
+  "movingStopControls": [
+    {
+      "previousZeroInputAt": 1795378036.113887,
+      "resumedAt": 1795378036.147431,
+      "observedSpanMs": 33.54382514953613,
+      "role": "DB",
+      "phase": "Live",
+      "previousHorizontalSpeed": 19.981459741224594,
+      "resumedHorizontalSpeed": 0.10996672223879929,
+      "positionDisplacementStuds": 0.1601980416486292,
+      "previousInputSteering": {
+        "y": 0,
+        "x": 0.8586429953575134,
+        "z": 0.5125741362571716
+      },
+      "resumedInputSteeringPresent": true,
+      "resumedPreviousHeadingPresent": false,
+      "resumedInputSteering": {
+        "y": 0,
+        "x": 0.8586429953575134,
+        "z": 0.5125741362571716
+      },
+      "requestedDirection": {
+        "y": 0,
+        "x": 0,
+        "z": 1
+      },
+      "outputDirection": {
+        "y": 0,
+        "x": 0.39206644892692566,
+        "z": 0.31029650568962097
+      },
+      "outputMagnitude": 0.5000000218173581,
+      "avoidanceActive": true,
+      "avoidanceReason": "passing player",
+      "requestedSprint": false,
+      "outputSprint": false
+    },
+    {
+      "previousZeroInputAt": 1795378074.131845,
+      "resumedAt": 1795378074.148105,
+      "observedSpanMs": 16.25990867614746,
+      "role": "DB",
+      "phase": "Live",
+      "previousHorizontalSpeed": 5.01043044210048,
+      "resumedHorizontalSpeed": 0.09908320810551254,
+      "positionDisplacementStuds": 0.012280475096250763,
+      "previousInputSteering": {
+        "y": 0,
+        "x": -0.13753236830234528,
+        "z": 0.9904972910881042
+      },
+      "resumedInputSteeringPresent": true,
+      "resumedPreviousHeadingPresent": false,
+      "resumedInputSteering": {
+        "y": 0,
+        "x": -0.13753236830234528,
+        "z": 0.9904972910881042
+      },
+      "requestedDirection": {
+        "y": 0,
+        "x": -0.9999999403953552,
+        "z": 0
+      },
+      "outputDirection": {
+        "y": 0,
+        "x": 0,
+        "z": 0
+      },
+      "outputMagnitude": 0.0,
+      "avoidanceActive": true,
+      "avoidanceReason": "passing player",
+      "requestedSprint": false,
+      "outputSprint": false
+    }
+  ],
+  "controlInterpretation": [
+    "The33ms and16ms examples retain steering. Their previous zero-input frames were still moving; the records do not establish two stationary observations, so retaining bounded turning is consistent with the intended guard.",
+    "The16ms example remains stopped by obstacle arbitration despite a nonzero coverage request."
+  ],
+  "limitations": [
+    "The internal navigationIdleSince timestamp and character-object identity are not logged. Same-body continuity is supported by nearby positions and stable role/phase, not proven by an exported identity.",
+    "Intermediate navigation frames are not all logged. The initial zero-input row is not itself a physical stop; a later unlogged stationary zero-input frame is inferred from the controller behavior.",
+    "Absent inputSteering alone is not proof of branch execution. The inference uses the short interval, retained earlier steering, physical velocity and captured context together.",
+    "No native physics replay or server catch/tackle timing is inferred from these movement rows.",
+    "This validates a narrow restart behavior and preserves collision limits; it does not establish an interception guarantee or a causal win-rate improvement."
+  ]
+}

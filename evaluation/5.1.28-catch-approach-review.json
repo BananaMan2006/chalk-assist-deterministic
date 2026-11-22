@@ -1,0 +1,178 @@
+{
+  "schemaVersion": 1,
+  "candidateVersion": "5.1.28",
+  "case": "5.1.27 WR26 blocked catch approach",
+  "purpose": "Test whether a different checked initial passing side can retain a feasible aerial finish after conservative native sprint acknowledgement. This is offline mechanism evidence, not a native result.",
+  "observedOutcome": "Intercepted",
+  "observedContext": {
+    "reachableForecasts": 6,
+    "totalForecasts": 35,
+    "jumpDispatches": 0,
+    "diveDispatches": 0,
+    "stemHandoffDistanceDeficitStuds": 5.779456,
+    "initialStamina": 78
+  },
+  "shortHorizonMechanism": {
+    "scope": "At a new live WR catch encounter, compare two already legal passing sides through their bounded turns. Preserve current collision bounds and side lock.",
+    "maximumProjectionSeconds": 0.25,
+    "maximumHelperStepsPerSide": 15,
+    "futureSprintAcknowledgementCredited": false,
+    "requiresBothProjectionsValid": true,
+    "minimumRequiredProgressGainStuds": 0.1,
+    "recordedFixtureProjectedProgressStuds": {
+      "retainedSide": 3.487,
+      "alternateSide": 4.488
+    },
+    "recordedFixtureAlternateMinimumClearanceStuds": 3.7608,
+    "note": "These are the online candidate\u2019s short forecasts. The separate full approach replay below uses evolving recorded opponent observations, not the same constant-velocity projection for the whole play."
+  },
+  "fullApproachReplay": {
+    "groundStepSeconds": 0.016666666666666666,
+    "groundReplanSeconds": 0.1,
+    "sprintAcknowledgementSeconds": 0.2,
+    "staminaRegenerationCredited": false,
+    "minimumReservedStamina": 13,
+    "walkingSpeedStudsPerSecond": 20,
+    "sprintingSpeedStudsPerSecond": 27,
+    "retainedDefenderDeadline": true,
+    "clearPathTurnLimitRadiansPerSecond": 9,
+    "usesCurrentPlannerFreshJumpAndDiveChecks": true,
+    "WRDiveMustStartInsideEndzone": true,
+    "results": [
+      {
+        "variant": "current",
+        "flightEpochOffsetSeconds": -0.05,
+        "sprintAcknowledgementSeconds": 0.2,
+        "sampledAirborneEndzoneOverlap": false,
+        "firstSampledOverlapAfterOriginalLaunchSeconds": null,
+        "sampledOverlapMarginStuds": null,
+        "staminaAtFirstSampledOverlap": null,
+        "minimumObservedTraceBodyGapStuds": 3.481933389894569,
+        "minimumGroundedBodyGapStuds": 3.481933389894569,
+        "dispatchedModeledActions": [],
+        "rejectedModeledActions": []
+      },
+      {
+        "variant": "current",
+        "flightEpochOffsetSeconds": 0,
+        "sprintAcknowledgementSeconds": 0.2,
+        "sampledAirborneEndzoneOverlap": false,
+        "firstSampledOverlapAfterOriginalLaunchSeconds": null,
+        "sampledOverlapMarginStuds": null,
+        "staminaAtFirstSampledOverlap": null,
+        "minimumObservedTraceBodyGapStuds": 3.492381354068127,
+        "minimumGroundedBodyGapStuds": 3.492381354068127,
+        "dispatchedModeledActions": [],
+        "rejectedModeledActions": []
+      },
+      {
+        "variant": "current",
+        "flightEpochOffsetSeconds": 0.05,
+        "sprintAcknowledgementSeconds": 0.2,
+        "sampledAirborneEndzoneOverlap": false,
+        "firstSampledOverlapAfterOriginalLaunchSeconds": null,
+        "sampledOverlapMarginStuds": null,
+        "staminaAtFirstSampledOverlap": null,
+        "minimumObservedTraceBodyGapStuds": 3.489740841334427,
+        "minimumGroundedBodyGapStuds": 3.489740841334427,
+        "dispatchedModeledActions": [
+          {
+            "action": "jump",
+            "afterLaunch": 2.7417550086975098
+          }
+        ],
+        "rejectedModeledActions": [
+          {
+            "action": "dive",
+            "afterLaunch": 2.858421564102173
+          }
+        ]
+      },
+      {
+        "variant": "rightFirst",
+        "flightEpochOffsetSeconds": -0.05,
+        "sprintAcknowledgementSeconds": 0.2,
+        "sampledAirborneEndzoneOverlap": true,
+        "firstSampledOverlapAfterOriginalLaunchSeconds": 2.8917551040649414,
+        "sampledOverlapMarginStuds": 0.012862995679760125,
+        "staminaAtFirstSampledOverlap": 17.583333333333318,
+        "minimumObservedTraceBodyGapStuds": 4.066185636867519,
+        "minimumGroundedBodyGapStuds": 4.066185636867519,
+        "dispatchedModeledActions": [
+          {
+            "action": "jump",
+            "afterLaunch": 2.6250884532928467
+          },
+          {
+            "action": "dive",
+            "afterLaunch": 2.725088357925415
+          }
+        ],
+        "rejectedModeledActions": []
+      },
+      {
+        "variant": "rightFirst",
+        "flightEpochOffsetSeconds": 0,
+        "sprintAcknowledgementSeconds": 0.2,
+        "sampledAirborneEndzoneOverlap": true,
+        "firstSampledOverlapAfterOriginalLaunchSeconds": 2.9584217071533203,
+        "sampledOverlapMarginStuds": 0.06507002062226919,
+        "staminaAtFirstSampledOverlap": 17.16666666666665,
+        "minimumObservedTraceBodyGapStuds": 4.066185636867519,
+        "minimumGroundedBodyGapStuds": 4.066185636867519,
+        "dispatchedModeledActions": [
+          {
+            "action": "jump",
+            "afterLaunch": 2.6250884532928467
+          },
+          {
+            "action": "dive",
+            "afterLaunch": 2.7417550086975098
+          }
+        ],
+        "rejectedModeledActions": []
+      },
+      {
+        "variant": "rightFirst",
+        "flightEpochOffsetSeconds": 0.05,
+        "sprintAcknowledgementSeconds": 0.2,
+        "sampledAirborneEndzoneOverlap": true,
+        "firstSampledOverlapAfterOriginalLaunchSeconds": 2.9417550563812256,
+        "sampledOverlapMarginStuds": 0.8400924361030797,
+        "staminaAtFirstSampledOverlap": 13.833333333333318,
+        "minimumObservedTraceBodyGapStuds": 4.066185636867519,
+        "minimumGroundedBodyGapStuds": 4.066185636867519,
+        "dispatchedModeledActions": [
+          {
+            "action": "jump",
+            "afterLaunch": 2.7084217071533203
+          },
+          {
+            "action": "dive",
+            "afterLaunch": 2.8750884532928467
+          }
+        ],
+        "rejectedModeledActions": []
+      }
+    ],
+    "aggregate": {
+      "retainedSideScenarios": 3,
+      "retainedSideSampledAerialEndzoneOverlaps": 0,
+      "alternateSideScenarios": 3,
+      "alternateSideSampledAerialEndzoneOverlaps": 3
+    }
+  },
+  "limits": [
+    "The complete approach replay is an approximate controller and native-motion model, not exact game execution.",
+    "The longer replay retains the original side or selects the alternate only on the first encounter. The separate actual-function fixture establishes that the bounded online rule selects this alternate for the logged WR26 state. It does not replay every full controller callback verbatim.",
+    "Opponent positions and velocities are interpolated from the same recorded play for both counterfactual paths. The opponent could react differently to a changed path; collision impulses and server arbitration are not simulated.",
+    "The online two-side choice uses only the current observation and a bounded constant-velocity forecast. The longer fixed-trace replay is offline stress evidence and is not used online.",
+    "Sprint acknowledgement is modeled as 200 ms for every new request. \u00b150 ms flight epochs are three sampled scenarios, not proof over all timing errors.",
+    "The model preserves ordinary clear-path turning and the retained defender deadline; native floor flags, body contacts, wall clipping, network delay and every controller lifecycle transition are not reproduced.",
+    "First sampled geometric overlap is not a server-accepted catch. Its displayed margin may be below the planner\u2019s robust contact-center margin.",
+    "This comparison supports a narrower reduction in avoidable detour travel. It does not establish that the recorded interception would be reversed, or that future contested catches will succeed."
+  ],
+  "privacy": "Only authored scalar evidence is included; no account names, account identifiers, raw client scripts, credentials or local paths.",
+  "buildId": "217d14b313328b9a4b300382847917ee3fd27e9d6e1e7a4502bf9637105b1930",
+  "runtimeSha256": "a8fa5f5d395270cfec6efc6d61a6e30c22d9ee799165a595dcd3d64cd1efde40"
+}

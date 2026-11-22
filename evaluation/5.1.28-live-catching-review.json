@@ -1,0 +1,59 @@
+{
+  "schemaVersion": 1,
+  "release": "5.1.28",
+  "buildId": "217d14b313328b9a4b300382847917ee3fd27e9d6e1e7a4502bf9637105b1930",
+  "scope": "Two positive native action controls, separate from the retained receiving failures and the new passing-side comparison.",
+  "cases": [
+    {
+      "case": "WR2",
+      "nativeOutcome": "Catch",
+      "jumpDispatchDelayMilliseconds": 13.97705078125,
+      "jumpConfirmationDelayMilliseconds": 15.76995849609375,
+      "firstLocalClaimAgeMilliseconds": 0.14666665811091661,
+      "firstLocalClaimAfterForecastTouchMilliseconds": 19.356727600097656,
+      "rootInsideEndzoneStuds": 8.384246826171875,
+      "claimAirborne": true,
+      "claimDiving": false,
+      "nativeCatchAfterLocalClaimMilliseconds": 334.6869945526123,
+      "lastPlanMarginStuds": 0.40201330184936523,
+      "solveMilliseconds": {
+        "count": 12,
+        "median": 15.280187508324161,
+        "p95": 37.75183332618326,
+        "max": 37.75183332618326
+      }
+    },
+    {
+      "case": "WR23",
+      "nativeOutcome": "Catch",
+      "jumpDispatchDelayMilliseconds": 19.912004470825195,
+      "jumpConfirmationDelayMilliseconds": 2.249002456665039,
+      "firstLocalClaimAgeMilliseconds": 0.20258332369849086,
+      "firstLocalClaimAfterForecastTouchMilliseconds": 8.208274841308594,
+      "rootInsideEndzoneStuds": 17.151840209960938,
+      "claimAirborne": true,
+      "claimDiving": true,
+      "nativeCatchAfterLocalClaimMilliseconds": 283.9241027832031,
+      "lastPlanMarginStuds": 0.40190768241882324,
+      "solveMilliseconds": {
+        "count": 14,
+        "median": 14.461916667642072,
+        "p95": 35.71141668362543,
+        "max": 35.71141668362543
+      },
+      "diveDispatchDelayMilliseconds": 5.197763442993164,
+      "diveOriginInsideEndzoneStuds": 5.541748046875,
+      "airborneDiveObserved": true,
+      "nearestOpponentHorizontalGapAtClaimStuds": 26.38108384754664,
+      "staminaLastSampleBeforeClaim": 25
+    }
+  ],
+  "limits": [
+    "These controls verify observed upright and jump-dive inputs followed by native Catch, not guaranteed possession.",
+    "The new passing-side comparison has not been observed in these two plays.",
+    "WR10 and WR25 receiving incompletes remain in the full incident ledger; positive controls do not remove them.",
+    "A local claim is not native possession; both observations are retained separately.",
+    "Observed delays do not measure network receipt or server arbitration directly.",
+    "Nearest opponent gap is a single replicated observation, not proof that an opponent could never contest the path."
+  ]
+}

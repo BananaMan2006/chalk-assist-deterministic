@@ -1,0 +1,60 @@
+{
+  "schemaVersion": 1,
+  "release": "5.1.28",
+  "incident": "WR25",
+  "nativeOutcome": "Incomplete",
+  "concededPointOnThisDown": false,
+  "scope": "First live-ball avoidance handoff and later blocked recovery.",
+  "forecastCounts": {
+    "reachable": 6,
+    "total": 19
+  },
+  "airborneActionsDispatched": 0,
+  "firstHandoff": {
+    "secondsAfterLaunch": 0.070404052734375,
+    "retainedSide": null,
+    "retainedHeadingPresent": false,
+    "commandedMovementMagnitude": 0,
+    "bodyGapStuds": 4.225331101803781,
+    "nearContactBandStuds": 4.25,
+    "requestedDirectionDotTargetHeading": 0.999959083664884,
+    "comparisonEntryMinimumDot": 0.999999,
+    "newComparisonEligible": false,
+    "exclusionReasons": [
+      "Character was already inside the near-contact band.",
+      "The continuous-catch movement request was not the same direction as direct target steering."
+    ],
+    "oppositeExistingSideCandidateAvailable": false,
+    "interpretation": "The first catch decision had no stale passing-side lock. Changing or clearing a prethrow lock would not change this entry. Even a private forced-right preference fell back to the existing left candidate and the same zero movement."
+  },
+  "laterOverlapComparison": {
+    "method": "Private 250 ms continuation of the existing fixed continuous-catch request, with current snapshot opponent velocity, unchanged native movement checks and a 200 ms sprint-acknowledgement delay.",
+    "cases": [
+      {
+        "afterLaunchSeconds": 0.22381706237792987,
+        "existingProgressStuds": 0.017963783919975152,
+        "alternateProgressStuds": 3.1553724079995082,
+        "existingMinimumBodyGapStuds": 2.673875366246294,
+        "alternateMinimumBodyGapStuds": 2.2985283407471027
+      },
+      {
+        "afterLaunchSeconds": 0.25828404426574725,
+        "existingProgressStuds": -1.6653345369377348e-16,
+        "alternateProgressStuds": 2.929165992304265,
+        "existingMinimumBodyGapStuds": 2.738444445605843,
+        "alternateMinimumBodyGapStuds": 2.197677674320973
+      }
+    ],
+    "decision": "Rejected as a clearance-preserving fix: extra modeled target progress comes with deeper physical overlap, whose native collision response is not reproduced."
+  },
+  "recordedReplay": {
+    "firstSixStatesMaximumDirectionError": 3.470162670507177e-08,
+    "laterDebounceLimitation": "One later clear-path return lacks the prior clear-frame timestamp; its exact hold-versus-return timing is not reconstructed."
+  },
+  "response": "No additional avoidance or collision-threshold edit was made from this incident. Route funding and recovery before the overlap are investigated separately.",
+  "limits": [
+    "Snapshot-projected opponent velocity is not a guarantee of continued movement.",
+    "The overlap replay omits native collision impulses, replication differences and authoritative catches.",
+    "Zero logged comparison objects alone is not proof of no invocation; the entry exclusion here is determined from the recorded input and source guards."
+  ]
+}

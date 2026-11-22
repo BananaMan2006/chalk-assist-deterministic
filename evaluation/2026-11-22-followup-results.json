@@ -1,0 +1,963 @@
+{
+  "schemaVersion": 1,
+  "task": "Active monitoring during development and release validation",
+  "window": {
+    "startUtc": "2026-11-22T19:38:56Z",
+    "startEpoch": 1795376336.0,
+    "endExclusive": 1795383000.0,
+    "endExclusiveUtc": "2026-11-22T21:30:00+00:00",
+    "scheduledEndExclusive": null,
+    "scheduledEndExclusiveUtc": null,
+    "observedThroughEpoch": 1795383008.994505,
+    "durationSeconds": 6664.0,
+    "observedDurationSeconds": 6664.0,
+    "fixedDurationRequested": false,
+    "completed": true,
+    "generatedAt": 1795383009.297834
+  },
+  "builds": [
+    {
+      "release": "5.1.24",
+      "buildId": "98d6fc36be5b287ec1f95a906a384440bf3fbbfe5ece8a009116f148c7d9ffbb",
+      "releaseStage": "baseline",
+      "throws": 40,
+      "contextThrowsExcluded": 5,
+      "firstObservedEventAt": 1795376246.953439,
+      "lastObservedEventAt": 1795377240.900413,
+      "currentlyLoaded": null,
+      "roles": {
+        "WR": {
+          "throws": 20,
+          "nativeOutcomes": {
+            "Catch": 15,
+            "Incomplete": 4,
+            "AbortedByForfeit": 1
+          },
+          "passTypes": {
+            "Floater": 20
+          }
+        },
+        "DB": {
+          "throws": 20,
+          "nativeOutcomes": {
+            "Intercepted": 18,
+            "Catch": 1,
+            "Swatted": 1
+          },
+          "passTypes": {
+            "Floater": 7,
+            "Bullet": 13
+          }
+        }
+      },
+      "concededPointEvents": 2,
+      "unlinkedConcededPoints": 0,
+      "runtimeErrors": 0,
+      "completedMatchEndings": {
+        "wins": 5,
+        "losses": 0,
+        "scores": {
+          "4-0": 3,
+          "4-1": 2
+        },
+        "forfeitsExcluded": 7
+      },
+      "incidents": [
+        {
+          "index": 9,
+          "contextThrow": false,
+          "role": "WR",
+          "pass": "Floater",
+          "launchSecondsIntoWindow": 63.667495012283325,
+          "nativeOutcome": "Incomplete",
+          "terminal": {
+            "result": "Incomplete",
+            "you": 2,
+            "them": 0
+          },
+          "reachableForecasts": 7,
+          "forecastCount": 34,
+          "actions": [],
+          "localContactClaims": 0
+        },
+        {
+          "index": 14,
+          "contextThrow": false,
+          "role": "DB",
+          "pass": "Bullet",
+          "launchSecondsIntoWindow": 199.89181804656982,
+          "nativeOutcome": "Catch",
+          "terminal": {
+            "result": "Touchdown",
+            "point": "Opp",
+            "you": 0,
+            "them": 1
+          },
+          "reachableForecasts": 0,
+          "forecastCount": 5,
+          "actions": [],
+          "localContactClaims": 0
+        },
+        {
+          "index": 24,
+          "contextThrow": false,
+          "role": "WR",
+          "pass": "Floater",
+          "launchSecondsIntoWindow": 430.6446039676666,
+          "nativeOutcome": "Incomplete",
+          "terminal": {
+            "result": "Incomplete",
+            "you": 1,
+            "them": 0
+          },
+          "reachableForecasts": 0,
+          "forecastCount": 17,
+          "actions": [],
+          "localContactClaims": 0
+        },
+        {
+          "index": 25,
+          "contextThrow": false,
+          "role": "WR",
+          "pass": "Floater",
+          "launchSecondsIntoWindow": 447.060870885849,
+          "nativeOutcome": "Incomplete",
+          "terminal": {
+            "result": "Incomplete",
+            "point": "Opp",
+            "you": 1,
+            "them": 1
+          },
+          "reachableForecasts": 11,
+          "forecastCount": 12,
+          "actions": [
+            "jumpRequest",
+            "jump"
+          ],
+          "localContactClaims": 1
+        },
+        {
+          "index": 36,
+          "contextThrow": false,
+          "role": "WR",
+          "pass": "Floater",
+          "launchSecondsIntoWindow": 679.9150159358978,
+          "nativeOutcome": "Incomplete",
+          "terminal": {
+            "result": "Incomplete",
+            "you": 0,
+            "them": 0
+          },
+          "reachableForecasts": 0,
+          "forecastCount": 26,
+          "actions": [],
+          "localContactClaims": 0
+        }
+      ],
+      "frameGapEvents": 8,
+      "maximumObservedFrameGapSeconds": 1.0189732313156128,
+      "nativeLocalJamNotices": 0,
+      "settingsVerification": {
+        "observedAt": 1795376501.422197,
+        "savedRevision": 14,
+        "diskRevision": 14,
+        "allSevenRuntimeSettingsMatchSaved": true,
+        "diskMatchesMemory": true,
+        "selectedMode": "1v1",
+        "settings": {
+          "master": true,
+          "assist": true,
+          "fullAuto": true,
+          "autoplay": true,
+          "autoLeave": true,
+          "matchAlerts": false,
+          "wrRepeat": false
+        },
+        "observerChangedSettings": false
+      },
+      "lastObservedLoaded": false
+    },
+    {
+      "release": "5.1.25",
+      "buildId": "819f9f9da5a3bc730e23aeca583a1c526d821d4ee3fe7b91d9e8d4b6065f7bdd",
+      "releaseStage": "candidate",
+      "throws": 9,
+      "contextThrowsExcluded": 0,
+      "firstObservedEventAt": 1795377246.055072,
+      "lastObservedEventAt": 1795377411.376562,
+      "currentlyLoaded": null,
+      "roles": {
+        "WR": {
+          "throws": 4,
+          "nativeOutcomes": {
+            "Catch": 4
+          },
+          "passTypes": {
+            "Floater": 4
+          }
+        },
+        "DB": {
+          "throws": 5,
+          "nativeOutcomes": {
+            "Intercepted": 4,
+            "Incomplete": 1
+          },
+          "passTypes": {
+            "Floater": 3,
+            "Bullet": 2
+          }
+        }
+      },
+      "concededPointEvents": 0,
+      "unlinkedConcededPoints": 0,
+      "runtimeErrors": 0,
+      "completedMatchEndings": {
+        "wins": 2,
+        "losses": 0,
+        "scores": {
+          "4-0": 2
+        },
+        "forfeitsExcluded": 0
+      },
+      "incidents": [],
+      "frameGapEvents": 0,
+      "maximumObservedFrameGapSeconds": 0,
+      "nativeLocalJamNotices": 0,
+      "settingsVerification": {
+        "observedAt": 1795377247.041908,
+        "savedRevision": 14,
+        "diskRevision": 14,
+        "allSevenRuntimeSettingsMatchSaved": true,
+        "diskMatchesMemory": true,
+        "selectedMode": "1v1",
+        "settings": {
+          "master": true,
+          "assist": true,
+          "fullAuto": true,
+          "autoplay": true,
+          "autoLeave": true,
+          "matchAlerts": false,
+          "wrRepeat": false
+        },
+        "observerChangedSettings": false
+      },
+      "lastObservedLoaded": false
+    },
+    {
+      "release": "5.1.25",
+      "buildId": "84bb5f82ef607983caaf5b70afe56d0401998436391026e492749e418cad2137",
+      "releaseStage": "final",
+      "throws": 25,
+      "contextThrowsExcluded": 0,
+      "firstObservedEventAt": 1795377415.764888,
+      "lastObservedEventAt": 1795378001.319043,
+      "currentlyLoaded": null,
+      "roles": {
+        "WR": {
+          "throws": 9,
+          "nativeOutcomes": {
+            "Catch": 8,
+            "AbortedByForfeit": 1
+          },
+          "passTypes": {
+            "Floater": 9
+          }
+        },
+        "DB": {
+          "throws": 16,
+          "nativeOutcomes": {
+            "Intercepted": 9,
+            "Incomplete": 3,
+            "Swatted": 3,
+            "AbortedByForfeit": 1
+          },
+          "passTypes": {
+            "Bullet": 10,
+            "Floater": 6
+          }
+        }
+      },
+      "concededPointEvents": 0,
+      "unlinkedConcededPoints": 0,
+      "runtimeErrors": 0,
+      "completedMatchEndings": {
+        "wins": 3,
+        "losses": 0,
+        "scores": {
+          "4-0": 3
+        },
+        "forfeitsExcluded": 4
+      },
+      "incidents": [],
+      "frameGapEvents": 0,
+      "maximumObservedFrameGapSeconds": 0,
+      "nativeLocalJamNotices": 0,
+      "settingsVerification": {
+        "observedAt": 1795377416.364042,
+        "savedRevision": 14,
+        "diskRevision": 14,
+        "allSevenRuntimeSettingsMatchSaved": true,
+        "diskMatchesMemory": true,
+        "selectedMode": "1v1",
+        "settings": {
+          "master": true,
+          "assist": true,
+          "fullAuto": true,
+          "autoplay": true,
+          "autoLeave": true,
+          "matchAlerts": false,
+          "wrRepeat": false
+        },
+        "observerChangedSettings": false
+      },
+      "lastObservedLoaded": false
+    },
+    {
+      "release": "5.1.26",
+      "buildId": "09545b3b26f99ebe9853cde5251b8ea553daa16eec54abd6823658261a6891e1",
+      "releaseStage": "final",
+      "throws": 77,
+      "contextThrowsExcluded": 0,
+      "firstObservedEventAt": 1795378005.391527,
+      "lastObservedEventAt": 1795379638.280134,
+      "currentlyLoaded": null,
+      "roles": {
+        "WR": {
+          "throws": 37,
+          "nativeOutcomes": {
+            "Catch": 34,
+            "Swatted": 1,
+            "Incomplete": 2
+          },
+          "passTypes": {
+            "Floater": 37
+          }
+        },
+        "DB": {
+          "throws": 40,
+          "nativeOutcomes": {
+            "Intercepted": 28,
+            "Swatted": 4,
+            "Catch": 6,
+            "Incomplete": 2
+          },
+          "passTypes": {
+            "Bullet": 29,
+            "Floater": 11
+          }
+        }
+      },
+      "concededPointEvents": 5,
+      "unlinkedConcededPoints": 0,
+      "runtimeErrors": 0,
+      "completedMatchEndings": {
+        "wins": 12,
+        "losses": 0,
+        "scores": {
+          "4-0": 9,
+          "4-2": 2,
+          "4-1": 1
+        },
+        "forfeitsExcluded": 5
+      },
+      "incidents": [
+        {
+          "index": 8,
+          "contextThrow": false,
+          "role": "WR",
+          "pass": "Floater",
+          "launchSecondsIntoWindow": 1827.871260881424,
+          "nativeOutcome": "Swatted",
+          "terminal": {
+            "result": "Swatted",
+            "you": 2,
+            "them": 0
+          },
+          "reachableForecasts": 13,
+          "forecastCount": 14,
+          "actions": [
+            "jumpRequest",
+            "jump"
+          ],
+          "localContactClaims": 1
+        },
+        {
+          "index": 15,
+          "contextThrow": false,
+          "role": "DB",
+          "pass": "Floater",
+          "launchSecondsIntoWindow": 1991.7732400894165,
+          "nativeOutcome": "Catch",
+          "terminal": {
+            "result": "Touchdown",
+            "point": "Opp",
+            "you": 0,
+            "them": 1
+          },
+          "reachableForecasts": 13,
+          "forecastCount": 13,
+          "actions": [
+            "jumpRequest",
+            "jump"
+          ],
+          "localContactClaims": 1
+        },
+        {
+          "index": 20,
+          "contextThrow": false,
+          "role": "DB",
+          "pass": "Floater",
+          "launchSecondsIntoWindow": 2084.9863719940186,
+          "nativeOutcome": "Catch",
+          "terminal": {
+            "result": "Touchdown",
+            "point": "Opp",
+            "you": 3,
+            "them": 2
+          },
+          "reachableForecasts": 14,
+          "forecastCount": 14,
+          "actions": [
+            "jumpRequest",
+            "jump"
+          ],
+          "localContactClaims": 1
+        },
+        {
+          "index": 27,
+          "contextThrow": false,
+          "role": "DB",
+          "pass": "Bullet",
+          "launchSecondsIntoWindow": 2228.7817471027374,
+          "nativeOutcome": "Catch",
+          "terminal": {
+            "result": "Tackled",
+            "you": 1,
+            "them": 0
+          },
+          "reachableForecasts": 3,
+          "forecastCount": 3,
+          "actions": [
+            "jumpRequest",
+            "jump",
+            "diveAttempt",
+            "dive"
+          ],
+          "localContactClaims": 1
+        },
+        {
+          "index": 34,
+          "contextThrow": false,
+          "role": "WR",
+          "pass": "Floater",
+          "launchSecondsIntoWindow": 2380.460428953171,
+          "nativeOutcome": "Incomplete",
+          "terminal": {
+            "result": "Incomplete",
+            "you": 1,
+            "them": 0
+          },
+          "reachableForecasts": 0,
+          "forecastCount": 12,
+          "actions": [],
+          "localContactClaims": 0
+        },
+        {
+          "index": 48,
+          "contextThrow": false,
+          "role": "DB",
+          "pass": "Floater",
+          "launchSecondsIntoWindow": 2677.542522907257,
+          "nativeOutcome": "Catch",
+          "terminal": {
+            "result": "Touchdown",
+            "point": "Opp",
+            "you": 1,
+            "them": 1
+          },
+          "reachableForecasts": 19,
+          "forecastCount": 19,
+          "actions": [
+            "jumpRequest",
+            "jumpRetry",
+            "jumpRequest",
+            "jumpRetry",
+            "jumpRequest",
+            "jumpRetry"
+          ],
+          "localContactClaims": 0
+        },
+        {
+          "index": 51,
+          "contextThrow": false,
+          "role": "DB",
+          "pass": "Floater",
+          "launchSecondsIntoWindow": 2731.5403819084167,
+          "nativeOutcome": "Catch",
+          "terminal": {
+            "result": "Touchdown",
+            "point": "Opp",
+            "you": 2,
+            "them": 2
+          },
+          "reachableForecasts": 11,
+          "forecastCount": 12,
+          "actions": [
+            "jumpRequest",
+            "jump"
+          ],
+          "localContactClaims": 1
+        },
+        {
+          "index": 73,
+          "contextThrow": false,
+          "role": "DB",
+          "pass": "Bullet",
+          "launchSecondsIntoWindow": 3227.0918679237366,
+          "nativeOutcome": "Catch",
+          "terminal": {
+            "result": "Touchdown",
+            "point": "Opp",
+            "you": 1,
+            "them": 1
+          },
+          "reachableForecasts": 2,
+          "forecastCount": 2,
+          "actions": [
+            "jumpRequest",
+            "jump",
+            "diveAttempt",
+            "dive"
+          ],
+          "localContactClaims": 1
+        },
+        {
+          "index": 74,
+          "contextThrow": false,
+          "role": "WR",
+          "pass": "Floater",
+          "launchSecondsIntoWindow": 3247.141051054001,
+          "nativeOutcome": "Incomplete",
+          "terminal": {
+            "result": "Incomplete",
+            "you": 1,
+            "them": 1
+          },
+          "reachableForecasts": 0,
+          "forecastCount": 14,
+          "actions": [],
+          "localContactClaims": 0
+        }
+      ],
+      "frameGapEvents": 11,
+      "maximumObservedFrameGapSeconds": 1.0090022087097168,
+      "nativeLocalJamNotices": 1,
+      "settingsVerification": {
+        "observedAt": 1795378005.443027,
+        "savedRevision": 14,
+        "diskRevision": 14,
+        "allSevenRuntimeSettingsMatchSaved": true,
+        "diskMatchesMemory": true,
+        "selectedMode": "1v1",
+        "settings": {
+          "master": true,
+          "assist": true,
+          "fullAuto": true,
+          "autoplay": true,
+          "autoLeave": true,
+          "matchAlerts": false,
+          "wrRepeat": false
+        },
+        "observerChangedSettings": false
+      },
+      "lastObservedLoaded": false
+    },
+    {
+      "release": "5.1.27",
+      "buildId": "565c77ca91aacce826d58be004c031d504a7013ea0c135ddec8f33ddfbc5dc93",
+      "releaseStage": "final",
+      "throws": 98,
+      "contextThrowsExcluded": 0,
+      "firstObservedEventAt": 1795379642.664615,
+      "lastObservedEventAt": 1795381724.539783,
+      "currentlyLoaded": null,
+      "roles": {
+        "WR": {
+          "throws": 44,
+          "nativeOutcomes": {
+            "Catch": 40,
+            "Swatted": 3,
+            "Intercepted": 1
+          },
+          "passTypes": {
+            "Floater": 44
+          }
+        },
+        "DB": {
+          "throws": 54,
+          "nativeOutcomes": {
+            "Intercepted": 38,
+            "Swatted": 7,
+            "Catch": 1,
+            "Incomplete": 8
+          },
+          "passTypes": {
+            "Bullet": 26,
+            "Floater": 28
+          }
+        }
+      },
+      "concededPointEvents": 1,
+      "unlinkedConcededPoints": 0,
+      "runtimeErrors": 0,
+      "completedMatchEndings": {
+        "wins": 17,
+        "losses": 0,
+        "scores": {
+          "4-0": 16,
+          "4-1": 1
+        },
+        "forfeitsExcluded": 6
+      },
+      "incidents": [
+        {
+          "index": 10,
+          "contextThrow": false,
+          "role": "WR",
+          "pass": "Floater",
+          "launchSecondsIntoWindow": 3518.6690809726715,
+          "nativeOutcome": "Swatted",
+          "terminal": {
+            "result": "Swatted",
+            "you": 0,
+            "them": 0
+          },
+          "reachableForecasts": 16,
+          "forecastCount": 16,
+          "actions": [
+            "jumpRequest",
+            "jump"
+          ],
+          "localContactClaims": 1
+        },
+        {
+          "index": 13,
+          "contextThrow": false,
+          "role": "WR",
+          "pass": "Floater",
+          "launchSecondsIntoWindow": 3573.683419942856,
+          "nativeOutcome": "Swatted",
+          "terminal": {
+            "result": "Swatted",
+            "you": 2,
+            "them": 0
+          },
+          "reachableForecasts": 16,
+          "forecastCount": 17,
+          "actions": [
+            "jumpRequest",
+            "jump"
+          ],
+          "localContactClaims": 1
+        },
+        {
+          "index": 26,
+          "contextThrow": false,
+          "role": "WR",
+          "pass": "Floater",
+          "launchSecondsIntoWindow": 3857.863200902939,
+          "nativeOutcome": "Intercepted",
+          "terminal": {
+            "result": "Intercepted",
+            "point": "Opp",
+            "you": 0,
+            "them": 1
+          },
+          "reachableForecasts": 6,
+          "forecastCount": 35,
+          "actions": [],
+          "localContactClaims": 0
+        },
+        {
+          "index": 27,
+          "contextThrow": false,
+          "role": "DB",
+          "pass": "Floater",
+          "launchSecondsIntoWindow": 3879.4623489379883,
+          "nativeOutcome": "Catch",
+          "terminal": {
+            "result": "Tackled",
+            "you": 0,
+            "them": 1
+          },
+          "reachableForecasts": 12,
+          "forecastCount": 13,
+          "actions": [
+            "jumpRequest",
+            "jump"
+          ],
+          "localContactClaims": 1
+        },
+        {
+          "index": 41,
+          "contextThrow": false,
+          "role": "WR",
+          "pass": "Floater",
+          "launchSecondsIntoWindow": 4161.778290987015,
+          "nativeOutcome": "Swatted",
+          "terminal": {
+            "result": "Swatted",
+            "you": 0,
+            "them": 0
+          },
+          "reachableForecasts": 10,
+          "forecastCount": 11,
+          "actions": [
+            "jumpRequest",
+            "jump"
+          ],
+          "localContactClaims": 1
+        }
+      ],
+      "frameGapEvents": 0,
+      "maximumObservedFrameGapSeconds": 0,
+      "nativeLocalJamNotices": 0,
+      "settingsVerification": {
+        "observedAt": 1795380345.626734,
+        "savedRevision": 14,
+        "diskRevision": 14,
+        "allSevenRuntimeSettingsMatchSaved": true,
+        "diskMatchesMemory": true,
+        "selectedMode": "1v1",
+        "settings": {
+          "master": true,
+          "assist": true,
+          "fullAuto": true,
+          "autoplay": true,
+          "autoLeave": true,
+          "matchAlerts": false,
+          "wrRepeat": false
+        },
+        "observerChangedSettings": false
+      },
+      "lastObservedLoaded": false
+    },
+    {
+      "release": "5.1.28",
+      "buildId": "217d14b313328b9a4b300382847917ee3fd27e9d6e1e7a4502bf9637105b1930",
+      "releaseStage": "final",
+      "throws": 57,
+      "contextThrowsExcluded": 0,
+      "firstObservedEventAt": 1795381728.704126,
+      "lastObservedEventAt": 1795382953.409429,
+      "currentlyLoaded": null,
+      "roles": {
+        "WR": {
+          "throws": 27,
+          "nativeOutcomes": {
+            "Catch": 25,
+            "Incomplete": 2
+          },
+          "passTypes": {
+            "Floater": 27
+          }
+        },
+        "DB": {
+          "throws": 30,
+          "nativeOutcomes": {
+            "Intercepted": 22,
+            "Swatted": 4,
+            "Catch": 3,
+            "Incomplete": 1
+          },
+          "passTypes": {
+            "Floater": 13,
+            "Bullet": 17
+          }
+        }
+      },
+      "concededPointEvents": 1,
+      "unlinkedConcededPoints": 0,
+      "runtimeErrors": 0,
+      "completedMatchEndings": {
+        "wins": 10,
+        "losses": 0,
+        "scores": {
+          "4-0": 9,
+          "4-1": 1
+        },
+        "forfeitsExcluded": 6
+      },
+      "incidents": [
+        {
+          "index": 10,
+          "contextThrow": false,
+          "role": "WR",
+          "pass": "Floater",
+          "launchSecondsIntoWindow": 5621.653573036194,
+          "nativeOutcome": "Incomplete",
+          "terminal": {
+            "result": "Incomplete",
+            "you": 1,
+            "them": 0
+          },
+          "reachableForecasts": 0,
+          "forecastCount": 14,
+          "actions": [],
+          "localContactClaims": 0
+        },
+        {
+          "index": 25,
+          "contextThrow": false,
+          "role": "WR",
+          "pass": "Floater",
+          "launchSecondsIntoWindow": 5930.16474199295,
+          "nativeOutcome": "Incomplete",
+          "terminal": {
+            "result": "Incomplete",
+            "you": 2,
+            "them": 0
+          },
+          "reachableForecasts": 6,
+          "forecastCount": 19,
+          "actions": [],
+          "localContactClaims": 0
+        },
+        {
+          "index": 34,
+          "contextThrow": false,
+          "role": "DB",
+          "pass": "Floater",
+          "launchSecondsIntoWindow": 6154.21740603447,
+          "nativeOutcome": "Catch",
+          "terminal": {
+            "result": "Tackled",
+            "you": 1,
+            "them": 0
+          },
+          "reachableForecasts": 21,
+          "forecastCount": 21,
+          "actions": [
+            "jumpRequest",
+            "jumpRetry",
+            "jumpRequest",
+            "jump"
+          ],
+          "localContactClaims": 1
+        },
+        {
+          "index": 37,
+          "contextThrow": false,
+          "role": "DB",
+          "pass": "Floater",
+          "launchSecondsIntoWindow": 6204.6252229213715,
+          "nativeOutcome": "Catch",
+          "terminal": {
+            "result": "Touchdown",
+            "point": "Opp",
+            "you": 3,
+            "them": 1
+          },
+          "reachableForecasts": 15,
+          "forecastCount": 15,
+          "actions": [
+            "jumpRequest",
+            "jump"
+          ],
+          "localContactClaims": 1
+        },
+        {
+          "index": 49,
+          "contextThrow": false,
+          "role": "DB",
+          "pass": "Bullet",
+          "launchSecondsIntoWindow": 6456.056350946426,
+          "nativeOutcome": "Catch",
+          "terminal": {
+            "result": "Tackled",
+            "point": "You",
+            "you": 1,
+            "them": 0
+          },
+          "reachableForecasts": 4,
+          "forecastCount": 4,
+          "actions": [
+            "diveAttempt",
+            "dive"
+          ],
+          "localContactClaims": 0
+        }
+      ],
+      "frameGapEvents": 0,
+      "maximumObservedFrameGapSeconds": 0,
+      "nativeLocalJamNotices": 0,
+      "settingsVerification": {
+        "observedAt": 1795381729.510197,
+        "savedRevision": 14,
+        "diskRevision": 14,
+        "allSevenRuntimeSettingsMatchSaved": true,
+        "diskMatchesMemory": true,
+        "selectedMode": "1v1",
+        "settings": {
+          "master": true,
+          "assist": true,
+          "fullAuto": true,
+          "autoplay": true,
+          "autoLeave": true,
+          "matchAlerts": false,
+          "wrRepeat": false
+        },
+        "observerChangedSettings": false
+      },
+      "lastObservedLoaded": true
+    }
+  ],
+  "observerErrors": [],
+  "sourceCoverage": {
+    "ciu_auto_events.jsonl": {
+      "malformed": 0,
+      "resets": 0,
+      "rows": 20893,
+      "filtered": 0
+    },
+    "ciu_deterministic_events.jsonl": {
+      "malformed": 0,
+      "resets": 0,
+      "rows": 14956,
+      "filtered": 0
+    },
+    "ciu_failures.jsonl": {
+      "malformed": 0,
+      "resets": 0,
+      "rows": 0,
+      "filtered": 48
+    }
+  },
+  "limitations": [
+    "Native awarded outcomes are distinct from local contact claims and predicted reach.",
+    "Context before the monitoring start is preserved separately and excluded from throw denominators.",
+    "The first match can already be underway; match totals are observed endings, not necessarily every match from setup.",
+    "Forfeits are excluded from completed-match performance.",
+    "Changing opponents and uncontrolled matchups prevent causal improvement or general win-rate claims.",
+    "Private status snapshots and native identities are not included in this report.",
+    "Live status stopped updating before the cutoff. Final saved settings are verified, but current running state is not verified from that stale snapshot."
+  ],
+  "incidentCoverage": {
+    "checkedAt": 1795383009.297834,
+    "expectedCount": 24,
+    "capturedCount": 24,
+    "allExpectedCaptured": true,
+    "missing": [],
+    "unexpected": [],
+    "unlinkedConcededPoints": 0
+  },
+  "finalRuntimeStatus": {
+    "statusTime": 1795382955.730124,
+    "ageAtCollectorFinalPollSeconds": 53.26,
+    "freshAtCollectorStopWithin10Seconds": false,
+    "lastObservedVersion": "5.1.28",
+    "lastObservedBuildId": "217d14b313328b9a4b300382847917ee3fd27e9d6e1e7a4502bf9637105b1930",
+    "lastObservedPhase": "Lobby",
+    "lastObservedSettingsStillMatchDisk": true
+  }
+}

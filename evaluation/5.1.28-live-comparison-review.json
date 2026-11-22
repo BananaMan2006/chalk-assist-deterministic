@@ -1,0 +1,23 @@
+{
+  "buildId": "217d14b313328b9a4b300382847917ee3fd27e9d6e1e7a4502bf9637105b1930",
+  "generatedAt": 1795383044.2634282,
+  "loggedComparisons": 0,
+  "loggedAlternateSelections": 0,
+  "rows": [],
+  "frameGapEvents": [],
+  "plannerSolveTime": {
+    "count": 596,
+    "maximumMs": 73.21037497604266,
+    "meanMs": 12.938120595086522
+  },
+  "routeAuthoringSolveTime": {
+    "count": 28,
+    "maximumMs": 132.62729166308418,
+    "meanMs": 94.9210535639265
+  },
+  "limitations": [
+    "Counts reflect emitted telemetry. The existing avoidance logger throttles unchanged reasons; absence of a logged comparison does not prove no invocation.",
+    "comparison.duration is a projected movement horizon, not measured controller execution time.",
+    "The per-tick controller duration is emitted only by frame-gap diagnostics; no baseline duration is inferred from their absence."
+  ]
+}

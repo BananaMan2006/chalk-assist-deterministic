@@ -1,0 +1,134 @@
+{
+  "schemaVersion": 1,
+  "release": "5.1.28",
+  "scope": "Bounded passing-side selection at the first observed WR live-ball avoidance encounter.",
+  "observedFailure": {
+    "incident": "5.1.27 WR26",
+    "nativeOutcome": "Intercepted",
+    "description": "A moving defender repeatedly forced the receiver left of its planned right-side catch route. After throw receipt, catch forecasts alternated between reachable and sprint-pending pursuit while collision avoidance retained a left bypass. No catch or airborne action was completed.",
+    "initialHandoffHadOldSide": false,
+    "importantDistinction": "The first catch avoidance state had no prior passing side. Clearing stale side state would not change that decision."
+  },
+  "reproducedDefect": {
+    "description": "The original entry rule used body position to choose a side, then ranked the best endpoint direction on that side. Its score did not include the time needed to turn and move along that checked path. A slightly higher eventual-direction score selected a slower bounded approach.",
+    "recordedDecisionVectorReplayError": 7.799595933478066e-08,
+    "oldSide": "left",
+    "newSide": "right",
+    "oldInstantaneousCandidateScore": 0.8677632543786574,
+    "otherInstantaneousCandidateScore": 0.8660254037844386,
+    "projectionSeconds": 0.25,
+    "oldProjectedProgressStuds": 3.4871473574452523,
+    "newProjectedProgressStuds": 4.488321226876337,
+    "projectedGainStuds": 1.001173869431085,
+    "oldProjectedMinimumClearanceStuds": 4.13608589840709,
+    "newProjectedMinimumClearanceStuds": 3.760776611779433,
+    "existingClearanceStuds": 3.75,
+    "initialCommandSpeedStudsPerSecond": 15,
+    "initialSprintRequestedByAvoidance": false
+  },
+  "implementation": {
+    "entryGate": [
+      "Controller explicitly opts in only for WR, Live phase and an observed ball arc.",
+      "The catch target and future arrival deadline are finite and the requested direction agrees with that target.",
+      "No existing passing side is locked; already selected bypasses retain their normal stability behavior.",
+      "The character is outside the near-contact band and both existing side candidates are available."
+    ],
+    "comparison": [
+      "Replay at most 15 ordinary helper steps per side within 250 ms, using only current numeric body positions and velocities.",
+      "Use the actual caller heading and movement request for the first projected step.",
+      "Use the dispatch snapshot speed to interpret already-scaled movement, then cap the next speed after sprint release. No new sprint acknowledgement or extra speed is credited.",
+      "Keep existing turn limits, collision checks, physical movement scales and field bounds.",
+      "Unknown velocity, an early clear-path transition, a passed target or another invalid projection retains the original side.",
+      "Select the alternative only when both forecasts remain valid and it improves projected target progress by at least 0.1 stud."
+    ],
+    "maximumNestedHelperCalls": 30,
+    "nativeInputChanges": "No jump, dive, capsule, character-speed, floor-state or catch-claim override.",
+    "observability": "Numeric side scores, projected progress/clearance and step budget are attached to the existing throttled playerAvoidance event. No additional event stream or UI is added."
+  },
+  "validation": {
+    "focusedAndExistingHelper": {
+      "passed": 74,
+      "total": 74,
+      "failures": []
+    },
+    "actualController": {
+      "passed": 45,
+      "total": 45,
+      "failures": []
+    },
+    "beforeHelper": {
+      "passed": 68,
+      "total": 74,
+      "failures": [
+        "recorded new catch encounter compares actual bounded turns instead of a slightly larger instantaneous score",
+        "mirrored catch has the same checked progress and mirrored side",
+        "a selected passing side remains locked on later observations",
+        "projected walking output is interpreted once at dispatch speed",
+        "unknown retained trajectory is not treated as worse than a known alternative",
+        "inactive old heading does not replace the caller heading on the first projected step"
+      ]
+    },
+    "beforeController": {
+      "passed": 43,
+      "total": 45,
+      "failures": [
+        "bounded side comparison is explicitly limited to WR live-ball approaches",
+        "bounded comparison diagnostics use the existing avoidance event"
+      ]
+    },
+    "historicalEntryStates": 29,
+    "nativeOutcomeLabels": {
+      "Intercepted": 5,
+      "Incomplete": 3,
+      "Catch": 17,
+      "Swatted": 4
+    },
+    "successfulCatchChoicesPreserved": 17,
+    "changedHistoricalChoices": 1,
+    "changedCases": [
+      "5.1.27 WR26"
+    ],
+    "maximumLoggedVectorReproductionError": 5.874151722385271e-07,
+    "offlineLuaTimingMs": {
+      "medianAcrossAllEntries": 0.1739590079523623,
+      "medianWhenComparisonRan": 4.311917029554024,
+      "maximum": 4.7912499867379665,
+      "comparisonEntryCount": 10
+    },
+    "labelsUse": "Native outcomes are evaluation labels only; they are never inputs to selection.",
+    "additionalMovingBlockControl": {
+      "incident": "5.1.27 WR71",
+      "nativeOutcome": "Catch",
+      "observationsCompared": 5,
+      "newComparisonsInvoked": 0,
+      "beforeAfterDirectionsAndSprintChoicesIdentical": true,
+      "observedSequence": "No safe movement, resumed a checked bypass 33 ms later, then returned to the catch path.",
+      "passingSideAlreadyLocked": true,
+      "maximumObservedVectorReproductionErrorFirstFourStates": 3.3110289310970405e-08,
+      "lastStateLimitation": "The last state lacks the prior clear-frame debounce timestamp. Before and after are identical for the reconstructed state, but it does not exactly reproduce the observed final return. The entry-only branch is excluded by the retained side for any debounce timestamp."
+    }
+  },
+  "limits": [
+    "The measured correction is a bounded movement-progress improvement, not proof that every missed catch is fixed.",
+    "The 250 ms comparison extrapolates current opponent velocity; opponents can react or change direction immediately.",
+    "The new projected minimum clearance is about 0.011 stud above the existing threshold. This does not create a guarantee against native body interaction or replication uncertainty.",
+    "The preserved successful controls cover the initial avoidance decision, not randomized full-match counterfactual outcomes.",
+    "Offline Lua timing is measured in the local replay runtime; native Roblox scheduling and float precision can differ.",
+    "Known contested catch awards, native airborne-state changes and missed-takeoff causes remain separate incident classes."
+  ],
+  "conditionalCatchReplay": {
+    "artifact": "5.1.28-catch-approach-review.json",
+    "originalSampledAirborneEndzoneOverlaps": 0,
+    "alternateSampledAirborneEndzoneOverlaps": 3,
+    "casesPerApproach": 3,
+    "flightEpochOffsetsMs": [
+      -50,
+      0,
+      50
+    ],
+    "sprintAcknowledgementDelayMs": 200,
+    "interpretation": "Conditional model feasibility only. The replay retains the recorded opponent trajectory and cannot reproduce how the opponent would react, native collision impulses/floor flags or authoritative catch arbitration."
+  },
+  "buildId": "217d14b313328b9a4b300382847917ee3fd27e9d6e1e7a4502bf9637105b1930",
+  "runtimeSha256": "a8fa5f5d395270cfec6efc6d61a6e30c22d9ee799165a595dcd3d64cd1efde40"
+}

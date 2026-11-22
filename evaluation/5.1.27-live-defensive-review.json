@@ -1,0 +1,53 @@
+{
+  "schemaVersion": 1,
+  "release": "5.1.27",
+  "buildId": "565c77ca91aacce826d58be004c031d504a7013ea0c135ddec8f33ddfbc5dc93",
+  "scope": "Defensive opposing catches observed after release5.1.27; ongoing monitoring, not a final window total.",
+  "cases": [
+    {
+      "incident": "DB27",
+      "pass": "Floater",
+      "nativeBallOutcome": "Opponent Catch",
+      "terminal": "Tackled",
+      "concededPoint": false,
+      "reachableForecasts": 12,
+      "forecastCount": 13,
+      "jumpDispatchLatenessMs": 4.3826,
+      "dispatchToConfirmationMs": 15.08,
+      "jumpRequestDiagnostic": {
+        "jumpHeight": 6,
+        "jumpPower": 50,
+        "useJumpPower": false,
+        "jumpStateEnabled": true,
+        "platformStand": false,
+        "floorMaterial": "Grass",
+        "humanoidState": "Running",
+        "jumpHeld": true,
+        "nearestOpponentGapStuds": 5.556
+      },
+      "findings": [
+        "The requested jump produced observed upward movement; this was not a missed takeoff.",
+        "The opponent approached from behind while the local character jumped from a parked position. The sampled horizontal gap was about0.65stud at the local root near its apex.",
+        "The native airborne flag became false while physical flight remained true. At that moment the controller logged native catch reach shortened and discarded the old long-hand contact witness.",
+        "A later fresh local contact used the shorter native capsule. Possession was awarded to the opponent, and a successful tackle prevented a point."
+      ],
+      "nativeReachChangeAfterDispatchMs": 256.319,
+      "localContactAgeMs": 0.1681,
+      "localContactNativeAirborne": false,
+      "localContactRootHeightStuds": 9.796,
+      "localContactVerticalVelocity": -17.5351,
+      "localContactCapsuleMarginStuds": 0.103515,
+      "response": "Retain the native-state guard and replan from the actual shorter reach. No input override or speculative timing change was made.",
+      "limitations": [
+        "Opponent proximity and native-state transition are observations; telemetry does not prove the exact native cause of the state change.",
+        "A local contact claim is not authoritative possession.",
+        "The diagnostic fields prove the initial request was eligible; they cannot establish later native catch arbitration."
+      ]
+    }
+  ],
+  "counts": {
+    "opposingCatchesReviewed": 1,
+    "concededTouchdowns": 0,
+    "tackledRecoveriesWithoutPoint": 1
+  }
+}
