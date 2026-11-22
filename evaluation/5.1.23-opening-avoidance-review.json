@@ -1,0 +1,152 @@
+{
+  "schemaVersion": 1,
+  "observations": {
+    "nativeJammedConfirmed": 2,
+    "normalRunSpeed": 20,
+    "observedSlowedSpeed": 9,
+    "observedForwardDeficitsStuds": [
+      10.407,
+      15.107
+    ],
+    "infeasibleStemShortfallsStuds": [
+      9.026,
+      16.801
+    ]
+  },
+  "counterfactuals": {
+    "wr4-recorded": [
+      {
+        "lookahead": 0.25,
+        "radius": 3.75,
+        "early": 0.9,
+        "minimumGap": 3.7816474739312955,
+        "progress": 36.11279314739318,
+        "remainingDistance": 51.867563860279425,
+        "travel": 36.81666666666665,
+        "sprintSeconds": 0.8333333333333343
+      },
+      {
+        "lookahead": 0.45,
+        "radius": 4.75,
+        "early": 0.9,
+        "minimumGap": 4.77749529228052,
+        "progress": 36.14235811016941,
+        "remainingDistance": 51.88867196827648,
+        "travel": 36.81666666666665,
+        "sprintSeconds": 0.8333333333333343
+      },
+      {
+        "lookahead": 0.45,
+        "radius": 4.75,
+        "early": 1.05,
+        "minimumGap": 5.11069836132929,
+        "progress": 37.10005109552348,
+        "remainingDistance": 50.95026698731652,
+        "travel": 37.86666666666666,
+        "sprintSeconds": 0.9833333333333347
+      }
+    ],
+    "wr4-stationary": [
+      {
+        "lookahead": 0.25,
+        "radius": 3.75,
+        "early": 0.9,
+        "minimumGap": 3.754475079353558,
+        "progress": 36.2639685272501,
+        "remainingDistance": 51.72537648626698,
+        "travel": 36.81666666666665,
+        "sprintSeconds": 0.8333333333333343
+      },
+      {
+        "lookahead": 0.45,
+        "radius": 4.75,
+        "early": 0.9,
+        "minimumGap": 4.751627213661708,
+        "progress": 36.207226771622615,
+        "remainingDistance": 51.83924261481815,
+        "travel": 36.81666666666665,
+        "sprintSeconds": 0.8333333333333343
+      },
+      {
+        "lookahead": 0.45,
+        "radius": 4.75,
+        "early": 1.05,
+        "minimumGap": 4.753048811608068,
+        "progress": 37.203701496955915,
+        "remainingDistance": 50.840147420331135,
+        "travel": 37.86666666666666,
+        "sprintSeconds": 0.9833333333333347
+      }
+    ],
+    "wr5-recorded": [
+      {
+        "lookahead": 0.25,
+        "radius": 3.75,
+        "early": 0.9,
+        "minimumGap": 3.1361200411317607,
+        "progress": 35.14436717397091,
+        "remainingDistance": 65.1218139904419,
+        "travel": 36.516666666666644,
+        "sprintSeconds": 0.8166666666666675
+      },
+      {
+        "lookahead": 0.45,
+        "radius": 4.75,
+        "early": 0.9,
+        "minimumGap": 4.367616859694553,
+        "progress": 35.706041304769876,
+        "remainingDistance": 64.57432475523602,
+        "travel": 36.366666666666646,
+        "sprintSeconds": 0.8166666666666675
+      },
+      {
+        "lookahead": 0.45,
+        "radius": 4.75,
+        "early": 1.05,
+        "minimumGap": 4.54400495720025,
+        "progress": 37.11269749738475,
+        "remainingDistance": 63.16800914995976,
+        "travel": 37.74999999999999,
+        "sprintSeconds": 0.966666666666668
+      }
+    ],
+    "wr5-stationary": [
+      {
+        "lookahead": 0.25,
+        "radius": 3.75,
+        "early": 0.9,
+        "minimumGap": 3.7681967734419066,
+        "progress": 36.11145560207001,
+        "remainingDistance": 64.15257179326959,
+        "travel": 36.84999999999998,
+        "sprintSeconds": 0.8166666666666675
+      },
+      {
+        "lookahead": 0.45,
+        "radius": 4.75,
+        "early": 0.9,
+        "minimumGap": 4.756608928902646,
+        "progress": 36.08602175144844,
+        "remainingDistance": 64.2334208276629,
+        "travel": 36.69999999999998,
+        "sprintSeconds": 0.8166666666666675
+      },
+      {
+        "lookahead": 0.45,
+        "radius": 4.75,
+        "early": 1.05,
+        "minimumGap": 4.758397029078539,
+        "progress": 37.12046918688435,
+        "remainingDistance": 63.19663239255201,
+        "travel": 37.74999999999999,
+        "sprintSeconds": 0.966666666666668
+      }
+    ]
+  },
+  "limits": [
+    "Uses fixed recorded or stationary opponent paths; a real opponent may react differently.",
+    "Steps pure movement at 60 Hz with an authored 50 ms native sprint transition; does not simulate Roblox physics, jam acceptance or server catch results.",
+    "Native jam slowdown is deliberately not imposed in counterfactuals; clearance improvements are not proof of prevented jams or recovered catches.",
+    "The second recorded route preserves its original 0.9-second opening when its alternative handoff is unfunded."
+  ]
+}
