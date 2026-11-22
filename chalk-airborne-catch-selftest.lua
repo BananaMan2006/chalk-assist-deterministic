@@ -621,13 +621,13 @@ return function(Planner,source)
         return function(realPlanner)
         return function(input,clocks,role,options)
             options=options or {}
-            local result={jumps=0,dives=0,cancels=0,finished=false}
+            local result={jumps=0,dives=0,cancels=0,finished=false,dbChecks=0}
             local plan=input
             local now=100
             local nextSolve=0
-            local jumped,dived=false,false
-            local jumpRequest,lastSnapshot,lastJump,lastDive=nil,{},0,0
-            local reachAirborne,message,motion
+            local jumped,dived=options.jumped==true,false
+            local jumpRequest,lastSnapshot,lastJump,lastDive=options.jumpRequest,{},options.lastJump or 0,0
+            local reachAirborne,message,motion=options.reachAirborne,nil,nil
             local atTarget,parkedPosition=false,nil
             local counters={dives=0}
             local clockIndex=0
@@ -637,19 +637,21 @@ return function(Planner,source)
             end}
             local s={role=role}
             local root={Position=options.position or Vector3.new(0,5,0),AssemblyLinearVelocity=Vector3.zero}
-            local h={FloorMaterial="Air",PlatformStand=false}
+            local h={FloorMaterial=options.floorMaterial or "Air",PlatformStand=false}
             function h:Move()end
             function h:ChangeState()result.jumps=result.jumps+1 end
             local Enum={HumanoidStateType={Jumping="Jumping"},Material={Air="Air"}}
             local Config={Moves={Dive={Cooldown=1.6}}}
             local Moves={Upright=function()return true end}
-            local function motionState()return {grounded=true,diveModeMatchesMotion=true}end
+            local function motionState()return options.motion or {grounded=true,diveModeMatchesMotion=true}end
             local function log()end
             local function xyz()return {}end
             local function snapshot()
                 local goal=options.goalZ
                 if goal==nil and not options.missingGoal then goal=-100 end
-                return {role=role,wrDiveGoalZ=goal,position=root.Position,bounds=options.bounds}
+                return {role=role,wrDiveGoalZ=goal,position=root.Position,bounds=options.bounds,
+                    nativeAirborne=options.nativeAirborne,physicalAirborne=options.nativeAirborne,
+                    grounded=options.nativeAirborne~=true,canDive=true}
             end
             local function solveActual()return nil end
             local function divePermitted()return true end
@@ -661,6 +663,10 @@ return function(Planner,source)
                     return true
                 end,
                 canDiveFrom=realPlanner.canDiveFrom,
+                rejectUnreachableDBAirborneDive=function()
+                    result.dbChecks=result.dbChecks+1
+                    return options.rejectDB==true,"checked DB trajectory",10,2
+                end,
                 validateJump=function()return true end,
                 pose=function()return {Position=root.Position}end}
     ]]..staleGuard..[[
@@ -937,6 +943,109 @@ return function(Planner,source)
         diving.config.Pass=s.config.Pass;diving.canJump=false
         local reach=Planner.solve(diving)
         if reach and reach.diveAt then assert(not reach.continuousCatch) end
+    end)
+    local function recordedStaleDBDive()
+        local s=fixture()
+        s.role="DB";s.preferAirborne=false;s.requireAirborne=false
+        s.now=100;s.launchAt=99.422016
+        s.position=Vector3.new(33.546302795410156,7.789941310882568,49.895320892333984)
+        s.velocity=Vector3.new(-7.677981853485107,45.2568473815918,-25.846139907836914)
+        s.arc={P0=Vector3.new(18.893924713134766,7.636868476867676,-53.83334732055664),
+            P1=Vector3.new(34.86635971069336,5.136868476867676,56.308685302734375),Flight=1.05,Apex=6}
+        s.grounded=false;s.nativeAirborne=true;s.physicalAirborne=true;s.reachAirborne=true
+        s.canJump=false;s.canDive=true;s.gravity=196.1999969482422
+        s.jumpSpeed=48.52215950860912;s.diveDistance=14.731816774606706
+        s.turfY=1.63686865568161;s.diveTurfY=s.turfY;s.groundRootY=s.turfY+3
+        local p={kind="jumpDive",jumpAt=99.867423,diveAt=99.996593,contactAt=100.246593,
+            direction=Vector3.new(-.10895305126905441,0,-.9940468668937683),
+            _speed=27,_runSpeed=20,_sprintSeconds=2.44,_reaction=0,_aimDistance=0}
+        return s,p
+    end
+    test("recorded delayed DB takeoff rejects a dive with no modeled contact remaining",function()
+        local s,p=recordedStaleDBDive()
+        local rejected,why,checks,gap=Planner.rejectUnreachableDBAirborneDive(s,p)
+        assert(rejected and why=="Observed DB dive has no modeled contact before turf")
+        assert(checks>1 and checks<=320 and gap>.9)
+        assert(p.kind=="jumpDive" and p.jumpAt==99.867423 and p.diveAt==99.996593,
+            "Checking fresh motion must not mutate the existing plan")
+        assert(s.reachAirborne==true and s.now==100)
+    end)
+    test("DB no-contact check preserves a legitimate grounded finish",function()
+        local s=fixture();s.role="DB";s.now=100;s.launchAt=99.9
+        s.grounded=false;s.nativeAirborne=true;s.physicalAirborne=true;s.reachAirborne=nil
+        s.position=Vector3.new(0,4,0);s.velocity=Vector3.zero
+        s.arc={P0=Vector3.new(0,12,16),P1=Vector3.new(0,0,16),Flight=.6,Apex=0}
+        local p={kind="dive",diveAt=100,contactAt=100.4,direction=Vector3.new(0,0,1),
+            _diveDelay=0,_speed=27,_runSpeed=20,_sprintSeconds=4,_reaction=0,_aimDistance=0}
+        local cf,air=Planner.pose(s,p,p.contactAt)
+        local w,h,r=Planner.capsule(s,cf,air)
+        assert(not air and r-Planner.segmentDistance(Planner.ballAt(s.arc,.5),w,h)>.4)
+        assert(not Planner.rejectUnreachableDBAirborneDive(s,p),"DB finish must not use WR airborne-only policy")
+    end)
+    test("DB no-contact check retains near intervals and unbounded horizons",function()
+        local s,p=recordedStaleDBDive()
+        local actual={}for k,v in pairs(p)do actual[k]=v end
+        actual.kind="dive";actual.jumpAt=nil;actual._jumpDelay=nil
+        actual.diveAt=s.now;actual._diveDelay=0
+        local at=.08137;local cf,air=Planner.pose(s,actual,s.now+at)
+        local _,hands,r=Planner.capsule(s,cf,air)
+        local contact=hands+Vector3.new(0,r-.0001,0)
+        local velocity=Vector3.new(900,-40,0);local elapsed=s.now+at-s.launchAt
+        s.arc={P0=contact-velocity*elapsed,P1=contact+velocity*(1.05-elapsed),Flight=1.05,Apex=0}
+        local rejected=Planner.rejectUnreachableDBAirborneDive(s,p)
+        assert(not rejected,"A narrow contact between scan centers must remain possible")
+        s,p=recordedStaleDBDive();s.arc.Flight=10
+        assert(not Planner.rejectUnreachableDBAirborneDive(s,p),"A bounded check cannot rule out unexamined later contact")
+    end)
+    test("DB motion bound includes the fixed one-stud tipped waist with small configured offsets",function()
+        local s=fixture();s.role="DB";s.now=100;s.launchAt=99.8
+        s.position=Vector3.new(0,6.1,0);s.velocity=Vector3.zero
+        s.grounded=false;s.nativeAirborne=true;s.physicalAirborne=true;s.reachAirborne=true
+        s.gravity=.01;s.jumpSpeed=0;s.walkSpeed=0;s.runSpeed=0;s.sprintSeconds=0
+        s.turfY=3;s.diveTurfY=3;s.groundRootY=6;s.diveDistance=0
+        s.config.CatchRadius=.00001;s.config.DiveCatchRadius=.00001
+        s.config.WaistDrop=.05;s.config.HandOffset=.05;s.config.HandUpOffset=.05;s.config.DiveReach=.05
+        s.arc={P0=Vector3.new(0,6.7767162880057,-.8263047945345675),
+            P1=Vector3.new(0,2.5767162880056995,-.8263047945345675),Flight=1.05,Apex=0}
+        local p={kind="dive",diveAt=100,contactAt=100.4,direction=Vector3.new(0,0,1),
+            _diveDelay=0,_aimDistance=0,_reaction=0,_speed=0,_runSpeed=0,_sprintSeconds=0}
+        local cf,air=Planner.pose(s,p,100.11);local w,h,r=Planner.capsule(s,cf,air)
+        assert(r-Planner.segmentDistance(Planner.ballAt(s.arc,.31),w,h)>0,
+            "The authored narrow tipped-waist contact must exist")
+        assert(not Planner.rejectUnreachableDBAirborneDive(s,p),
+            "Fixed waist extent must bound rotation even when configured offsets are smaller")
+    end)
+    test("DB no-contact check never grants native state or changes other roles",function()
+        for _,gate in ipairs({"grounded","native","reach","cooldown","WR"})do
+            local s,p=recordedStaleDBDive()
+            if gate=="grounded" then s.grounded=true elseif gate=="native" then s.nativeAirborne=false
+            elseif gate=="reach" then s.reachAirborne=false elseif gate=="cooldown" then s.canDive=false
+            else s.role="WR" end
+            assert(not Planner.rejectUnreachableDBAirborneDive(s,p),gate)
+        end
+    end)
+    test("live DB impossible-contact check replans before diving and retains uncertain dives",function()
+        local function plan()return {kind="dive",diveAt=100.02,contactAt=100.5,
+            direction=Vector3.new(1,0,0)}end
+        local motion={grounded=false,nativeAirborne=true,physicalAirborne=true,diveModeMatchesMotion=true}
+        local blocked=dispatchFixture(plan(),{100.03},"DB",{rejectDB=true,nativeAirborne=true,motion=motion})
+        assert(blocked.dbChecks==1 and blocked.cancels==1 and blocked.dives==0 and not blocked.finished)
+        local retained=dispatchFixture(plan(),{100.03},"DB",{rejectDB=false,nativeAirborne=true,motion=motion})
+        assert(retained.dbChecks==1 and retained.cancels==0 and retained.dives==1 and retained.finished)
+    end)
+    test("native dive guards precede the DB model check and grounded dives remain available",function()
+        local function plan()return {kind="dive",diveAt=100.02,contactAt=100.5,
+            direction=Vector3.new(1,0,0)}end
+        local wrongMode=dispatchFixture(plan(),{100.03},"DB",{rejectDB=true,nativeAirborne=false,
+            motion={grounded=false,physicalAirborne=true,nativeAirborne=false,diveModeMatchesMotion=false}})
+        assert(wrongMode.cancels==1 and wrongMode.dbChecks==0 and wrongMode.dives==0)
+        local awaiting=plan();awaiting.jumpAt=99.9
+        local waiting=dispatchFixture(awaiting,{100.03},"DB",{rejectDB=true,jumped=true,jumpRequest={},
+            nativeAirborne=true,motion={grounded=false,nativeAirborne=true,diveModeMatchesMotion=true}})
+        assert(waiting.dbChecks==0 and waiting.dives==0)
+        local ground=dispatchFixture(plan(),{100.03},"DB",{floorMaterial="Ground",nativeAirborne=false,
+            motion={grounded=true,nativeAirborne=false,physicalAirborne=false,diveModeMatchesMotion=true}})
+        assert(ground.cancels==0 and ground.dives==1)
     end)
     return report
 end

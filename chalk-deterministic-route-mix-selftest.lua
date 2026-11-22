@@ -158,6 +158,61 @@ return function(Policy,create,routeSource,Planner)
             opponentVelocity=Vector3.zero})
         return p,f,routeMath
     end
+    test("crowded setup selects a legal near-center start with a funded deep cut",function()
+        for _,cycle in ipairs({0,1}) do
+            local p,f,routeMath=narrowRouteFixture(cycle)
+            p.setupSeconds=3.1
+            local offset=Vector3.new(100,0,200)
+            p.offset=offset;p.position=p.position+offset;p.opponentPosition=p.opponentPosition+offset
+            local seenArc=false
+            local checked={pose=Planner.pose}
+            local function origin(s)
+                seenArc=true
+                assert(math.abs(s.arc.P0.X-(f.MidX+offset.X))<1e-6,"lineup offset moved the quarterback")
+            end
+            checked.solve=function(s) origin(s);return Planner.solve(s) end
+            checked.forecastStem=function(s,...) origin(s);return Planner.forecastStem(s,...) end
+            local c=assert(Policy.chooseScheduledRoute(p,Config,f,routeMath,checked))
+            assert(seenArc and c.payload.Pass=="Floater" and c.openingStartShifted)
+            local shift=c.payload.StartX-f.MidX
+            assert(math.abs(shift)>=6 and math.abs(shift)<=1.5*f.YD+.001,"opening remains trapped at center")
+            assert(shift*(cycle==0 and -1 or 1)>0,"centered pressure erased alternating setup sides")
+            assert(c.payload.StartX>=f.MinX+Config.SidelineMarginYards*f.YD
+                and c.payload.StartX<=f.MaxX-Config.SidelineMarginYards*f.YD)
+            assert(math.abs(c.payload.Points[2].X-f.MidX)<.01,"setup offset erased the deep middle cut")
+            assert(c.stemYards>=(f.GoalZ-f.LOSZ)/f.YD*.65 and c.cutAngle>=40)
+            assert(c.reachable and not c.bestEffort and c.requireAirborne and c.estimatedCatchInsideGoal)
+            assert(c.finalSprintStamina>=10 and c.targetSidelineInset<=f.YD)
+        end
+    end)
+    test("uncrowded or already-started routes retain the centered setup",function()
+        for _,kind in ipairs({"none","far","wide","behind","no_clock","live","short"}) do
+            local p,f,routeMath=narrowRouteFixture()
+            p.setupSeconds=3.1
+            if kind=="none" then p.opponentPosition=nil
+            elseif kind=="far" then p.opponentPosition=Vector3.new(f.MidX,3,f.GoalZ)
+            elseif kind=="wide" then p.opponentPosition=p.opponentPosition+Vector3.new(3*f.YD,0,0)
+            elseif kind=="behind" then p.opponentPosition=Vector3.new(f.MidX,3,p.LOS-2*f.YD)
+            elseif kind=="no_clock" then p.setupSeconds=nil
+            elseif kind=="live" then p.phase="Live"
+            else p.LOS=f.GoalZ-3*f.YD;p.position=Vector3.new(f.MidX,3,p.LOS-2)
+                p.opponentPosition=Vector3.new(f.MidX,3,p.LOS+4) end
+            local c=assert(Policy.chooseScheduledRoute(p,Config,f,routeMath,Planner))
+            assert(c.payload.StartX==f.MidX and not c.openingStartShifted,"unrelated setup changed: "..kind)
+        end
+    end)
+    test("rejected lateral setup falls back once to the existing funded center route",function()
+        local p,f,routeMath=narrowRouteFixture();p.setupSeconds=3.1
+        local shifted,centered=0,0
+        local constrained=setmetatable({Sanitize=function(raw,startX,los)
+            if math.abs(startX-f.MidX)>.01 then shifted=shifted+1;return {} end
+            centered=centered+1;return routeMath.Sanitize(raw,startX,los)
+        end},{__index=routeMath})
+        local c=assert(Policy.chooseScheduledRoute(p,Config,f,constrained,Planner))
+        assert(shifted>0 and centered>0 and c.openingStartFallback,"lateral rejection skipped the bounded center fallback")
+        assert(c.payload.StartX==f.MidX and c.reachable and not c.bestEffort and c.finalSprintStamina>=10)
+        assert(shifted<=576,"setup fallback expanded the finite route search")
+    end)
     test("deep inset route does not hide a funded sideline airborne catch",function()
         for _,cycle in ipairs({0,1}) do
             local p,f,routeMath=narrowRouteFixture(cycle)

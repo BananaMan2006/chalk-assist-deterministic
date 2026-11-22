@@ -410,6 +410,87 @@ function Planner.validateAirborneDive(s,p)
     return finish=="jumpDive",reason or "Observed airborne contact remains reachable"
 end
 
+-- A one-sided stale-plan check. False means keep the existing plan; it does
+-- not assert a robust catch. The original solve and native mode guards remain.
+-- Reject only a geometrically separated remaining trajectory. Close/uncertain
+-- intervals keep the existing action, including legal DB grounded finishes.
+-- This is a model check, not a guarantee about native physics or server awards.
+function Planner.rejectUnreachableDBAirborneDive(s,p)
+    if not validSnapshot(s) or s.role~="DB" or not p or not finite(p.diveAt)
+        or not finite(p.contactAt) or p.contactAt<=s.now or s.grounded
+        or s.canDive~=true or s.nativeAirborne~=true or s.reachAirborne==false
+        or not vec(p.direction) or math.abs(p.direction.Magnitude-1)>.01 then
+        return false,"DB aerial miss check not applicable"
+    end
+    local duration=diveCfg(s,"Time",.35)
+    local ground=diveCfg(s,"Ground",.75)
+    local tip=diveCfg(s,"Tip",.5)
+    if duration<=0 or ground<0 or tip<=0 or not finite(s.diveDistance) or s.diveDistance<0 then
+        return false,"DB aerial miss check unavailable"
+    end
+    local projected={}for k,v in pairs(s)do projected[k]=v end
+    projected.maxHorizon=4
+    -- Retaining the longer upright reach after landing is deliberately
+    -- optimistic: uncertainty must preserve the already selected action.
+    projected.reachAirborne=true
+    local horizon=flightHorizon(projected,true)
+    if not horizon or horizon>duration+ground or horizon>1.1 then
+        return false,"DB aerial contact horizon extends beyond bounded check"
+    end
+    local actual={}for k,v in pairs(p)do actual[k]=v end
+    actual.kind,actual.jumpAt,actual._jumpDelay="dive",nil,nil
+    actual.diveAt,actual._diveDelay=s.now,0
+    actual._diveDistance=nil
+    actual._reaction,actual._aimDistance=0,0
+    local start=math.max(0,s.launchAt+.120001-s.now)
+    if start>=horizon then return false,"No eligible bounded DB contact interval" end
+    local function ballVelocity(t)
+        local u=(s.now+t-s.launchAt)/s.arc.Flight
+        return (s.arc.P1-s.arc.P0)/s.arc.Flight
+            +UP*(4*s.arc.Apex/s.arc.Flight*(1-2*u))
+    end
+    local v=math.max(0,(s.velocity or ZERO).Y)
+    local horizontalSpeed=2*s.diveDistance/duration
+    local verticalSpeed=math.max(v,math.abs(v-s.gravity*horizon))
+    local reach=math.max(1,math.abs(cfg(s,"WaistDrop",1)),math.abs(cfg(s,"HandUpOffset",3.5)),
+        math.abs(cfg(s,"HandOffset",.5)),math.abs(cfg(s,"DiveReach",2.4)))
+    local angularSpeed=math.rad(80)*math.pi/(2*duration*tip)
+    local lipschitz=math.max(ballVelocity(start).Magnitude,ballVelocity(horizon).Magnitude)
+        +math.sqrt(horizontalSpeed*horizontalSpeed+verticalSpeed*verticalSpeed)+reach*angularSpeed
+    if not finite(lipschitz) then return false,"Invalid DB contact motion bound" end
+    local boundaries={start,horizon}
+    local tipping=diveTipBoundary(projected,actual)
+    if tipping and tipping-s.now>start and tipping-s.now<horizon then
+        table.insert(boundaries,tipping-s.now)
+    end
+    table.sort(boundaries)
+    local checks=0;local minimumGap=INF
+    local function gapAt(t)
+        local cf,air=Planner.pose(projected,actual,s.now+t)
+        local w,h,r=Planner.capsule(projected,cf,air)
+        return Planner.segmentDistance(Planner.ballAt(s.arc,s.now+t-s.launchAt),w,h)-r
+    end
+    for _,t in ipairs(boundaries)do
+        local gap=gapAt(t);checks=checks+1;minimumGap=math.min(minimumGap,gap)
+        if not finite(gap) or gap<=.0001 then return false,"Possible DB contact retained",checks,minimumGap end
+    end
+    for i=1,#boundaries-1 do
+        local a,b=boundaries[i],boundaries[i+1]
+        local steps=math.max(1,math.ceil((b-a)/.004))
+        if checks+steps>320 then return false,"DB contact check budget exhausted",checks,minimumGap end
+        local width=(b-a)/steps
+        for j=1,steps do
+            local gap=gapAt(a+(j-.5)*width);checks=checks+1;minimumGap=math.min(minimumGap,gap)
+            -- Capsule distance is Lipschitz within each constant-radius
+            -- interval. A near interval is uncertain, so retain the action.
+            if not finite(gap) or gap<=lipschitz*width*.5+.0001 then
+                return false,"Possible DB contact retained",checks,minimumGap
+            end
+        end
+    end
+    return true,"Observed DB dive has no modeled contact before turf",checks,minimumGap
+end
+
 -- Validate the existing contact after shifting takeoff to this actual input
 -- instant. Three contact samples are enough to reject a late jump without a
 -- new strategy search. WR additionally retains its sampled first-contact rule.

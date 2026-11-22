@@ -484,6 +484,7 @@ return function(ctx, Planner, createTackle, WRApproach, Motion, createCarrierMov
             position=root.Position,velocity=root.AssemblyLinearVelocity,desiredDirection=direction,
             opponents=opponents,bounds=bounds,requestedSprint=requestedSprint,walkSpeed=h.WalkSpeed,
             targetPosition=arrival and arrival.targetPosition,arriveBy=arrival and arrival.arriveBy,
+            precisePath=s.phase=="Live" and s.arc~=nil and (s.role=="WR" or s.role=="DB"),
             runSpeed=Config.RunSpeed,currentDirection=steering,
             sprintSpeed=Config.SprintSpeed,
             openingContactWindow=openingContactWindow==true,
@@ -1273,6 +1274,21 @@ return function(ctx, Planner, createTackle, WRApproach, Motion, createCarrierMov
             end
             if plan.jumpAt and (not jumped or jumpRequest or actionNow-lastJump<0.045
                 or h.FloorMaterial~=Enum.Material.Air) then return end
+            if s.role=="DB" then
+                local actual=snapshot(s,root,h,actionNow)
+                local reject,why,checks,minimumGap=Planner.rejectUnreachableDBAirborneDive(actual,plan)
+                if reject then
+                    log("replan",{role=s.role,reason=why,action="airborneDive",
+                        checkedAt=actual.now,scheduledJump=plan.jumpAt,scheduledDive=plan.diveAt,
+                        contactAt=plan.contactAt,position=xyz(actual.position),velocity=xyz(actual.velocity),
+                        direction=xyz(plan.direction),grounded=actual.grounded,
+                        nativeAirborne=actual.nativeAirborne,physicalAirborne=actual.physicalAirborne,
+                        reachAirborne=actual.reachAirborne,contactChecks=checks,minimumContactGap=minimumGap})
+                    cancel();nextSolve=now
+                    message="Dive origin changed · recalculating"
+                    return
+                end
+            end
             if s.role=="WR" and plan.airborneFinish=="jumpDive" then
                 local actual=snapshot(s,root,h,actionNow)
                 local valid,why=Planner.validateAirborneDive(actual,plan)
@@ -1433,6 +1449,22 @@ return function(ctx, Planner, createTackle, WRApproach, Motion, createCarrierMov
             log=log,clippedDistance=clippedDistance})
     end
     local bindName="ChalkDB_Interception"
+    -- Passive cadence context distinguishes render stalls from a busy solve.
+    -- Focus is unknown until an actual native focus event is observed.
+    local cadenceConnections={}
+    local windowFocused,focusChangedAt
+    local heartbeatClock,heartbeatCount,heartbeatMaxGap=nil,0,0
+    cadenceConnections[#cadenceConnections+1]=UIS.WindowFocused:Connect(function()
+        windowFocused=true;focusChangedAt=workspace:GetServerTimeNow()
+    end)
+    cadenceConnections[#cadenceConnections+1]=UIS.WindowFocusReleased:Connect(function()
+        windowFocused=false;focusChangedAt=workspace:GetServerTimeNow()
+    end)
+    cadenceConnections[#cadenceConnections+1]=RunService.Heartbeat:Connect(function()
+        local now=os.clock()
+        if heartbeatClock then heartbeatMaxGap=math.max(heartbeatMaxGap,now-heartbeatClock) end
+        heartbeatClock=now;heartbeatCount=heartbeatCount+1
+    end)
     local previousRenderClock,previousTickSeconds,lastFrameGapLog=nil,0,-math.huge
     RunService:BindToRenderStep(bindName,Enum.RenderPriority.Character.Value+1,function(dt)
         local began=os.clock()
@@ -1443,9 +1475,13 @@ return function(ctx, Planner, createTackle, WRApproach, Motion, createCarrierMov
         if alive and auto and began-lastFrameGapLog>=1
             and (dt>.25 or callbackGap>.25 or tickSeconds>.15) then
             log("frameGap",{frameDt=dt,callbackGap=callbackGap,
-                previousTickMs=previousTickSeconds*1000,tickMs=tickSeconds*1000})
+                previousTickMs=previousTickSeconds*1000,tickMs=tickSeconds*1000,
+                focusKnown=windowFocused~=nil,windowFocused=windowFocused,focusChangedAt=focusChangedAt,
+                heartbeatsSinceRender=heartbeatCount,heartbeatMaxGap=heartbeatMaxGap,
+                heartbeatAge=heartbeatClock and math.max(0,os.clock()-heartbeatClock) or nil})
             lastFrameGapLog=began
         end
+        heartbeatCount,heartbeatMaxGap=0,0
         previousTickSeconds=tickSeconds
         if not ok then
             lastError=tostring(err)
@@ -1587,6 +1623,7 @@ return function(ctx, Planner, createTackle, WRApproach, Motion, createCarrierMov
         if tackleAssist then tackleAssist.cancel() end
         if carrierAssist then carrierAssist.unload() end
         RunService:UnbindFromRenderStep(bindName)
+        for _,connection in ipairs(cadenceConnections or {}) do connection:Disconnect() end
         touchedConnection:Disconnect()
         cancel()
     end

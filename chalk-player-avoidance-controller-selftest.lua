@@ -662,5 +662,18 @@ end
             equal(input.clearance,eligible and 4.75 or nil,gate.." clearance")
         end
     end)
+    test("fine pursuit belongs to an observed live ball without a fabricated arrival",function()
+        for _,gate in ipairs({"WR","DB","noBall","PreSnap","RAC","QB"}) do
+            local f=fixture();f.context.role=gate=="WR" and "WR" or gate=="QB" and "QB" or "DB"
+            f.context.arc=gate~="noBall" and {} or nil
+            if gate=="PreSnap" or gate=="RAC" then f.context.phase=gate end
+            f.context.catchIntent={};f.plan.kind="pursue";f.plan.reachable=false
+            f.api.catch(f.context)
+            local input=f.helperCalls[#f.helperCalls].input
+            equal(input.precisePath,gate=="WR" or gate=="DB",gate)
+            equal(input.arriveBy,nil);equal(input.targetPosition,nil)
+            equal(f.plan.reachable,false)
+        end
+    end)
     return report
 end

@@ -104,6 +104,10 @@ function Avoidance.update(previous,input)
     -- deadline never relaxes collision checks; it only avoids spending that
     -- margin on a needlessly wide angle or a clear-path debounce hold.
     local catchPath=vec(input.targetPosition) and finite(input.arriveBy)
+    -- Losing a reachable catch does not justify a coarser route to the same
+    -- observed ball. A pursuit may keep fine detour choices without gaining
+    -- an arrival deadline, extra speed, or a reachable-contact claim.
+    local precisePath=catchPath or input.precisePath==true
     local goalDelta=catchPath and (input.targetPosition-position)*FLAT or ZERO
     local goalHeading=goalDelta.Magnitude>.001 and goalDelta.Unit or heading
     local remaining=catchPath and math.max(0,input.arriveBy-now) or 0
@@ -282,7 +286,7 @@ function Avoidance.update(previous,input)
     end
     local function candidate(side)
         local best
-        local angles=catchPath and {5,10,15,20,25,30,35,40,45,50,55,60,65,70,75,80,85,90}
+        local angles=precisePath and {5,10,15,20,25,30,35,40,45,50,55,60,65,70,75,80,85,90}
             or {35,55,75,90}
         for _,degrees in ipairs(angles) do
             local direction=rotate(heading,side*math.rad(degrees))
@@ -294,7 +298,7 @@ function Avoidance.update(previous,input)
                 -- progress only for the caller's explicit sprint opt-in. The
                 -- bounded turn below still has to pass both speed checks.
                 local alignment=direction:Dot(heading)
-                local score=alignment+(catchPath and 0 or math.min(gap,radius+3)*.015)
+                local score=alignment+(precisePath and 0 or math.min(gap,radius+3)*.015)
                 if sprintEligible then
                     local usableSpeed=keepSprint(direction) and sprintSpeed*strength or walkSpeed
                     score=alignment*usableSpeed/math.max(.001,walkSpeed)

@@ -1,4 +1,4 @@
--- Chalk-Release: 5.1.24
+-- Chalk-Release: 5.1.25
 -- Chalk-Product: deterministic
 -- Chalk It Up DB/WR ball assist using normal sprint/jump/dive controls.
 -- Cyan: replicated route (when supplied). Yellow: movement estimate.
@@ -47,7 +47,7 @@ assert(matchEvent and fxEvent and matchEvent:IsA("RemoteEvent") and fxEvent:IsA(
     "Chalk It Up Match/Fx events were not found")
 
 local api = {}
-local RELEASE_VERSION="5.1.24"
+local RELEASE_VERSION="5.1.25"
 local loadedGameId,loadedPlaceId,loadedJobId=game.GameId,game.PlaceId,game.JobId
 env.ChalkDB = api
 local alive, enabled = true, true
@@ -967,7 +967,7 @@ end
 function api.status()
     local ch = characterOf(opponent)
     local holder,isEnemy,holderRole=carrierContext()
-    return {product="deterministic",version=RELEASE_VERSION,buildId="98d6fc36be5b287ec1f95a906a384440bf3fbbfe5ece8a009116f148c7d9ffbb",policyMode="deterministic", enabled=enabled, role=role or "unknown",rawRole=rawRole or "unknown", phase=phase,
+    return {product="deterministic",version=RELEASE_VERSION,buildId="84bb5f82ef607983caaf5b70afe56d0401998436391026e492749e418cad2137",policyMode="deterministic", enabled=enabled, role=role or "unknown",rawRole=rawRole or "unknown", phase=phase,
         ui={visible=windowVisible,minimized=minimized,x=panel.Position.X.Offset,y=panel.Position.Y.Offset},
         matchAlerts={enabled=alertSettings.enabled,saveError=alertSettings.saveError},
         preferences=preferences and preferences.status() or nil,
@@ -1928,6 +1928,87 @@ function Planner.validateAirborneDive(s,p)
     if not connected then return false,connectionReason end
     local finish,reason=Planner.airborneFinish(s,witness)
     return finish=="jumpDive",reason or "Observed airborne contact remains reachable"
+end
+
+-- A one-sided stale-plan check. False means keep the existing plan; it does
+-- not assert a robust catch. The original solve and native mode guards remain.
+-- Reject only a geometrically separated remaining trajectory. Close/uncertain
+-- intervals keep the existing action, including legal DB grounded finishes.
+-- This is a model check, not a guarantee about native physics or server awards.
+function Planner.rejectUnreachableDBAirborneDive(s,p)
+    if not validSnapshot(s) or s.role~="DB" or not p or not finite(p.diveAt)
+        or not finite(p.contactAt) or p.contactAt<=s.now or s.grounded
+        or s.canDive~=true or s.nativeAirborne~=true or s.reachAirborne==false
+        or not vec(p.direction) or math.abs(p.direction.Magnitude-1)>.01 then
+        return false,"DB aerial miss check not applicable"
+    end
+    local duration=diveCfg(s,"Time",.35)
+    local ground=diveCfg(s,"Ground",.75)
+    local tip=diveCfg(s,"Tip",.5)
+    if duration<=0 or ground<0 or tip<=0 or not finite(s.diveDistance) or s.diveDistance<0 then
+        return false,"DB aerial miss check unavailable"
+    end
+    local projected={}for k,v in pairs(s)do projected[k]=v end
+    projected.maxHorizon=4
+    -- Retaining the longer upright reach after landing is deliberately
+    -- optimistic: uncertainty must preserve the already selected action.
+    projected.reachAirborne=true
+    local horizon=flightHorizon(projected,true)
+    if not horizon or horizon>duration+ground or horizon>1.1 then
+        return false,"DB aerial contact horizon extends beyond bounded check"
+    end
+    local actual={}for k,v in pairs(p)do actual[k]=v end
+    actual.kind,actual.jumpAt,actual._jumpDelay="dive",nil,nil
+    actual.diveAt,actual._diveDelay=s.now,0
+    actual._diveDistance=nil
+    actual._reaction,actual._aimDistance=0,0
+    local start=math.max(0,s.launchAt+.120001-s.now)
+    if start>=horizon then return false,"No eligible bounded DB contact interval" end
+    local function ballVelocity(t)
+        local u=(s.now+t-s.launchAt)/s.arc.Flight
+        return (s.arc.P1-s.arc.P0)/s.arc.Flight
+            +UP*(4*s.arc.Apex/s.arc.Flight*(1-2*u))
+    end
+    local v=math.max(0,(s.velocity or ZERO).Y)
+    local horizontalSpeed=2*s.diveDistance/duration
+    local verticalSpeed=math.max(v,math.abs(v-s.gravity*horizon))
+    local reach=math.max(1,math.abs(cfg(s,"WaistDrop",1)),math.abs(cfg(s,"HandUpOffset",3.5)),
+        math.abs(cfg(s,"HandOffset",.5)),math.abs(cfg(s,"DiveReach",2.4)))
+    local angularSpeed=math.rad(80)*math.pi/(2*duration*tip)
+    local lipschitz=math.max(ballVelocity(start).Magnitude,ballVelocity(horizon).Magnitude)
+        +math.sqrt(horizontalSpeed*horizontalSpeed+verticalSpeed*verticalSpeed)+reach*angularSpeed
+    if not finite(lipschitz) then return false,"Invalid DB contact motion bound" end
+    local boundaries={start,horizon}
+    local tipping=diveTipBoundary(projected,actual)
+    if tipping and tipping-s.now>start and tipping-s.now<horizon then
+        table.insert(boundaries,tipping-s.now)
+    end
+    table.sort(boundaries)
+    local checks=0;local minimumGap=INF
+    local function gapAt(t)
+        local cf,air=Planner.pose(projected,actual,s.now+t)
+        local w,h,r=Planner.capsule(projected,cf,air)
+        return Planner.segmentDistance(Planner.ballAt(s.arc,s.now+t-s.launchAt),w,h)-r
+    end
+    for _,t in ipairs(boundaries)do
+        local gap=gapAt(t);checks=checks+1;minimumGap=math.min(minimumGap,gap)
+        if not finite(gap) or gap<=.0001 then return false,"Possible DB contact retained",checks,minimumGap end
+    end
+    for i=1,#boundaries-1 do
+        local a,b=boundaries[i],boundaries[i+1]
+        local steps=math.max(1,math.ceil((b-a)/.004))
+        if checks+steps>320 then return false,"DB contact check budget exhausted",checks,minimumGap end
+        local width=(b-a)/steps
+        for j=1,steps do
+            local gap=gapAt(a+(j-.5)*width);checks=checks+1;minimumGap=math.min(minimumGap,gap)
+            -- Capsule distance is Lipschitz within each constant-radius
+            -- interval. A near interval is uncertain, so retain the action.
+            if not finite(gap) or gap<=lipschitz*width*.5+.0001 then
+                return false,"Possible DB contact retained",checks,minimumGap
+            end
+        end
+    end
+    return true,"Observed DB dive has no modeled contact before turf",checks,minimumGap
 end
 
 -- Validate the existing contact after shifting takeoff to this actual input
@@ -3624,6 +3705,10 @@ function Avoidance.update(previous,input)
     -- deadline never relaxes collision checks; it only avoids spending that
     -- margin on a needlessly wide angle or a clear-path debounce hold.
     local catchPath=vec(input.targetPosition) and finite(input.arriveBy)
+    -- Losing a reachable catch does not justify a coarser route to the same
+    -- observed ball. A pursuit may keep fine detour choices without gaining
+    -- an arrival deadline, extra speed, or a reachable-contact claim.
+    local precisePath=catchPath or input.precisePath==true
     local goalDelta=catchPath and (input.targetPosition-position)*FLAT or ZERO
     local goalHeading=goalDelta.Magnitude>.001 and goalDelta.Unit or heading
     local remaining=catchPath and math.max(0,input.arriveBy-now) or 0
@@ -3802,7 +3887,7 @@ function Avoidance.update(previous,input)
     end
     local function candidate(side)
         local best
-        local angles=catchPath and {5,10,15,20,25,30,35,40,45,50,55,60,65,70,75,80,85,90}
+        local angles=precisePath and {5,10,15,20,25,30,35,40,45,50,55,60,65,70,75,80,85,90}
             or {35,55,75,90}
         for _,degrees in ipairs(angles) do
             local direction=rotate(heading,side*math.rad(degrees))
@@ -3814,7 +3899,7 @@ function Avoidance.update(previous,input)
                 -- progress only for the caller's explicit sprint opt-in. The
                 -- bounded turn below still has to pass both speed checks.
                 local alignment=direction:Dot(heading)
-                local score=alignment+(catchPath and 0 or math.min(gap,radius+3)*.015)
+                local score=alignment+(precisePath and 0 or math.min(gap,radius+3)*.015)
                 if sprintEligible then
                     local usableSpeed=keepSprint(direction) and sprintSpeed*strength or walkSpeed
                     score=alignment*usableSpeed/math.max(.001,walkSpeed)
@@ -4710,6 +4795,7 @@ return function(ctx, Planner, createTackle, WRApproach, Motion, createCarrierMov
             position=root.Position,velocity=root.AssemblyLinearVelocity,desiredDirection=direction,
             opponents=opponents,bounds=bounds,requestedSprint=requestedSprint,walkSpeed=h.WalkSpeed,
             targetPosition=arrival and arrival.targetPosition,arriveBy=arrival and arrival.arriveBy,
+            precisePath=s.phase=="Live" and s.arc~=nil and (s.role=="WR" or s.role=="DB"),
             runSpeed=Config.RunSpeed,currentDirection=steering,
             sprintSpeed=Config.SprintSpeed,
             openingContactWindow=openingContactWindow==true,
@@ -5499,6 +5585,21 @@ return function(ctx, Planner, createTackle, WRApproach, Motion, createCarrierMov
             end
             if plan.jumpAt and (not jumped or jumpRequest or actionNow-lastJump<0.045
                 or h.FloorMaterial~=Enum.Material.Air) then return end
+            if s.role=="DB" then
+                local actual=snapshot(s,root,h,actionNow)
+                local reject,why,checks,minimumGap=Planner.rejectUnreachableDBAirborneDive(actual,plan)
+                if reject then
+                    log("replan",{role=s.role,reason=why,action="airborneDive",
+                        checkedAt=actual.now,scheduledJump=plan.jumpAt,scheduledDive=plan.diveAt,
+                        contactAt=plan.contactAt,position=xyz(actual.position),velocity=xyz(actual.velocity),
+                        direction=xyz(plan.direction),grounded=actual.grounded,
+                        nativeAirborne=actual.nativeAirborne,physicalAirborne=actual.physicalAirborne,
+                        reachAirborne=actual.reachAirborne,contactChecks=checks,minimumContactGap=minimumGap})
+                    cancel();nextSolve=now
+                    message="Dive origin changed · recalculating"
+                    return
+                end
+            end
             if s.role=="WR" and plan.airborneFinish=="jumpDive" then
                 local actual=snapshot(s,root,h,actionNow)
                 local valid,why=Planner.validateAirborneDive(actual,plan)
@@ -5659,6 +5760,22 @@ return function(ctx, Planner, createTackle, WRApproach, Motion, createCarrierMov
             log=log,clippedDistance=clippedDistance})
     end
     local bindName="ChalkDB_Interception"
+    -- Passive cadence context distinguishes render stalls from a busy solve.
+    -- Focus is unknown until an actual native focus event is observed.
+    local cadenceConnections={}
+    local windowFocused,focusChangedAt
+    local heartbeatClock,heartbeatCount,heartbeatMaxGap=nil,0,0
+    cadenceConnections[#cadenceConnections+1]=UIS.WindowFocused:Connect(function()
+        windowFocused=true;focusChangedAt=workspace:GetServerTimeNow()
+    end)
+    cadenceConnections[#cadenceConnections+1]=UIS.WindowFocusReleased:Connect(function()
+        windowFocused=false;focusChangedAt=workspace:GetServerTimeNow()
+    end)
+    cadenceConnections[#cadenceConnections+1]=RunService.Heartbeat:Connect(function()
+        local now=os.clock()
+        if heartbeatClock then heartbeatMaxGap=math.max(heartbeatMaxGap,now-heartbeatClock) end
+        heartbeatClock=now;heartbeatCount=heartbeatCount+1
+    end)
     local previousRenderClock,previousTickSeconds,lastFrameGapLog=nil,0,-math.huge
     RunService:BindToRenderStep(bindName,Enum.RenderPriority.Character.Value+1,function(dt)
         local began=os.clock()
@@ -5669,9 +5786,13 @@ return function(ctx, Planner, createTackle, WRApproach, Motion, createCarrierMov
         if alive and auto and began-lastFrameGapLog>=1
             and (dt>.25 or callbackGap>.25 or tickSeconds>.15) then
             log("frameGap",{frameDt=dt,callbackGap=callbackGap,
-                previousTickMs=previousTickSeconds*1000,tickMs=tickSeconds*1000})
+                previousTickMs=previousTickSeconds*1000,tickMs=tickSeconds*1000,
+                focusKnown=windowFocused~=nil,windowFocused=windowFocused,focusChangedAt=focusChangedAt,
+                heartbeatsSinceRender=heartbeatCount,heartbeatMaxGap=heartbeatMaxGap,
+                heartbeatAge=heartbeatClock and math.max(0,os.clock()-heartbeatClock) or nil})
             lastFrameGapLog=began
         end
+        heartbeatCount,heartbeatMaxGap=0,0
         previousTickSeconds=tickSeconds
         if not ok then
             lastError=tostring(err)
@@ -5813,6 +5934,7 @@ return function(ctx, Planner, createTackle, WRApproach, Motion, createCarrierMov
         if tackleAssist then tackleAssist.cancel() end
         if carrierAssist then carrierAssist.unload() end
         RunService:UnbindFromRenderStep(bindName)
+        for _,connection in ipairs(cadenceConnections or {}) do connection:Disconnect() end
         touchedConnection:Disconnect()
         cancel()
     end
@@ -7046,7 +7168,7 @@ end
 -- Deep middle Floaters with alternating candidate sides. Observed coverage
 -- chooses among funded routes; one confirmed camper response is allowed per
 -- opponent session, independently of the cosmetic left/right route cycle.
-function Policy.chooseScheduledRoute(input,Config,Field,RouteMath,Planner)
+local function chooseScheduledRoute(input,Config,Field,RouteMath,Planner,centerFallback)
     input=input or {}
     if not validField(Field) or type(RouteMath)~="table" or type(RouteMath.Sanitize)~="function"
         or type(RouteMath.Plan)~="function" or input.mode=="Team" then
@@ -7103,8 +7225,33 @@ function Policy.chooseScheduledRoute(input,Config,Field,RouteMath,Planner)
     local jumpHeight=finite(Config.JumpHeight) and Config.JumpHeight or 6
     local turf=finite(Field.TurfY) and Field.TurfY or 0
     local rootY=vec(input.position) and input.position.Y or turf+3
-    local start=Vector3.new(mid+offset.X,rootY,los+offset.Z)
-    local observedStart=vec(input.position) and input.position or start
+    local startX=mid
+    -- A centered defender can use the hike to arrive directly in front of a
+    -- stationary receiver. Choose a legal nearby start before the route clock
+    -- begins, then converge on the same deep middle cut. This is a setup choice,
+    -- not immunity to a defender who follows it. The complete route is funded
+    -- from that start below; no extra live sprint or unchecked escape is added.
+    local setup=finite(input.setupSeconds) and clamp(input.setupSeconds,0,(Config.HikeTime or 3)+.5) or 0
+    local openingShifted=false
+    if not centerFallback and not shortField and input.phase=="PreSnap" and setup>0
+        and vec(input.opponentPosition) then
+        local other=input.opponentPosition-offset
+        local depth=other.Z-los
+        local jam=Config.Moves and Config.Moves.Jam
+        local clearance=clamp((jam and finite(jam.Range) and jam.Range or 3.5)+1.25,3.75,5.25)
+        local setupReach=math.max(0,tonumber(Config.PreSnapDBSpeed) or 0)*setup
+        if depth>=-clearance and depth<=setupReach+clearance+.5 and math.abs(other.X-mid)<=clearance then
+            local side=math.abs(other.X-mid)>math.max(.5,yd*.1) and (other.X>mid and -1 or 1) or preferredSide
+            local margin=math.max(edge,(Config.SidelineMarginYards or 2)*yd)
+            local proposed=clamp(mid+side*1.5*yd,Field.MinX+margin,Field.MaxX-margin)
+            if math.abs(proposed-mid)>=clearance+.5 then startX=proposed;openingShifted=true end
+        end
+    end
+    local start=Vector3.new(startX+offset.X,rootY,los+offset.Z)
+    -- Submit.StartX is the native lineup request. Preserve the observed
+    -- behind-LOS depth; only the explicitly selected starting X changes.
+    local observedStart=vec(input.position) and (openingShifted
+        and Vector3.new(startX+offset.X,input.position.Y,input.position.Z) or input.position) or start
     local forecastCount=0
     local preferredDeep,deepestFeasible,bestEffort
     -- Native ink sanitation can shorten the drawn final leg even when its
@@ -7126,14 +7273,16 @@ function Policy.chooseScheduledRoute(input,Config,Field,RouteMath,Planner)
                     if sideDone then break end
                     local endX=mid+side*((Field.MaxX-Field.MinX)*.5-edge)*widthFraction
                     local endZ=clamp(los+(goalDepth+beyond)*yd,los+yd,Field.EndZ-edge)
-                    local raw={Vector2.new(mid,los),Vector2.new(mid,los+stemYards*yd),Vector2.new(endX,endZ)}
-                    local points=RouteMath.Sanitize(raw,mid,los)
+                    local raw={Vector2.new(startX,los),Vector2.new(mid,los+stemYards*yd),Vector2.new(endX,endZ)}
+                    local points=RouteMath.Sanitize(raw,startX,los)
                     -- Native ink/lead sanitation may pull the last point inward.
                     -- The actual center stem and a sharp legal cut must survive.
                     if #points==3 and (points[1]-raw[1]).Magnitude<.01 and (points[2]-raw[2]).Magnitude<.01 then
                         local outgoing=points[3]-points[2]
                         local lateral=side*outgoing.X
-                        local angle=outgoing.Magnitude>.01 and math.deg(math.acos(clamp(outgoing.Y/outgoing.Magnitude,-1,1))) or 0
+                        local incoming=points[2]-points[1]
+                        local angle=outgoing.Magnitude>.01 and incoming.Magnitude>.01
+                            and math.deg(math.acos(clamp(incoming.Unit:Dot(outgoing.Unit),-1,1))) or 0
                         if lateral>=2*yd and angle>=40 and angle<=115 and (not shortField or outgoing.Y>=0) then
                             local plan=RouteMath.Plan(points,"Floater")
                             local cut=worldPoint(points[2],offset,rootY)
@@ -7143,7 +7292,7 @@ function Policy.chooseScheduledRoute(input,Config,Field,RouteMath,Planner)
                                     local shape=side<0 and "middle_stem_left" or "middle_stem_right"
                                     local depth=(points[3].Y-los)/yd
                                     local family,signature=routeKeys("Floater",shape,depth,side)
-                                    bestEffort={payload={Points=points,StartX=mid,Pass="Floater"},plan=plan,
+                                    bestEffort={payload={Points=points,StartX=startX,Pass="Floater"},plan=plan,
                                         side=side,depth=depth,shape=shape,family=family,signature=signature,
                                         routeFamily="middle_stem",scheduledFamily="middle_stem",scheduledPass="Floater",
                                         routeStrategy="deep_middle_floater",middleStemDeep=true,stemYards=stemYards,
@@ -7305,7 +7454,7 @@ function Policy.chooseScheduledRoute(input,Config,Field,RouteMath,Planner)
                                                     local score=clamp(margin/yd,-30,20)*.5+remaining*.04-stemSprint
                                                         +math.min(angle,90)*.08+(insideGoal and 12 or 0)
                                                         +(side==preferredSide and .3 or 0)-failures[side]*12-(waiting and 15 or 0)
-                                                    local c={payload={Points=points,StartX=mid,Pass="Floater"},plan=plan,
+                                                    local c={payload={Points=points,StartX=startX,Pass="Floater"},plan=plan,
                                                         side=side,depth=depth,shape=shape,family=family,signature=signature,
                                                         routeFamily="middle_stem",cutDirection=side<0 and "left" or "right",
                                                         scheduledFamily="middle_stem",scheduledPass="Floater",score=score,
@@ -7330,6 +7479,7 @@ function Policy.chooseScheduledRoute(input,Config,Field,RouteMath,Planner)
                                                         requireDive=false,preferAirborne=true,preferJumpDive=false,requireAirborne=true,
                                                         finishMode="airborne_required",routeStrategy="deep_middle_floater",
                                                         forecastCount=forecastCount,runTime=contact.contactAt,
+                                                        openingStartShifted=openingShifted,openingStartOffset=startX-mid,
                                                         _contactSnapshot=snap,_staminaAtCut=afterStem}
                                                     if not best or c.score>best.score then best=c end
                                                     if not waiting and (not bestClear or c.score>bestClear.score) then bestClear=c end
@@ -7393,11 +7543,25 @@ function Policy.chooseScheduledRoute(input,Config,Field,RouteMath,Planner)
             return attachCampingGate(c,counterGate,gateReason)
         end
     end
+    if openingShifted then
+        -- One bounded fallback only. A legal setup offset must not replace a
+        -- funded centered route with an unverified best-effort pass.
+        local fallback,reason=chooseScheduledRoute(input,Config,Field,RouteMath,Planner,true)
+        if fallback then
+            fallback.openingStartFallback=true
+            fallback.forecastCount=(fallback.forecastCount or 0)+forecastCount
+        end
+        return fallback,reason
+    end
     if bestEffort then
         bestEffort.forecastCount=forecastCount
         return attachCampingGate(bestEffort,counterGate,counterGate.eligible and "no_funded_floater" or nil)
     end
     return nil,"No deep middle Floater has a funded airborne catch forecast"
+end
+
+function Policy.chooseScheduledRoute(input,Config,Field,RouteMath,Planner)
+    return chooseScheduledRoute(input,Config,Field,RouteMath,Planner,false)
 end
 
 -- input: LOS (field coordinates), world position/opponentPosition, offset,
@@ -8397,6 +8561,7 @@ return function(ctx,Policy,services)
         for _,key in ipairs({"estimatedCatchAt","estimatedCatchZ","estimatedFirstTouchAt","estimatedStopAt","estimatedContactMargin","stemSprintSeconds","stemSprintStart",
             "earlyStemSprintSeconds","stemRunSpeed","estimatedStemRegeneration","ballTargetZ","shortField",
             "sanitizedEndpointX","ballTargetX","estimatedCatchX","targetSidelineInset","catchSidelineInset","lateralSearchExtended",
+            "openingStartShifted","openingStartOffset","openingStartFallback",
             "stemTravelDistance","postThrowStem","stemDetour","forecastCount","cutAngle","estimatedCatchInsideGoal","rareBullet",
             "rareCampingBullet","continuousBulletCatch","carryMoveReserve","observedEndzoneCamping","campingObservationKnown",
             "campingEvidenceCount","campingCurrentKnown","campingCurrentWaiting","campingCounterUsed",
@@ -8900,6 +9065,8 @@ return function(ctx,Policy,services)
             sanitizedEndpointX=chosen.sanitizedEndpointX,ballTargetX=chosen.ballTargetX,
             estimatedCatchX=chosen.estimatedCatchX,targetSidelineInset=chosen.targetSidelineInset,
             catchSidelineInset=chosen.catchSidelineInset,lateralSearchExtended=chosen.lateralSearchExtended,
+            openingStartShifted=chosen.openingStartShifted,openingStartOffset=chosen.openingStartOffset,
+            openingStartFallback=chosen.openingStartFallback,
             stemTravelDistance=chosen.stemTravelDistance,postThrowStem=chosen.postThrowStem,
             stemDetour=chosen.stemDetour,forecastCount=chosen.forecastCount,
             cutAngle=chosen.cutAngle,estimatedCatchInsideGoal=chosen.estimatedCatchInsideGoal,rareBullet=chosen.rareBullet,
@@ -8943,6 +9110,8 @@ return function(ctx,Policy,services)
             sanitizedEndpointX=chosen.sanitizedEndpointX,ballTargetX=chosen.ballTargetX,
             estimatedCatchX=chosen.estimatedCatchX,targetSidelineInset=chosen.targetSidelineInset,
             catchSidelineInset=chosen.catchSidelineInset,lateralSearchExtended=chosen.lateralSearchExtended,
+            openingStartShifted=chosen.openingStartShifted,openingStartOffset=chosen.openingStartOffset,
+            openingStartFallback=chosen.openingStartFallback,
             estimatedFirstTouchAt=chosen.estimatedFirstTouchAt,estimatedStopAt=chosen.estimatedStopAt,
             shape=chosen.shape,depth=chosen.depth,family=chosen.family,signature=chosen.signature,
             adaptationPenalty=chosen.adaptationPenalty,recentFailureCount=chosen.recentFailureCount,
@@ -9949,7 +10118,7 @@ end
 end)()
 
 api.initializePreferences(createPreferences)
-assist = createAssist({snapshot=api.context,version=RELEASE_VERSION,buildId="98d6fc36be5b287ec1f95a906a384440bf3fbbfe5ece8a009116f148c7d9ffbb",fullplay=function(s,root,h,now,dt)
+assist = createAssist({snapshot=api.context,version=RELEASE_VERSION,buildId="84bb5f82ef607983caaf5b70afe56d0401998436391026e492749e418cad2137",fullplay=function(s,root,h,now,dt)
     if fullplay then return fullplay.navigate(s,root,h,now,dt) end
 end},Planner,createTackle,WRApproach,Motion,createCarrierMoves,PlayerAvoidance)
 assist.setEnabled(false)
@@ -9965,7 +10134,7 @@ repeatWR = createWRRepeat({snapshot=api.context,
     autoplay=function() return autoplay.status() end,
     disableAutoplay=function() return api.setAutoplay(false) end})
 repeatWR.setEnabled(false)
-fullplay = createFullplay({Planner=Planner,snapshot=api.context,version=RELEASE_VERSION,buildId="98d6fc36be5b287ec1f95a906a384440bf3fbbfe5ece8a009116f148c7d9ffbb",
+fullplay = createFullplay({Planner=Planner,snapshot=api.context,version=RELEASE_VERSION,buildId="84bb5f82ef607983caaf5b70afe56d0401998436391026e492749e418cad2137",
     assistEnabled=function() return assist.status().enabled end,
     release=function() if assist.releaseFullplay then assist.releaseFullplay() end end},FullplayPolicy)
 matchSkip = createMatchSkip({snapshot=api.context,startDisabled=true,preferencesManaged=true,
@@ -9988,7 +10157,7 @@ local GAME_ID,PLACE_ID=10770281752,116097127629859
 local MAIN_URL="https://raw.githubusercontent.com/BananaMan2006/chalk-assist-deterministic/main/chalk-it-up-1v1.lua"
 local CACHE_FILE="chalk-deterministic-cache.lua"
 local MAIN_FILE="chalk-it-up-1v1.lua"
-local MIN_RELEASE="5.1.24"
+local MIN_RELEASE="5.1.25"
 local MARKER="__ChalkDeterministicAutoBoot"
 local env=type(getgenv)=="function" and getgenv() or _G
 local boot

@@ -892,5 +892,43 @@ return function(Avoidance)
         assert((relative+rv*at).Magnitude>=3.75-1e-7,"paced correction bypassed clearance")
         legal(p,d.direction)
     end)
+    test("live-ball pursuit keeps fine turn choices without inventing an arrival deadline",function()
+        for _,mirror in ipairs({1,-1}) do
+            local desired=Vector3.new(-.8053424954414368*mirror,0,.5928098559379578)
+            local heading=Vector3.new(-.31612783670425415*mirror,0,.9487166404724121)
+            local p=fixture({dt=.01680058240890503,desiredDirection=desired,currentDirection=heading,
+                sprintSpeed=27,allowSprintDetour=true,precisePath=true,
+                opponents={{position=Vector3.new(-5.422843933105469*mirror,0,-1.672393798828125),
+                    velocity=Vector3.new(-13.675317764282227*mirror,0,23.28740119934082)}}})
+            local prior={now=-p.dt,active=true,side=mirror,heading=heading,desiredHeading=desired,
+                samples={{time=-.2,position=-heading*24.813629853186733*.2}}}
+            local _,d=Avoidance.update(prior,p)
+            assert(d.sprint and d.active and not d.blocked)
+            assert(d.direction:Dot(desired)*27>23.8,"pursuit retained an unnecessarily coarse detour")
+            assert(d.direction.Unit:Dot(heading.Unit)>=math.cos(8*p.dt)-1e-8,"fine path skipped bounded turning")
+            local relative=p.opponents[1].position-p.position
+            local rv=p.opponents[1].velocity-d.direction*27
+            local at=math.clamp(-relative:Dot(rv)/rv:Dot(rv),0,.25)
+            assert((relative+rv*at).Magnitude>=4.25-1e-7,"fine path weakened prospective sprint clearance")
+            assert(p.targetPosition==nil and p.arriveBy==nil,"pursuit acquired a catch deadline")
+            legal(p,d.direction)
+            p.precisePath=false
+            local _,ordinary=Avoidance.update(prior,p)
+            assert(ordinary.direction:Dot(desired)*27<22.3,"unflagged movement unexpectedly changed")
+        end
+    end)
+    test("fine pursuit retains input ownership bounds and clear-path behavior",function()
+        for _,gate in ipairs({"clear","owned","boundary"}) do
+            local p=fixture({precisePath=true,sprintSpeed=27,allowSprintDetour=true})
+            if gate=="owned" then p.canDetour=false;p.opponents={{position=Vector3.new(0,0,5),velocity=Vector3.zero}}
+            elseif gate=="boundary" then
+                p.bounds.maxX=.1;p.bounds.minX=-.1;p.bounds.maxZ=.1
+                p.opponents={{position=Vector3.new(0,0,4),velocity=Vector3.zero}}
+            end
+            local _,d=Avoidance.update(nil,p)
+            if gate=="boundary" then assert(not d.sprint and d.direction.Magnitude==0)
+            else same(d.direction,p.desiredDirection);assert(d.sprint and not d.active) end
+        end
+    end)
     return report
 end

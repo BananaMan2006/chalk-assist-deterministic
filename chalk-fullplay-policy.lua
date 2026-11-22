@@ -523,7 +523,7 @@ end
 -- Deep middle Floaters with alternating candidate sides. Observed coverage
 -- chooses among funded routes; one confirmed camper response is allowed per
 -- opponent session, independently of the cosmetic left/right route cycle.
-function Policy.chooseScheduledRoute(input,Config,Field,RouteMath,Planner)
+local function chooseScheduledRoute(input,Config,Field,RouteMath,Planner,centerFallback)
     input=input or {}
     if not validField(Field) or type(RouteMath)~="table" or type(RouteMath.Sanitize)~="function"
         or type(RouteMath.Plan)~="function" or input.mode=="Team" then
@@ -580,8 +580,33 @@ function Policy.chooseScheduledRoute(input,Config,Field,RouteMath,Planner)
     local jumpHeight=finite(Config.JumpHeight) and Config.JumpHeight or 6
     local turf=finite(Field.TurfY) and Field.TurfY or 0
     local rootY=vec(input.position) and input.position.Y or turf+3
-    local start=Vector3.new(mid+offset.X,rootY,los+offset.Z)
-    local observedStart=vec(input.position) and input.position or start
+    local startX=mid
+    -- A centered defender can use the hike to arrive directly in front of a
+    -- stationary receiver. Choose a legal nearby start before the route clock
+    -- begins, then converge on the same deep middle cut. This is a setup choice,
+    -- not immunity to a defender who follows it. The complete route is funded
+    -- from that start below; no extra live sprint or unchecked escape is added.
+    local setup=finite(input.setupSeconds) and clamp(input.setupSeconds,0,(Config.HikeTime or 3)+.5) or 0
+    local openingShifted=false
+    if not centerFallback and not shortField and input.phase=="PreSnap" and setup>0
+        and vec(input.opponentPosition) then
+        local other=input.opponentPosition-offset
+        local depth=other.Z-los
+        local jam=Config.Moves and Config.Moves.Jam
+        local clearance=clamp((jam and finite(jam.Range) and jam.Range or 3.5)+1.25,3.75,5.25)
+        local setupReach=math.max(0,tonumber(Config.PreSnapDBSpeed) or 0)*setup
+        if depth>=-clearance and depth<=setupReach+clearance+.5 and math.abs(other.X-mid)<=clearance then
+            local side=math.abs(other.X-mid)>math.max(.5,yd*.1) and (other.X>mid and -1 or 1) or preferredSide
+            local margin=math.max(edge,(Config.SidelineMarginYards or 2)*yd)
+            local proposed=clamp(mid+side*1.5*yd,Field.MinX+margin,Field.MaxX-margin)
+            if math.abs(proposed-mid)>=clearance+.5 then startX=proposed;openingShifted=true end
+        end
+    end
+    local start=Vector3.new(startX+offset.X,rootY,los+offset.Z)
+    -- Submit.StartX is the native lineup request. Preserve the observed
+    -- behind-LOS depth; only the explicitly selected starting X changes.
+    local observedStart=vec(input.position) and (openingShifted
+        and Vector3.new(startX+offset.X,input.position.Y,input.position.Z) or input.position) or start
     local forecastCount=0
     local preferredDeep,deepestFeasible,bestEffort
     -- Native ink sanitation can shorten the drawn final leg even when its
@@ -603,14 +628,16 @@ function Policy.chooseScheduledRoute(input,Config,Field,RouteMath,Planner)
                     if sideDone then break end
                     local endX=mid+side*((Field.MaxX-Field.MinX)*.5-edge)*widthFraction
                     local endZ=clamp(los+(goalDepth+beyond)*yd,los+yd,Field.EndZ-edge)
-                    local raw={Vector2.new(mid,los),Vector2.new(mid,los+stemYards*yd),Vector2.new(endX,endZ)}
-                    local points=RouteMath.Sanitize(raw,mid,los)
+                    local raw={Vector2.new(startX,los),Vector2.new(mid,los+stemYards*yd),Vector2.new(endX,endZ)}
+                    local points=RouteMath.Sanitize(raw,startX,los)
                     -- Native ink/lead sanitation may pull the last point inward.
                     -- The actual center stem and a sharp legal cut must survive.
                     if #points==3 and (points[1]-raw[1]).Magnitude<.01 and (points[2]-raw[2]).Magnitude<.01 then
                         local outgoing=points[3]-points[2]
                         local lateral=side*outgoing.X
-                        local angle=outgoing.Magnitude>.01 and math.deg(math.acos(clamp(outgoing.Y/outgoing.Magnitude,-1,1))) or 0
+                        local incoming=points[2]-points[1]
+                        local angle=outgoing.Magnitude>.01 and incoming.Magnitude>.01
+                            and math.deg(math.acos(clamp(incoming.Unit:Dot(outgoing.Unit),-1,1))) or 0
                         if lateral>=2*yd and angle>=40 and angle<=115 and (not shortField or outgoing.Y>=0) then
                             local plan=RouteMath.Plan(points,"Floater")
                             local cut=worldPoint(points[2],offset,rootY)
@@ -620,7 +647,7 @@ function Policy.chooseScheduledRoute(input,Config,Field,RouteMath,Planner)
                                     local shape=side<0 and "middle_stem_left" or "middle_stem_right"
                                     local depth=(points[3].Y-los)/yd
                                     local family,signature=routeKeys("Floater",shape,depth,side)
-                                    bestEffort={payload={Points=points,StartX=mid,Pass="Floater"},plan=plan,
+                                    bestEffort={payload={Points=points,StartX=startX,Pass="Floater"},plan=plan,
                                         side=side,depth=depth,shape=shape,family=family,signature=signature,
                                         routeFamily="middle_stem",scheduledFamily="middle_stem",scheduledPass="Floater",
                                         routeStrategy="deep_middle_floater",middleStemDeep=true,stemYards=stemYards,
@@ -782,7 +809,7 @@ function Policy.chooseScheduledRoute(input,Config,Field,RouteMath,Planner)
                                                     local score=clamp(margin/yd,-30,20)*.5+remaining*.04-stemSprint
                                                         +math.min(angle,90)*.08+(insideGoal and 12 or 0)
                                                         +(side==preferredSide and .3 or 0)-failures[side]*12-(waiting and 15 or 0)
-                                                    local c={payload={Points=points,StartX=mid,Pass="Floater"},plan=plan,
+                                                    local c={payload={Points=points,StartX=startX,Pass="Floater"},plan=plan,
                                                         side=side,depth=depth,shape=shape,family=family,signature=signature,
                                                         routeFamily="middle_stem",cutDirection=side<0 and "left" or "right",
                                                         scheduledFamily="middle_stem",scheduledPass="Floater",score=score,
@@ -807,6 +834,7 @@ function Policy.chooseScheduledRoute(input,Config,Field,RouteMath,Planner)
                                                         requireDive=false,preferAirborne=true,preferJumpDive=false,requireAirborne=true,
                                                         finishMode="airborne_required",routeStrategy="deep_middle_floater",
                                                         forecastCount=forecastCount,runTime=contact.contactAt,
+                                                        openingStartShifted=openingShifted,openingStartOffset=startX-mid,
                                                         _contactSnapshot=snap,_staminaAtCut=afterStem}
                                                     if not best or c.score>best.score then best=c end
                                                     if not waiting and (not bestClear or c.score>bestClear.score) then bestClear=c end
@@ -870,11 +898,25 @@ function Policy.chooseScheduledRoute(input,Config,Field,RouteMath,Planner)
             return attachCampingGate(c,counterGate,gateReason)
         end
     end
+    if openingShifted then
+        -- One bounded fallback only. A legal setup offset must not replace a
+        -- funded centered route with an unverified best-effort pass.
+        local fallback,reason=chooseScheduledRoute(input,Config,Field,RouteMath,Planner,true)
+        if fallback then
+            fallback.openingStartFallback=true
+            fallback.forecastCount=(fallback.forecastCount or 0)+forecastCount
+        end
+        return fallback,reason
+    end
     if bestEffort then
         bestEffort.forecastCount=forecastCount
         return attachCampingGate(bestEffort,counterGate,counterGate.eligible and "no_funded_floater" or nil)
     end
     return nil,"No deep middle Floater has a funded airborne catch forecast"
+end
+
+function Policy.chooseScheduledRoute(input,Config,Field,RouteMath,Planner)
+    return chooseScheduledRoute(input,Config,Field,RouteMath,Planner,false)
 end
 
 -- input: LOS (field coordinates), world position/opponentPosition, offset,

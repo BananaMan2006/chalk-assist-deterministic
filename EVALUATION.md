@@ -1,6 +1,17 @@
-# Evaluation scope · 5.1.24
+# Evaluation scope · 5.1.25
 
 This release continues the authored, deterministic controller. Its checks establish local rule behavior and packaging properties. **They do not demonstrate a live win rate, a winning streak, perfect catching, or improvement through training.** The release has no training system or shared model.
+
+## 5.1.25 scope
+
+This follow-up addresses separate, reproduced defects without treating every failed play as the same timing problem.
+
+- **Opening pressure:** A legal native StartX offset of 1.5 yards is eligible only during setup when a centered defender can reach the middle opening. It converges on the same deep middle cut, keeps the quarterback origin fixed and recalculates the complete route and catch budget. One centered fallback prevents an unfunded shifted route from replacing a funded centered route. Seventeen recorded route inputs retained funded catches. A fixed-opponent movement reconstruction improved initial progress, but a control in which the defender follows the changed start reproduces the blockage. This is a preventive setup choice, not jam immunity. [Opening evidence](evaluation/5.1.25-opening-review.json).
+- **Pursuit detours:** A live WR/DB ball pursuit retains the fine-angle clearance-checked choices used by reachable catches. It receives no catch deadline or extra reach credit. One of five matched snapshots improves progress toward the ball from 22.12 to 23.95 studs/second; the other four stay unchanged. This does not prove the complete missed play is rescued. [Pursuit evidence](evaluation/5.1.25-pursuit-review.json).
+- **Stale defensive dive:** A due airborne DB dive is projected again from observed position and velocity. It is cancelled only when a bounded scan with interval motion bounds rules out modeled overlap anywhere before turf. Uncertain cases keep the existing action. This avoids the broader fresh-contact check that incorrectly rejected successful historical dives, and does not require a DB catch to finish airborne. Native action and mode checks still come first. [Dive evidence](evaluation/5.1.25-dive-review.json).
+- **Execution gaps:** Native focus transitions and heartbeat cadence are attached to the existing frame-gap diagnostics. Focus is explicitly unknown until an event is observed. This is passive evidence collection, not a workaround that changes game speed or ignores stale action deadlines. Roblox's documented [focus events](https://create.roblox.com/docs/reference/engine/classes/UserInputService#WindowFocused) identify foreground transitions; they do not themselves establish the cause of a stall.
+
+The native airborne-state disagreement in the earlier defensive Floater miss remains unresolved: a later dive must not be forced when the game reports the wrong mode. A separate receiving miss in the follow-up had a fresh local contact and continued geometric overlap but an authoritative Incomplete. Local data cannot identify the server rejection reason. These are retained as failures, not relabeled successes. Validation passed 544 rule checks, 93 deterministic checks, 71 airborne checks and 36 build, installer and preference checks. Initial live execution has verified the native shifted lineup, deep middle target and native sprint speed; live outcome evidence is recorded separately by exact build.
 
 ## November 22 completed one-hour review
 
