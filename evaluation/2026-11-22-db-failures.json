@@ -1,0 +1,439 @@
+{
+  "schemaVersion": 1,
+  "windowStart": 1795352583,
+  "windowEnd": 1795356183,
+  "scope": "Every observed DB opponent Catch in the requested hour, including recoveries with no point conceded. This is a causal audit, not a perfect-play claim.",
+  "counts": {
+    "opponentCatches": 18,
+    "opponentTouchdownPoints": 12,
+    "covered": 18,
+    "pending": 0
+  },
+  "incidents": [
+    {
+      "version": "5.1.21",
+      "incident": 4,
+      "pass": "Floater",
+      "terminal": {
+        "result": "Touchdown",
+        "you": 2,
+        "them": 1,
+        "point": "Opp",
+        "round": 3,
+        "down": 1
+      },
+      "category": "contested_claim",
+      "observedExplanation": "Jump and dive executed; positive local contact margin. Opponent received authoritative Catch. No reproduced missing input; exact server arbitration is unknown.",
+      "changeOrDisposition": "No speculative timing change.",
+      "localClaimObserved": true,
+      "jumpRequestCount": 1,
+      "diveCount": 1,
+      "forecasts": {
+        "reachable": 10,
+        "total": 11
+      }
+    },
+    {
+      "version": "5.1.21",
+      "incident": 7,
+      "pass": "Bullet",
+      "terminal": {
+        "result": "Touchdown",
+        "you": 3,
+        "them": 2,
+        "point": "Opp",
+        "round": 5,
+        "down": 1
+      },
+      "category": "early_bullet_race_and_tackle",
+      "observedExplanation": "Ground dive executed but no local contact. Result position lay earlier on the arc than planned contact. Two later tackle dives had no observed authoritative acceptance; receiver jumped and changed heading.",
+      "changeOrDisposition": "No proven safe additional action; tackle input is not tackle acceptance.",
+      "localClaimObserved": false,
+      "jumpRequestCount": 0,
+      "diveCount": 1,
+      "forecasts": {
+        "reachable": 5,
+        "total": 5
+      }
+    },
+    {
+      "version": "5.1.21",
+      "incident": 11,
+      "pass": "Bullet",
+      "terminal": {
+        "result": "Tackled",
+        "you": 0,
+        "them": 1,
+        "point": null,
+        "round": 2,
+        "down": 2
+      },
+      "category": "unreachable_pass_recovered_by_tackle",
+      "observedExplanation": "All six forecasts were unreachable; no aerial action was available. Native tackle stopped the receiver.",
+      "changeOrDisposition": "No point conceded; preserve successful tackle.",
+      "localClaimObserved": false,
+      "jumpRequestCount": 0,
+      "diveCount": 0,
+      "forecasts": {
+        "reachable": 0,
+        "total": 6
+      }
+    },
+    {
+      "version": "5.1.21",
+      "incident": 14,
+      "pass": "Floater",
+      "terminal": {
+        "result": "Tackled",
+        "you": 1,
+        "them": 2,
+        "point": null,
+        "round": 4,
+        "down": 2
+      },
+      "category": "contested_claim_recovered_by_tackle",
+      "observedExplanation": "Jump executed and local overlap was observed; opponent Catch followed. Native tackle stopped the receiver.",
+      "changeOrDisposition": "No point conceded; exact catch arbitration unknown.",
+      "localClaimObserved": true,
+      "jumpRequestCount": 1,
+      "diveCount": 0,
+      "forecasts": {
+        "reachable": 13,
+        "total": 14
+      }
+    },
+    {
+      "version": "5.1.21",
+      "incident": 18,
+      "pass": "Floater",
+      "terminal": {
+        "result": "Touchdown",
+        "you": 2,
+        "them": 4,
+        "point": "Opp",
+        "round": 6,
+        "down": 1
+      },
+      "category": "contested_claim",
+      "observedExplanation": "Jump executed and local overlap had positive margin; opponent Catch and TD followed. Replayed policy and planner matched the log.",
+      "changeOrDisposition": "No demonstrated input omission; authoritative race unresolved.",
+      "localClaimObserved": true,
+      "jumpRequestCount": 1,
+      "diveCount": 0,
+      "forecasts": {
+        "reachable": 14,
+        "total": 14
+      }
+    },
+    {
+      "version": "5.1.21",
+      "incident": 24,
+      "pass": "Floater",
+      "terminal": {
+        "result": "Touchdown",
+        "you": 3,
+        "them": 1,
+        "point": "Opp",
+        "round": 4,
+        "down": 2
+      },
+      "category": "contested_claim_after_travel_detours",
+      "observedExplanation": "Jump and dive executed near their deadlines, with positive local overlap. Post-throw detours and repeated plans were observed. Opponent Catch/TD followed.",
+      "changeOrDisposition": "Shared movement was audited; do not attribute server rejection to one unobserved cause.",
+      "localClaimObserved": true,
+      "jumpRequestCount": 1,
+      "diveCount": 1,
+      "forecasts": {
+        "reachable": 10,
+        "total": 11
+      }
+    },
+    {
+      "version": "5.1.23",
+      "incident": 8,
+      "pass": "Bullet",
+      "terminal": {
+        "result": "Tackled",
+        "you": 3,
+        "them": 0,
+        "point": null,
+        "round": 4,
+        "down": 2
+      },
+      "category": "delayed_takeoff_and_stale_dive_forecast",
+      "observedExplanation": "Estimated takeoff was about62ms after initial jump request; dive origin differed about1.47stud from plan. Fresh offline airborne-dive validation rejects that old contact. Receiver was then tackled.",
+      "changeOrDisposition": "A universal new DB dive guard was not shipped: grounded legal DB finishes and matched successes need protection. No point conceded.",
+      "localClaimObserved": false,
+      "jumpRequestCount": 1,
+      "diveCount": 1,
+      "forecasts": {
+        "reachable": 8,
+        "total": 8
+      }
+    },
+    {
+      "version": "5.1.23",
+      "incident": 10,
+      "pass": "Floater",
+      "terminal": {
+        "result": "Touchdown",
+        "you": 0,
+        "them": 1,
+        "point": "Opp",
+        "round": 1,
+        "down": 1
+      },
+      "category": "contested_claim_with_detour",
+      "observedExplanation": "Jump and positive local overlap occurred, after position-drift replans and post-throw avoidance. Native Catch/TD followed.",
+      "changeOrDisposition": "Exact server arbitration remains unknown.",
+      "localClaimObserved": true,
+      "jumpRequestCount": 1,
+      "diveCount": 0,
+      "forecasts": {
+        "reachable": 14,
+        "total": 15
+      }
+    },
+    {
+      "version": "5.1.23",
+      "incident": 13,
+      "pass": "Floater",
+      "terminal": {
+        "result": "Touchdown",
+        "you": 1,
+        "them": 2,
+        "point": "Opp",
+        "round": 3,
+        "down": 2
+      },
+      "category": "contested_vertical_race",
+      "observedExplanation": "Goal-side coverage and jump were present; positive local overlap occurred shortly after the native result position projected onto the arc.",
+      "changeOrDisposition": "Moving deeper alone does not resolve this geometry; no blanket timing adjustment.",
+      "localClaimObserved": true,
+      "jumpRequestCount": 1,
+      "diveCount": 0,
+      "forecasts": {
+        "reachable": 11,
+        "total": 12
+      }
+    },
+    {
+      "version": "5.1.23",
+      "incident": 15,
+      "pass": "Floater",
+      "terminal": {
+        "result": "Touchdown",
+        "you": 2,
+        "them": 3,
+        "point": "Opp",
+        "round": 5,
+        "down": 1
+      },
+      "category": "reproduced_airborne_stop_model_error",
+      "observedExplanation": "Planned jump required stopping horizontal movement while airborne. Native momentum overshot the target1.82stud, causing reversal attempts, five drift replans and a late emergency dive before opponent TD.",
+      "changeOrDisposition": "5.1.24 uses paced continuous movement for the narrow moving DB Floater jump case, with fresh bounds and bounded pending-claim followthrough. Exact regression and61 matched snapshots passed; a counterfactual win is not asserted.",
+      "localClaimObserved": true,
+      "jumpRequestCount": 1,
+      "diveCount": 1,
+      "forecasts": {
+        "reachable": 16,
+        "total": 17
+      }
+    },
+    {
+      "version": "5.1.23",
+      "incident": 18,
+      "pass": "Floater",
+      "terminal": {
+        "result": "Tackled",
+        "you": 3,
+        "them": 3,
+        "point": null,
+        "round": 7,
+        "down": 2
+      },
+      "category": "contested_claim_recovered_by_tackle",
+      "observedExplanation": "Jump and local overlap occurred; native Catch followed. Grab tackle stopped the receiver.",
+      "changeOrDisposition": "No point conceded.",
+      "localClaimObserved": true,
+      "jumpRequestCount": 1,
+      "diveCount": 0,
+      "forecasts": {
+        "reachable": 9,
+        "total": 9
+      }
+    },
+    {
+      "version": "5.1.23",
+      "incident": 20,
+      "pass": "Floater",
+      "terminal": {
+        "result": "Touchdown",
+        "you": 0,
+        "them": 1,
+        "point": "Opp",
+        "round": 1,
+        "down": 1
+      },
+      "category": "travel_window_lost",
+      "observedExplanation": "Only5 of19 forecasts remained reachable. Early close-player detours and native sprint-speed forecast changes consumed travel; later plans were pursuit-only. No expired reachable jump dispatch was found.",
+      "changeOrDisposition": "No proven single safe threshold change; still a positioning/travel limitation.",
+      "localClaimObserved": false,
+      "jumpRequestCount": 0,
+      "diveCount": 0,
+      "forecasts": {
+        "reachable": 5,
+        "total": 19
+      }
+    },
+    {
+      "version": "5.1.23",
+      "incident": 26,
+      "pass": "Floater",
+      "terminal": {
+        "result": "Tackled",
+        "you": 4,
+        "them": 1,
+        "point": "You",
+        "round": 5,
+        "down": 2
+      },
+      "category": "contested_claim_recovered_by_tackle",
+      "observedExplanation": "Opponent caught the Floater after a jump attempt, then was tackled on second down.",
+      "changeOrDisposition": "Our side received the point; no opponent point conceded.",
+      "localClaimObserved": true,
+      "jumpRequestCount": 1,
+      "diveCount": 0,
+      "forecasts": {
+        "reachable": 11,
+        "total": 11
+      }
+    },
+    {
+      "version": "5.1.23",
+      "incident": 39,
+      "pass": "Floater",
+      "terminal": {
+        "result": "Touchdown",
+        "you": 3,
+        "them": 2,
+        "point": "Opp",
+        "round": 5,
+        "down": 1
+      },
+      "category": "contested_claim",
+      "observedExplanation": "Fresh local airborne contact occurred after a jump16.2ms late and well inside the goal. Native Catch followed117.5ms later.",
+      "changeOrDisposition": "No omitted action demonstrated; server rejection/competing claim remains unobserved.",
+      "localClaimObserved": true,
+      "jumpRequestCount": 1,
+      "diveCount": 0,
+      "forecasts": {
+        "reachable": 13,
+        "total": 14
+      }
+    },
+    {
+      "version": "5.1.23",
+      "incident": 47,
+      "pass": "Bullet",
+      "terminal": {
+        "result": "Touchdown",
+        "you": 3,
+        "them": 1,
+        "point": "Opp",
+        "round": 4,
+        "down": 1
+      },
+      "category": "unaccepted_early_bullet_claim_and_recovery_distance",
+      "observedExplanation": "Jump and dive executed; local capsule margin2.219stud. Native Catch came565.5ms later at a substantially later arc position. Dive recovery left roughly45.8stud to the pursuit target; no tackle range was recovered despite normal sprint pursuit.",
+      "changeOrDisposition": "Exact23/24 replay unchanged and fresh airborne validation passes. Not the first-contact-gap defect; no unsupported tackle/timing fix.",
+      "localClaimObserved": true,
+      "jumpRequestCount": 1,
+      "diveCount": 1,
+      "forecasts": {
+        "reachable": 3,
+        "total": 3
+      }
+    },
+    {
+      "version": "5.1.24",
+      "incident": 2,
+      "pass": "Floater",
+      "terminal": {
+        "result": "Touchdown",
+        "you": 1,
+        "them": 1,
+        "point": "Opp",
+        "round": 2,
+        "down": 1
+      },
+      "category": "contested_claim_with_continuous_motion_verified",
+      "observedExplanation": "Continuous DB pacing, jump and83.5ms bounded pending-claim followthrough executed without an airborne stop or drift replan. Opponent still received Catch/TD after our local contact.",
+      "changeOrDisposition": "The repaired movement branch is active; authoritative catch race remains unresolved.",
+      "localClaimObserved": true,
+      "jumpRequestCount": 1,
+      "diveCount": 0,
+      "forecasts": {
+        "reachable": 11,
+        "total": 12
+      }
+    },
+    {
+      "version": "5.1.24",
+      "incident": 5,
+      "pass": "Floater",
+      "terminal": {
+        "result": "Touchdown",
+        "you": 2,
+        "them": 2,
+        "point": "Opp",
+        "round": 4,
+        "down": 2
+      },
+      "category": "native_airborne_reach_lost_above_opponent",
+      "observedExplanation": "Physical jump continued but native airborne state became false20ms before planned dive; controller invalidated the aerial plan. Opponent horizontal gap fell to1.15\u20131.64stud while our root was5.43\u20136.07stud above theirs, consistent with a floor probe hitting their body. No dive or local contact occurred.",
+      "changeOrDisposition": "Retained native-state guards.1,375 same-or-earlier lateral candidates produced only6 robust options; best fixed-trace clearance1.72stud was insufficient evidence of a safe remedy. Matched later Swatted control passed within1.246stud horizontally and5.410stud above the opponent while nativeAirborne remained true; its dive had already started. Proximity alone does not imply flag loss. No speculative sidestep shipped.",
+      "localClaimObserved": false,
+      "jumpRequestCount": 1,
+      "diveCount": 0,
+      "forecasts": {
+        "reachable": 10,
+        "total": 12
+      }
+    },
+    {
+      "version": "5.1.24",
+      "incident": 32,
+      "pass": "Floater",
+      "terminal": {
+        "result": "Tackled",
+        "you": 2,
+        "them": 0,
+        "point": null,
+        "round": 3,
+        "down": 2
+      },
+      "category": "stationary_contested_claim_recovered_by_tackle",
+      "observedExplanation": "Grounded arrival and stationary jump were preserved; no moving-pacing change applied. Jump was6.89ms late, fresh airborne local claim occurred, then opponent received Catch. Native tackle followed0.317s after Catch.",
+      "changeOrDisposition": "No point conceded; score stayed2\u20130. This also confirms ordinary parked DB jumps remain available.",
+      "localClaimObserved": true,
+      "jumpRequestCount": 1,
+      "diveCount": 0,
+      "forecasts": {
+        "reachable": 6,
+        "total": 6
+      }
+    }
+  ],
+  "limitations": [
+    "Result position projected onto the known arc is a geometric coordinate, not an observed server claim timestamp.",
+    "Replicated opponent poses are not server poses and do not reveal opponent action/input timestamps.",
+    "Native input requests and local contact callbacks do not guarantee server possession or tackle acceptance.",
+    "No production thresholds are changed by this audit.",
+    "Native floor-state changes are observed; the suspected opponent-body cause is not an instrumented native floor probe. A matched successful near-body swat retained nativeAirborne, so proximity does not guarantee failure.",
+    "No observation supplies the server reason for rejecting or losing a local catch claim.",
+    "Offline replays establish model/dispatch properties, not an authoritative counterfactual win."
+  ],
+  "completeThroughWindowEnd": true,
+  "cutoffUtc": "2026-11-22 14:03:03 UTC"
+}

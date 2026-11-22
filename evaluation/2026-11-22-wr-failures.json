@@ -1,0 +1,472 @@
+{
+  "schemaVersion": 1,
+  "window": {
+    "startEpochSeconds": 1795352583,
+    "endExclusiveEpochSeconds": 1795356183,
+    "durationMinutes": 60,
+    "nativeResultTailLimitSeconds": 8,
+    "observedThroughEpochSeconds": 1795356191,
+    "finalized": true
+  },
+  "inclusion": "Every WR pass launched in the window with a native pass outcome observed during the window or its fixed eight-second result tail; no-result plays are listed separately. The tail admits outcomes only for throws observed before the cutoff. Catch is the native pass result, not the final touchdown/score. Case numbers are local review references, not player identifiers.",
+  "countsByVersion": {
+    "5.1.21": {
+      "resolvedWRPasses": 16,
+      "catches": 10,
+      "noncatches": 6,
+      "nativeOutcomes": {
+        "Catch": 10,
+        "Swatted": 3,
+        "Incomplete": 2,
+        "Intercepted": 1
+      }
+    },
+    "5.1.22": {
+      "resolvedWRPasses": 19,
+      "catches": 15,
+      "noncatches": 4,
+      "nativeOutcomes": {
+        "Catch": 15,
+        "Incomplete": 2,
+        "Intercepted": 2
+      }
+    },
+    "5.1.23": {
+      "resolvedWRPasses": 26,
+      "catches": 23,
+      "noncatches": 3,
+      "nativeOutcomes": {
+        "Catch": 23,
+        "Incomplete": 1,
+        "Intercepted": 1,
+        "Swatted": 1
+      }
+    },
+    "5.1.24": {
+      "resolvedWRPasses": 17,
+      "catches": 16,
+      "noncatches": 1,
+      "nativeOutcomes": {
+        "Catch": 16,
+        "Incomplete": 1
+      }
+    }
+  },
+  "noncatchCount": 14,
+  "pendingOrBoundaryPlays": [],
+  "cases": [
+    {
+      "case": "5.1.21 WR 5",
+      "version": "5.1.21",
+      "minute": 1.27,
+      "pass": "Floater",
+      "nativeOutcome": "Swatted",
+      "reachableForecasts": 9,
+      "totalForecasts": 10,
+      "reachableForecastSafety": {
+        "contested": 9
+      },
+      "actionsObserved": [
+        "jumpRequest",
+        "jump"
+      ],
+      "localContactClaimObserved": true,
+      "nativeJamObserved": false,
+      "stemDeadlineDeficitStuds": 1.502,
+      "assessment": "contested_contact",
+      "finding": "Jump and local contact occurred, but the native result was a swat. All nine reachable forecasts were contested; missing jump execution is not the explanation.",
+      "specificEvidence": [
+        "Local claim preceded the native swat; jump dispatch was about 6 ms late."
+      ],
+      "relatedShippedChanges": [
+        "5.1.22: wider feasible route selection addresses separation, without proving this contest would be won."
+      ],
+      "remainingUncertainty": "Exact server claim ordering and opponent catch pose are not observable.",
+      "resolutionStatus": "Observed failure; related fixes are not proof this exact play would now succeed"
+    },
+    {
+      "case": "5.1.21 WR 9",
+      "version": "5.1.21",
+      "minute": 2.89,
+      "pass": "Floater",
+      "nativeOutcome": "Incomplete",
+      "reachableForecasts": 0,
+      "totalForecasts": 15,
+      "reachableForecastSafety": {},
+      "actionsObserved": [],
+      "localContactClaimObserved": false,
+      "nativeJamObserved": true,
+      "stemDeadlineDeficitStuds": 18.941,
+      "assessment": "jam_and_lost_travel",
+      "finding": "Native jam and movement detours preceded a large route deadline deficit. No airborne catch plan became reachable.",
+      "specificEvidence": [
+        "The remaining stem required 28.07 studs with only 9.13 studs of modeled travel capacity."
+      ],
+      "relatedShippedChanges": [
+        "5.1.23: earlier bounded bypass and funded opening sprint target initial obstruction.",
+        "5.1.24: walking-strength correction removes an extra slowdown where paced movement enters avoidance."
+      ],
+      "remainingUncertainty": "Sampled movement cannot apportion the loss exactly among jam slowdown, body contact and steering.",
+      "resolutionStatus": "Observed failure; related fixes are not proof this exact play would now succeed"
+    },
+    {
+      "case": "5.1.21 WR 10",
+      "version": "5.1.21",
+      "minute": 3.16,
+      "pass": "Floater",
+      "nativeOutcome": "Swatted",
+      "reachableForecasts": 16,
+      "totalForecasts": 17,
+      "reachableForecastSafety": {
+        "contested": 16
+      },
+      "actionsObserved": [
+        "jumpRequest",
+        "jump",
+        "diveAttempt",
+        "dive"
+      ],
+      "localContactClaimObserved": true,
+      "nativeJamObserved": true,
+      "stemDeadlineDeficitStuds": 10.733,
+      "assessment": "contested_contact_and_inset_route",
+      "finding": "Jump, dive and local contact occurred, but the native result was a swat. The selected sanitized side target was materially inset.",
+      "specificEvidence": [
+        "The ball target was about 10.41 studs inside the sideline, versus the usual 1-stud inset.",
+        "A native jam also preceded a 10.73-stud stem deadline deficit."
+      ],
+      "relatedShippedChanges": [
+        "5.1.22: ranks actual sanitized ball and airborne catch width; continues bounded search for a wider funded alternative."
+      ],
+      "remainingUncertainty": "Route width is a confirmed selection defect, not proof it solely caused the swat. Server claim ordering remains unknown.",
+      "resolutionStatus": "Observed failure; related fixes are not proof this exact play would now succeed"
+    },
+    {
+      "case": "5.1.21 WR 13",
+      "version": "5.1.21",
+      "minute": 3.97,
+      "pass": "Floater",
+      "nativeOutcome": "Intercepted",
+      "reachableForecasts": 10,
+      "totalForecasts": 19,
+      "reachableForecastSafety": {
+        "contested": 10
+      },
+      "actionsObserved": [],
+      "localContactClaimObserved": false,
+      "nativeJamObserved": true,
+      "stemDeadlineDeficitStuds": 12.016,
+      "assessment": "lost_reach_and_inset_route",
+      "finding": "After a native jam and later position drift, initially reachable catch forecasts became unreachable before any jump was dispatched. The target was also inset.",
+      "specificEvidence": [
+        "The stem deadline deficit was 12.02 studs.",
+        "The last reachable forecast was 1.81 s after throw; at 1.92 s the planner changed to unreachable pursuit.",
+        "The ball target was about 11.21 studs inside the sideline."
+      ],
+      "relatedShippedChanges": [
+        "5.1.22: wider feasible sanitized route selection.",
+        "5.1.23: earlier bounded bypass and funded opening sprint."
+      ],
+      "remainingUncertainty": "The evidence supports lost travel and reach; it does not isolate how much a wider route or different opponent response would change the result.",
+      "resolutionStatus": "Observed failure; related fixes are not proof this exact play would now succeed"
+    },
+    {
+      "case": "5.1.21 WR 16",
+      "version": "5.1.21",
+      "minute": 5.1,
+      "pass": "Floater",
+      "nativeOutcome": "Swatted",
+      "reachableForecasts": 13,
+      "totalForecasts": 16,
+      "reachableForecastSafety": {
+        "contested": 13
+      },
+      "actionsObserved": [
+        "jumpRequest",
+        "jump"
+      ],
+      "localContactClaimObserved": false,
+      "nativeJamObserved": true,
+      "stemDeadlineDeficitStuds": 11.409,
+      "assessment": "native_airborne_state_disagreement",
+      "finding": "Jump executed, but the planned dive was canceled when native airborne eligibility disagreed with upward motion. Restoring the flag did not restore a reachable catch.",
+      "specificEvidence": [
+        "At cancellation the root was at height 11.11 with upward velocity 21.31; the native airborne flag was false.",
+        "The flag returned about 33 ms later; the next predicted miss was about 3.31 studs.",
+        "No dive or local claim was recorded."
+      ],
+      "relatedShippedChanges": [],
+      "remainingUncertainty": "The cause of the transient native flag is unresolved. The connected-contact change does not fix this eligibility problem.",
+      "resolutionStatus": "Observed failure; related fixes are not proof this exact play would now succeed"
+    },
+    {
+      "case": "5.1.21 WR 17",
+      "version": "5.1.21",
+      "minute": 5.35,
+      "pass": "Floater",
+      "nativeOutcome": "Incomplete",
+      "reachableForecasts": 10,
+      "totalForecasts": 25,
+      "reachableForecastSafety": {
+        "contested": 10
+      },
+      "actionsObserved": [],
+      "localContactClaimObserved": false,
+      "nativeJamObserved": true,
+      "stemDeadlineDeficitStuds": 12.989,
+      "assessment": "jam_and_lost_reach",
+      "finding": "A native jam and repeated approach drift consumed travel. The catch forecast became unreachable before the jump window; no jump or claim occurred.",
+      "specificEvidence": [
+        "The stem deadline deficit was 12.99 studs.",
+        "The last reachable forecast was 1.70 s after throw; all later forecasts starting at 1.80 s were unreachable."
+      ],
+      "relatedShippedChanges": [
+        "5.1.23: earlier bounded bypass and funded opening sprint target initial obstruction.",
+        "5.1.24: walking-strength correction addresses a separate source of lost approach speed."
+      ],
+      "remainingUncertainty": "The relative contributions of jam, body collision, detours and pacing are not independently recoverable.",
+      "resolutionStatus": "Observed failure; related fixes are not proof this exact play would now succeed"
+    },
+    {
+      "case": "5.1.22 WR 4",
+      "version": "5.1.22",
+      "minute": 13.88,
+      "pass": "Floater",
+      "nativeOutcome": "Incomplete",
+      "reachableForecasts": 7,
+      "totalForecasts": 20,
+      "reachableForecastSafety": {
+        "contested": 7
+      },
+      "actionsObserved": [],
+      "localContactClaimObserved": false,
+      "nativeJamObserved": true,
+      "stemDeadlineDeficitStuds": 9.026,
+      "assessment": "jam_and_lost_travel",
+      "finding": "A native jam produced enough measured loss of forward progress to explain most of the later catch deadline deficit. The wider route was already in use.",
+      "specificEvidence": [
+        "Observed speed-9 span: 0.90 s; forward progress 7.59 studs versus 17.99 at an unobstructed walk.",
+        "Later stem distance 20.53 studs exceeded capacity 11.51 by 9.03 studs."
+      ],
+      "relatedShippedChanges": [
+        "5.1.23: earlier bounded bypass and funded opening sprint.",
+        "5.1.24: walking-strength correction addresses additional approach slowdown."
+      ],
+      "remainingUncertainty": "The unobstructed comparison is descriptive; it does not prove a different path would avoid a reactive defender.",
+      "resolutionStatus": "Observed failure; related fixes are not proof this exact play would now succeed"
+    },
+    {
+      "case": "5.1.22 WR 5",
+      "version": "5.1.22",
+      "minute": 14.14,
+      "pass": "Floater",
+      "nativeOutcome": "Intercepted",
+      "reachableForecasts": 0,
+      "totalForecasts": 15,
+      "reachableForecastSafety": {},
+      "actionsObserved": [],
+      "localContactClaimObserved": false,
+      "nativeJamObserved": true,
+      "stemDeadlineDeficitStuds": 16.801,
+      "assessment": "jam_and_lost_travel",
+      "finding": "A native jam and almost stalled forward progress left no reachable catch forecast. The target was already at the intended wide side.",
+      "specificEvidence": [
+        "Observed speed-9 span: 0.80 s; forward progress 0.86 studs versus 15.97 at an unobstructed walk.",
+        "Later stem distance 35.49 studs exceeded capacity 18.69 by 16.80 studs."
+      ],
+      "relatedShippedChanges": [
+        "5.1.23: earlier bounded bypass and funded opening sprint.",
+        "5.1.24: walking-strength correction addresses additional approach slowdown."
+      ],
+      "remainingUncertainty": "No jump was executable under the observed reach forecasts; the logs do not prove a guaranteed alternate route.",
+      "resolutionStatus": "Observed failure; related fixes are not proof this exact play would now succeed"
+    },
+    {
+      "case": "5.1.22 WR 8",
+      "version": "5.1.22",
+      "minute": 15.25,
+      "pass": "Floater",
+      "nativeOutcome": "Intercepted",
+      "reachableForecasts": 17,
+      "totalForecasts": 18,
+      "reachableForecastSafety": {
+        "contested": 17
+      },
+      "actionsObserved": [
+        "jumpRequest",
+        "jump",
+        "diveAttempt",
+        "dive"
+      ],
+      "localContactClaimObserved": true,
+      "nativeJamObserved": true,
+      "stemDeadlineDeficitStuds": 8.751,
+      "assessment": "disconnected_first_contact_and_contest",
+      "finding": "Jump, dive and local contact occurred. Replay found a brief upright overlap followed by lost overlap before the robust catch window, while the defender also remained close.",
+      "specificEvidence": [
+        "The nominal first overlap lasted about 11 ms, followed by a 62 ms gap; minimum modeled margin was -1.96 studs.",
+        "Jump dispatch was 2.52 ms late; dive dispatch was 9.10 ms late.",
+        "The nearest recorded opponent root was 1.23 studs away shortly before the local claim."
+      ],
+      "relatedShippedChanges": [
+        "5.1.24: rejects dive forecasts whose first contact is disconnected from the robust contact window; checks timing variants and fresh action validation."
+      ],
+      "remainingUncertainty": "The discontinuity is a reproduced planner defect. It is not proof of the server rejection reason; an earlier snapshot still has a valid connected replacement, while the final old snapshot does not.",
+      "resolutionStatus": "Observed failure; related fixes are not proof this exact play would now succeed"
+    },
+    {
+      "case": "5.1.22 WR 33",
+      "version": "5.1.22",
+      "minute": 24.47,
+      "pass": "Floater",
+      "nativeOutcome": "Incomplete",
+      "reachableForecasts": 13,
+      "totalForecasts": 15,
+      "reachableForecastSafety": {
+        "contested": 13
+      },
+      "actionsObserved": [
+        "jumpRequest",
+        "jump",
+        "diveAttempt",
+        "dive"
+      ],
+      "localContactClaimObserved": true,
+      "nativeJamObserved": false,
+      "stemDeadlineDeficitStuds": null,
+      "assessment": "disconnected_first_contact",
+      "finding": "Jump, dive and local contact occurred, but the forecast joined a transient upright overlap to a later stable window across lost contact.",
+      "specificEvidence": [
+        "Jump dispatch was 12.62 ms late; dive dispatch was 2.62 ms late; dive origin error was 0.28 studs.",
+        "The nominal contact gap was about 64 ms, with minimum modeled margin -3.28 studs.",
+        "The local claim occurred 9.19 ms after forecast first contact; native Incomplete followed about 516 ms later."
+      ],
+      "relatedShippedChanges": [
+        "5.1.24: connected first-contact validation rejects the old trajectory and finds a different reachable jump/dive trajectory in replay."
+      ],
+      "remainingUncertainty": "Ball positions in replay are modeled from the observed launch, not independent server poses. The server decision mechanism remains unresolved.",
+      "resolutionStatus": "Observed failure; related fixes are not proof this exact play would now succeed"
+    },
+    {
+      "case": "5.1.23 WR 16",
+      "version": "5.1.23",
+      "minute": 32.66,
+      "pass": "Floater",
+      "nativeOutcome": "Incomplete",
+      "reachableForecasts": 0,
+      "totalForecasts": 14,
+      "reachableForecastSafety": {},
+      "actionsObserved": [],
+      "localContactClaimObserved": false,
+      "nativeJamObserved": true,
+      "stemDeadlineDeficitStuds": 16.76,
+      "assessment": "jam_and_lost_travel",
+      "finding": "A native jam still occurred despite the initial bypass update. The play reached the throw already too far short and never produced a reachable airborne plan.",
+      "specificEvidence": [
+        "Native jam reported speed 9.",
+        "At stem release, 26.32 studs remained with only 9.56 studs of travel capacity: a 16.76-stud deficit."
+      ],
+      "relatedShippedChanges": [
+        "5.1.24: walking-strength correction removes a reproduced extra approach slowdown; jam avoidance itself remains imperfect."
+      ],
+      "remainingUncertainty": "The earlier bypass did not prevent this jam. The contribution of double-scaled movement to this exact play is not separately measured.",
+      "resolutionStatus": "Observed failure; related fixes are not proof this exact play would now succeed"
+    },
+    {
+      "case": "5.1.23 WR 36",
+      "version": "5.1.23",
+      "minute": 39.94,
+      "pass": "Floater",
+      "nativeOutcome": "Intercepted",
+      "reachableForecasts": 6,
+      "totalForecasts": 7,
+      "reachableForecastSafety": {
+        "contested": 6
+      },
+      "actionsObserved": [],
+      "localContactClaimObserved": false,
+      "nativeJamObserved": false,
+      "stemDeadlineDeficitStuds": -0.086,
+      "assessment": "execution_or_observation_stall",
+      "finding": "A reachable jump forecast was followed by a 2.33-second event gap spanning the scheduled catch. No jump, dive or local contact was recorded.",
+      "specificEvidence": [
+        "The last reachable forecast was at +1.31 s; the next replan was at +3.64 s after throw.",
+        "Across that gap observed position advanced about 1.65 studs while the plan expected roughly 30 studs.",
+        "The recorded solve was about 10 ms, so a long planner solve is not demonstrated."
+      ],
+      "relatedShippedChanges": [
+        "5.1.24: frame-gap diagnostics distinguish callback timing, frame delta and tick duration; this is instrumentation, not a claimed stall fix."
+      ],
+      "remainingUncertainty": "No independent pause, process failure or game-log error explains the gap. Missing telemetry alone cannot identify whether the runtime or observation path stalled.",
+      "resolutionStatus": "Observed failure; related fixes are not proof this exact play would now succeed"
+    },
+    {
+      "case": "5.1.23 WR 40",
+      "version": "5.1.23",
+      "minute": 41.08,
+      "pass": "Floater",
+      "nativeOutcome": "Swatted",
+      "reachableForecasts": 8,
+      "totalForecasts": 10,
+      "reachableForecastSafety": {
+        "contested": 8
+      },
+      "actionsObserved": [
+        "jumpRequest",
+        "jump"
+      ],
+      "localContactClaimObserved": true,
+      "nativeJamObserved": false,
+      "stemDeadlineDeficitStuds": 0.649,
+      "assessment": "contested_contact",
+      "finding": "Jump and local contact occurred near the expected contact time, but the native result was a swat. All eight reachable forecasts were contested.",
+      "specificEvidence": [
+        "The local claim was about 5.05 ms after predicted first touch and the root was 9.63 studs inside the goal.",
+        "No dive was planned or required for this upright catch forecast."
+      ],
+      "relatedShippedChanges": [],
+      "remainingUncertainty": "No missing-input defect is demonstrated. Server claim ordering, remote pose and sufficient separation remain unresolved.",
+      "resolutionStatus": "Observed failure; related fixes are not proof this exact play would now succeed"
+    },
+    {
+      "case": "5.1.24 WR 35",
+      "version": "5.1.24",
+      "minute": 58.14,
+      "pass": "Floater",
+      "nativeOutcome": "Incomplete",
+      "reachableForecasts": 0,
+      "totalForecasts": 14,
+      "reachableForecastSafety": {},
+      "actionsObserved": [],
+      "localContactClaimObserved": false,
+      "nativeJamObserved": false,
+      "stemDeadlineDeficitStuds": 19.162,
+      "assessment": "initial_obstruction_and_lost_travel",
+      "finding": "Initial approach stalled and moved backward while avoidance tried to pass the blocker. Checked-path rejection withheld movement and sprint despite 75 stamina. The play was already far short at throw and never found a reachable catch plan.",
+      "specificEvidence": [
+        "The first blocker was 5.394 studs ahead, closing at 11.977 studs/s; no walking heading within the current +/-90-degree candidate set satisfied the 4.75-stud clearance.",
+        "From about 0.10 to 0.72 s after route start, forward position changed from -21.43 to -25.89 studs; early avoidance records emitted zero movement direction.",
+        "The remaining stem required 28.75 studs with 9.58 studs of travel capacity, a 19.16-stud deficit.",
+        "All 14 post-throw forecasts were unreachable; ordinary later predicted misses were about 12.6-13.4 studs.",
+        "No native Jammed notification, jump, dive or local contact claim was observed."
+      ],
+      "relatedShippedChanges": [],
+      "remainingUncertainty": "Backward headings outside the current search pass an instantaneous clearance calculation, but no alternative is yet validated through the bounded turn, catch deadline and opponent response. This remains unresolved and is not a connected-contact failure.",
+      "resolutionStatus": "Observed failure; related fixes are not proof this exact play would now succeed"
+    }
+  ],
+  "limits": [
+    "Client contact callbacks are claims, not possession or proof the server accepted the catch.",
+    "A reachable forecast does not guarantee execution or victory against the opponent.",
+    "Related shipped changes have regression/replay support; individual historical outcomes are not proven reversed.",
+    "Versions faced different sequences of opponents and plays, so these small sequential counts are not a controlled efficacy estimate.",
+    "No player names, account identifiers, raw client code or credentials are included.",
+    "Contested is a planner risk label, not an independent reconstruction of server-side opponent reach.",
+    "The observed WR throws were Floaters; this window does not validate the rare Bullet counterstrategy."
+  ],
+  "failureExecutionGroups": {
+    "local_contact_claim": 5,
+    "no_airborne_action_observed": 8,
+    "airborne_action_without_claim": 1
+  }
+}

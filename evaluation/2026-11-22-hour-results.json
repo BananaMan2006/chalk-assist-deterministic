@@ -1,0 +1,891 @@
+{
+  "schemaVersion": 1,
+  "task": "One-hour active monitoring with version-separated evidence",
+  "window": {
+    "startUtc": "2026-11-22T13:03:03Z",
+    "endExclusiveUtc": "2026-11-22T14:03:03Z",
+    "durationSeconds": 3600,
+    "nativeResultTailLimitSeconds": 8,
+    "completed": true,
+    "observerStopped": true,
+    "generatedAt": 1795356206.848864
+  },
+  "builds": [
+    {
+      "release": "5.1.21",
+      "buildId": "5958b21322549383bc7339b61ab0ab86cf45f1607ba2246faecd470779700d14",
+      "firstObservedSecondsIntoHour": 0,
+      "lastObservedSecondsIntoHour": 686.0161681175232,
+      "throws": 33,
+      "roles": {
+        "WR": {
+          "throws": 16,
+          "nativeOutcomes": {
+            "Catch": 10,
+            "Swatted": 3,
+            "Incomplete": 2,
+            "Intercepted": 1
+          },
+          "passTypes": {
+            "Floater": 16
+          }
+        },
+        "DB": {
+          "throws": 17,
+          "nativeOutcomes": {
+            "Incomplete": 1,
+            "Intercepted": 8,
+            "Catch": 6,
+            "Swatted": 2
+          },
+          "passTypes": {
+            "Floater": 8,
+            "Bullet": 9
+          }
+        }
+      },
+      "concededPointEvents": 7,
+      "unlinkedConcededPoints": 0,
+      "postWindowTerminalsForObservedThrows": 0,
+      "postWindowConcededPointsForObservedThrows": 0,
+      "completedMatchOutcomesObserved": {
+        "wins": 4,
+        "losses": 1,
+        "scores": {
+          "4-2": 1,
+          "2-4": 1,
+          "4-1": 1,
+          "4-0": 2
+        },
+        "forfeitsExcluded": 2,
+        "forfeitScoresExcluded": {
+          "0-0": 2
+        }
+      },
+      "runtimeErrors": 0,
+      "incidents": [
+        {
+          "index": 4,
+          "launchSecondsIntoHour": 61.038503885269165,
+          "role": "DB",
+          "pass": "Floater",
+          "nativeOutcome": "Catch",
+          "terminal": {
+            "result": "Touchdown",
+            "point": "Opp",
+            "you": 2,
+            "them": 1
+          },
+          "reachableForecasts": 10,
+          "forecasts": 11,
+          "actions": [
+            "jumpRequest",
+            "jump",
+            "diveAttempt",
+            "dive"
+          ],
+          "localContactClaims": 1
+        },
+        {
+          "index": 5,
+          "launchSecondsIntoHour": 76.12122797966003,
+          "role": "WR",
+          "pass": "Floater",
+          "nativeOutcome": "Swatted",
+          "terminal": {
+            "result": "Swatted",
+            "you": 2,
+            "them": 1
+          },
+          "reachableForecasts": 9,
+          "forecasts": 10,
+          "actions": [
+            "jumpRequest",
+            "jump"
+          ],
+          "localContactClaims": 1
+        },
+        {
+          "index": 7,
+          "launchSecondsIntoHour": 113.18656206130981,
+          "role": "DB",
+          "pass": "Bullet",
+          "nativeOutcome": "Catch",
+          "terminal": {
+            "result": "Touchdown",
+            "point": "Opp",
+            "you": 3,
+            "them": 2
+          },
+          "reachableForecasts": 5,
+          "forecasts": 5,
+          "actions": [
+            "diveAttempt",
+            "dive"
+          ],
+          "localContactClaims": 0
+        },
+        {
+          "index": 9,
+          "launchSecondsIntoHour": 173.61382007598877,
+          "role": "WR",
+          "pass": "Floater",
+          "nativeOutcome": "Incomplete",
+          "terminal": {
+            "result": "Incomplete",
+            "you": 0,
+            "them": 0
+          },
+          "reachableForecasts": 0,
+          "forecasts": 15,
+          "actions": [],
+          "localContactClaims": 0
+        },
+        {
+          "index": 10,
+          "launchSecondsIntoHour": 189.3130989074707,
+          "role": "WR",
+          "pass": "Floater",
+          "nativeOutcome": "Swatted",
+          "terminal": {
+            "result": "Swatted",
+            "point": "Opp",
+            "you": 0,
+            "them": 1
+          },
+          "reachableForecasts": 16,
+          "forecasts": 17,
+          "actions": [
+            "jumpRequest",
+            "jump",
+            "diveAttempt",
+            "dive"
+          ],
+          "localContactClaims": 1
+        },
+        {
+          "index": 11,
+          "launchSecondsIntoHour": 205.46248292922974,
+          "role": "DB",
+          "pass": "Bullet",
+          "nativeOutcome": "Catch",
+          "terminal": {
+            "result": "Tackled",
+            "you": 0,
+            "them": 1
+          },
+          "reachableForecasts": 0,
+          "forecasts": 6,
+          "actions": [],
+          "localContactClaims": 0
+        },
+        {
+          "index": 13,
+          "launchSecondsIntoHour": 238.344633102417,
+          "role": "WR",
+          "pass": "Floater",
+          "nativeOutcome": "Intercepted",
+          "terminal": {
+            "result": "Intercepted",
+            "point": "Opp",
+            "you": 1,
+            "them": 2
+          },
+          "reachableForecasts": 10,
+          "forecasts": 19,
+          "actions": [],
+          "localContactClaims": 0
+        },
+        {
+          "index": 14,
+          "launchSecondsIntoHour": 265.9936079978943,
+          "role": "DB",
+          "pass": "Floater",
+          "nativeOutcome": "Catch",
+          "terminal": {
+            "result": "Tackled",
+            "you": 1,
+            "them": 2
+          },
+          "reachableForecasts": 13,
+          "forecasts": 14,
+          "actions": [
+            "jumpRequest",
+            "jump"
+          ],
+          "localContactClaims": 1
+        },
+        {
+          "index": 16,
+          "launchSecondsIntoHour": 305.92518496513367,
+          "role": "WR",
+          "pass": "Floater",
+          "nativeOutcome": "Swatted",
+          "terminal": {
+            "result": "Swatted",
+            "you": 2,
+            "them": 2
+          },
+          "reachableForecasts": 13,
+          "forecasts": 16,
+          "actions": [
+            "jumpRequest",
+            "jump"
+          ],
+          "localContactClaims": 0
+        },
+        {
+          "index": 17,
+          "launchSecondsIntoHour": 321.19130301475525,
+          "role": "WR",
+          "pass": "Floater",
+          "nativeOutcome": "Incomplete",
+          "terminal": {
+            "result": "Incomplete",
+            "point": "Opp",
+            "you": 2,
+            "them": 3
+          },
+          "reachableForecasts": 10,
+          "forecasts": 25,
+          "actions": [],
+          "localContactClaims": 0
+        },
+        {
+          "index": 18,
+          "launchSecondsIntoHour": 349.22352290153503,
+          "role": "DB",
+          "pass": "Floater",
+          "nativeOutcome": "Catch",
+          "terminal": {
+            "result": "Touchdown",
+            "point": "Opp",
+            "you": 2,
+            "them": 4,
+            "matchOver": true
+          },
+          "reachableForecasts": 14,
+          "forecasts": 14,
+          "actions": [
+            "jumpRequest",
+            "jump"
+          ],
+          "localContactClaims": 1
+        },
+        {
+          "index": 24,
+          "launchSecondsIntoHour": 483.71678709983826,
+          "role": "DB",
+          "pass": "Floater",
+          "nativeOutcome": "Catch",
+          "terminal": {
+            "result": "Touchdown",
+            "point": "Opp",
+            "you": 3,
+            "them": 1
+          },
+          "reachableForecasts": 10,
+          "forecasts": 11,
+          "actions": [
+            "jumpRequest",
+            "jump",
+            "diveAttempt",
+            "dive"
+          ],
+          "localContactClaims": 1
+        }
+      ],
+      "contextThrowsExcludedFromThrowTotals": 0
+    },
+    {
+      "release": "5.1.22",
+      "buildId": "83b53cd409e035ae7d089a0c6b737cc77c643356d37fecc5a3c07ef74bd07a9a",
+      "firstObservedSecondsIntoHour": 690.8749809265137,
+      "lastObservedSecondsIntoHour": 1628.7273979187012,
+      "throws": 41,
+      "roles": {
+        "WR": {
+          "throws": 19,
+          "nativeOutcomes": {
+            "Catch": 15,
+            "Incomplete": 2,
+            "Intercepted": 2
+          },
+          "passTypes": {
+            "Floater": 19
+          }
+        },
+        "DB": {
+          "throws": 22,
+          "nativeOutcomes": {
+            "Intercepted": 18,
+            "Incomplete": 3,
+            "Swatted": 1
+          },
+          "passTypes": {
+            "Bullet": 14,
+            "Floater": 8
+          }
+        }
+      },
+      "concededPointEvents": 2,
+      "unlinkedConcededPoints": 0,
+      "postWindowTerminalsForObservedThrows": 0,
+      "postWindowConcededPointsForObservedThrows": 0,
+      "completedMatchOutcomesObserved": {
+        "wins": 7,
+        "losses": 0,
+        "scores": {
+          "4-2": 1,
+          "4-0": 6
+        },
+        "forfeitsExcluded": 7,
+        "forfeitScoresExcluded": {
+          "0-0": 5,
+          "3-0": 2
+        }
+      },
+      "runtimeErrors": 0,
+      "incidents": [
+        {
+          "index": 4,
+          "launchSecondsIntoHour": 832.6821689605713,
+          "role": "WR",
+          "pass": "Floater",
+          "nativeOutcome": "Incomplete",
+          "terminal": {
+            "result": "Incomplete",
+            "you": 0,
+            "them": 0
+          },
+          "reachableForecasts": 7,
+          "forecasts": 20,
+          "actions": [],
+          "localContactClaims": 0
+        },
+        {
+          "index": 5,
+          "launchSecondsIntoHour": 848.2814290523529,
+          "role": "WR",
+          "pass": "Floater",
+          "nativeOutcome": "Intercepted",
+          "terminal": {
+            "result": "Intercepted",
+            "point": "Opp",
+            "you": 0,
+            "them": 1
+          },
+          "reachableForecasts": 0,
+          "forecasts": 15,
+          "actions": [],
+          "localContactClaims": 0
+        },
+        {
+          "index": 8,
+          "launchSecondsIntoHour": 915.112095117569,
+          "role": "WR",
+          "pass": "Floater",
+          "nativeOutcome": "Intercepted",
+          "terminal": {
+            "result": "Intercepted",
+            "point": "Opp",
+            "you": 1,
+            "them": 2
+          },
+          "reachableForecasts": 17,
+          "forecasts": 18,
+          "actions": [
+            "jumpRequest",
+            "jump",
+            "diveAttempt",
+            "dive"
+          ],
+          "localContactClaims": 1
+        },
+        {
+          "index": 33,
+          "launchSecondsIntoHour": 1468.0180969238281,
+          "role": "WR",
+          "pass": "Floater",
+          "nativeOutcome": "Incomplete",
+          "terminal": {
+            "result": "Incomplete",
+            "you": 0,
+            "them": 0
+          },
+          "reachableForecasts": 13,
+          "forecasts": 15,
+          "actions": [
+            "jumpRequest",
+            "jump",
+            "diveAttempt",
+            "dive"
+          ],
+          "localContactClaims": 1
+        }
+      ],
+      "contextThrowsExcludedFromThrowTotals": 0
+    },
+    {
+      "release": "5.1.23",
+      "buildId": "91091804fb6fb5b74bcf2a954f054abbafe75e2c0f3173aeb889c4caff0aa2ba",
+      "firstObservedSecondsIntoHour": 1633.877357006073,
+      "lastObservedSecondsIntoHour": 2788.758173942566,
+      "throws": 56,
+      "roles": {
+        "WR": {
+          "throws": 26,
+          "nativeOutcomes": {
+            "Catch": 23,
+            "Incomplete": 1,
+            "Intercepted": 1,
+            "Swatted": 1
+          },
+          "passTypes": {
+            "Floater": 26
+          }
+        },
+        "DB": {
+          "throws": 30,
+          "nativeOutcomes": {
+            "Intercepted": 15,
+            "Catch": 9,
+            "Swatted": 6
+          },
+          "passTypes": {
+            "Bullet": 15,
+            "Floater": 15
+          }
+        }
+      },
+      "concededPointEvents": 7,
+      "unlinkedConcededPoints": 0,
+      "postWindowTerminalsForObservedThrows": 0,
+      "postWindowConcededPointsForObservedThrows": 0,
+      "completedMatchOutcomesObserved": {
+        "wins": 9,
+        "losses": 0,
+        "scores": {
+          "4-0": 5,
+          "4-3": 1,
+          "4-1": 2,
+          "4-2": 1
+        },
+        "forfeitsExcluded": 2,
+        "forfeitScoresExcluded": {
+          "3-0": 1,
+          "2-0": 1
+        }
+      },
+      "runtimeErrors": 0,
+      "incidents": [
+        {
+          "index": 8,
+          "launchSecondsIntoHour": 1791.7691988945007,
+          "role": "DB",
+          "pass": "Bullet",
+          "nativeOutcome": "Catch",
+          "terminal": {
+            "result": "Tackled",
+            "you": 3,
+            "them": 0
+          },
+          "reachableForecasts": 8,
+          "forecasts": 8,
+          "actions": [
+            "jumpRequest",
+            "jumpRetry",
+            "jump",
+            "diveAttempt",
+            "dive"
+          ],
+          "localContactClaims": 0
+        },
+        {
+          "index": 10,
+          "launchSecondsIntoHour": 1857.067843914032,
+          "role": "DB",
+          "pass": "Floater",
+          "nativeOutcome": "Catch",
+          "terminal": {
+            "result": "Touchdown",
+            "point": "Opp",
+            "you": 0,
+            "them": 1
+          },
+          "reachableForecasts": 14,
+          "forecasts": 15,
+          "actions": [
+            "jumpRequest",
+            "jump"
+          ],
+          "localContactClaims": 1
+        },
+        {
+          "index": 13,
+          "launchSecondsIntoHour": 1911.249188899994,
+          "role": "DB",
+          "pass": "Floater",
+          "nativeOutcome": "Catch",
+          "terminal": {
+            "result": "Touchdown",
+            "point": "Opp",
+            "you": 1,
+            "them": 2
+          },
+          "reachableForecasts": 11,
+          "forecasts": 12,
+          "actions": [
+            "jumpRequest",
+            "jump"
+          ],
+          "localContactClaims": 1
+        },
+        {
+          "index": 15,
+          "launchSecondsIntoHour": 1944.3310179710388,
+          "role": "DB",
+          "pass": "Floater",
+          "nativeOutcome": "Catch",
+          "terminal": {
+            "result": "Touchdown",
+            "point": "Opp",
+            "you": 2,
+            "them": 3
+          },
+          "reachableForecasts": 16,
+          "forecasts": 17,
+          "actions": [
+            "jumpRequest",
+            "jump",
+            "diveAttempt",
+            "dive"
+          ],
+          "localContactClaims": 1
+        },
+        {
+          "index": 16,
+          "launchSecondsIntoHour": 1959.3971691131592,
+          "role": "WR",
+          "pass": "Floater",
+          "nativeOutcome": "Incomplete",
+          "terminal": {
+            "result": "Incomplete",
+            "you": 2,
+            "them": 3
+          },
+          "reachableForecasts": 0,
+          "forecasts": 14,
+          "actions": [],
+          "localContactClaims": 0
+        },
+        {
+          "index": 18,
+          "launchSecondsIntoHour": 1993.7790479660034,
+          "role": "DB",
+          "pass": "Floater",
+          "nativeOutcome": "Catch",
+          "terminal": {
+            "result": "Tackled",
+            "you": 3,
+            "them": 3
+          },
+          "reachableForecasts": 9,
+          "forecasts": 9,
+          "actions": [
+            "jumpRequest",
+            "jump"
+          ],
+          "localContactClaims": 1
+        },
+        {
+          "index": 20,
+          "launchSecondsIntoHour": 2052.732670068741,
+          "role": "DB",
+          "pass": "Floater",
+          "nativeOutcome": "Catch",
+          "terminal": {
+            "result": "Touchdown",
+            "point": "Opp",
+            "you": 0,
+            "them": 1
+          },
+          "reachableForecasts": 5,
+          "forecasts": 19,
+          "actions": [],
+          "localContactClaims": 0
+        },
+        {
+          "index": 26,
+          "launchSecondsIntoHour": 2161.0450270175934,
+          "role": "DB",
+          "pass": "Floater",
+          "nativeOutcome": "Catch",
+          "terminal": {
+            "result": "Tackled",
+            "point": "You",
+            "you": 4,
+            "them": 1,
+            "matchOver": true
+          },
+          "reachableForecasts": 11,
+          "forecasts": 11,
+          "actions": [
+            "jumpRequest",
+            "jump"
+          ],
+          "localContactClaims": 1
+        },
+        {
+          "index": 36,
+          "launchSecondsIntoHour": 2396.412097930908,
+          "role": "WR",
+          "pass": "Floater",
+          "nativeOutcome": "Intercepted",
+          "terminal": {
+            "result": "Intercepted",
+            "point": "Opp",
+            "you": 1,
+            "them": 1
+          },
+          "reachableForecasts": 6,
+          "forecasts": 7,
+          "actions": [],
+          "localContactClaims": 0
+        },
+        {
+          "index": 39,
+          "launchSecondsIntoHour": 2449.860183954239,
+          "role": "DB",
+          "pass": "Floater",
+          "nativeOutcome": "Catch",
+          "terminal": {
+            "result": "Touchdown",
+            "point": "Opp",
+            "you": 3,
+            "them": 2
+          },
+          "reachableForecasts": 13,
+          "forecasts": 14,
+          "actions": [
+            "jumpRequest",
+            "jump"
+          ],
+          "localContactClaims": 1
+        },
+        {
+          "index": 40,
+          "launchSecondsIntoHour": 2464.8594110012054,
+          "role": "WR",
+          "pass": "Floater",
+          "nativeOutcome": "Swatted",
+          "terminal": {
+            "result": "Swatted",
+            "you": 3,
+            "them": 2
+          },
+          "reachableForecasts": 8,
+          "forecasts": 10,
+          "actions": [
+            "jumpRequest",
+            "jump"
+          ],
+          "localContactClaims": 1
+        },
+        {
+          "index": 47,
+          "launchSecondsIntoHour": 2592.749372959137,
+          "role": "DB",
+          "pass": "Bullet",
+          "nativeOutcome": "Catch",
+          "terminal": {
+            "result": "Touchdown",
+            "point": "Opp",
+            "you": 3,
+            "them": 1
+          },
+          "reachableForecasts": 3,
+          "forecasts": 3,
+          "actions": [
+            "jumpRequest",
+            "jump",
+            "diveAttempt",
+            "dive"
+          ],
+          "localContactClaims": 1
+        }
+      ],
+      "contextThrowsExcludedFromThrowTotals": 0
+    },
+    {
+      "release": "5.1.24",
+      "buildId": "98d6fc36be5b287ec1f95a906a384440bf3fbbfe5ece8a009116f148c7d9ffbb",
+      "firstObservedSecondsIntoHour": 2793.0103509426117,
+      "lastObservedSecondsIntoHour": 3600.0,
+      "throws": 41,
+      "roles": {
+        "WR": {
+          "throws": 17,
+          "nativeOutcomes": {
+            "Catch": 16,
+            "Incomplete": 1
+          },
+          "passTypes": {
+            "Floater": 17
+          }
+        },
+        "DB": {
+          "throws": 24,
+          "nativeOutcomes": {
+            "Catch": 3,
+            "Swatted": 3,
+            "Intercepted": 16,
+            "Incomplete": 2
+          },
+          "passTypes": {
+            "Floater": 9,
+            "Bullet": 15
+          }
+        }
+      },
+      "concededPointEvents": 2,
+      "unlinkedConcededPoints": 0,
+      "postWindowTerminalsForObservedThrows": 0,
+      "postWindowConcededPointsForObservedThrows": 0,
+      "completedMatchOutcomesObserved": {
+        "wins": 6,
+        "losses": 0,
+        "scores": {
+          "4-2": 1,
+          "4-0": 5
+        },
+        "forfeitsExcluded": 3,
+        "forfeitScoresExcluded": {
+          "2-0": 1,
+          "1-0": 1,
+          "3-0": 1
+        }
+      },
+      "runtimeErrors": 0,
+      "incidents": [
+        {
+          "index": 2,
+          "launchSecondsIntoHour": 2826.1184771060944,
+          "role": "DB",
+          "pass": "Floater",
+          "nativeOutcome": "Catch",
+          "terminal": {
+            "result": "Touchdown",
+            "point": "Opp",
+            "you": 1,
+            "them": 1
+          },
+          "reachableForecasts": 11,
+          "forecasts": 12,
+          "actions": [
+            "jumpRequest",
+            "jump"
+          ],
+          "localContactClaims": 1
+        },
+        {
+          "index": 5,
+          "launchSecondsIntoHour": 2882.4495980739594,
+          "role": "DB",
+          "pass": "Floater",
+          "nativeOutcome": "Catch",
+          "terminal": {
+            "result": "Touchdown",
+            "point": "Opp",
+            "you": 2,
+            "them": 2
+          },
+          "reachableForecasts": 10,
+          "forecasts": 12,
+          "actions": [
+            "jumpRequest",
+            "jump"
+          ],
+          "localContactClaims": 0
+        },
+        {
+          "index": 32,
+          "launchSecondsIntoHour": 3429.297214984894,
+          "role": "DB",
+          "pass": "Floater",
+          "nativeOutcome": "Catch",
+          "terminal": {
+            "result": "Tackled",
+            "you": 2,
+            "them": 0
+          },
+          "reachableForecasts": 6,
+          "forecasts": 6,
+          "actions": [
+            "jumpRequest",
+            "jump"
+          ],
+          "localContactClaims": 1
+        },
+        {
+          "index": 35,
+          "launchSecondsIntoHour": 3488.4145929813385,
+          "role": "WR",
+          "pass": "Floater",
+          "nativeOutcome": "Incomplete",
+          "terminal": {
+            "result": "Incomplete",
+            "you": 1,
+            "them": 0
+          },
+          "reachableForecasts": 0,
+          "forecasts": 14,
+          "actions": [],
+          "localContactClaims": 0
+        }
+      ],
+      "contextThrowsExcludedFromThrowTotals": 0
+    }
+  ],
+  "observerErrors": 0,
+  "sourceCoverage": {
+    "ciu_auto_events.jsonl": {
+      "malformed": 0,
+      "resets": 0,
+      "rows": 11473,
+      "filtered": 0
+    },
+    "ciu_deterministic_events.jsonl": {
+      "malformed": 0,
+      "resets": 0,
+      "rows": 7977,
+      "filtered": 0
+    },
+    "ciu_failures.jsonl": {
+      "malformed": 0,
+      "resets": 0,
+      "rows": 0,
+      "filtered": 50
+    }
+  },
+  "unversionedDiagnosticHistoryPreservedSeparately": true,
+  "knownLiveEventGaps": [
+    {
+      "release": "5.1.23",
+      "playIndex": 36,
+      "role": "WR",
+      "durationSeconds": 2.329,
+      "nativeOutcome": "Intercepted",
+      "actionDispatched": false,
+      "cause": "Unresolved; no events emitted in interval, before frame-gap diagnostic was added"
+    }
+  ],
+  "limitations": [
+    "Native awarded outcomes are separate from local contact claims and predicted reach.",
+    "The first match may already have been underway when observation began; completed-match outcomes are observed endings, not necessarily entire matches observed from setup.",
+    "Forfeits are excluded from completed-match performance totals.",
+    "A fixed eight-second result tail admits results only for throws already observed before the hour cutoff.",
+    "Version changes are separated; uncontrolled opponents and changing matchups prevent causal improvement or general win-rate claims.",
+    "Public reports contain no account names, native session identifiers, private recordings or extracted game code."
+  ]
+}

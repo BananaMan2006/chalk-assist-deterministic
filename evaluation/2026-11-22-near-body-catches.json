@@ -1,0 +1,73 @@
+{
+  "schemaVersion": 1,
+  "cases": [
+    {
+      "case": "DB5 opponent Catch and TD",
+      "nativeResult": "Catch",
+      "diveDispatches": [],
+      "samples": [
+        {
+          "timeAfterLaunch": 2.6532559394836426,
+          "nativeAirborne": true,
+          "diving": false,
+          "gapHorizontalStuds": 2.403299762324277,
+          "rootVerticalDifferenceStuds": 2.826138973236084
+        },
+        {
+          "timeAfterLaunch": 2.753037929534912,
+          "nativeAirborne": false,
+          "diving": false,
+          "gapHorizontalStuds": 1.6436963667162048,
+          "rootVerticalDifferenceStuds": 5.430229187011719
+        },
+        {
+          "timeAfterLaunch": 2.8523149490356445,
+          "nativeAirborne": false,
+          "diving": false,
+          "gapHorizontalStuds": 1.151037669934552,
+          "rootVerticalDifferenceStuds": 6.072319030761719
+        }
+      ],
+      "claimObserved": false,
+      "launchSecondsIntoHour": 2882.4495980739594
+    },
+    {
+      "case": "DB near-body Swatted control",
+      "nativeResult": "Swatted",
+      "diveDispatches": [
+        0.6011688709259033
+      ],
+      "samples": [
+        {
+          "timeAfterLaunch": 0.5510368347167969,
+          "nativeAirborne": true,
+          "diving": false,
+          "gapHorizontalStuds": 3.1777742793012482,
+          "rootVerticalDifferenceStuds": 3.396404266357422
+        },
+        {
+          "timeAfterLaunch": 0.6518118381500244,
+          "nativeAirborne": true,
+          "diving": true,
+          "gapHorizontalStuds": 1.2455872612627839,
+          "rootVerticalDifferenceStuds": 5.410161018371582
+        },
+        {
+          "timeAfterLaunch": 0.7511858940124512,
+          "nativeAirborne": true,
+          "diving": true,
+          "gapHorizontalStuds": 5.072578094939324,
+          "rootVerticalDifferenceStuds": 6.092424392700195
+        }
+      ],
+      "claimObserved": true,
+      "launchSecondsIntoHour": 3351.1492030620575
+    }
+  ],
+  "interpretation": "Close body proximity does not invariably disable native airborne state. In the Swatted control the dive was already active before the smallest horizontal gap; DB5 remained upright until its native state invalidated the planned dive.",
+  "limitations": [
+    "Replicated opponent poses are not server poses.",
+    "This comparison is observational and does not establish the physical floor probe target.",
+    "The successful control is a break-up, not an interception."
+  ]
+}

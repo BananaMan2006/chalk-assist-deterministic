@@ -1,0 +1,234 @@
+{
+  "schemaVersion": 1,
+  "completed": true,
+  "windowStartUtc": "2026-11-22T13:03:03Z",
+  "windowEndExclusiveUtc": "2026-11-22T14:03:03Z",
+  "builds": [
+    {
+      "version": "5.1.21",
+      "buildId": "5958b21322549383bc7339b61ab0ab86cf45f1607ba2246faecd470779700d14",
+      "planSolveMs": {
+        "count": 338,
+        "median": 14.044833311345428,
+        "p95": 39.97874999186024,
+        "min": 0.058791658375412226,
+        "max": 54.69124997034669
+      },
+      "routeAuthoringSolveMs": {
+        "count": 16,
+        "median": 38.8203333131969,
+        "p95": 87.0303749688901,
+        "min": 22.16595836216584,
+        "max": 87.0303749688901
+      },
+      "routes": 16,
+      "routeStrategies": {
+        "deep_middle_floater": 16
+      },
+      "extendedLateralSearchRoutes": 0,
+      "targetSidelineInsetStuds": {
+        "count": 0,
+        "median": null,
+        "p95": null,
+        "min": null,
+        "max": null
+      },
+      "predictedCatchSidelineInsetStuds": {
+        "count": 0,
+        "median": null,
+        "p95": null,
+        "min": null,
+        "max": null
+      },
+      "loggedOpeningAvoidanceDecisions": 0,
+      "loggedActiveOpeningAvoidanceDecisions": 0,
+      "localNativeJamNotices": 5,
+      "jamSecondsIntoHour": [
+        171.08874011039734,
+        186.58615708351135,
+        235.64932990074158,
+        303.3783230781555,
+        318.62144708633423
+      ],
+      "dbContinuousCatchPlans": 0,
+      "boundedClaimMovementContinuations": 10,
+      "claimMovementSeconds": {
+        "count": 10,
+        "median": 0.08956217765808105,
+        "p95": 0.09615468978881836,
+        "min": 0.08423280715942383,
+        "max": 0.09615468978881836
+      },
+      "frameGapEvents": []
+    },
+    {
+      "version": "5.1.22",
+      "buildId": "83b53cd409e035ae7d089a0c6b737cc77c643356d37fecc5a3c07ef74bd07a9a",
+      "planSolveMs": {
+        "count": 405,
+        "median": 11.753791652154177,
+        "p95": 38.88783330330625,
+        "min": 0.053958327043801546,
+        "max": 59.107250010129064
+      },
+      "routeAuthoringSolveMs": {
+        "count": 20,
+        "median": 43.397416709922254,
+        "p95": 95.97887500422075,
+        "min": 23.599791689775884,
+        "max": 102.7435417054221
+      },
+      "routes": 20,
+      "routeStrategies": {
+        "deep_middle_floater": 20
+      },
+      "extendedLateralSearchRoutes": 2,
+      "targetSidelineInsetStuds": {
+        "count": 20,
+        "median": 0.9999968409538269,
+        "p95": 1.0000006556510925,
+        "min": 0.9999968409538269,
+        "max": 1.0000006556510925
+      },
+      "predictedCatchSidelineInsetStuds": {
+        "count": 20,
+        "median": 5.867489516735077,
+        "p95": 6.550865828990936,
+        "min": 5.719963729381561,
+        "max": 6.860359847545624
+      },
+      "loggedOpeningAvoidanceDecisions": 0,
+      "loggedActiveOpeningAvoidanceDecisions": 0,
+      "localNativeJamNotices": 3,
+      "jamSecondsIntoHour": [
+        830.0780820846558,
+        845.5989110469818,
+        912.5792379379272
+      ],
+      "dbContinuousCatchPlans": 0,
+      "boundedClaimMovementContinuations": 15,
+      "claimMovementSeconds": {
+        "count": 15,
+        "median": 0.09533381462097168,
+        "p95": 0.10130691528320312,
+        "min": 0.08734250068664551,
+        "max": 0.10130691528320312
+      },
+      "frameGapEvents": []
+    },
+    {
+      "version": "5.1.23",
+      "buildId": "91091804fb6fb5b74bcf2a954f054abbafe75e2c0f3173aeb889c4caff0aa2ba",
+      "planSolveMs": {
+        "count": 588,
+        "median": 10.377000027801841,
+        "p95": 36.441999953240156,
+        "min": 0.06595836021006107,
+        "max": 55.87912502232939
+      },
+      "routeAuthoringSolveMs": {
+        "count": 26,
+        "median": 44.56208331976086,
+        "p95": 103.97966665914282,
+        "min": 29.228541650809348,
+        "max": 126.38395838439465
+      },
+      "routes": 26,
+      "routeStrategies": {
+        "deep_middle_floater": 26
+      },
+      "extendedLateralSearchRoutes": 6,
+      "targetSidelineInsetStuds": {
+        "count": 26,
+        "median": 1.0000006556510925,
+        "p95": 1.0000006556510925,
+        "min": 0.9999968409538269,
+        "max": 1.0000006556510925
+      },
+      "predictedCatchSidelineInsetStuds": {
+        "count": 26,
+        "median": 5.867260634899139,
+        "p95": 6.6117159724235535,
+        "min": 5.493321120738983,
+        "max": 6.793324172496796
+      },
+      "loggedOpeningAvoidanceDecisions": 95,
+      "loggedActiveOpeningAvoidanceDecisions": 76,
+      "localNativeJamNotices": 3,
+      "jamSecondsIntoHour": [
+        1924.105700969696,
+        1957.2863910198212,
+        2477.716658115387
+      ],
+      "dbContinuousCatchPlans": 0,
+      "boundedClaimMovementContinuations": 17,
+      "claimMovementSeconds": {
+        "count": 17,
+        "median": 0.09547281265258789,
+        "p95": 0.10186457633972168,
+        "min": 0.08414959907531738,
+        "max": 0.10186457633972168
+      },
+      "frameGapEvents": []
+    },
+    {
+      "version": "5.1.24",
+      "buildId": "98d6fc36be5b287ec1f95a906a384440bf3fbbfe5ece8a009116f148c7d9ffbb",
+      "planSolveMs": {
+        "count": 368,
+        "median": 12.29837501887232,
+        "p95": 38.159624964464456,
+        "min": 0.04033336881548166,
+        "max": 62.914625043049455
+      },
+      "routeAuthoringSolveMs": {
+        "count": 17,
+        "median": 44.031541678123176,
+        "p95": 141.81629166705534,
+        "min": 29.41054163966328,
+        "max": 141.81629166705534
+      },
+      "routes": 17,
+      "routeStrategies": {
+        "deep_middle_floater": 17
+      },
+      "extendedLateralSearchRoutes": 2,
+      "targetSidelineInsetStuds": {
+        "count": 17,
+        "median": 0.9999968409538269,
+        "p95": 1.0000006556510925,
+        "min": 0.9999968409538269,
+        "max": 1.0000006556510925
+      },
+      "predictedCatchSidelineInsetStuds": {
+        "count": 17,
+        "median": 5.8671595454216,
+        "p95": 6.891810119152069,
+        "min": 4.892262160778046,
+        "max": 6.891810119152069
+      },
+      "loggedOpeningAvoidanceDecisions": 64,
+      "loggedActiveOpeningAvoidanceDecisions": 52,
+      "localNativeJamNotices": 1,
+      "jamSecondsIntoHour": [
+        2804.725781917572
+      ],
+      "dbContinuousCatchPlans": 45,
+      "boundedClaimMovementContinuations": 16,
+      "claimMovementSeconds": {
+        "count": 16,
+        "median": 0.09363198280334473,
+        "p95": 0.1117398738861084,
+        "min": 0.08349013328552246,
+        "max": 0.1117398738861084
+      },
+      "frameGapEvents": []
+    }
+  ],
+  "limitations": [
+    "Counts reflect logged decisions, not every engine frame.",
+    "New diagnostics only exist in builds that emit them; zero earlier events does not prove absence.",
+    "Local jam notices do not independently identify initiation time.",
+    "Predicted catch inset describes the forecast airborne contact, not an observed successful awarded catch."
+  ]
+}
