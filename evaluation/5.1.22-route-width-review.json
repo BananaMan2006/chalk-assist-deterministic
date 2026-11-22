@@ -1,0 +1,122 @@
+{
+  "schemaVersion": 1,
+  "release": "5.1.22",
+  "scope": "Narrow receiving route selection regression; route quality is modeled, not a live catch guarantee.",
+  "sourceFinding": "The previous search stopped after two yards below the deepest funded stem, even when native ink sanitation had left that catch far infield. A later bounded middle-stem candidate could already target the legal sideline with a funded airborne catch.",
+  "selectionChange": "Use actual sanitized target and predicted first airborne root pose. Continue the existing finite search for materially wider eligible catches while retaining deep-middle, opponent-lane/history score, endzone, native bounds and stamina checks.",
+  "comparison": [
+    {
+      "version": "5.1.21",
+      "stemYards": 22.00000264607131,
+      "cutDegrees": 40.01977421716957,
+      "targetSidelineInsetStuds": 11.212770099748361,
+      "catchSidelineInsetStuds": 15.987184547707702,
+      "drawnEndpointInsetStuds": 23.84386815684965,
+      "catchPastGoalStuds": 15.80423096963986,
+      "finalSprintStamina": 13.785373109462313,
+      "forecasts": 18,
+      "offlineSolveMedianMs": 67.8389579989016,
+      "airborneRequired": true,
+      "firstContactInsideGoal": true
+    },
+    {
+      "version": "candidate",
+      "stemYards": 17.500001852249916,
+      "cutDegrees": 43.01444408147502,
+      "targetSidelineInsetStuds": 1.0,
+      "catchSidelineInsetStuds": 5.865340972876567,
+      "drawnEndpointInsetStuds": 7.231934224558046,
+      "catchPastGoalStuds": 8.255180644810679,
+      "finalSprintStamina": 17.55461273593935,
+      "forecasts": 20,
+      "offlineSolveMedianMs": 104.46674999548122,
+      "airborneRequired": true,
+      "firstContactInsideGoal": true
+    }
+  ],
+  "differential": [
+    {
+      "fixture": "authored",
+      "version": "5.1.21",
+      "total": 2,
+      "passed": 1,
+      "seconds": 0.7666,
+      "results": [
+        {
+          "name": "deep inset route does not hide a funded sideline airborne catch",
+          "passed": false,
+          "error": "[string \"<python>\"]:168: deeper inset route ended the width search"
+        },
+        {
+          "name": "unfunded wider catch preserves the existing reachable inset fallback",
+          "passed": true,
+          "error": null
+        }
+      ]
+    },
+    {
+      "fixture": "authored",
+      "version": "candidate",
+      "total": 2,
+      "passed": 2,
+      "seconds": 1.2245,
+      "results": [
+        {
+          "name": "deep inset route does not hide a funded sideline airborne catch",
+          "passed": true,
+          "error": null
+        },
+        {
+          "name": "unfunded wider catch preserves the existing reachable inset fallback",
+          "passed": true,
+          "error": null
+        }
+      ]
+    },
+    {
+      "fixture": "cached-authorized-native",
+      "version": "5.1.21",
+      "total": 2,
+      "passed": 1,
+      "seconds": 0.1373,
+      "results": [
+        {
+          "name": "deep inset route does not hide a funded sideline airborne catch",
+          "passed": false,
+          "error": "[string \"<python>\"]:168: deeper inset route ended the width search"
+        },
+        {
+          "name": "unfunded wider catch preserves the existing reachable inset fallback",
+          "passed": true,
+          "error": null
+        }
+      ]
+    },
+    {
+      "fixture": "cached-authorized-native",
+      "version": "candidate",
+      "total": 2,
+      "passed": 2,
+      "seconds": 0.2891,
+      "results": [
+        {
+          "name": "deep inset route does not hide a funded sideline airborne catch",
+          "passed": true,
+          "error": null
+        },
+        {
+          "name": "unfunded wider catch preserves the existing reachable inset fallback",
+          "passed": true,
+          "error": null
+        }
+      ]
+    }
+  ],
+  "limitations": [
+    "Cached authorized native route math with observed numeric field geometry and double-precision offline Vector math; current Roblox physics and server decisions are not reproduced.",
+    "Solve milliseconds are offline Python/Lua measurements, not game frame latency.",
+    "Typical routes already target the legal sideline; drawn endpoint and airborne root contact are distinct from the pass target.",
+    "Wider geometry does not prove reduced breakups against a responsive defender."
+  ],
+  "extractedGameSourceIncluded": false
+}
