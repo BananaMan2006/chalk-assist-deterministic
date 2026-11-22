@@ -523,6 +523,33 @@ end
 -- Deep middle Floaters with alternating candidate sides. Observed coverage
 -- chooses among funded routes; one confirmed camper response is allowed per
 -- opponent session, independently of the cosmetic left/right route cycle.
+-- Diversity can resolve a quality tie; it cannot buy a later, less funded or
+-- more covered catch. The caller considers only already-enumerated candidates
+-- at the same stem, so this adds no candidates to the existing bounded search.
+function Policy.chooseOpeningCut(current,preferred,preferredSide,failures,goalDepth,yd,edge)
+    if type(current)~="table" or type(preferred)~="table" or current.side==preferredSide
+        or preferred.side~=preferredSide or not finite(goalDepth) or not finite(yd) or yd<=0
+        or not finite(edge) or type(failures)~="table" then return current end
+    for _,c in ipairs({current,preferred}) do
+        local requiredReserve=finite(c.finalSprintReserve) and math.max(10,c.finalSprintReserve) or 10
+        if not c.reachable or not c.requireAirborne or not c.estimatedCatchInsideGoal or c.anticipatedLane
+            or not finite(c.stemYards) or c.stemYards<goalDepth*.65
+            or not finite(c.cutAngle) or c.cutAngle<40 or c.cutAngle>115
+            or not finite(c.targetSidelineInset) or c.targetSidelineInset>math.max(edge,yd)
+            or not finite(c.catchSidelineInset) or c.catchSidelineInset>1.5*yd
+            or not finite(c.defenderEnvelopeMargin) or not finite(c.finalSprintStamina)
+            or c.finalSprintStamina<requiredReserve or not finite(c.estimatedFirstTouchAt) then return current end
+    end
+    if not finite(failures[preferredSide]) or not finite(failures[current.side])
+        or failures[preferredSide]>failures[current.side]
+        or math.abs(preferred.stemYards-current.stemYards)>1e-6
+        or preferred.targetSidelineInset>current.targetSidelineInset+1e-6
+        or preferred.defenderEnvelopeMargin<current.defenderEnvelopeMargin-1e-6
+        or preferred.finalSprintStamina<current.finalSprintStamina-1e-6
+        or preferred.estimatedFirstTouchAt>current.estimatedFirstTouchAt+1e-6 then return current end
+    return preferred
+end
+
 local function chooseScheduledRoute(input,Config,Field,RouteMath,Planner,centerFallback)
     input=input or {}
     if not validField(Field) or type(RouteMath)~="table" or type(RouteMath.Sanitize)~="function"
@@ -587,7 +614,7 @@ local function chooseScheduledRoute(input,Config,Field,RouteMath,Planner,centerF
     -- not immunity to a defender who follows it. The complete route is funded
     -- from that start below; no extra live sprint or unchecked escape is added.
     local setup=finite(input.setupSeconds) and clamp(input.setupSeconds,0,(Config.HikeTime or 3)+.5) or 0
-    local openingShifted=false
+    local openingShifted,centeredOpening=false,false
     if not centerFallback and not shortField and input.phase=="PreSnap" and setup>0
         and vec(input.opponentPosition) then
         local other=input.opponentPosition-offset
@@ -596,10 +623,15 @@ local function chooseScheduledRoute(input,Config,Field,RouteMath,Planner,centerF
         local clearance=clamp((jam and finite(jam.Range) and jam.Range or 3.5)+1.25,3.75,5.25)
         local setupReach=math.max(0,tonumber(Config.PreSnapDBSpeed) or 0)*setup
         if depth>=-clearance and depth<=setupReach+clearance+.5 and math.abs(other.X-mid)<=clearance then
-            local side=math.abs(other.X-mid)>math.max(.5,yd*.1) and (other.X>mid and -1 or 1) or preferredSide
+            local centered=math.abs(other.X-mid)<=math.max(.5,yd*.1)
+            -- Setup side runs on a separate two-play cycle from final cut
+            -- side. A visibly offset blocker still takes away-side priority.
+            local side=not centered and (other.X>mid and -1 or 1) or (math.floor(index/2)%2==0 and -1 or 1)
             local margin=math.max(edge,(Config.SidelineMarginYards or 2)*yd)
             local proposed=clamp(mid+side*1.5*yd,Field.MinX+margin,Field.MaxX-margin)
-            if math.abs(proposed-mid)>=clearance+.5 then startX=proposed;openingShifted=true end
+            if math.abs(proposed-mid)>=clearance+.5 then
+                startX=proposed;openingShifted=true;centeredOpening=centered
+            end
         end
     end
     local start=Vector3.new(startX+offset.X,rootY,los+offset.Z)
@@ -619,7 +651,7 @@ local function chooseScheduledRoute(input,Config,Field,RouteMath,Planner,centerF
     end
     local lateralSearchFloor=goalDepth*.65
     for _,stemYards in ipairs(stems) do
-        local best,bestClear,bestInside,bestInsideClear,bestInsideWide,bestInsideWideClear
+        local best,bestClear,bestInside,bestInsideClear,bestInsideWide,bestInsideWideClear,bestPreferredWide
         for _,side in ipairs({preferredSide,-preferredSide}) do
             local sideDone=false
             for _,beyond in ipairs(shortField and {5,4,3,2,1} or {1,2,3,4,5,6}) do
@@ -841,6 +873,9 @@ local function chooseScheduledRoute(input,Config,Field,RouteMath,Planner,centerF
                                                     if insideGoal and (not bestInside or c.score>bestInside.score) then bestInside=c end
                                                     if insideGoal and not waiting and (not bestInsideClear or c.score>bestInsideClear.score) then bestInsideClear=c end
                                                     if insideGoal and sideReached(c) then
+                                                        if side==preferredSide and not waiting and (not bestPreferredWide or c.score>bestPreferredWide.score) then
+                                                            bestPreferredWide=c
+                                                        end
                                                         if not bestInsideWide or c.score>bestInsideWide.score then bestInsideWide=c end
                                                         if not waiting and (not bestInsideWideClear or c.score>bestInsideWideClear.score) then bestInsideWideClear=c end
                                                     end
@@ -863,6 +898,9 @@ local function chooseScheduledRoute(input,Config,Field,RouteMath,Planner,centerF
         local c=bestInsideClear or bestClear or bestInside or best
         local wide=bestInsideWideClear or (not bestInsideClear and bestInsideWide)
         if wide and c and wide.score>=c.score-5 then c=wide end
+        if centeredOpening then
+            c=Policy.chooseOpeningCut(c,bestPreferredWide,preferredSide,failures,goalDepth,yd,edge)
+        end
         if c and not preferredDeep then preferredDeep,deepestFeasible=c,stemYards
         elseif c and stemYards>=deepestFeasible-2 and
             (c.cutAngle>=preferredDeep.cutAngle+5 and not (c.anticipatedLane and not preferredDeep.anticipatedLane)

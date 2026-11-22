@@ -99,6 +99,39 @@ return function(ctx, Planner, createTackle, WRApproach, Motion, createCarrierMov
         local ok,state=pcall(function() return h:GetState().Name end)
         return ok and state or nil
     end
+    -- Passive state attached only to existing jump input records. A requested
+    -- Jumping state is not evidence of lift; retain the actual native settings
+    -- and nearby-body geometry without changing either one.
+    local function jumpDiagnostic(s,root,h)
+        local fields={role=s.role,observationPhase="after native jump request"}
+        pcall(function()
+            fields.position,fields.velocity=xyz(root.Position),xyz(root.AssemblyLinearVelocity)
+            fields.jumpHeight,fields.jumpPower,fields.useJumpPower=h.JumpHeight,h.JumpPower,h.UseJumpPower
+            fields.platformStand,fields.jumpHeld,fields.humanoidState=h.PlatformStand,h.Jump,humanoidState(h)
+            local enabledOK,enabled=pcall(function() return h:GetStateEnabled(Enum.HumanoidStateType.Jumping) end)
+            if enabledOK then fields.jumpStateEnabled=enabled end
+            local floorOK,floor=pcall(function() return h.FloorMaterial.Name end)
+            if floorOK then fields.floorMaterial=floor end
+            local seen={}
+            local function inspect(character)
+                if not character or seen[character] then return end
+                seen[character]=true
+                pcall(function()
+                    local other=character:FindFirstChild("HumanoidRootPart")
+                    if not other then return end
+                    local delta=other.Position-root.Position
+                    local gap=(delta*Vector3.new(1,0,1)).Magnitude
+                    if gap==gap and gap<math.huge and (not fields.nearestOpponentGap or gap<fields.nearestOpponentGap) then
+                        fields.nearestOpponentGap=gap
+                        fields.nearestOpponentHeightDifference=delta.Y
+                    end
+                end)
+            end
+            inspect(s.opponent)
+            for _,character in ipairs(s.opponents or {}) do inspect(character) end
+        end)
+        return fields
+    end
     local function networkPing()
         local ok,value=pcall(function() return me:GetNetworkPing() end)
         if ok and type(value)=="number" and value==value and value>=0 and value<math.huge then
@@ -952,8 +985,10 @@ return function(ctx, Planner, createTackle, WRApproach, Motion, createCarrierMov
                     if cancelStaleAction(retryAt) then h.Jump=false;return end
                     jumpRequest.retried=true
                     h:ChangeState(Enum.HumanoidStateType.Jumping)
-                    log("jumpRetry",{dispatchAt=jumpRequest.dispatchedAt,
-                        age=now-(jumpRequest.dispatchedAt or jumpRequest.time)})
+                    local diagnostic=jumpDiagnostic(s,root,h)
+                    diagnostic.dispatchAt=jumpRequest.dispatchedAt
+                    diagnostic.age=now-(jumpRequest.dispatchedAt or jumpRequest.time)
+                    log("jumpRetry",diagnostic)
                 end
             else
                 log("actionRejected",{action="jump",reason="no takeoff observed",role=s.role,
@@ -1262,8 +1297,10 @@ return function(ctx, Planner, createTackle, WRApproach, Motion, createCarrierMov
                 h:ChangeState(Enum.HumanoidStateType.Jumping)
                 jumped=true
                 jumpRequest={time=now,dispatchedAt=dispatchAt,y=root.Position.Y}
-                log("jumpRequest", {position=xyz(root.Position),delay=dispatchAt-plan.jumpAt,
-                    dispatchAt=dispatchAt,frameAt=now,scheduledAt=plan.jumpAt})
+                local diagnostic=jumpDiagnostic(s,root,h)
+                diagnostic.delay=dispatchAt-plan.jumpAt
+                diagnostic.dispatchAt,diagnostic.frameAt,diagnostic.scheduledAt=dispatchAt,now,plan.jumpAt
+                log("jumpRequest",diagnostic)
             else
                 cancel(); message="Jump window changed · recalculating"; return
             end

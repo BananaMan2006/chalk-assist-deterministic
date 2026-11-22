@@ -159,7 +159,7 @@ return function(Policy,create,routeSource,Planner)
         return p,f,routeMath
     end
     test("crowded setup selects a legal near-center start with a funded deep cut",function()
-        for _,cycle in ipairs({0,1}) do
+        for _,cycle in ipairs({0,2}) do
             local p,f,routeMath=narrowRouteFixture(cycle)
             p.setupSeconds=3.1
             local offset=Vector3.new(100,0,200)
@@ -176,13 +176,76 @@ return function(Policy,create,routeSource,Planner)
             assert(seenArc and c.payload.Pass=="Floater" and c.openingStartShifted)
             local shift=c.payload.StartX-f.MidX
             assert(math.abs(shift)>=6 and math.abs(shift)<=1.5*f.YD+.001,"opening remains trapped at center")
-            assert(shift*(cycle==0 and -1 or 1)>0,"centered pressure erased alternating setup sides")
+            assert(shift*(cycle==0 and -1 or 1)>0,"centered pressure erased both setup sides")
             assert(c.payload.StartX>=f.MinX+Config.SidelineMarginYards*f.YD
                 and c.payload.StartX<=f.MaxX-Config.SidelineMarginYards*f.YD)
             assert(math.abs(c.payload.Points[2].X-f.MidX)<.01,"setup offset erased the deep middle cut")
             assert(c.stemYards>=(f.GoalZ-f.LOSZ)/f.YD*.65 and c.cutAngle>=40)
             assert(c.reachable and not c.bestEffort and c.requireAirborne and c.estimatedCatchInsideGoal)
             assert(c.finalSprintStamina>=10 and c.targetSidelineInset<=f.YD)
+        end
+    end)
+    test("centered pressure allows all four funded start and cut combinations",function()
+        local pairings={}
+        for cycle=0,3 do
+            local p,f,routeMath=narrowRouteFixture(cycle);p.setupSeconds=3.1
+            p.opponentPosition=Vector3.new(f.MidX,p.opponentPosition.Y,p.opponentPosition.Z)
+            local c=assert(Policy.chooseScheduledRoute(p,Config,f,routeMath,Planner))
+            local startSide=c.payload.StartX<f.MidX and -1 or 1
+            pairings[startSide..":"..c.side]=true
+            assert(c.side==(cycle%2==0 and -1 or 1),"setup side still reveals every final cut")
+            assert(c.stemYards>=20 and c.cutAngle>=40 and c.cutAngle<=115)
+            assert(c.reachable and c.requireAirborne and c.estimatedCatchInsideGoal)
+            assert(c.targetSidelineInset<=math.max(Config.RouteEdgeMargin,f.YD) and c.catchSidelineInset<=1.5*f.YD)
+            assert(c.finalSprintStamina>=10,"diversity lost the final catch reserve")
+            assert(math.abs(c.payload.Points[2].X-f.MidX)<.01,"diversity moved the middle cut")
+        end
+        for _,key in ipairs({"-1:-1","-1:1","1:-1","1:1"}) do
+            assert(pairings[key],"missing legal start/cut combination "..key)
+        end
+    end)
+    test("cut diversity rejects coverage timing width funding and history regressions",function()
+        local p,f,routeMath=narrowRouteFixture(0);p.setupSeconds=3.1
+        p.opponentPosition=Vector3.new(f.MidX,p.opponentPosition.Y,p.opponentPosition.Z)
+        local current=assert(Policy.chooseScheduledRoute(p,Config,f,routeMath,Planner))
+        p.routeCycle=1
+        local preferred=assert(Policy.chooseScheduledRoute(p,Config,f,routeMath,Planner))
+        local depth=(f.GoalZ-p.LOS)/f.YD
+        local failures={[-1]=0,[1]=0}
+        assert(Policy.chooseOpeningCut(current,preferred,1,failures,depth,f.YD,1)==preferred)
+        local function rejected(changes,history)
+            local c={};for k,v in pairs(preferred) do c[k]=v end
+            for k,v in pairs(changes) do c[k]=v end
+            assert(Policy.chooseOpeningCut(current,c,1,history or failures,depth,f.YD,1)==current,
+                "diversity accepted a worse or unverified contact")
+        end
+        rejected({defenderEnvelopeMargin=current.defenderEnvelopeMargin-.01})
+        rejected({finalSprintStamina=current.finalSprintStamina-.01})
+        rejected({finalSprintStamina=9.99})
+        rejected({finalSprintReserve=preferred.finalSprintStamina+.01})
+        rejected({estimatedFirstTouchAt=current.estimatedFirstTouchAt+.001})
+        rejected({stemYards=current.stemYards-.1})
+        rejected({targetSidelineInset=current.targetSidelineInset+.01})
+        rejected({catchSidelineInset=1.5*f.YD+.01})
+        rejected({cutAngle=39.99})
+        rejected({requireAirborne=false})
+        rejected({estimatedCatchInsideGoal=false})
+        rejected({reachable=false})
+        rejected({anticipatedLane=true})
+        rejected({}, {[-1]=0,[1]=1})
+        p.recentRoutes={{side=1,success=false,result="Swatted"}}
+        local c=assert(Policy.chooseScheduledRoute(p,Config,f,routeMath,Planner))
+        assert(c.side==-1,"four-way schedule overrode a known failed side")
+    end)
+    test("off-center blockers retain away-side setup priority across all cut cycles",function()
+        for _,side in ipairs({-1,1}) do
+            for cycle=0,3 do
+                local p,f,routeMath=narrowRouteFixture(cycle);p.setupSeconds=3.1
+                p.opponentPosition=Vector3.new(f.MidX+side,p.opponentPosition.Y,p.opponentPosition.Z)
+                local c=assert(Policy.chooseScheduledRoute(p,Config,f,routeMath,Planner))
+                assert((c.payload.StartX-f.MidX)*side<0,"diversity moved toward the observed blocker")
+                assert(c.reachable and c.finalSprintStamina>=10 and c.estimatedCatchInsideGoal)
+            end
         end
     end)
     test("uncrowded or already-started routes retain the centered setup",function()

@@ -617,11 +617,12 @@ return function(Planner,source)
     end)
     local staleGuard=assert(source:match("(    local function cancelStaleAction.-)    local walls"))
     local actionSection=assert(source:match("(        local actionNow=workspace:GetServerTimeNow%(%).-)        message=plan.reachable==false"))
+    local jumpDiagnostic=assert(source:match("(    local function jumpDiagnostic.-)    local function networkPing"))
     local dispatchFixture=assert(loadstring([[
         return function(realPlanner)
         return function(input,clocks,role,options)
             options=options or {}
-            local result={jumps=0,dives=0,cancels=0,finished=false,dbChecks=0}
+            local result={jumps=0,dives=0,cancels=0,finished=false,dbChecks=0,logs={}}
             local plan=input
             local now=100
             local nextSolve=0
@@ -635,17 +636,28 @@ return function(Planner,source)
                 clockIndex=math.min(clockIndex+1,#clocks)
                 return clocks[clockIndex]
             end}
-            local s={role=role}
+            local s={role=role,opponent=options.opponent,opponents=options.opponents}
             local root={Position=options.position or Vector3.new(0,5,0),AssemblyLinearVelocity=Vector3.zero}
-            local h={FloorMaterial=options.floorMaterial or "Air",PlatformStand=false}
+            local nativeState=options.nativeState or "Running"
+            local h={FloorMaterial=options.floorMaterial or "Air",PlatformStand=false,
+                JumpHeight=options.jumpHeight or 6,JumpPower=options.jumpPower or 50,UseJumpPower=options.useJumpPower==true}
             function h:Move()end
-            function h:ChangeState()result.jumps=result.jumps+1 end
+            function h:ChangeState(state)
+                result.jumps=result.jumps+1;nativeState=state
+                if options.zeroJumpOnRequest then h.JumpHeight=0 end
+                if options.diagnosticPropertyError then
+                    h.JumpHeight=nil
+                    setmetatable(h,{__index=function(_,key)if key=="JumpHeight" then error("removed humanoid")end end})
+                end
+            end
+            function h:GetStateEnabled()return options.jumpEnabled~=false end
+            local function humanoidState()return nativeState end
             local Enum={HumanoidStateType={Jumping="Jumping"},Material={Air="Air"}}
             local Config={Moves={Dive={Cooldown=1.6}}}
             local Moves={Upright=function()return true end}
             local function motionState()return options.motion or {grounded=true,diveModeMatchesMotion=true}end
-            local function log()end
-            local function xyz()return {}end
+            local function log(kind,fields)result.logs[#result.logs+1]={kind=kind,fields=fields}end
+            local function xyz(v)return v and {x=v.X,y=v.Y,z=v.Z}end
             local function snapshot()
                 local goal=options.goalZ
                 if goal==nil and not options.missingGoal then goal=-100 end
@@ -669,7 +681,7 @@ return function(Planner,source)
                 end,
                 validateJump=function()return true end,
                 pose=function()return {Position=root.Position}end}
-    ]]..staleGuard..[[
+    ]]..jumpDiagnostic..staleGuard..[[
             local function tick()
     ]]..actionSection..[[
                 result.finished=true
@@ -733,7 +745,7 @@ return function(Planner,source)
     local confirmation=assert(source:match('        h.Jump=jumpRequest~=nil\n(        if jumpRequest then.-)        if h.PlatformStand and not dived then'))
     local pendingFixture=assert(loadstring([[
         return function(options)
-            local result={retries=0,cancels=0,confirmed=0,finished=false}
+            local result={retries=0,cancels=0,confirmed=0,finished=false,logs={}}
             local now=options.now
             local plan={kind="jump",jumpAt=100.025,contactAt=options.contactAt or 100.5}
             local lastSnapshot={jumpSpeed=math.sqrt(2*196.2*6),gravity=196.2,now=100}
@@ -743,17 +755,20 @@ return function(Planner,source)
             local root={Position=Vector3.new(0,3+(options.rise or 0),0),
                 AssemblyLinearVelocity=Vector3.new(0,options.velocity or 0,0)}
             local Enum={Material={Air="Air"},HumanoidStateType={Jumping="Jumping",Freefall="Freefall"}}
+            local nativeState="Running"
             local h={FloorMaterial=options.airborne and "Air" or "Ground",Jump=true,
-                GetState=function()return "Running" end}
-            function h:ChangeState()result.retries=result.retries+1 end
+                JumpHeight=6,JumpPower=50,UseJumpPower=false,PlatformStand=false,
+                GetState=function()return nativeState end,GetStateEnabled=function()return true end}
+            function h:ChangeState(state)result.retries=result.retries+1;nativeState=state end
+            local function humanoidState()return nativeState end
             local workspace={GetServerTimeNow=function()return options.clock or now end}
-            local function log()end
-            local function xyz()return {}end
+            local function log(kind,fields)result.logs[#result.logs+1]={kind=kind,fields=fields}end
+            local function xyz(v)return v and {x=v.X,y=v.Y,z=v.Z}end
             local function cancel()result.cancels=result.cancels+1;plan=nil;jumpRequest=nil end
             local lastJump,confirmedCatchJump,groundedReachSince,reachAirborne
             local nextSolve,message=0,nil
             local counters={jumps=0}
-    ]]..staleGuard..[[
+    ]]..jumpDiagnostic..staleGuard..[[
             local function tick()
     ]]..confirmation..[[
                 result.finished=true
@@ -764,6 +779,42 @@ return function(Planner,source)
             return result
         end
     ]]))()
+    test("jump request diagnostics capture actual post-input settings without changing dispatch",function()
+        local other={FindFirstChild=function()return {Position=Vector3.new(3,7,4)}end,Name="private-name"}
+        local r=dispatchFixture({kind="jump",jumpAt=100.02,contactAt=100.5},{100.03},"DB",{
+            position=Vector3.new(0,5,0),floorMaterial={Name="Grass"},zeroJumpOnRequest=true,
+            jumpPower=48,jumpEnabled=false,opponent=other,opponents={other}})
+        assert(r.jumps==1 and r.dives==0 and r.cancels==0 and r.jumpRequested)
+        assert(#r.logs==1 and r.logs[1].kind=="jumpRequest")
+        local d=r.logs[1].fields
+        assert(d.jumpHeight==0 and d.jumpPower==48 and d.useJumpPower==false and d.jumpStateEnabled==false)
+        assert(d.humanoidState=="Jumping" and d.floorMaterial=="Grass" and d.platformStand==false and d.jumpHeld)
+        assert(d.velocity.x==0 and d.velocity.y==0 and d.velocity.z==0)
+        assert(d.nearestOpponentGap==5 and d.nearestOpponentHeightDifference==2)
+        assert(d.name==nil and d.opponent==nil and d.opponents==nil and d.userId==nil)
+    end)
+    test("jump diagnostics tolerate unavailable body or floor details without suppressing input",function()
+        local r=dispatchFixture({kind="jump",jumpAt=100.02,contactAt=100.5},{100.03},"DB",{
+            opponent={FindFirstChild=function()error("removed body")end}})
+        assert(r.jumps==1 and r.cancels==0 and #r.logs==1)
+        local d=r.logs[1].fields
+        assert(d.nearestOpponentGap==nil and d.floorMaterial==nil and d.jumpHeight==6)
+    end)
+    test("a failed passive native-property read cannot suppress an already dispatched jump",function()
+        local r=dispatchFixture({kind="jump",jumpAt=100.02,contactAt=100.5},{100.03},"DB",{
+            diagnosticPropertyError=true})
+        assert(r.jumps==1 and r.cancels==0 and r.finished and r.jumpRequested)
+        assert(#r.logs==1 and r.logs[1].kind=="jumpRequest")
+        assert(r.logs[1].fields.jumpHeight==nil and r.logs[1].fields.position.y==5)
+    end)
+    test("existing jump retry records receive diagnostics with no added retry or event",function()
+        local r=pendingFixture({role="DB",now=100.08})
+        assert(r.retries==1 and r.cancels==0 and r.confirmed==0 and r.held and r.pending)
+        assert(#r.logs==1 and r.logs[1].kind=="jumpRetry")
+        local d=r.logs[1].fields
+        assert(d.jumpHeight==6 and d.jumpStateEnabled==true and d.humanoidState=="Jumping")
+        assert(d.velocity.y==0 and d.dispatchAt==100.03 and d.jumpHeld)
+    end)
     test("unconfirmed jump cannot retry or remain held after contact for either role",function()
         for _,role in ipairs({"WR","DB"})do
             local r=pendingFixture({role=role,now=100.08,contactAt=100.06})

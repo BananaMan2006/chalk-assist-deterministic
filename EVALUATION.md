@@ -1,6 +1,16 @@
-# Evaluation scope · 5.1.26
+# Evaluation scope · 5.1.27
 
 This release continues the authored, deterministic controller. Its checks establish local rule behavior and packaging properties. **They do not demonstrate a live win rate, a winning streak, perfect catching, or improvement through training.** The release has no training system or shared model.
+
+## 5.1.27 scope
+
+Centered-pressure starts and final cuts previously repeated the same pairing. The new policy cycles the starting side separately and can choose an already-enumerated alternate cut at the same deep stem only when width, airborne end-zone contact, final sprint reserve, first-contact time, conservative defender coverage and recent failure history are no worse. Off-center blockers retain away-side setup priority. No new candidate pool or repeated search is added; changed geometry can still change existing early exits and forecast counts.
+
+The [route review](evaluation/5.1.27-route-review.json) preserves four funded start/cut combinations and 51 recorded-state comparisons with no lost funded route. Cross-side cuts in the recorded witness remain sharp at 43.94 degrees, versus 52.52 degrees for same-side cuts. The current conservative defender envelope remains contested; diversity is not proof that the opponent cannot reach the catch. This is not a demonstrated rescue of the recorded receiving breakup.
+
+A separate defensive failure entered the native Jumping state without rising while another body displaced the stationary character. Existing jump-request and retry events now capture the actual jump properties and native state at dispatch to investigate possible property transitions. Inputs, retry limits and native action permission remain unchanged. Timely input alone does not prove takeoff or possession.
+
+Validation passed 547 rule checks, 96 deterministic checks, 75 airborne checks and 36 build, installer and preference checks. The added jump diagnostics are checked against actual dispatch code, including a native property changing during input and unavailable-property handling. Live outcomes are reported separately from these offline checks.
 
 ## 5.1.26 scope
 
