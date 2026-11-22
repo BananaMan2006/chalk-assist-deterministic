@@ -1,0 +1,57 @@
+{
+  "schemaVersion": 1,
+  "incident": "5.1.24 DB14, second monitoring window",
+  "scope": "Exact recorded first resumed avoidance input, with only stale currentDirection removed in counterfactual.",
+  "results": [
+    {
+      "variant": "old",
+      "direction": {
+        "x": 0.9938835421405801,
+        "z": 0.11043325885843311
+      },
+      "forwardProgressPerSecond": -19.8776708428116,
+      "reason": "passing player",
+      "active": true,
+      "sprint": false,
+      "initialBodyGapStuds": 2.7957888861830273,
+      "predictedMinimumBodyGapStuds": 2.7957888861830273,
+      "predictedEndingBodyGapStuds": 12.164631802669598
+    },
+    {
+      "variant": "reset",
+      "direction": {
+        "x": -0.9914992944762482,
+        "z": -0.13011206344187365
+      },
+      "forwardProgressPerSecond": 19.829985889524963,
+      "reason": "passing player",
+      "active": true,
+      "sprint": false,
+      "initialBodyGapStuds": 2.7957888861830273,
+      "predictedMinimumBodyGapStuds": 2.7889588411250674,
+      "predictedEndingBodyGapStuds": 3.1949450835482045
+    }
+  ],
+  "limitations": [
+    "The controller regression separately establishes same-body zero-input stationary evidence before clearing the heading.",
+    "Linear body geometry is not native physics or future opponent behavior.",
+    "This reproduces the wrong-way initial command, not a guaranteed interception or tackle outcome."
+  ],
+  "release": "5.1.26",
+  "controllerRegression": {
+    "oldPassed": 41,
+    "oldTotal": 43,
+    "newPassed": 43,
+    "newTotal": 43
+  },
+  "preservedControls": [
+    "moving/coasting reversals",
+    "blocked nonzero intent",
+    "same/backward time",
+    "new root",
+    "manual control",
+    "airborne motion",
+    "pending/committed actions",
+    "unsafe overlapping restart stays stopped"
+  ]
+}

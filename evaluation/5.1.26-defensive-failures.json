@@ -1,0 +1,54 @@
+{
+  "schemaVersion": 1,
+  "scope": "Read-only defensive coverage and pursuit audit from retained numeric observations.",
+  "historicalFloaterDB5": {
+    "opponentLateralGapNearThrowStuds": 8.2808,
+    "localGoalSideDepthNearThrowStuds": 0.5264,
+    "localStaminaNearThrow": 94,
+    "facts": [
+      "A passing-side avoidance path preceded the opponent lateral acceleration.",
+      "The coverage policy requested a lateral recovery sprint while avoidance was returning from its previous heading.",
+      "The physically moving body spent approximately150ms completing that bounded return before requested sprint was allowed.",
+      "The jump subsequently occurred; native airborne permission shortened before the scheduled dive despite rising physical motion."
+    ],
+    "interpretation": "The initial lateral deficit increases how much of the later catch approach passes over the opponent. The return interval is consistent with bounded turning; unlike the later stationary-restart defect, no unsafe stale-heading reset is justified here.",
+    "rejectedFix": "15,540 wider schedule candidates did not establish an early connected contact that avoids the observed native-state loss with adequate separation.",
+    "limitations": [
+      "Proximity does not prove why native airborne state changed. A successful near-body swat control retained native airborne state.",
+      "No production coverage threshold or native-state override was added from this incident."
+    ]
+  },
+  "currentBulletDB14": {
+    "reachableForecasts": 0,
+    "forecastCount": 5,
+    "firstPredictedMissStuds": 8.87,
+    "lastPredictedMissStuds": 9.825,
+    "localAerialActions": 0,
+    "prethrowDefect": "An approximately83ms zero-input physical stop was followed by a reversal. The old150ms idle reset had not cleared steering, so unchanged avoidance initially moved opposite the new coverage request.",
+    "reproduction": "5.1.26-short-stop-review.json",
+    "fixedBehavior": "Only a same-body stationary restart after a previous zero-input physical stop discards the stale heading; ordinary collision checks still choose the actual movement.",
+    "tackle": {
+      "predictedFirstContactSeconds": 0.0875,
+      "predictedWindowSeconds": 0.04,
+      "predictedMarginStuds": 1.4126,
+      "requiredMarginStuds": 1.1905,
+      "targetVelocityAtDispatch": {
+        "x": -14.5334,
+        "z": -9.96228
+      },
+      "targetVelocityAtFirstObservedContactTime": {
+        "x": -23.1872,
+        "z": 7.66055
+      },
+      "observedGapAt088SecondsStuds": 5.57035,
+      "observedGapAt265SecondsStuds": 2.01664,
+      "nativeTackleResult": false,
+      "interpretation": "The target changed direction before the predicted first window. Later proximity did not produce an authoritative tackle; the record does not expose a server rejection reason."
+    },
+    "limitations": [
+      "Correcting a prethrow movement defect is not a counterfactual guarantee of interception.",
+      "The tackle miss is separate from the stationary-restart fix.",
+      "No reachable catch was omitted by the observed initial aerial dispatch logic."
+    ]
+  }
+}
