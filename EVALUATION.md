@@ -1,6 +1,18 @@
-# Evaluation scope · 5.1.23
+# Evaluation scope · 5.1.24
 
 This release continues the authored, deterministic controller. Its checks establish local rule behavior and packaging properties. **They do not demonstrate a live win rate, a winning streak, perfect catching, or improvement through training.** The release has no training system or shared model.
+
+## 5.1.24 scope
+
+Two WR dive traces advertised a brief initial upright contact, then lost overlap for roughly 62–65 ms as the body tipped, before reaching the later robust contact window. The native client sends its catch request on the first overlap. The planner now checks that this first overlap connects to the later window, including the exact upright-to-dive capsule boundary and sampled action delays. Some accepted historical catches also contained disconnected modeled windows, so this corrects the forecast contract without claiming to prove the server’s rejection rule. Earlier recorded WR snapshots retain connected alternatives; a late already-committed snapshot need not be rescuable. The [connected-contact review](evaluation/5.1.24-connected-contact-review.json) retains the failing-before/passing-after cases, matched controls and offline timing limits.
+
+A defensive Floater touchdown exposed a different motion error: the plan stopped its moving jump in midair, but observed momentum continued about 1.8 studs, followed by repeated reversing replans. Only configured Floater DB jump plans that stop between takeoff and contact gain the existing paced continuous approach. They preserve the normal contact margin, 60 ms jump reserve and field bounds. The [defensive momentum review](evaluation/5.1.24-defensive-momentum-review.json) preserves matched controls and explicit limits. The same bounded post-claim continuation now supports that DB command, captures role identity and revokes on role, phase, result, reserve, motion or clearance changes. It sends no additional catch claim or action.
+
+The [paced-movement review](evaluation/5.1.24-paced-movement-review.json) separately reproduces a double walking-speed reduction during a safe return from avoidance. A direction already requesting 20 studs/second at native speed 27 was reduced again to about 14.8. Candidate checks and output now apply the physical speed cap once, preserving requested magnitude and all collision checks.
+
+A later WR interception contained a 2.329-second event gap spanning the jump deadline, with no jump or dive issued. This does not establish a planner timing error or the source of the interruption. Passive diagnostics now distinguish render callback gaps, the preceding controller duration and current controller duration; stale-action validation remains enforced.
+
+Validation passed 541 rule checks, 90 deterministic checks, 64 airborne checks and 36 build, installer and preference checks. Live checks remain ongoing in the one-hour window. Jams, contested server awards and execution stalls remain possible; the changes do not establish guaranteed catches or zero conceded points.
 
 ## 5.1.23 scope
 

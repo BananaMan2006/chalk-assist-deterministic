@@ -80,6 +80,97 @@ return function(Planner,source)
         p.approachTarget=p.diveAt and Planner.pose(s,p,p.diveAt-.000001).Position or p.rootTarget
         return fresh
     end
+    local function disconnectedFloater(index)
+        -- Numeric observations only, from two failed receiving dives. Both
+        -- had an upright overlap followed by a tilt-induced gap before the
+        -- later contact window. No player identity or native source is stored.
+        local d=index==8 and {
+            now=102.34921598434448,position=Vector3.new(54.97901916503906,4.636867523193359,93.6631851196289),
+            velocity=Vector3.new(14.703125,0.0000260655160673,22.645488739013672),staminaTime=.72,targetX=66.99998474121094,
+            direction=Vector3.new(.3794228434562683,0,.9252234697341919),
+            approach=Vector3.new(59.32286834716797,8.7846040725708,104.25567626953125),
+            jumpAt=102.6633369922638,diveAt=102.7733371257782,contactAt=102.96333718299866}
+            or {
+            now=102.44028210639954,position=Vector3.new(-16.397777557373047,4.636867046356201,102.65338134765625),
+            velocity=Vector3.new(-15.22146987915039,0.0000390609275200,22.300378799438477),staminaTime=.76,targetX=-29.212129592895508,
+            direction=Vector3.new(-.5637038350105286,0,.8259770274162292),
+            approach=Vector3.new(-21.68922233581543,8.784605026245117,110.40676879882812),
+            jumpAt=102.6780457496643,diveAt=102.78804588317871,contactAt=102.97804570198059}
+        local s=fixture();s.now=d.now;s.passType="Floater";s.position=d.position;s.velocity=d.velocity
+        s.lookDirection=d.direction;s.steeringDirection=d.direction;s.groundRootY=d.position.Y
+        s.arc={P0=Vector3.new(18.893924713134766,7.636868476867676,-53.83334732055664),
+            P1=Vector3.new(d.targetX,5.136868476867676,125.72048950195312),Flight=3.1,Apex=42}
+        s.turfY=1.63686865568161;s.diveTurfY=s.turfY;s.wrDiveGoalZ=103.30604553222656
+        s.sprintSeconds=d.staminaTime;s.reactionDelay=0;s.preferJumpDive=false;s.requireEndzoneCatch=true
+        s.diveDistance=14.731816774606706;s.gravity=196.1999969482422;s.jumpSpeed=48.52215950860912
+        s.bounds={minX=-29.7121302485466,maxX=67.49998158216476,minZ=-43.512135207653046,maxZ=151.9120985865593}
+        local p={kind="jumpDive",direction=d.direction,jumpAt=d.jumpAt,diveAt=d.diveAt,contactAt=d.contactAt,
+            approachTarget=d.approach,_jumpDelay=d.jumpAt-s.now,_diveDelay=d.diveAt-s.now,
+            _aimDistance=((d.approach-d.position)*Vector3.new(1,0,1)).Magnitude,
+            _speed=27,_runSpeed=20,_sprintSeconds=d.staminaTime,_reaction=0}
+        return s,p
+    end
+    local function denseConnected(s,p)
+        local start=math.max(s.now,s.launchAt+.1201)
+        local finish=p.contactAt+.012
+        local first
+        for i=0,math.ceil((finish-start)/.001) do
+            local at=math.min(finish,start+i*.001)
+            local cf,air=Planner.pose(s,p,at);local a,b,r=Planner.capsule(s,cf,air)
+            local margin=r-Planner.segmentDistance(Planner.ballAt(s.arc,at-s.launchAt),a,b)
+            if margin>=0 then first=first or at
+            elseif first and margin<-.00001 then return false,first,at end
+        end
+        return first~=nil,first
+    end
+    test("failed Floater replay chooses a connected first catch instead of bridging a dive-tip gap",function()
+        for _,index in ipairs({8,33}) do
+            local s,old=disconnectedFloater(index)
+            assert(not denseConnected(s,old),"Recorded fixture lost its two disconnected windows")
+            local p,why=Planner.solve(s)
+            -- The final WR8 snapshot can already be too late for a robust
+            -- replacement. WR33 still has a valid alternate airborne dive.
+            if index==33 then assert(p and p.reachable and p.airborneFinish,
+                why or "Rejected every catch instead of finding an alternative") end
+            if p then
+                assert(denseConnected(s,p),"Selected a brief first claim separated from its robust contact")
+                assert(p.margin>=s.margin and not p.risk and p.firstTouchAt<=p.contactAt)
+                for ji=0,(p.jumpAt and 2 or 0) do for di=0,(p.diveAt and 2 or 0) do
+                    local q={}for k,v in pairs(p)do q[k]=v end
+                    if p.jumpAt then q._jumpDelay=p._jumpDelay+.0175*ji;q.jumpAt=p.jumpAt+.0175*ji end
+                    if p.diveAt then q._diveDelay=p._diveDelay+.01*di;q.diveAt=p.diveAt+.01*di;q._diveDistance=nil end
+                    assert(denseConnected(s,q),"Dispatch variant reopened a first-contact gap")
+                end end
+            end
+        end
+    end)
+    test("DB first contact includes the brief upright overlap before a dive tips",function()
+        for _,index in ipairs({8,33}) do
+            local s,p=disconnectedFloater(index);s.role="DB";s.requireAirborne=false;s.requireEndzoneCatch=false
+            local _,first=denseConnected(s,p)
+            local touch=Planner.firstTouch(s,p)
+            assert(not touch.uncertain and math.abs(touch.at-first)<.001,
+                "DB coarse scan skipped the first native claim pocket")
+        end
+    end)
+    test("the earlier WR8 snapshot retains a connected airborne dive",function()
+        local s=disconnectedFloater(8)
+        s.now=102.19874882698059;s.position=Vector3.new(51.98614501953125,4.636867523193359,90.96587371826172)
+        s.velocity=Vector3.new(20.538305282592773,.0000260655160673,17.52649688720703)
+        s.lookDirection=Vector3.new(.7672805786132812,0,.6413116455078125)
+        s.steeringDirection=Vector3.new(.7606779932975769,0,.6491295099258423);s.sprintSeconds=.88
+        local p,why=Planner.solve(s)
+        assert(p and p.diveAt and p.airborneFinish=="jumpDive",why or "Earlier dive opportunity was erased")
+        assert(denseConnected(s,p),"Earlier chosen dive still bridges a first-contact gap")
+    end)
+    test("fresh jump and dive validators reject a disconnected first claim for WR and DB",function()
+        for _,role in ipairs({"WR","DB"}) do
+            local s,p=disconnectedFloater(33);s.role=role
+            assert(not Planner.validateJump(advanceToJump(s,p,0),p),"Fresh jump retained a disconnected dive claim")
+            local actual=dispatch(s,p)
+            assert(not Planner.validateAirborneDive(actual,p),"Fresh dive retained a disconnected first claim")
+        end
+    end)
     test("WR dive starts inside the endzone rather than merely finishing there",function()
         local s=diveFixture();local old=assert(Planner.solve(s))
         local origin=Planner.pose(s,old,old.diveAt).Position
@@ -781,6 +872,71 @@ return function(Planner,source)
             {phase="Live",arc={}}}) do run(s)end
         assert(calls()==0)
         run({phase="Live",arc={},launchAt=100});assert(calls()==1)
+    end)
+    local function recordedDBAirborneStop()
+        local s=fixture()
+        s.role="DB";s.requireAirborne=false;s.preferAirborne=false;s.preferJumpDive=false
+        s.now=100;s.launchAt=97.560481
+        s.arc={P0=Vector3.new(18.893924713134766,7.636868476867676,-53.83334732055664),
+            P1=Vector3.new(59.323341369628906,5.136868476867676,114.45716857910156),Flight=3.1,Apex=42}
+        s.position=Vector3.new(52.1050910949707,4.636868000030518,98.02066040039062)
+        s.velocity=Vector3.new(19.359466552734375,0,18.82049560546875)
+        s.lookDirection=s.velocity.Unit;s.steeringDirection=s.velocity.Unit
+        s.jumpSpeed=48.52215950860912;s.gravity=196.1999969482422
+        s.groundRootY=s.position.Y;s.turfY=1.63686865568161;s.diveTurfY=s.turfY
+        s.diveDistance=14.731816774606706;s.sprintSeconds=1.56;s.reactionDelay=0
+        s.maxHorizon=1.060481
+        s.config.Pass={Floater={Flight=3.1,Apex=42},Bullet={Flight=.9,Apex=0}}
+        s.bounds={minX=-29.7121302485466,maxX=67.49998158216476,
+            minZ=-43.512135207653046,maxZ=151.9120985865593}
+        return s
+    end
+    test("recorded DB floater keeps moving through contact instead of stopping during its jump",function()
+        local s=recordedDBAirborneStop();local p=assert(Planner.solve(s))
+        -- The recorded old plan stopped 214 ms before contact while airborne;
+        -- native momentum moved 1.816 studs beyond it before repeated reversals.
+        local oldJump,oldStop,oldContact=100.1340624,100.2202789,100.4340624
+        assert(oldStop>oldJump and oldStop<oldContact)
+        assert(p.kind=="jump" and not p.diveAt and p.continuousCatch)
+        assert(p.margin>=.4 and p.jumpTimingBudget==.06 and not p.risk)
+        assert(math.abs(p.contactAt-oldContact)<.003 and p.stopAt>=p.contactAt+.012)
+        local before=Planner.pose(s,p,p.contactAt-.012).Position
+        local after=Planner.pose(s,p,p.contactAt+.012).Position
+        assert(((after-before)*Vector3.new(1,0,1)).Magnitude>.1)
+        local fresh=advanceToJump(s,p,0)
+        assert(Planner.validateJump(fresh,p),"Paced DB witness failed fresh takeoff validation")
+    end)
+    test("fresh paced DB jump rejects a shifted remaining path outside the field",function()
+        local s=recordedDBAirborneStop();local p=assert(Planner.solve(s))
+        local fresh=advanceToJump(s,p,0)
+        local final=Planner.pose(s,p,p.stopAt).Position
+        fresh.bounds={minX=s.bounds.minX,maxX=final.X-.1,
+            minZ=s.bounds.minZ,maxZ=s.bounds.maxZ}
+        local valid,why=Planner.validateJump(fresh,p)
+        assert(not valid and why=="Continuous DB catch leaves field bounds",tostring(why))
+        local translated=recordedDBAirborneStop();local shift=Vector3.new(100,0,200)
+        translated.position=translated.position+shift
+        translated.arc={P0=translated.arc.P0+shift,P1=translated.arc.P1+shift,Flight=3.1,Apex=42}
+        translated.bounds={minX=s.bounds.minX+100,maxX=s.bounds.maxX+100,
+            minZ=s.bounds.minZ+200,maxZ=s.bounds.maxZ+200}
+        local moved=assert(Planner.solve(translated))
+        assert(moved.continuousCatch and math.abs(moved.contactAt-p.contactAt)<.00001)
+        assert(Planner.validateJump(advanceToJump(translated,moved,0),moved))
+    end)
+    test("DB pacing excludes stationary holds bullet arcs dives and optimistic opponent envelopes",function()
+        local s=fixture();s.role="DB";s.requireAirborne=false;s.preferAirborne=false
+        s.config.Pass={Floater={Flight=3.1,Apex=42},Bullet={Flight=.9,Apex=0}}
+        local bullet=assert(Planner.solve(s));assert(not bullet.continuousCatch)
+        local parked=recordedDBAirborneStop();parked.walkSpeed=0;parked.runSpeed=0
+        parked.velocity=Vector3.zero;parked.canDive=false
+        parked.position=Vector3.new(56.37,parked.position.Y,102.16)
+        local stationary=assert(Planner.solve(parked));assert(not stationary.continuousCatch)
+        local enemy=recordedDBAirborneStop();enemy.optimisticReachEnvelope=true
+        local possible=assert(Planner.solve(enemy));assert(not possible.continuousCatch)
+        local diving=fixture();diving.role="DB";diving.requireAirborne=false;diving.preferAirborne=false
+        diving.config.Pass=s.config.Pass;diving.canJump=false
+        local reach=Planner.solve(diving)
+        if reach and reach.diveAt then assert(not reach.continuousCatch) end
     end)
     return report
 end

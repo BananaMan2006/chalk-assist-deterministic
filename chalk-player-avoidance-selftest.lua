@@ -866,5 +866,31 @@ return function(Avoidance)
             assert(not d.active and d.sprint);same(d.direction,p.desiredDirection)
         end
     end)
+    test("already paced walking input is capped once during a clear bounded return",function()
+        for _,requestedSpeed in ipairs({5,13.5,20,27}) do
+            local p=fixture({requestedSprint=false,desiredDirection=Vector3.new(0,0,requestedSpeed/27),
+                currentDirection=Vector3.new(.1,0,.995).Unit})
+            local prior={now=-.025,active=true,side=1,heading=p.currentDirection,clearSince=-.3}
+            local _,d=Avoidance.update(prior,p)
+            assert(not d.sprint and d.active and d.reason=="returning to path")
+            assert(math.abs(d.direction.Magnitude*27-math.min(requestedSpeed,20))<1e-7,
+                "walking scale was applied twice")
+            assert(d.direction.Magnitude<=p.desiredDirection.Magnitude+1e-8)
+            legal(p,d.direction)
+        end
+    end)
+    test("paced walking return still reduces movement for a crossing body",function()
+        local p=fixture({requestedSprint=false,desiredDirection=Vector3.new(0,0,20/27),
+            currentDirection=Vector3.new(.1,0,.995).Unit,
+            opponents={{position=Vector3.new(-3,0,4),velocity=Vector3.new(15,0,0)}}})
+        local prior={now=-.025,active=true,side=1,heading=p.currentDirection,clearSince=-.3}
+        local _,d=Avoidance.update(prior,p)
+        assert(not d.sprint and d.direction.Magnitude<=20/27+1e-8)
+        local relative=p.opponents[1].position-p.position
+        local rv=p.opponents[1].velocity-d.direction*27
+        local at=math.clamp(-relative:Dot(rv)/rv:Dot(rv),0,.25)
+        assert((relative+rv*at).Magnitude>=3.75-1e-7,"paced correction bypassed clearance")
+        legal(p,d.direction)
+    end)
     return report
 end

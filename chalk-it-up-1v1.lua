@@ -1,4 +1,4 @@
--- Chalk-Release: 5.1.23
+-- Chalk-Release: 5.1.24
 -- Chalk-Product: deterministic
 -- Chalk It Up DB/WR ball assist using normal sprint/jump/dive controls.
 -- Cyan: replicated route (when supplied). Yellow: movement estimate.
@@ -47,7 +47,7 @@ assert(matchEvent and fxEvent and matchEvent:IsA("RemoteEvent") and fxEvent:IsA(
     "Chalk It Up Match/Fx events were not found")
 
 local api = {}
-local RELEASE_VERSION="5.1.23"
+local RELEASE_VERSION="5.1.24"
 local loadedGameId,loadedPlaceId,loadedJobId=game.GameId,game.PlaceId,game.JobId
 env.ChalkDB = api
 local alive, enabled = true, true
@@ -967,7 +967,7 @@ end
 function api.status()
     local ch = characterOf(opponent)
     local holder,isEnemy,holderRole=carrierContext()
-    return {product="deterministic",version=RELEASE_VERSION,buildId="91091804fb6fb5b74bcf2a954f054abbafe75e2c0f3173aeb889c4caff0aa2ba",policyMode="deterministic", enabled=enabled, role=role or "unknown",rawRole=rawRole or "unknown", phase=phase,
+    return {product="deterministic",version=RELEASE_VERSION,buildId="98d6fc36be5b287ec1f95a906a384440bf3fbbfe5ece8a009116f148c7d9ffbb",policyMode="deterministic", enabled=enabled, role=role or "unknown",rawRole=rawRole or "unknown", phase=phase,
         ui={visible=windowVisible,minimized=minimized,x=panel.Position.X.Offset,y=panel.Position.Y.Offset},
         matchAlerts={enabled=alertSettings.enabled,saveError=alertSettings.saveError},
         preferences=preferences and preferences.status() or nil,
@@ -1770,6 +1770,16 @@ end
 
 -- Find the first native capsule overlap along the whole proposed approach.
 -- A later intended catch must not be credited with yards after an earlier touch.
+local function diveTipBoundary(s,p)
+    if not p.diveAt then return nil end
+    local duration=diveCfg(s,"Time",0.35)
+    local tip=math.max(0.001,diveCfg(s,"Tip",0.5))
+    -- Invert the same cosine easing as pose(): this is the discontinuity
+    -- where the upright catch capsule becomes the narrower tipped capsule.
+    local fraction=tip*math.acos(1-2*math.acos(0.6)/math.rad(80))/math.pi
+    if duration<=0 or fraction>1 then return nil end
+    return p.diveAt+duration*fraction
+end
 function Planner.firstTouch(s,p,checkedThrough)
     -- The optional lower bound is used only after an identical shared prefix
     -- has already been checked. It never skips an unexamined approach.
@@ -1783,7 +1793,7 @@ function Planner.firstTouch(s,p,checkedThrough)
     end
     local stride=0.04
     local sampleBudget=512
-    if s.requireAirborne then
+    if s.requireAirborne or p.diveAt then
         -- Fast bullets can cross an entire catch volume between 40 ms samples.
         -- Bound sampled travel by a catch radius using observed arc speed and
         -- the proposed root motion. This remains a sampled geometric witness,
@@ -1807,6 +1817,7 @@ function Planner.firstTouch(s,p,checkedThrough)
     end
     local previous=first
     local at=first
+    local boundary=diveTipBoundary(s,p)
     while at<=last do
         local hit=overlap(at)
         if hit then
@@ -1820,9 +1831,49 @@ function Planner.firstTouch(s,p,checkedThrough)
         end
         if at==last then break end
         previous=at
-        at=math.min(last,at+stride)
+        local nextAt=math.min(last,at+stride)
+        if boundary then
+            for _,edge in ipairs({boundary-.00001,boundary+.00001}) do
+                if edge>at and edge<nextAt then nextAt=edge end
+            end
+        end
+        at=nextAt
     end
     return {at=last,root=p.rootTarget,position=p.contactPosition,progress=p.contactPosition.Z}
+end
+
+-- Native contact may be claimed at the FIRST overlap. A later robust contact
+-- window does not repair a brief earlier overlap that disappears as the dive
+-- tips. Keep those windows connected, including both sides of the capsule
+-- discontinuity. This is a bounded geometric check, not server acceptance.
+function Planner.connectedContact(s,p,touch,window)
+    if not p or not finite(p.contactAt) then return false,"Missing contact witness" end
+    if not p.diveAt then return true end
+    touch=touch or Planner.firstTouch(s,p)
+    if touch.uncertain then return false,touch.reason end
+    if not finite(touch.at) or touch.at>p.contactAt then return false,"Invalid first-contact witness" end
+    local last=p.contactAt+(window or p.timingMargin or s.timingMargin or .012)
+    local stride=.006
+    local count=math.ceil(math.max(0,last-touch.at)/stride)
+    if count>128 then return false,"Connected-contact sampling budget exceeded" end
+    local function overlaps(at)
+        local cf,airborne=Planner.pose(s,p,at)
+        local a,b,r=Planner.capsule(s,cf,airborne)
+        local ball=Planner.ballAt(s.arc,at-s.launchAt)
+        return r-Planner.segmentDistance(ball,a,b)>=-.00001
+    end
+    local boundary=diveTipBoundary(s,p)
+    if boundary and boundary>touch.at and boundary<last then
+        if not overlaps(math.max(touch.at,boundary-.00001))
+            or not overlaps(math.min(last,boundary+.00001)) then
+            return false,"First dive contact is disconnected by tipping"
+        end
+    end
+    for i=0,count do
+        local at=math.min(last,touch.at+i*stride)
+        if not overlaps(at) then return false,"First dive contact does not persist to the robust window" end
+    end
+    return true
 end
 
 -- An aerial finish is based on the first catch-volume overlap, not a later
@@ -1873,6 +1924,8 @@ function Planner.validateAirborneDive(s,p)
     actual._reaction,actual._aimDistance=0,0
     local witness=contact(s,actual,p.contactAt-s.now,p.requiredMargin,p.timingMargin)
     if not witness then return false,"Observed dive no longer reaches the ball" end
+    local connected,connectionReason=Planner.connectedContact(s,witness)
+    if not connected then return false,connectionReason end
     local finish,reason=Planner.airborneFinish(s,witness)
     return finish=="jumpDive",reason or "Observed airborne contact remains reachable"
 end
@@ -1907,6 +1960,9 @@ function Planner.validateJump(s,p)
             actual._runSpeed,actual._sprintSeconds)
         if actual._aimDistance>explicitMoveCap(s) then return false,"Continuous catch exceeds movement limit" end
         actual.stopAt=p.contactAt+.08
+        if s.role=="DB" and not inBounds(s,Planner.pose(s,actual,actual.stopAt).Position) then
+            return false,"Continuous DB catch leaves field bounds"
+        end
     end
     if p.diveAt then
         actual._diveDelay=p.diveAt-s.now
@@ -1915,6 +1971,8 @@ function Planner.validateJump(s,p)
     end
     local witness=contact(s,actual,p.contactAt-s.now,p.requiredMargin,p.timingMargin)
     if not witness then return false,"Jump no longer reaches the planned ball contact" end
+    local connected,connectionReason=Planner.connectedContact(s,witness)
+    if not connected then return false,connectionReason end
     if s.role=="WR" and (s.requireAirborne or s.requireEndzoneCatch or p.continuousCatch) then
         local finish,reason=Planner.airborneFinish(s,witness)
         if not finish then return false,reason or "Jump no longer has airborne first contact" end
@@ -1935,19 +1993,31 @@ end
 -- a guarantee against longer stalls or unknown server catch arbitration.
 local function scheduledContact(s,p,t,margin,window,relaxed)
     local base,miss=contact(s,p,t,margin,window)
-    if not base or s.actionTimingEnvelope==false or not (p._jumpDelay or p._diveDelay) then return base,miss end
+    if not base then return nil,miss end
+    -- DB action/time scoring can discard most otherwise valid candidates.
+    -- Defer their first-contact path scans until a candidate can improve it.
+    local connectionNow=s.role~="DB" and not s.optimisticReachEnvelope
+    if p.diveAt and connectionNow then
+        if s.role=="WR" and (s.requireAirborne or s.requireEndzoneCatch)
+            and not Planner.airborneFinish(s,base,{at=base.contactAt}) then return nil,-.01 end
+        local touch=Planner.firstTouch(s,base)
+        if not Planner.connectedContact(s,base,touch,window) then return nil,-.01 end
+        base._timingFirstTouch=touch
+    end
+    if s.actionTimingEnvelope==false or not (p._jumpDelay or p._diveDelay) then return base,miss end
     local jumpBudget,diveBudget=p._jumpDelay and (s.role=="DB" and not relaxed and 0.060 or 0.035) or 0,p._diveDelay and 0.020 or 0
     local minimumMargin=base.margin
     local sharedUntil
     if s.role=="WR" and (s.requireAirborne or s.requireEndzoneCatch) then
         if not Planner.airborneFinish(s,base,{at=base.contactAt}) then return nil,-0.01 end
-        local first=Planner.firstTouch(s,base)
+        local first=base._timingFirstTouch or Planner.firstTouch(s,base)
         if not Planner.airborneFinish(s,base,first) then return nil,-0.01 end
         base._timingFirstTouch=first
         -- All delayed variants have exactly the same pose before the first
         -- nominal action. Check this often-long Floater prefix only once.
         sharedUntil=math.min(p.jumpAt or INF,p.diveAt or INF)
     end
+    if base._timingFirstTouch then sharedUntil=math.min(p.jumpAt or INF,p.diveAt or INF) end
     for ji=0,(p._jumpDelay and 2 or 0) do
         for di=0,(p._diveDelay and 2 or 0) do
             if ji~=0 or di~=0 then
@@ -1967,9 +2037,15 @@ local function scheduledContact(s,p,t,margin,window,relaxed)
                 end
                 local witness,delayedMargin=contact(s,actual,t,margin,window)
                 if not witness then return nil,delayedMargin end
-                if sharedUntil then
+                local touch
+                if actual.diveAt and connectionNow then
+                    touch=sharedUntil and base._timingFirstTouch.at<=sharedUntil and base._timingFirstTouch
+                        or Planner.firstTouch(s,witness,sharedUntil)
+                    if not Planner.connectedContact(s,witness,touch,window) then return nil,-.01 end
+                end
+                if s.role=="WR" and (s.requireAirborne or s.requireEndzoneCatch) and sharedUntil then
                     if not Planner.airborneFinish(s,witness,{at=witness.contactAt}) then return nil,-0.01 end
-                    local touch=Planner.firstTouch(s,witness,sharedUntil)
+                    touch=touch or Planner.firstTouch(s,witness,sharedUntil)
                     if not Planner.airborneFinish(s,witness,touch) then return nil,-0.01 end
                 end
                 minimumMargin=math.min(minimumMargin,witness.margin)
@@ -1979,6 +2055,28 @@ local function scheduledContact(s,p,t,margin,window,relaxed)
     base.margin=minimumMargin
     base.jumpTimingBudget,base.diveTimingBudget=jumpBudget,diveBudget
     return base
+end
+
+local function connectedSchedule(s,p,window)
+    if not p.diveAt or s.optimisticReachEnvelope then return true end
+    local first=Planner.firstTouch(s,p)
+    if not Planner.connectedContact(s,p,first,window) then return false end
+    local sharedUntil=math.min(p.jumpAt or INF,p.diveAt)
+    local jumpBudget,diveBudget=p.jumpTimingBudget or 0,p.diveTimingBudget or 0
+    for ji=0,(jumpBudget>0 and 2 or 0) do for di=0,(diveBudget>0 and 2 or 0) do
+        if ji~=0 or di~=0 then
+            local actual={}for k,v in pairs(p)do actual[k]=v end
+            if p._jumpDelay then
+                actual._jumpDelay=p._jumpDelay+jumpBudget*ji/2;actual.jumpAt=s.now+actual._jumpDelay
+            end
+            actual._diveDelay=p._diveDelay+diveBudget*di/2;actual.diveAt=s.now+actual._diveDelay
+            actual._diveDistance=nil
+            local touch=first.at<=sharedUntil and first or Planner.firstTouch(s,actual,sharedUntil)
+            if not Planner.connectedContact(s,actual,touch,window) then return false end
+        end
+    end end
+    p._timingFirstTouch=first
+    return true
 end
 
 local function oneDefenderDeadline(s,horizon,source)
@@ -2010,6 +2108,9 @@ local function oneDefenderDeadline(s,horizon,source)
     -- An opponent's possible reach remains optimistic. Our own execution
     -- budget must not make an unknown defender look artificially slower.
     o.actionTimingEnvelope=false
+    -- Unknown opponents retain an optimistic possible-reach envelope. Our
+    -- execution/first-claim requirements must not make their reach look worse.
+    o.optimisticReachEnvelope=true
     o.allowHold=true
     o.allowLastResort=false -- already widened; keep opponent forecasts bounded
     o.opponent=nil
@@ -2112,10 +2213,23 @@ function Planner.solve(s)
         end
     end
     local function consider(p,t)
-        if s.role=="WR" and (s.passType=="Floater"
-            or s.passType=="Bullet" and s.continuousBulletCatch==true) and s.grounded and not p.diveAt
+        if not wr and best then
+            -- Margin is capped at two in the existing score. Its best possible
+            -- value supplies a safe bound before any expensive path scan.
+            local lower=chase and (t+costs[p.kind]/0.18*.005-.0004)
+                or (t+costs[p.kind]-.05)
+            if lower>=bestScore then return end
+        end
+        local floater=s.config and s.config.Pass and s.config.Pass.Floater
+        local dbAirborneStop=s.role=="DB" and floater
+            and s.arc.Flight==floater.Flight and s.arc.Apex==floater.Apex
+            and not s.optimisticReachEnvelope and p.kind=="jump" and p.jumpAt
+            and p.stopAt>p.jumpAt and p.stopAt<s.now+t
+        if (s.role=="WR" and (s.passType=="Floater"
+            or s.passType=="Bullet" and s.continuousBulletCatch==true) or dbAirborneStop)
+            and s.grounded and not p.diveAt
             and (p.kind=="jump" or p.kind=="move") and t>p._reaction+.06 then
-            -- A moving receiver cannot stop instantly while airborne. Pace
+            -- A moving player cannot stop instantly while airborne. Pace
             -- the approach before takeoff and keep ordinary input through the
             -- contact window, then validate that trajectory normally below.
             local drift=(s.velocity or ZERO)*FLAT*math.min(t,p._reaction)
@@ -2131,6 +2245,7 @@ function Planner.solve(s)
                     local extent=travel(t+.08-p._reaction,p._speed*scale,p._runSpeed*scale,p._sprintSeconds)
                     if extent>explicitMoveCap(s) then return end
                     p.direction=flatUnit(delta,p.direction)
+                    if dbAirborneStop and not inBounds(s,s.position+drift+p.direction*extent) then return end
                     p._speed=p._speed*scale;p._runSpeed=p._runSpeed*scale
                     p._aimDistance=extent
                     p.stopAt=s.now+t+.08;p.movementScale=scale;p.continuousCatch=true
@@ -2256,7 +2371,14 @@ function Planner.solve(s)
         local score=chase
             and (t+costs[p.kind]/0.18*0.005-math.min(candidate.margin,2)*0.0002)
             or (t+costs[p.kind]-math.min(candidate.margin,2)*0.025)
-        if score < bestScore then best,bestScore=candidate,score end
+        if score < bestScore then
+            if not connectedSchedule(s,candidate,relaxed and .004 or nil) then
+                rememberNearMiss(t,-.01,dbNearMisses)
+                if p._diveDelay then rememberNearMiss(t,-.01) end
+                return
+            end
+            best,bestScore=candidate,score
+        end
     end
     local function delayChoices(t,ages)
         local result={}
@@ -3473,7 +3595,11 @@ function Avoidance.update(previous,input)
     local strength=math.min(1,flat.Magnitude)
     local speed=clamp(finite(input.walkSpeed) and input.walkSpeed or 20,0,60)
     local run=clamp(finite(input.runSpeed) and input.runSpeed or 20,1,60)
-    local walkSpeed=math.min(speed,run)
+    -- The caller may already encode a requested walking speed in its vector
+    -- while native sprint is still active (20/27, for example). Cap that
+    -- physical request once; multiplying by the walking ratio again would
+    -- turn a checked 20-stud request into 14.8-stud movement.
+    local walkSpeed=math.min(speed*strength,run)
     -- Only an explicitly opted-in final sprint can retain sprint on a detour.
     -- The caller still owns stamina, role, and committed-action priorities.
     local sprintSpeed=finite(input.sprintSpeed) and clamp(input.sprintSpeed,0,60) or nil
@@ -3625,7 +3751,7 @@ function Avoidance.update(previous,input)
         local old=state.active and state.heading or nil
         if vec(old) and old.Magnitude>.001 and old:Dot(heading)<.9999 then
             state.clearSince=state.clearSince or now
-            local amount=speed>0 and strength*walkSpeed/speed or strength
+            local amount=speed>0 and walkSpeed/speed or strength
             -- A single clear frame near the capsule boundary is not an exit.
             -- Retain the checked passing heading briefly so alternating clear/
             -- threatened frames cannot reverse the turn on every heartbeat.
@@ -3680,7 +3806,7 @@ function Avoidance.update(previous,input)
             or {35,55,75,90}
         for _,degrees in ipairs(angles) do
             local direction=rotate(heading,side*math.rad(degrees))
-            local safe,gap,bounded=evaluate(direction,walkSpeed*strength)
+            local safe,gap,bounded=evaluate(direction,walkSpeed)
             if safe then
                 -- A shallow walking-only bypass can repeatedly release sprint
                 -- even when a slightly wider same-side path is safe at both
@@ -3690,7 +3816,7 @@ function Avoidance.update(previous,input)
                 local alignment=direction:Dot(heading)
                 local score=alignment+(catchPath and 0 or math.min(gap,radius+3)*.015)
                 if sprintEligible then
-                    local usableSpeed=keepSprint(direction) and sprintSpeed or walkSpeed
+                    local usableSpeed=keepSprint(direction) and sprintSpeed*strength or walkSpeed
                     score=alignment*usableSpeed/math.max(.001,walkSpeed)
                 end
                 if not best or score>best.score then best={direction=direction,score=score,side=side} end
@@ -3700,7 +3826,7 @@ function Avoidance.update(previous,input)
                 local improves=true
                 for _,other in ipairs(obstacles) do
                     if other.relative.Magnitude<radius+.5 then
-                        local ending=(other.relative+(other.velocity-direction*walkSpeed*strength)*horizon).Magnitude
+                        local ending=(other.relative+(other.velocity-direction*walkSpeed)*horizon).Magnitude
                         if ending<other.relative.Magnitude+.4 then improves=false end
                     end
                 end
@@ -3730,7 +3856,7 @@ function Avoidance.update(previous,input)
         return state,decision(steered*strength,true,true,false,"passing player",
             {side=state.side,progressSpeed=measured})
     end
-    local amount=speed>0 and strength*walkSpeed/speed or strength
+    local amount=speed>0 and walkSpeed/speed or strength
     local safeAmount
     for _,fraction in ipairs({1,.75,.5,.25,.125}) do
         local safe=evaluate(steered,speed*amount*fraction)
@@ -4861,7 +4987,8 @@ return function(ctx, Planner, createTackle, WRApproach, Motion, createCarrierMov
     local function checkedClaimMotion(record,s,now)
         if not alive or not auto or not s.enabled or s.testing or not inputOwned or not s.playBudget
             or UIS:GetFocusedTextBox() or GuiService.MenuIsOpen
-            or s.phase~="Live" or s.role~="WR" or s.launchAt~=record.launchAt or s.arc~=record.arc
+            or s.phase~="Live" or (s.role~="WR" and s.role~="DB") or s.role~=record.role
+            or s.launchAt~=record.launchAt or s.arc~=record.arc
             or not claimFinite(now) or now<record.started or now>=record.stopAt then return nil,"ownership or deadline" end
         local root,h=healthyCharacter()
         if root~=record.root or h~=record.h or h.PlatformStand or h.FloorMaterial~=Enum.Material.Air
@@ -4914,7 +5041,7 @@ return function(ctx, Planner, createTackle, WRApproach, Motion, createCarrierMov
             or typeof(plan.direction)~="Vector3" or not claimFinite(plan.direction.Magnitude)
             or plan.direction.Magnitude<.001
             or command.direction.Unit:Dot(plan.direction.Unit)<math.cos(.1) then return false end
-        local record={root=root,h=h,launchAt=s.launchAt,arc=s.arc,started=now,stopAt=plan.stopAt,
+        local record={root=root,h=h,role=s.role,launchAt=s.launchAt,arc=s.arc,started=now,stopAt=plan.stopAt,
             direction=command.direction,speed=h.WalkSpeed,sprint=me:GetAttribute("SprintOn")==true,
             requireGoal=lastSnapshot.requireEndzoneCatch==true}
         local valid=checkedClaimMotion(record,s,now)
@@ -5532,8 +5659,20 @@ return function(ctx, Planner, createTackle, WRApproach, Motion, createCarrierMov
             log=log,clippedDistance=clippedDistance})
     end
     local bindName="ChalkDB_Interception"
+    local previousRenderClock,previousTickSeconds,lastFrameGapLog=nil,0,-math.huge
     RunService:BindToRenderStep(bindName,Enum.RenderPriority.Character.Value+1,function(dt)
+        local began=os.clock()
+        local callbackGap=previousRenderClock and began-previousRenderClock or 0
+        previousRenderClock=began
         local ok,err=pcall(tick,math.clamp(dt,0.001,0.1))
+        local tickSeconds=os.clock()-began
+        if alive and auto and began-lastFrameGapLog>=1
+            and (dt>.25 or callbackGap>.25 or tickSeconds>.15) then
+            log("frameGap",{frameDt=dt,callbackGap=callbackGap,
+                previousTickMs=previousTickSeconds*1000,tickMs=tickSeconds*1000})
+            lastFrameGapLog=began
+        end
+        previousTickSeconds=tickSeconds
         if not ok then
             lastError=tostring(err)
             auto=false
@@ -9810,7 +9949,7 @@ end
 end)()
 
 api.initializePreferences(createPreferences)
-assist = createAssist({snapshot=api.context,version=RELEASE_VERSION,buildId="91091804fb6fb5b74bcf2a954f054abbafe75e2c0f3173aeb889c4caff0aa2ba",fullplay=function(s,root,h,now,dt)
+assist = createAssist({snapshot=api.context,version=RELEASE_VERSION,buildId="98d6fc36be5b287ec1f95a906a384440bf3fbbfe5ece8a009116f148c7d9ffbb",fullplay=function(s,root,h,now,dt)
     if fullplay then return fullplay.navigate(s,root,h,now,dt) end
 end},Planner,createTackle,WRApproach,Motion,createCarrierMoves,PlayerAvoidance)
 assist.setEnabled(false)
@@ -9826,7 +9965,7 @@ repeatWR = createWRRepeat({snapshot=api.context,
     autoplay=function() return autoplay.status() end,
     disableAutoplay=function() return api.setAutoplay(false) end})
 repeatWR.setEnabled(false)
-fullplay = createFullplay({Planner=Planner,snapshot=api.context,version=RELEASE_VERSION,buildId="91091804fb6fb5b74bcf2a954f054abbafe75e2c0f3173aeb889c4caff0aa2ba",
+fullplay = createFullplay({Planner=Planner,snapshot=api.context,version=RELEASE_VERSION,buildId="98d6fc36be5b287ec1f95a906a384440bf3fbbfe5ece8a009116f148c7d9ffbb",
     assistEnabled=function() return assist.status().enabled end,
     release=function() if assist.releaseFullplay then assist.releaseFullplay() end end},FullplayPolicy)
 matchSkip = createMatchSkip({snapshot=api.context,startDisabled=true,preferencesManaged=true,
@@ -9849,7 +9988,7 @@ local GAME_ID,PLACE_ID=10770281752,116097127629859
 local MAIN_URL="https://raw.githubusercontent.com/BananaMan2006/chalk-assist-deterministic/main/chalk-it-up-1v1.lua"
 local CACHE_FILE="chalk-deterministic-cache.lua"
 local MAIN_FILE="chalk-it-up-1v1.lua"
-local MIN_RELEASE="5.1.23"
+local MIN_RELEASE="5.1.24"
 local MARKER="__ChalkDeterministicAutoBoot"
 local env=type(getgenv)=="function" and getgenv() or _G
 local boot

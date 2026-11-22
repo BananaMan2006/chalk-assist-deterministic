@@ -761,7 +761,8 @@ return function(ctx, Planner, createTackle, WRApproach, Motion, createCarrierMov
     local function checkedClaimMotion(record,s,now)
         if not alive or not auto or not s.enabled or s.testing or not inputOwned or not s.playBudget
             or UIS:GetFocusedTextBox() or GuiService.MenuIsOpen
-            or s.phase~="Live" or s.role~="WR" or s.launchAt~=record.launchAt or s.arc~=record.arc
+            or s.phase~="Live" or (s.role~="WR" and s.role~="DB") or s.role~=record.role
+            or s.launchAt~=record.launchAt or s.arc~=record.arc
             or not claimFinite(now) or now<record.started or now>=record.stopAt then return nil,"ownership or deadline" end
         local root,h=healthyCharacter()
         if root~=record.root or h~=record.h or h.PlatformStand or h.FloorMaterial~=Enum.Material.Air
@@ -814,7 +815,7 @@ return function(ctx, Planner, createTackle, WRApproach, Motion, createCarrierMov
             or typeof(plan.direction)~="Vector3" or not claimFinite(plan.direction.Magnitude)
             or plan.direction.Magnitude<.001
             or command.direction.Unit:Dot(plan.direction.Unit)<math.cos(.1) then return false end
-        local record={root=root,h=h,launchAt=s.launchAt,arc=s.arc,started=now,stopAt=plan.stopAt,
+        local record={root=root,h=h,role=s.role,launchAt=s.launchAt,arc=s.arc,started=now,stopAt=plan.stopAt,
             direction=command.direction,speed=h.WalkSpeed,sprint=me:GetAttribute("SprintOn")==true,
             requireGoal=lastSnapshot.requireEndzoneCatch==true}
         local valid=checkedClaimMotion(record,s,now)
@@ -1432,8 +1433,20 @@ return function(ctx, Planner, createTackle, WRApproach, Motion, createCarrierMov
             log=log,clippedDistance=clippedDistance})
     end
     local bindName="ChalkDB_Interception"
+    local previousRenderClock,previousTickSeconds,lastFrameGapLog=nil,0,-math.huge
     RunService:BindToRenderStep(bindName,Enum.RenderPriority.Character.Value+1,function(dt)
+        local began=os.clock()
+        local callbackGap=previousRenderClock and began-previousRenderClock or 0
+        previousRenderClock=began
         local ok,err=pcall(tick,math.clamp(dt,0.001,0.1))
+        local tickSeconds=os.clock()-began
+        if alive and auto and began-lastFrameGapLog>=1
+            and (dt>.25 or callbackGap>.25 or tickSeconds>.15) then
+            log("frameGap",{frameDt=dt,callbackGap=callbackGap,
+                previousTickMs=previousTickSeconds*1000,tickMs=tickSeconds*1000})
+            lastFrameGapLog=began
+        end
+        previousTickSeconds=tickSeconds
         if not ok then
             lastError=tostring(err)
             auto=false

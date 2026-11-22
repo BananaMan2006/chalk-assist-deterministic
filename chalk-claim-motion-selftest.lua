@@ -25,8 +25,8 @@ return function(f,Avoidance)
     local RunService={UnbindFromRenderStep=function()f.unbound=true end}
     local bindName='authored-bind'
     local alive,auto,inputOwned=true,true,true
-    local plan,lastSnapshot=f.plan,{requireEndzoneCatch=true}
-    local throwKey,throwRole,claimedKey=f.s.launchAt,'WR',nil
+    local plan,lastSnapshot=f.plan,{requireEndzoneCatch=f.s.role=='WR'}
+    local throwKey,throwRole,claimedKey=f.s.launchAt,f.s.role,nil
     local claimObservedAt,claimTraceCount,claimTraceNext=nil,0,0
     local pendingClaimMotion,lastCatchMotion=nil,{root=f.root,h=f.h,launchAt=f.s.launchAt,at=f.time-.01,direction=f.direction}
     local controlledHumanoid,ownsSprint=f.h,true
@@ -109,9 +109,9 @@ end
         assert(f.observations==2 and f.sprintCalls==1,'expiry did not release normally')
     end)
     test('claim continuation never starts for unconfirmed or unbounded movement',function()
-        for _,gate in ipairs({'DB','dive','diveAt','noJump','pendingJump','notContinuous','unreachable','staleCommand','wrongHeading','longStop','expired','infinite','manual','air','platform','staleTouch','resetTouch','futureTouch','nanTouch'}) do
+        for _,gate in ipairs({'QB','dive','diveAt','noJump','pendingJump','notContinuous','unreachable','staleCommand','wrongHeading','longStop','expired','infinite','manual','air','platform','staleTouch','resetTouch','futureTouch','nanTouch'}) do
             local f=fixture()
-            if gate=='DB' then f.s.role='DB' elseif gate=='dive' then f.api.gate('dived',true)
+            if gate=='QB' then f.s.role='QB' elseif gate=='dive' then f.api.gate('dived',true)
             elseif gate=='diveAt' then f.plan.diveAt=100 elseif gate=='noJump' then f.api.gate('jumped',false)
             elseif gate=='pendingJump' then f.api.gate('jumpRequest',{}) elseif gate=='notContinuous' then f.plan.continuousCatch=false
             elseif gate=='unreachable' then f.plan.reachable=false elseif gate=='staleCommand' then f.api.gate('commandAt',99.94)
@@ -191,6 +191,28 @@ end
         for _,value in ipairs({Vector3.zero,Vector3.new(0/0,0,0),Vector3.new(math.huge,0,0),Vector3.new(0,0,1.1)}) do
             local f=fixture();f.api.gate('commandDirection',value);f.api.touch()
             assert(not f.api.state().pending and not f.api.state().owned,'invalid command preserved')
+        end
+    end)
+    test('DB continuous jump keeps only its checked paced command until the original stop',function()
+        local f=fixture();f.s.role='DB';f.s.playBudget={dbReserve=40};f.goal=140
+        f.direction=Vector3.new(.25,0,.44);f.plan.direction=f.direction.Unit
+        f.api=factory(f,Avoidance);f.api.touch()
+        assert(f.api.state().pending and f.api.state().pending.role=='DB')
+        f.time=100.04;f.api.tick()
+        assert((f.moves[#f.moves]-f.direction).Magnitude<1e-8 and f.sprintCalls==0)
+        f.time=f.plan.stopAt;f.api.tick()
+        assert(not f.api.state().pending and f.moves[#f.moves].Magnitude==0)
+    end)
+    test('DB pending jump motion yields to changed role reserve result or crossing body',function()
+        for _,gate in ipairs({'role','reserve','result','body'}) do
+            local f=fixture();f.s.role='DB';f.s.playBudget={dbReserve=40};f.api=factory(f,Avoidance)
+            f.api.touch();assert(f.api.state().pending)
+            f.time=100.04
+            if gate=='role' then f.s.role='WR'
+            elseif gate=='reserve' then f.noBudget=true
+            elseif gate=='body' then f.opponent={position=f.root.Position+Vector3.new(.2,0,2),velocity=Vector3.zero} end
+            if gate=='result' then f.api.result() else f.api.tick() end
+            assert(not f.api.state().pending and f.moves[#f.moves].Magnitude==0,gate)
         end
     end)
     return report

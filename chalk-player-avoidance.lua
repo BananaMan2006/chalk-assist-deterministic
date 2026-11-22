@@ -75,7 +75,11 @@ function Avoidance.update(previous,input)
     local strength=math.min(1,flat.Magnitude)
     local speed=clamp(finite(input.walkSpeed) and input.walkSpeed or 20,0,60)
     local run=clamp(finite(input.runSpeed) and input.runSpeed or 20,1,60)
-    local walkSpeed=math.min(speed,run)
+    -- The caller may already encode a requested walking speed in its vector
+    -- while native sprint is still active (20/27, for example). Cap that
+    -- physical request once; multiplying by the walking ratio again would
+    -- turn a checked 20-stud request into 14.8-stud movement.
+    local walkSpeed=math.min(speed*strength,run)
     -- Only an explicitly opted-in final sprint can retain sprint on a detour.
     -- The caller still owns stamina, role, and committed-action priorities.
     local sprintSpeed=finite(input.sprintSpeed) and clamp(input.sprintSpeed,0,60) or nil
@@ -227,7 +231,7 @@ function Avoidance.update(previous,input)
         local old=state.active and state.heading or nil
         if vec(old) and old.Magnitude>.001 and old:Dot(heading)<.9999 then
             state.clearSince=state.clearSince or now
-            local amount=speed>0 and strength*walkSpeed/speed or strength
+            local amount=speed>0 and walkSpeed/speed or strength
             -- A single clear frame near the capsule boundary is not an exit.
             -- Retain the checked passing heading briefly so alternating clear/
             -- threatened frames cannot reverse the turn on every heartbeat.
@@ -282,7 +286,7 @@ function Avoidance.update(previous,input)
             or {35,55,75,90}
         for _,degrees in ipairs(angles) do
             local direction=rotate(heading,side*math.rad(degrees))
-            local safe,gap,bounded=evaluate(direction,walkSpeed*strength)
+            local safe,gap,bounded=evaluate(direction,walkSpeed)
             if safe then
                 -- A shallow walking-only bypass can repeatedly release sprint
                 -- even when a slightly wider same-side path is safe at both
@@ -292,7 +296,7 @@ function Avoidance.update(previous,input)
                 local alignment=direction:Dot(heading)
                 local score=alignment+(catchPath and 0 or math.min(gap,radius+3)*.015)
                 if sprintEligible then
-                    local usableSpeed=keepSprint(direction) and sprintSpeed or walkSpeed
+                    local usableSpeed=keepSprint(direction) and sprintSpeed*strength or walkSpeed
                     score=alignment*usableSpeed/math.max(.001,walkSpeed)
                 end
                 if not best or score>best.score then best={direction=direction,score=score,side=side} end
@@ -302,7 +306,7 @@ function Avoidance.update(previous,input)
                 local improves=true
                 for _,other in ipairs(obstacles) do
                     if other.relative.Magnitude<radius+.5 then
-                        local ending=(other.relative+(other.velocity-direction*walkSpeed*strength)*horizon).Magnitude
+                        local ending=(other.relative+(other.velocity-direction*walkSpeed)*horizon).Magnitude
                         if ending<other.relative.Magnitude+.4 then improves=false end
                     end
                 end
@@ -332,7 +336,7 @@ function Avoidance.update(previous,input)
         return state,decision(steered*strength,true,true,false,"passing player",
             {side=state.side,progressSpeed=measured})
     end
-    local amount=speed>0 and strength*walkSpeed/speed or strength
+    local amount=speed>0 and walkSpeed/speed or strength
     local safeAmount
     for _,fraction in ipairs({1,.75,.5,.25,.125}) do
         local safe=evaluate(steered,speed*amount*fraction)
