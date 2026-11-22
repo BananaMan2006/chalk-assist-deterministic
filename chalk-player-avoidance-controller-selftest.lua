@@ -58,7 +58,7 @@ return function(f)
     local avoidanceStatus={active=false,blocked=false}
     local lastAvoidanceLog=0
     local Field={MinX=-30,MaxX=30,BackZ=0,EndZ=120}
-    local Config={RunSpeed=20,SprintSpeed=27}
+    local Config=f.config or {RunSpeed=20,SprintSpeed=27}
     local Enum={Material={Air="Air"}}
     local ctx={fullplay=function() return f.directive end}
     local me={GetAttribute=function(_,key)
@@ -638,6 +638,28 @@ end
                     assert((relative+rv*.25).Magnitude>=relative.Magnitude+.25)
                 end
             end
+        end
+    end)
+    test("opening jam preview belongs only to a current grounded WR route before its throw",function()
+        for _,gate in ipairs({"opening","walking","grace","expired","thrown","pendingThrow","DB","staleRound","futureSnap","jammed","airborne"}) do
+            local f=fundedRouteFixture()
+            f.config={RunSpeed=20,SprintSpeed=27,Moves={Jam={Window=1.5,Grace=.35,Range=3.5}}}
+            if gate=="walking" then f.directive.sprint=false
+            elseif gate=="grace" then f.context.snapAt=f.now-1.7;f.directive.avoidanceArrival.snapAt=f.context.snapAt
+            elseif gate=="expired" then f.context.snapAt=f.now-1.9;f.directive.avoidanceArrival.snapAt=f.context.snapAt
+            elseif gate=="thrown" then f.context.arc={}
+            elseif gate=="pendingThrow" then f.context.passStarted=true
+            elseif gate=="DB" then f.context.role="DB"
+            elseif gate=="staleRound" then f.context.roundKey="different"
+            elseif gate=="futureSnap" then f.context.snapAt=f.now+.1;f.directive.avoidanceArrival.snapAt=f.context.snapAt
+            elseif gate=="jammed" then f.h.WalkSpeed=9
+            elseif gate=="airborne" then f.h.FloorMaterial="Air" end
+            f.realAvoidance=nil;f.api=factory(f);f.api.navigate(f.context)
+            local input=f.helperCalls[#f.helperCalls].input
+            local eligible=gate=="opening" or gate=="walking" or gate=="grace"
+            equal(input.openingContactWindow,eligible,gate)
+            equal(input.lookahead,eligible and .45 or nil,gate.." preview")
+            equal(input.clearance,eligible and 4.75 or nil,gate.." clearance")
         end
     end)
     return report

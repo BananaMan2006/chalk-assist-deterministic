@@ -1,4 +1,4 @@
-# Running Chalk Assist 5.1.22
+# Running Chalk Assist 5.1.23
 
 The public repository is [BananaMan2006/chalk-assist-deterministic](https://github.com/BananaMan2006/chalk-assist-deterministic). The ready-to-run file is `chalk-it-up-1v1.lua`.
 

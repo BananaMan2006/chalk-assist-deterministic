@@ -89,7 +89,11 @@ function Avoidance.update(previous,input)
     -- the same boundary, without widening ordinary walking avoidance.
     local sprintClearance=radius+.5
     local threatRadius=sprintEligible and sprintClearance or radius
-    local horizon=clamp(finite(input.lookahead) and input.lookahead or .25,.1,.3)
+    -- Only the controller's bounded opening window looks farther ahead. This
+    -- starts a shallow bypass before a defender can burst into the normal
+    -- collision band; later route/catch steering keeps its existing horizon.
+    local horizon=clamp(finite(input.lookahead) and input.lookahead or .25,.1,
+        input.openingContactWindow==true and .45 or .3)
     local height=clamp(finite(input.verticalClearance) and input.verticalClearance or 5,2,8)
     local turnRate=clamp(finite(input.turnRate) and input.turnRate or 8,2,12)
     -- Catch approaches may have only a small travel margin. This optional

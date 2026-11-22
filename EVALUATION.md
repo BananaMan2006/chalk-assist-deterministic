@@ -1,6 +1,16 @@
-# Evaluation scope · 5.1.22
+# Evaluation scope · 5.1.23
 
 This release continues the authored, deterministic controller. Its checks establish local rule behavior and packaging properties. **They do not demonstrate a live win rate, a winning streak, perfect catching, or improvement through training.** The release has no training system or shared model.
+
+## 5.1.23 scope
+
+Two receiving failures contained confirmed native Jammed events, followed by approximately 0.8 seconds at speed 9. Observed forward-travel deficits were about 10.4 and 15.1 studs; the later stem checks were short by 9.0 and 16.8 studs. These measurements combine slowdown, push and steering losses. They support improving the opening approach, not relaxing catch-reach validation.
+
+The movement controller now begins a shallow bypass earlier during the bounded native opening jam window, including its configured grace. It requires the current WR route, valid snap and future waypoint, normal grounded movement and no active or pending throw. Its wider preview preserves bounded turns, legal field positions, body clearance and funded sprint checks. Default DB and live-ball movement remain unchanged. [Opening movement review](evaluation/5.1.23-opening-avoidance-review.json) separates fixed-opponent counterfactuals from actual outcomes: the replay cannot establish how a responsive defender or the server would react.
+
+The route selector can reallocate 0.15 seconds from the late sprint to the opening when a defender occupies the middle approach. It tests the original allocation at the same total budget when the new handoff is unfunded. In fifteen observed starting-state replays, fourteen gain 1.05 studs of nominal early travel; all retain their prior catch width and final reserve. It adds no future regeneration credit. The bounded pressure search grows from nine to fourteen possible sprint allocations and increases offline solve time; those timings do not measure Roblox performance. See the [opening route review](evaluation/5.1.23-opening-route-review.json).
+
+Validation passed 537 rule checks, 90 deterministic checks and 36 build, installer and preference checks. Live verification is ongoing in the November 22 one-hour window. No zero-concession or universal catch claim is made.
 
 ## 5.1.22 scope
 

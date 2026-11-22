@@ -652,12 +652,22 @@ function Policy.chooseScheduledRoute(input,Config,Field,RouteMath,Planner)
                                     if aroundDistance<INF then detourDistance=math.max(distance,aroundDistance);bodyOnStem=true end
                                 end
                             end
-                            for _,stemSprint in ipairs({.4,.6,.8,1,1.2,1.4,1.6,1.8,2}) do
+                            local sprintSchedules={}
+                            for _,seconds in ipairs({.4,.6,.8,1,1.2,1.4,1.6,1.8,2}) do
+                                -- Try more opening pace against middle pressure,
+                                -- but keep the original allocation at the SAME
+                                -- total budget if its handoff is better funded.
+                                if bodyOnStem and not shortField and seconds>=1.2 then
+                                    sprintSchedules[#sprintSchedules+1]={seconds,1.05}
+                                end
+                                sprintSchedules[#sprintSchedules+1]={seconds,math.min(.9,seconds)}
+                            end
+                            for _,schedule in ipairs(sprintSchedules) do
+                                local stemSprint,earlySprint=schedule[1],schedule[2]
                                 local cutAt=(detourDistance-(sprint-run)*stemSprint)/run+.15+(shortField and .1 or 0)
                                 if shortField then cutAt=math.max(1.5,cutAt) end
-                                -- Reallocate the same bounded stem sprint earlier;
-                                -- the late burst shrinks by the same amount.
-                                local earlySprint=math.min(.9,stemSprint)
+                                -- The extra .15s opening comes from the late
+                                -- burst, which retains at least .15s of lead-in.
                                 local lateSprint=stemSprint-earlySprint
                                 local lateStart=cutAt-lateSprint
                                 local stemRun=shortField and clamp((detourDistance-sprint*stemSprint)

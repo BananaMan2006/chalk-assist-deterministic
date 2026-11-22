@@ -1,4 +1,4 @@
--- Chalk-Release: 5.1.22
+-- Chalk-Release: 5.1.23
 -- Chalk-Product: deterministic
 -- Chalk It Up DB/WR ball assist using normal sprint/jump/dive controls.
 -- Cyan: replicated route (when supplied). Yellow: movement estimate.
@@ -47,7 +47,7 @@ assert(matchEvent and fxEvent and matchEvent:IsA("RemoteEvent") and fxEvent:IsA(
     "Chalk It Up Match/Fx events were not found")
 
 local api = {}
-local RELEASE_VERSION="5.1.22"
+local RELEASE_VERSION="5.1.23"
 local loadedGameId,loadedPlaceId,loadedJobId=game.GameId,game.PlaceId,game.JobId
 env.ChalkDB = api
 local alive, enabled = true, true
@@ -967,7 +967,7 @@ end
 function api.status()
     local ch = characterOf(opponent)
     local holder,isEnemy,holderRole=carrierContext()
-    return {product="deterministic",version=RELEASE_VERSION,buildId="83b53cd409e035ae7d089a0c6b737cc77c643356d37fecc5a3c07ef74bd07a9a",policyMode="deterministic", enabled=enabled, role=role or "unknown",rawRole=rawRole or "unknown", phase=phase,
+    return {product="deterministic",version=RELEASE_VERSION,buildId="91091804fb6fb5b74bcf2a954f054abbafe75e2c0f3173aeb889c4caff0aa2ba",policyMode="deterministic", enabled=enabled, role=role or "unknown",rawRole=rawRole or "unknown", phase=phase,
         ui={visible=windowVisible,minimized=minimized,x=panel.Position.X.Offset,y=panel.Position.Y.Offset},
         matchAlerts={enabled=alertSettings.enabled,saveError=alertSettings.saveError},
         preferences=preferences and preferences.status() or nil,
@@ -3487,7 +3487,11 @@ function Avoidance.update(previous,input)
     -- the same boundary, without widening ordinary walking avoidance.
     local sprintClearance=radius+.5
     local threatRadius=sprintEligible and sprintClearance or radius
-    local horizon=clamp(finite(input.lookahead) and input.lookahead or .25,.1,.3)
+    -- Only the controller's bounded opening window looks farther ahead. This
+    -- starts a shallow bypass before a defender can burst into the normal
+    -- collision band; later route/catch steering keeps its existing horizon.
+    local horizon=clamp(finite(input.lookahead) and input.lookahead or .25,.1,
+        input.openingContactWindow==true and .45 or .3)
     local height=clamp(finite(input.verticalClearance) and input.verticalClearance or 5,2,8)
     local turnRate=clamp(finite(input.turnRate) and input.turnRate or 8,2,12)
     -- Catch approaches may have only a small travel margin. This optional
@@ -4555,11 +4559,19 @@ return function(ctx, Planner, createTackle, WRApproach, Motion, createCarrierMov
         end
         local target=arrival and arrival.targetPosition
         local routeIdentity=s.roundKey or s.preSnapEnds
-        local fundedRouteSprint=s.role=="WR" and requestedSprint==true and not s.arc and not s.passStarted
+        local currentFundedRoute=s.role=="WR" and not s.arc and not s.passStarted
             and routeIdentity~=nil and arrival~=nil and arrival.routeRoundKey==tostring(routeIdentity)
             and finite(s.snapAt) and arrival.snapAt==s.snapAt and s.snapAt<=now
             and finite(arrival.arriveBy) and arrival.arriveBy>now
             and typeof(target)=="Vector3" and finite(target.X) and finite(target.Y) and finite(target.Z)
+        local fundedRouteSprint=currentFundedRoute and requestedSprint==true
+        local jam=Config.Moves and Config.Moves.Jam
+        local openingContactWindow=currentFundedRoute and s.phase=="Live"
+            and jam and finite(jam.Window) and finite(jam.Range)
+            and now-s.snapAt<=math.min(2,jam.Window+(finite(jam.Grace) and math.max(0,jam.Grace) or 0))
+            and h.WalkSpeed>=Config.RunSpeed*.95
+            and canDetour and h.FloorMaterial~=Enum.Material.Air and not h.PlatformStand
+        local openingClearance=openingContactWindow and math.max(3.75,math.min(5.25,jam.Range+1.25)) or nil
         local allowSprintDetour=s.phase=="Live" and (fundedRouteSprint
             or s.role=="WR" and s.catchIntent~=nil
                 and (s.catchIntent.continuousSprint==true or s.arc~=nil)
@@ -4574,6 +4586,8 @@ return function(ctx, Planner, createTackle, WRApproach, Motion, createCarrierMov
             targetPosition=arrival and arrival.targetPosition,arriveBy=arrival and arrival.arriveBy,
             runSpeed=Config.RunSpeed,currentDirection=steering,
             sprintSpeed=Config.SprintSpeed,
+            openingContactWindow=openingContactWindow==true,
+            lookahead=openingContactWindow and .45 or nil,clearance=openingClearance,
             -- The helper checks the actual turn at both movement speeds.
             allowSprintDetour=allowSprintDetour,
             canDetour=canDetour and h.FloorMaterial~=Enum.Material.Air and not h.PlatformStand})
@@ -4597,6 +4611,7 @@ return function(ctx, Planner, createTackle, WRApproach, Motion, createCarrierMov
                 inputSteering=xyz(inputSteering),previousHeading=xyz(previousAvoidanceHeading),
                 previousSide=previousAvoidanceSide,side=decision.side,progressSpeed=decision.progressSpeed,
                 dt=dt,bounds=bounds,observedBodies=observedBodies,
+                openingContactWindow=openingContactWindow==true,clearance=openingClearance,
                 allowSprintDetour=allowSprintDetour,walkSpeed=h.WalkSpeed,
                 approachTarget=arrival and xyz(arrival.targetPosition),arriveBy=arrival and arrival.arriveBy,
                 requestedSprint=requestedSprint,sprint=decision.sprint,stamina=me:GetAttribute("Stamina")})
@@ -7021,12 +7036,22 @@ function Policy.chooseScheduledRoute(input,Config,Field,RouteMath,Planner)
                                     if aroundDistance<INF then detourDistance=math.max(distance,aroundDistance);bodyOnStem=true end
                                 end
                             end
-                            for _,stemSprint in ipairs({.4,.6,.8,1,1.2,1.4,1.6,1.8,2}) do
+                            local sprintSchedules={}
+                            for _,seconds in ipairs({.4,.6,.8,1,1.2,1.4,1.6,1.8,2}) do
+                                -- Try more opening pace against middle pressure,
+                                -- but keep the original allocation at the SAME
+                                -- total budget if its handoff is better funded.
+                                if bodyOnStem and not shortField and seconds>=1.2 then
+                                    sprintSchedules[#sprintSchedules+1]={seconds,1.05}
+                                end
+                                sprintSchedules[#sprintSchedules+1]={seconds,math.min(.9,seconds)}
+                            end
+                            for _,schedule in ipairs(sprintSchedules) do
+                                local stemSprint,earlySprint=schedule[1],schedule[2]
                                 local cutAt=(detourDistance-(sprint-run)*stemSprint)/run+.15+(shortField and .1 or 0)
                                 if shortField then cutAt=math.max(1.5,cutAt) end
-                                -- Reallocate the same bounded stem sprint earlier;
-                                -- the late burst shrinks by the same amount.
-                                local earlySprint=math.min(.9,stemSprint)
+                                -- The extra .15s opening comes from the late
+                                -- burst, which retains at least .15s of lead-in.
                                 local lateSprint=stemSprint-earlySprint
                                 local lateStart=cutAt-lateSprint
                                 local stemRun=shortField and clamp((detourDistance-sprint*stemSprint)
@@ -9785,7 +9810,7 @@ end
 end)()
 
 api.initializePreferences(createPreferences)
-assist = createAssist({snapshot=api.context,version=RELEASE_VERSION,buildId="83b53cd409e035ae7d089a0c6b737cc77c643356d37fecc5a3c07ef74bd07a9a",fullplay=function(s,root,h,now,dt)
+assist = createAssist({snapshot=api.context,version=RELEASE_VERSION,buildId="91091804fb6fb5b74bcf2a954f054abbafe75e2c0f3173aeb889c4caff0aa2ba",fullplay=function(s,root,h,now,dt)
     if fullplay then return fullplay.navigate(s,root,h,now,dt) end
 end},Planner,createTackle,WRApproach,Motion,createCarrierMoves,PlayerAvoidance)
 assist.setEnabled(false)
@@ -9801,7 +9826,7 @@ repeatWR = createWRRepeat({snapshot=api.context,
     autoplay=function() return autoplay.status() end,
     disableAutoplay=function() return api.setAutoplay(false) end})
 repeatWR.setEnabled(false)
-fullplay = createFullplay({Planner=Planner,snapshot=api.context,version=RELEASE_VERSION,buildId="83b53cd409e035ae7d089a0c6b737cc77c643356d37fecc5a3c07ef74bd07a9a",
+fullplay = createFullplay({Planner=Planner,snapshot=api.context,version=RELEASE_VERSION,buildId="91091804fb6fb5b74bcf2a954f054abbafe75e2c0f3173aeb889c4caff0aa2ba",
     assistEnabled=function() return assist.status().enabled end,
     release=function() if assist.releaseFullplay then assist.releaseFullplay() end end},FullplayPolicy)
 matchSkip = createMatchSkip({snapshot=api.context,startDisabled=true,preferencesManaged=true,
@@ -9824,7 +9849,7 @@ local GAME_ID,PLACE_ID=10770281752,116097127629859
 local MAIN_URL="https://raw.githubusercontent.com/BananaMan2006/chalk-assist-deterministic/main/chalk-it-up-1v1.lua"
 local CACHE_FILE="chalk-deterministic-cache.lua"
 local MAIN_FILE="chalk-it-up-1v1.lua"
-local MIN_RELEASE="5.1.22"
+local MIN_RELEASE="5.1.23"
 local MARKER="__ChalkDeterministicAutoBoot"
 local env=type(getgenv)=="function" and getgenv() or _G
 local boot

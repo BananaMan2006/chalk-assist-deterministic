@@ -839,5 +839,32 @@ return function(Avoidance)
             legal(p,d.direction)
         end
     end)
+    test("opening preview begins a bounded bypass before ordinary collision steering",function()
+        for _,side in ipairs({-1,1}) do
+            local p=fixture({opponents={{position=Vector3.new(side*.5,0,16),velocity=Vector3.zero}},
+                sprintSpeed=27,allowSprintDetour=true,targetPosition=Vector3.new(0,0,45),arriveBy=2})
+            local _,ordinary=Avoidance.update(nil,p)
+            assert(not ordinary.active,"ordinary path unexpectedly blocked")
+            p.openingContactWindow=true;p.lookahead=.45;p.clearance=4.75
+            local _,opening=Avoidance.update(nil,p)
+            assert(opening.active and opening.direction.X*side<0,"opening did not start away from blocker")
+            assert(opening.direction.Magnitude<=1 and opening.direction.Unit.Z>=math.cos(8*p.dt)-1e-8,
+                "opening bypass skipped the native turn bound")
+            legal(p,opening.direction)
+        end
+    end)
+    test("opening preview does not sidestep clear behind departing or high bodies",function()
+        for _,other in ipairs({
+            {position=Vector3.new(0,0,-8),velocity=Vector3.zero},
+            {position=Vector3.new(0,0,16),velocity=Vector3.new(0,0,30)},
+            {position=Vector3.new(12,0,10),velocity=Vector3.zero},
+            {position=Vector3.new(0,8,10),velocity=Vector3.zero},
+        }) do
+            local p=fixture({opponents={other},openingContactWindow=true,lookahead=.45,clearance=4.75,
+                sprintSpeed=27,allowSprintDetour=true,targetPosition=Vector3.new(0,0,45),arriveBy=2})
+            local _,d=Avoidance.update(nil,p)
+            assert(not d.active and d.sprint);same(d.direction,p.desiredDirection)
+        end
+    end)
     return report
 end

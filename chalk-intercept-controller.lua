@@ -459,11 +459,19 @@ return function(ctx, Planner, createTackle, WRApproach, Motion, createCarrierMov
         end
         local target=arrival and arrival.targetPosition
         local routeIdentity=s.roundKey or s.preSnapEnds
-        local fundedRouteSprint=s.role=="WR" and requestedSprint==true and not s.arc and not s.passStarted
+        local currentFundedRoute=s.role=="WR" and not s.arc and not s.passStarted
             and routeIdentity~=nil and arrival~=nil and arrival.routeRoundKey==tostring(routeIdentity)
             and finite(s.snapAt) and arrival.snapAt==s.snapAt and s.snapAt<=now
             and finite(arrival.arriveBy) and arrival.arriveBy>now
             and typeof(target)=="Vector3" and finite(target.X) and finite(target.Y) and finite(target.Z)
+        local fundedRouteSprint=currentFundedRoute and requestedSprint==true
+        local jam=Config.Moves and Config.Moves.Jam
+        local openingContactWindow=currentFundedRoute and s.phase=="Live"
+            and jam and finite(jam.Window) and finite(jam.Range)
+            and now-s.snapAt<=math.min(2,jam.Window+(finite(jam.Grace) and math.max(0,jam.Grace) or 0))
+            and h.WalkSpeed>=Config.RunSpeed*.95
+            and canDetour and h.FloorMaterial~=Enum.Material.Air and not h.PlatformStand
+        local openingClearance=openingContactWindow and math.max(3.75,math.min(5.25,jam.Range+1.25)) or nil
         local allowSprintDetour=s.phase=="Live" and (fundedRouteSprint
             or s.role=="WR" and s.catchIntent~=nil
                 and (s.catchIntent.continuousSprint==true or s.arc~=nil)
@@ -478,6 +486,8 @@ return function(ctx, Planner, createTackle, WRApproach, Motion, createCarrierMov
             targetPosition=arrival and arrival.targetPosition,arriveBy=arrival and arrival.arriveBy,
             runSpeed=Config.RunSpeed,currentDirection=steering,
             sprintSpeed=Config.SprintSpeed,
+            openingContactWindow=openingContactWindow==true,
+            lookahead=openingContactWindow and .45 or nil,clearance=openingClearance,
             -- The helper checks the actual turn at both movement speeds.
             allowSprintDetour=allowSprintDetour,
             canDetour=canDetour and h.FloorMaterial~=Enum.Material.Air and not h.PlatformStand})
@@ -501,6 +511,7 @@ return function(ctx, Planner, createTackle, WRApproach, Motion, createCarrierMov
                 inputSteering=xyz(inputSteering),previousHeading=xyz(previousAvoidanceHeading),
                 previousSide=previousAvoidanceSide,side=decision.side,progressSpeed=decision.progressSpeed,
                 dt=dt,bounds=bounds,observedBodies=observedBodies,
+                openingContactWindow=openingContactWindow==true,clearance=openingClearance,
                 allowSprintDetour=allowSprintDetour,walkSpeed=h.WalkSpeed,
                 approachTarget=arrival and xyz(arrival.targetPosition),arriveBy=arrival and arrival.arriveBy,
                 requestedSprint=requestedSprint,sprint=decision.sprint,stamina=me:GetAttribute("Stamina")})

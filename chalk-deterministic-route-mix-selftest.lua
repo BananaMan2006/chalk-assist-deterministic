@@ -235,6 +235,45 @@ return function(Policy,create,routeSource,Planner)
         assert(c.stemDetour and c.stemTravelDistance>c.stemYards*Field.YD)
         assert(c.finalSprintStamina>=10)
     end)
+    test("middle pressure funds a longer opening on either cut side at actual75",function()
+        for _,cycle in ipairs({0,1}) do
+            local p,f,routeMath=narrowRouteFixture(cycle)
+            local c=assert(Policy.chooseScheduledRoute(p,Config,f,routeMath,Planner))
+            assert(c.stemDetour and c.side==(cycle==0 and -1 or 1))
+            assert(c.earlyStemSprintSeconds==1.05,"middle pressure kept the shorter opening")
+            assert(c.stemSprintSeconds<=2,"opening exceeded the existing stem budget")
+            local late=c.cutAt-c.stemSprintStart
+            assert(late>=.15-1e-6 and math.abs(c.earlyStemSprintSeconds+late-c.stemSprintSeconds)<1e-6)
+            assert(c.reachable and not c.bestEffort and c.requireAirborne and c.estimatedCatchInsideGoal)
+            assert(c.finalSprintStamina>=10 and c.targetSidelineInset<=f.YD and c.catchSidelineInset<=1.5*f.YD)
+            local cost=(c.stemSprintSeconds+c.finalSprintDuration)*Config.SprintDrain
+            assert(math.abs(c.finalSprintStamina-(75-cost+c.estimatedStemRegeneration))<1e-5)
+            local commandInput=input({LOS=p.LOS,offset=p.offset,phase="Live",elapsed=.95,
+                position=p.position+Vector3.new(0,0,24),stamina=75-.95*Config.SprintDrain,currentWalkSpeed=27,
+                routePlan=c.plan,routeStrategy=c.routeStrategy,slowStem=true,slowStemTime=c.cutAt,
+                earlyStemSprintSeconds=c.earlyStemSprintSeconds,stemSprintStart=c.stemSprintStart,
+                estimatedStemRegeneration=c.estimatedStemRegeneration,estimatedCatchAt=c.estimatedCatchAt,
+                finalSprintReserve=c.finalSprintReserve,middleStemDeep=true,routeWaypoint=2})
+            assert(Policy.movement(commandInput,Config,f,routeMath).sprint,"funded extra opening was not executable")
+            commandInput.elapsed=1.10
+            assert(not Policy.movement(commandInput,Config,f,routeMath).sprint,"pressure opening failed to release")
+            commandInput.elapsed=.95;commandInput.stamina=0
+            assert(not Policy.movement(commandInput,Config,f,routeMath).sprint,"pressure invented unavailable stamina")
+        end
+    end)
+    test("no opponent or a defender outside the middle approach keeps the shorter opening",function()
+        for _,where in ipairs({"none","left","right","behind","past_cut"}) do
+            local p,f,routeMath=narrowRouteFixture()
+            if where=="none" then p.opponentPosition=nil;p.opponentVelocity=nil
+            elseif where=="left" then p.opponentPosition=Vector3.new(f.MidX-4*f.YD,3,p.opponentPosition.Z)
+            elseif where=="right" then p.opponentPosition=Vector3.new(f.MidX+4*f.YD,3,p.opponentPosition.Z)
+            elseif where=="behind" then p.opponentPosition=Vector3.new(f.MidX,3,p.position.Z-5)
+            else p.opponentPosition=Vector3.new(f.MidX,3,f.EndZ-1) end
+            local c=assert(Policy.chooseScheduledRoute(p,Config,f,routeMath,Planner))
+            assert(not c.stemDetour and c.earlyStemSprintSeconds<=.9,"unpressured opening changed: "..where)
+            assert(c.reachable and not c.bestEffort and c.finalSprintStamina>=10)
+        end
+    end)
     test("spawn gap and world offset remain part of the forecast",function()
         local p=input({position=Vector3.new(100,3,198),offset=Vector3.new(100,0,200)})
         local c=choose(p)
