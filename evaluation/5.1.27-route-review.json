@@ -1,0 +1,312 @@
+{
+  "schemaVersion": 1,
+  "case": "Recorded 5.1.26 WR8 prethrow geometry",
+  "problem": "A setup-side cycle and angle-weighted route ranking made every centered-pressure final cut return toward the visible starting side. This was not established as the cause of the recorded swat.",
+  "change": "Run centered-pressure setup side on a separate cycle; prefer an already-funded opposite cut only at the same deep stem and no wider target inset, with no worse conservative defender envelope, stamina, recent failures, or first-contact time. Off-center blockers retain away-side setup priority.",
+  "nativeGeometryWitness": [
+    {
+      "policy": "before",
+      "cycle": 0,
+      "startOffset": -7.365908387303353,
+      "cutSide": -1,
+      "stemYards": 20.00000264607131,
+      "cutDegrees": 52.518275665556665,
+      "finalStamina": 16.193719529365765,
+      "targetInset": 1.0,
+      "catchInset": 6.45565712776752,
+      "catchPastGoal": 7.328612178858748,
+      "airborne": true,
+      "funded": true,
+      "forecasts": 24,
+      "medianMs": 391.7457494826522,
+      "startInBounds": true
+    },
+    {
+      "policy": "before",
+      "cycle": 1,
+      "startOffset": 7.365908387303353,
+      "cutSide": 1,
+      "stemYards": 20.00000264607131,
+      "cutDegrees": 52.518275665556665,
+      "finalStamina": 16.19369799419829,
+      "targetInset": 1.0,
+      "catchInset": 6.455624396697516,
+      "catchPastGoal": 7.328581399250297,
+      "airborne": true,
+      "funded": true,
+      "forecasts": 24,
+      "medianMs": 393.78935398417525,
+      "startInBounds": true
+    },
+    {
+      "policy": "before",
+      "cycle": 2,
+      "startOffset": -7.365908387303353,
+      "cutSide": -1,
+      "stemYards": 20.00000264607131,
+      "cutDegrees": 52.518275665556665,
+      "finalStamina": 16.193719529365765,
+      "targetInset": 1.0,
+      "catchInset": 6.45565712776752,
+      "catchPastGoal": 7.328612178858748,
+      "airborne": true,
+      "funded": true,
+      "forecasts": 24,
+      "medianMs": 394.5174374966882,
+      "startInBounds": true
+    },
+    {
+      "policy": "before",
+      "cycle": 3,
+      "startOffset": 7.365908387303353,
+      "cutSide": 1,
+      "stemYards": 20.00000264607131,
+      "cutDegrees": 52.518275665556665,
+      "finalStamina": 16.19369799419829,
+      "targetInset": 1.0,
+      "catchInset": 6.455624396697516,
+      "catchPastGoal": 7.328581399250297,
+      "airborne": true,
+      "funded": true,
+      "forecasts": 24,
+      "medianMs": 392.05179148120806,
+      "startInBounds": true
+    },
+    {
+      "policy": "after",
+      "cycle": 0,
+      "startOffset": -7.365908387303353,
+      "cutSide": -1,
+      "stemYards": 20.00000264607131,
+      "cutDegrees": 52.518275665556665,
+      "finalStamina": 16.193719529365765,
+      "targetInset": 1.0,
+      "catchInset": 6.45565712776752,
+      "catchPastGoal": 7.328612178858748,
+      "airborne": true,
+      "funded": true,
+      "forecasts": 24,
+      "medianMs": 396.24472899595276,
+      "startInBounds": true
+    },
+    {
+      "policy": "after",
+      "cycle": 1,
+      "startOffset": -7.365908387303353,
+      "cutSide": 1,
+      "stemYards": 20.00000264607131,
+      "cutDegrees": 43.93997013862365,
+      "finalStamina": 16.57482304499075,
+      "targetInset": 1.0,
+      "catchInset": 6.70733236951672,
+      "catchPastGoal": 7.391042702917716,
+      "airborne": true,
+      "funded": true,
+      "forecasts": 24,
+      "medianMs": 403.07479150942527,
+      "startInBounds": true
+    },
+    {
+      "policy": "after",
+      "cycle": 2,
+      "startOffset": 7.365908387303353,
+      "cutSide": -1,
+      "stemYards": 20.00000264607131,
+      "cutDegrees": 43.93997013862365,
+      "finalStamina": 16.574801509823274,
+      "targetInset": 1.0,
+      "catchInset": 6.707299889539886,
+      "catchPastGoal": 7.391012758687268,
+      "airborne": true,
+      "funded": true,
+      "forecasts": 24,
+      "medianMs": 395.13008351786993,
+      "startInBounds": true
+    },
+    {
+      "policy": "after",
+      "cycle": 3,
+      "startOffset": 7.365908387303353,
+      "cutSide": 1,
+      "stemYards": 20.00000264607131,
+      "cutDegrees": 52.518275665556665,
+      "finalStamina": 16.19369799419829,
+      "targetInset": 1.0,
+      "catchInset": 6.455624396697516,
+      "catchPastGoal": 7.328581399250297,
+      "airborne": true,
+      "funded": true,
+      "forecasts": 24,
+      "medianMs": 393.8695414690301,
+      "startInBounds": true
+    }
+  ],
+  "offCenterControls": [
+    {
+      "opponentSideOffset": -1,
+      "cycle": 0,
+      "startOffset": 7.365908387303353,
+      "cutSide": 1,
+      "funded": true,
+      "reserve": 15.9901195649702
+    },
+    {
+      "opponentSideOffset": -1,
+      "cycle": 1,
+      "startOffset": 7.365908387303353,
+      "cutSide": 1,
+      "funded": true,
+      "reserve": 15.9901195649702
+    },
+    {
+      "opponentSideOffset": -1,
+      "cycle": 2,
+      "startOffset": 7.365908387303353,
+      "cutSide": 1,
+      "funded": true,
+      "reserve": 15.9901195649702
+    },
+    {
+      "opponentSideOffset": -1,
+      "cycle": 3,
+      "startOffset": 7.365908387303353,
+      "cutSide": 1,
+      "funded": true,
+      "reserve": 15.9901195649702
+    },
+    {
+      "opponentSideOffset": 1,
+      "cycle": 0,
+      "startOffset": -7.365908387303353,
+      "cutSide": -1,
+      "funded": true,
+      "reserve": 15.990134964110638
+    },
+    {
+      "opponentSideOffset": 1,
+      "cycle": 1,
+      "startOffset": -7.365908387303353,
+      "cutSide": -1,
+      "funded": true,
+      "reserve": 15.990134964110638
+    },
+    {
+      "opponentSideOffset": 1,
+      "cycle": 2,
+      "startOffset": -7.365908387303353,
+      "cutSide": -1,
+      "funded": true,
+      "reserve": 15.990134964110638
+    },
+    {
+      "opponentSideOffset": 1,
+      "cycle": 3,
+      "startOffset": -7.365908387303353,
+      "cutSide": -1,
+      "funded": true,
+      "reserve": 15.990134964110638
+    }
+  ],
+  "matchedControlSummary": {
+    "states": 51,
+    "lostFundedRoutes": 0,
+    "minimumFinalReserve": 15.738052487174471,
+    "minimumTurnDegrees": 43.93997013862365,
+    "maximumForecastCount": 52,
+    "forecastCountDeltaRange": [
+      -13,
+      12
+    ],
+    "offlineTimingMs": {
+      "before": {
+        "median": 407.3573340428993,
+        "max": 786.7652919958346
+      },
+      "after": {
+        "median": 403.876708005555,
+        "max": 686.6649159928784
+      }
+    }
+  },
+  "differentialRegression": {
+    "old": {
+      "results": [
+        {
+          "error": "[string \"<python>\"]:205: missing legal start/cut combination -1:1",
+          "name": "centered pressure allows all four funded start and cut combinations",
+          "passed": false
+        },
+        {
+          "error": "[string \"<python>\"]:216: attempt to call a nil value (field 'chooseOpeningCut')",
+          "name": "cut diversity rejects coverage timing width funding and history regressions",
+          "passed": false
+        },
+        {
+          "name": "off-center blockers retain away-side setup priority across all cut cycles",
+          "passed": true
+        }
+      ],
+      "total": 3,
+      "failed": 2,
+      "passed": 1
+    },
+    "new": {
+      "results": [
+        {
+          "name": "centered pressure allows all four funded start and cut combinations",
+          "passed": true
+        },
+        {
+          "name": "cut diversity rejects coverage timing width funding and history regressions",
+          "passed": true
+        },
+        {
+          "name": "off-center blockers retain away-side setup priority across all cut cycles",
+          "passed": true
+        }
+      ],
+      "total": 3,
+      "failed": 0,
+      "passed": 3
+    }
+  },
+  "coverageMeaning": "No observed waiting lane is not proof of an unreachable defender. Recorded conservative envelope margins remain negative: approximately -118.653 studs before and -118.292 for the cross-cut witness.",
+  "limits": [
+    "Deterministic diversity does not guarantee unpredictability, fewer breakups, or a catch.",
+    "The 40-degree legal sharp-cut floor is preserved; the recorded cross-cut is43.94 degrees versus52.52 for a same-side cut.",
+    "The finite candidate pool is unchanged, but setup geometry can affect existing early exits and solve counts.",
+    "Offline native-contract and planner replay does not simulate opponent reactions or server possession acceptance.",
+    "Matched geometry comparisons omit route history; adverse history is checked separately by the policy regression.",
+    "No account names, account identifiers, extracted client source, or raw private logs are included."
+  ],
+  "validation": {
+    "authored": {
+      "passed": 96,
+      "total": 96,
+      "failed": 0
+    },
+    "nativeContract": {
+      "passed": 187,
+      "total": 187,
+      "failed": 0
+    }
+  },
+  "release": "5.1.27",
+  "liveOutcomeStatus": "Not yet evaluated for this release. Historical WR8 swat and WR34 movement loss remain unresolved incidents.",
+  "crossCutDominanceWitness": {
+    "sameStemYards": 20.00000264607131,
+    "sameBallTargetInsetStuds": 1.0,
+    "before": {
+      "cutDegrees": 52.518275665556665,
+      "firstContactSeconds": 6.648599061229204,
+      "defenderEnvelopeMarginStuds": -118.65334634750754,
+      "finalStamina": 16.193719529365765
+    },
+    "after": {
+      "cutDegrees": 43.93997013862365,
+      "firstContactSeconds": 6.631503632173742,
+      "defenderEnvelopeMarginStuds": -118.29184479077279,
+      "finalStamina": 16.57482304499075
+    }
+  }
+}

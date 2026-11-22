@@ -1,0 +1,86 @@
+{
+  "schemaVersion": 1,
+  "case": "5.1.26 WR34",
+  "observedDeficitStuds": 21.8109,
+  "scope": "Four fixed recorded avoidance inputs, replaying current output and a private opposite-side preference probe. No production change.",
+  "snapshots": [
+    {
+      "secondsAfterThrow": -3.1146068572998047,
+      "old": {
+        "x": 0.9528128529149582,
+        "z": 0.3035583138027912,
+        "sprint": true,
+        "reason": "passing player",
+        "forwardSpeed": 8.001676024137312
+      },
+      "oppositeSide": {
+        "x": 0.9528128529149582,
+        "z": 0.3035583138027912,
+        "sprint": true,
+        "reason": "passing player",
+        "forwardSpeed": 8.001676024137312
+      },
+      "reproductionError": 6.745330549990802e-08
+    },
+    {
+      "secondsAfterThrow": -3.0972728729248047,
+      "old": {
+        "x": 0,
+        "z": 0,
+        "sprint": false,
+        "reason": "no room to pass",
+        "forwardSpeed": 0.0
+      },
+      "oppositeSide": {
+        "x": 0,
+        "z": 0,
+        "sprint": false,
+        "reason": "no room to pass",
+        "forwardSpeed": 0.0
+      },
+      "reproductionError": 0.0
+    },
+    {
+      "secondsAfterThrow": -1.3776609897613525,
+      "old": {
+        "x": 0,
+        "z": 0,
+        "sprint": false,
+        "reason": "no room to pass",
+        "forwardSpeed": 0.0
+      },
+      "oppositeSide": {
+        "x": 0,
+        "z": 0,
+        "sprint": false,
+        "reason": "no room to pass",
+        "forwardSpeed": 0.0
+      },
+      "reproductionError": 0.0
+    },
+    {
+      "secondsAfterThrow": -1.0441360473632812,
+      "old": {
+        "x": 0.9644603825693426,
+        "z": 0.26422730081796136,
+        "sprint": false,
+        "reason": "passing player",
+        "forwardSpeed": 1.743114673744779
+      },
+      "oppositeSide": {
+        "x": 0.46059063338302864,
+        "z": 0.19456680716570746,
+        "sprint": false,
+        "reason": "passing player",
+        "forwardSpeed": 2.1779501002278936
+      },
+      "reproductionError": 4.996014830783124e-08
+    }
+  ],
+  "decision": "Do not force side reversal: three outputs are unchanged and the fourth has only a small instantaneous forward-progress gain. This does not establish a safe complete path or rescue of the missed pass.",
+  "limitations": [
+    "Full native body physics and opponent reactions are not simulated.",
+    "A previous progress sample is reconstructed to reproduce the recorded scalar progress speed.",
+    "Repeated forced reversal could discard the existing side-stability behavior; it was not enabled."
+  ]
+}

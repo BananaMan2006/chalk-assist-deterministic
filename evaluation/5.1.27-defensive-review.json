@@ -1,0 +1,214 @@
+{
+  "schemaVersion": 1,
+  "release": "5.1.27",
+  "reviewedBuild": "5.1.26",
+  "reviewedBuildId": "09545b3b26f99ebe9853cde5251b8ea553daa16eec54abd6823658261a6891e1",
+  "scope": "Six observed opponent catches during continued release validation; every awarded catch is retained, including one tackle recovery.",
+  "counts": {
+    "opponentCatches": 6,
+    "concededTouchdownPoints": 5,
+    "tackledRecoveriesWithoutPoint": 1
+  },
+  "cases": [
+    {
+      "incident": "DB15",
+      "nativeBallOutcome": "Opponent Catch",
+      "terminal": "Touchdown",
+      "concededPoint": true,
+      "classification": "Fresh local contact was not awarded possession",
+      "confirmedJump": true,
+      "divingAtLocalContact": false,
+      "localContactAgeMs": 0.236,
+      "jumpDispatchLatenessMs": 6.104,
+      "actualLocalCapsuleMarginStuds": 0.6583,
+      "actualJumpHeightMinusModelAtContactStuds": 0.116,
+      "resultPositionArcLeadOverLocalBallMs": 17.42,
+      "geometricInferenceOnly": "The result position is projected onto the arc; this does not establish authoritative catch time, server receipt order or why the local claim lost.",
+      "response": "Retain native outcome as a failure to win possession; do not describe it as an omitted jump or dive. No unproven timing/height or server-claim override was installed."
+    },
+    {
+      "incident": "DB20",
+      "nativeBallOutcome": "Opponent Catch",
+      "terminal": "Touchdown",
+      "concededPoint": true,
+      "classification": "Fresh local contact was not awarded possession",
+      "confirmedJump": true,
+      "divingAtLocalContact": false,
+      "localContactAgeMs": 0.33,
+      "jumpDispatchLatenessMs": 12.314,
+      "actualLocalCapsuleMarginStuds": 0.1515,
+      "actualJumpHeightMinusModelAtContactStuds": 0.1185,
+      "resultPositionArcLeadOverLocalBallMs": 0.503,
+      "geometricInferenceOnly": "The result position is projected onto the arc; this does not establish authoritative catch time, server receipt order or why the local claim lost.",
+      "response": "Retain native outcome as a failure to win possession; do not describe it as an omitted jump or dive. No unproven timing/height or server-claim override was installed."
+    },
+    {
+      "incident": "DB27",
+      "nativeBallOutcome": "Opponent Catch",
+      "terminal": "Tackled",
+      "concededPoint": false,
+      "classification": "Fresh local contact was not awarded possession",
+      "confirmedJump": true,
+      "divingAtLocalContact": true,
+      "localContactAgeMs": 0.394,
+      "jumpDispatchLatenessMs": 11.713,
+      "actualLocalCapsuleMarginStuds": 3.4458,
+      "actualJumpHeightMinusModelAtContactStuds": null,
+      "resultPositionArcLeadOverLocalBallMs": -51.071,
+      "geometricInferenceOnly": "The result position is projected onto the arc; this does not establish authoritative catch time, server receipt order or why the local claim lost.",
+      "response": "Retain native outcome as a failure to win possession; do not describe it as an omitted jump or dive. No unproven timing/height or server-claim override was installed."
+    },
+    {
+      "incident": "DB48",
+      "nativeBallOutcome": "Opponent Catch",
+      "terminal": "Touchdown",
+      "concededPoint": true,
+      "classification": "Requested jump did not produce confirmed takeoff",
+      "jumpRequests": 3,
+      "jumpRetries": 3,
+      "confirmedJumps": 0,
+      "localContactClaims": 0,
+      "requestLatenessMs": [
+        2.683,
+        3.469,
+        1.615
+      ],
+      "observedBodyGapsStuds": [
+        4.165,
+        3.338,
+        1.371,
+        1.164,
+        1.146,
+        1.2
+      ],
+      "findings": [
+        "All three jump requests were punctual, each less than 4 ms after its schedule. Each received the existing retry; none produced confirmed upward movement.",
+        "The body was parked with zero requested movement. An approaching opponent closed from 4.17 to 1.37 studs before the first request; the root was then displaced horizontally while still commanding zero movement.",
+        "During held Jump, the native state reported Jumping but root height fell below its prior standing height and vertical velocity remained nonpositive.",
+        "Later planner snapshots still used the actual positive jump speed of 48.522 studs/s and reported the jump state enabled through canJump=true.",
+        "No native contact-effect event was captured for this interval."
+      ],
+      "assessment": "Physical interference during the parked takeoff is the strongest observed explanation, but client telemetry does not prove the exact native reason the jump produced no lift. This is distinct from a valid local claim rejected by authoritative catch arbitration.",
+      "response": "Add passive properties/state/body-gap fields to existing jumpRequest and jumpRetry events. Do not force native airborne state, modify jump properties or increase retry frequency.",
+      "limitations": [
+        "The exact Humanoid JumpHeight/JumpPower/state-enabled values at dispatch and retry are not separately recorded.",
+        "Opponent replication and body collision responses are not reconstructed by offline ballistic replay.",
+        "Proximity alone is not proof of jump suppression; successful near-body catches are retained as controls."
+      ]
+    },
+    {
+      "incident": "DB51",
+      "nativeBallOutcome": "Opponent Catch",
+      "terminal": "Touchdown",
+      "concededPoint": true,
+      "classification": "Fresh local contact was not awarded possession",
+      "confirmedJump": true,
+      "divingAtLocalContact": false,
+      "localContactAgeMs": 0.332,
+      "jumpDispatchLatenessMs": 12.828,
+      "actualLocalCapsuleMarginStuds": 0.3009,
+      "actualJumpHeightMinusModelAtContactStuds": 0.1143,
+      "resultPositionArcLeadOverLocalBallMs": 6.983,
+      "geometricInferenceOnly": "The result position is projected onto the arc; this does not establish authoritative catch time, server receipt order or why the local claim lost.",
+      "response": "Retain native outcome as a failure to win possession; do not describe it as an omitted jump or dive. No unproven timing/height or server-claim override was installed."
+    },
+    {
+      "incident": "DB73",
+      "nativeBallOutcome": "Opponent Catch",
+      "terminal": "Touchdown",
+      "concededPoint": true,
+      "classification": "Fresh local diving contact was not awarded possession; pursuit could not close the recovery gap",
+      "confirmedJump": true,
+      "divingAtLocalContact": true,
+      "localContactAgeMs": 0.226,
+      "jumpDispatchLatenessMs": 8.725,
+      "diveDispatchLatenessMs": 14.705,
+      "actualLocalCapsuleMarginStuds": 1.2916,
+      "reportedNetworkPingMs": 159.888,
+      "nativeResultObservedAfterLocalClaimMs": 817.733,
+      "resultPositionArcLeadOverLocalBallMs": -389.871,
+      "pursuit": {
+        "observedNavigationSamples": 19,
+        "initialOpponentDistanceStuds": 35.169,
+        "minimumSampledOpponentDistanceStuds": 28.162,
+        "finalSampledOpponentDistanceStuds": 29.496,
+        "firstNativeSpeed": 0,
+        "laterNativeSpeed": 27,
+        "finalSampledStamina": 19,
+        "tackleAttemptsObserved": 0,
+        "interpretation": "The initial dive recovered well behind the carrier; ordinary sprint pursuit never reached tackle range before the touchdown."
+      },
+      "findings": [
+        "Jump and dive were both dispatched within the existing action budgets, and a fresh airborne local contact was recorded.",
+        "The reported network-ping metric was about 160 ms, higher than the earlier reviewed contested contacts. The result was observed 818 ms after the local claim.",
+        "Longer callback gaps were captured before this throw; the actual jump and dive dispatches remained punctual."
+      ],
+      "geometricInferenceOnly": "The result position projection is a spatial trajectory comparison, not authoritative catch timing or server receipt order.",
+      "response": "Retain the loss and full postcatch pursuit in evaluation. Do not force claims, extend dive reach, change speed or assume higher latency proves the rejection cause."
+    }
+  ],
+  "successfulControls": [
+    {
+      "nativeOutcome": "Intercepted",
+      "version": "5.1.25",
+      "actualLocalCapsuleMarginStuds": 0.2441,
+      "actualJumpHeightMinusModelAtContactStuds": 0.3493
+    },
+    {
+      "nativeOutcome": "Intercepted",
+      "version": "5.1.26",
+      "actualLocalCapsuleMarginStuds": 0.0849,
+      "actualJumpHeightMinusModelAtContactStuds": 0.118
+    }
+  ],
+  "earlierContactSearch": {
+    "diveCandidatesTested": 18908,
+    "uprightCandidatesTested": 16800,
+    "ordinaryExecutableDiveCandidatesWithEarlierFirstTouch": 0,
+    "diveWithNewGroundStopBestEarlierMs": [
+      6.512,
+      7.191,
+      6.788,
+      5.994
+    ],
+    "uprightSameTargetBestEarlierMs": [
+      1.347,
+      2.173,
+      1.058,
+      1.25
+    ],
+    "uprightShiftedTargetBestEarlierMs": [
+      6.444,
+      6.521,
+      6.349,
+      6.25
+    ],
+    "sampling": "First observed native-sprint and last grounded snapshots for each loss; explicit bounded time/action grids, not a proof over every possible control.",
+    "constraints": "Existing 0.4 margin,12 ms contact half-window,60 ms jump and20 ms dive timing variants, connected first contact for dives, field bounds, observed stamina/speed and no intermediate airborne stopping.",
+    "conclusion": "No earlier ordinary dive was omitted in this bounded search. A new grounded launch-point stop or a changed upright stopping target offers roughly 6\u20137ms of modeled first-contact gain; finer jump timing alone offers 1\u20132ms. These unintegrated alternatives do not establish why the server awarded the losses or that the outcomes would reverse."
+  },
+  "nativeInputReview": [
+    "The controller computes jump speed from current Humanoid JumpHeight or JumpPower; it does not replace zero with a configuration default.",
+    "The request remains held during the pending interval; the sampled jumpHeld=true agrees with that behavior.",
+    "The existing stale-action deadline cancels each request approximately 80 ms after its schedule. It does not prematurely confirm takeoff or permit a dive through the native floor guard.",
+    "The inspected native team jump limiter would zero JumpHeight; the later positive jump-speed snapshots do not match a sustained limiter activation. A transient property change at the exact request is not observable from existing logs."
+  ],
+  "diagnosticValidation": {
+    "finalAirborneSuitePassed": 75,
+    "finalAirborneSuiteTotal": 75,
+    "newDiagnosticChecks": 4,
+    "checks": [
+      "Post-input native jump-height change is recorded without altering dispatch.",
+      "Missing body/floor details do not suppress input.",
+      "Throwing native-property reads retain the action and partial event.",
+      "Retry and event counts remain unchanged."
+    ]
+  },
+  "limits": [
+    "This is an incident audit, not proof of perfect play or a controlled win-rate improvement.",
+    "Local contact geometry does not guarantee authoritative possession.",
+    "Native body interaction and unknown authoritative catch arbitration are not reproduced by the offline solver.",
+    "The small alternative first-touch gains have not been validated in native execution; no planner ranking or catch-buffer change was made from this search.",
+    "The missed-takeoff response in this release is diagnostic only. Its exact native cause remains unproven."
+  ]
+}
