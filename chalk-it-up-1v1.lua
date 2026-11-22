@@ -1,4 +1,4 @@
--- Chalk-Release: 5.1.25
+-- Chalk-Release: 5.1.26
 -- Chalk-Product: deterministic
 -- Chalk It Up DB/WR ball assist using normal sprint/jump/dive controls.
 -- Cyan: replicated route (when supplied). Yellow: movement estimate.
@@ -47,7 +47,7 @@ assert(matchEvent and fxEvent and matchEvent:IsA("RemoteEvent") and fxEvent:IsA(
     "Chalk It Up Match/Fx events were not found")
 
 local api = {}
-local RELEASE_VERSION="5.1.25"
+local RELEASE_VERSION="5.1.26"
 local loadedGameId,loadedPlaceId,loadedJobId=game.GameId,game.PlaceId,game.JobId
 env.ChalkDB = api
 local alive, enabled = true, true
@@ -967,7 +967,7 @@ end
 function api.status()
     local ch = characterOf(opponent)
     local holder,isEnemy,holderRole=carrierContext()
-    return {product="deterministic",version=RELEASE_VERSION,buildId="84bb5f82ef607983caaf5b70afe56d0401998436391026e492749e418cad2137",policyMode="deterministic", enabled=enabled, role=role or "unknown",rawRole=rawRole or "unknown", phase=phase,
+    return {product="deterministic",version=RELEASE_VERSION,buildId="09545b3b26f99ebe9853cde5251b8ea553daa16eec54abd6823658261a6891e1",policyMode="deterministic", enabled=enabled, role=role or "unknown",rawRole=rawRole or "unknown", phase=phase,
         ui={visible=windowVisible,minimized=minimized,x=panel.Position.X.Offset,y=panel.Position.Y.Offset},
         matchAlerts={enabled=alertSettings.enabled,saveError=alertSettings.saveError},
         preferences=preferences and preferences.status() or nil,
@@ -4870,22 +4870,29 @@ return function(ctx, Planner, createTackle, WRApproach, Motion, createCarrierMov
             end
         end
         local velocity=root.AssemblyLinearVelocity
-        local stopped=s.playBudget~=nil and not s.arc and not jumped and not jumpRequest and not dived
-            and h.FloorMaterial~=Enum.Material.Air and strength<.001
+        local stationary=s.playBudget~=nil and not s.arc and not jumped and not jumpRequest and not dived
+            and h.FloorMaterial~=Enum.Material.Air
             and typeof(velocity)=="Vector3" and (velocity*Vector3.new(1,0,1)).Magnitude<1
+        local stopped=stationary and strength<.001
+        -- A new request can arrive before the settled-stop timer expires. If
+        -- the last navigation frame requested zero input and this same body
+        -- is still physically stopped, there is no travel heading to smooth
+        -- from. Collision checks below still choose the actual restart path.
+        local clearStoppedHeading=stationary and strength>=.001 and navigationIdleRoot==root
+            and navigationIdleSince~=nil and now>navigationIdleSince
         if stopped then
             if navigationIdleRoot~=root or not navigationIdleSince or now<navigationIdleSince then
                 navigationIdleRoot,navigationIdleSince=root,now
-            elseif now-navigationIdleSince>=.15 then
-                -- A settled stop has no previous travel direction. Retaining
-                -- one can restart forward coverage by walking backward first.
-                -- Moving reversals and committed catch actions keep smoothing.
-                steering=nil
-                avoidanceState,avoidanceRoot,avoidancePhase,lastAvoidanceReason=nil,nil,nil,nil
-                avoidanceStatus={active=false,blocked=false}
-            end
+            elseif now-navigationIdleSince>=.15 then clearStoppedHeading=true end
         else
             navigationIdleSince,navigationIdleRoot=nil,nil
+        end
+        if clearStoppedHeading then
+            -- Moving reversals, blocked nonzero input and committed catch
+            -- actions retain their normal bounded turns.
+            steering=nil
+            avoidanceState,avoidanceRoot,avoidancePhase,lastAvoidanceReason=nil,nil,nil,nil
+            avoidanceStatus={active=false,blocked=false}
         end
         local budget=sprintBudget(s)
         local avoid=avoidPlayers(s,root,h,now,dt,flat,strength>0.001 and directive.sprint==true and budget.canSprint,true,
@@ -10118,7 +10125,7 @@ end
 end)()
 
 api.initializePreferences(createPreferences)
-assist = createAssist({snapshot=api.context,version=RELEASE_VERSION,buildId="84bb5f82ef607983caaf5b70afe56d0401998436391026e492749e418cad2137",fullplay=function(s,root,h,now,dt)
+assist = createAssist({snapshot=api.context,version=RELEASE_VERSION,buildId="09545b3b26f99ebe9853cde5251b8ea553daa16eec54abd6823658261a6891e1",fullplay=function(s,root,h,now,dt)
     if fullplay then return fullplay.navigate(s,root,h,now,dt) end
 end},Planner,createTackle,WRApproach,Motion,createCarrierMoves,PlayerAvoidance)
 assist.setEnabled(false)
@@ -10134,7 +10141,7 @@ repeatWR = createWRRepeat({snapshot=api.context,
     autoplay=function() return autoplay.status() end,
     disableAutoplay=function() return api.setAutoplay(false) end})
 repeatWR.setEnabled(false)
-fullplay = createFullplay({Planner=Planner,snapshot=api.context,version=RELEASE_VERSION,buildId="84bb5f82ef607983caaf5b70afe56d0401998436391026e492749e418cad2137",
+fullplay = createFullplay({Planner=Planner,snapshot=api.context,version=RELEASE_VERSION,buildId="09545b3b26f99ebe9853cde5251b8ea553daa16eec54abd6823658261a6891e1",
     assistEnabled=function() return assist.status().enabled end,
     release=function() if assist.releaseFullplay then assist.releaseFullplay() end end},FullplayPolicy)
 matchSkip = createMatchSkip({snapshot=api.context,startDisabled=true,preferencesManaged=true,
@@ -10157,7 +10164,7 @@ local GAME_ID,PLACE_ID=10770281752,116097127629859
 local MAIN_URL="https://raw.githubusercontent.com/BananaMan2006/chalk-assist-deterministic/main/chalk-it-up-1v1.lua"
 local CACHE_FILE="chalk-deterministic-cache.lua"
 local MAIN_FILE="chalk-it-up-1v1.lua"
-local MIN_RELEASE="5.1.25"
+local MIN_RELEASE="5.1.26"
 local MARKER="__ChalkDeterministicAutoBoot"
 local env=type(getgenv)=="function" and getgenv() or _G
 local boot

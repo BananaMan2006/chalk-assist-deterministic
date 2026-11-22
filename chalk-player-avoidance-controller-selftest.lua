@@ -405,19 +405,83 @@ end
         f.directive.direction=Vector3.new(0,0,1);f.api.navigate(f.context)
         assert(f.moves[#f.moves].Z<0,"coasting reset a live travel heading")
     end)
-    test("movement resumption and root changes restart the idle confirmation interval",function()
+    test("moving resumptions and root changes cannot reuse an older idle observation",function()
         for _,change in ipairs({"movement","root"}) do
             local f=fixture();f.directive={direction=Vector3.new(0,0,-1),sprint=false}
             f.api.navigate(f.context);f.directive.direction=Vector3.zero
             f.now=10.1;f.api.navigate(f.context)
             if change=="movement" then
+                f.root.AssemblyLinearVelocity=Vector3.new(0,0,-20)
                 f.now=10.2;f.directive.direction=Vector3.new(0,0,-1);f.api.navigate(f.context)
             else
                 f.root={Position=Vector3.new(0,3,5),AssemblyLinearVelocity=Vector3.zero}
             end
-            f.now=10.21;f.directive.direction=Vector3.zero;f.api.navigate(f.context)
-            f.now=10.3;f.directive.direction=Vector3.new(0,0,1);f.api.navigate(f.context)
-            assert(f.moves[#f.moves].Z<0,change.." reused an older idle interval")
+            f.now=10.21;f.directive.direction=Vector3.new(0,0,1);f.api.navigate(f.context)
+            assert(f.moves[#f.moves].Z<0,change.." reused an older idle observation")
+        end
+    end)
+    test("recorded short stationary DB restart discards stale opposite steering before checked avoidance",function()
+        for _,mirror in ipairs({-1,1}) do
+            local f=fixture();f.realAvoidance=Avoidance
+            f.root.Position=Vector3.new(42.527645111083984,4.636868000030518,53.21098709106445)
+            f.context.geo={MinX=-30.2121302485466,MaxX=67.99998158216476,
+                BackZ=-44.012135207653046,EndZ=152.4120985865593}
+            local old=Vector3.new(mirror*.9710661768913269,0,.23881074786186218).Unit
+            f.directive={direction=old,sprint=false};f.now=1795376535.203296
+            f.root.AssemblyLinearVelocity=old*20;f.api.navigate(f.context)
+            f.directive.direction=Vector3.zero;f.now=1795376535.270415
+            f.root.AssemblyLinearVelocity=Vector3.new(mirror*1.25856e-7,0,1.36116e-7)
+            f.api.navigate(f.context)
+            local other={Position=f.root.Position+Vector3.new(mirror*-.4831390380859347,-.000078678131104,2.75372695922852),
+                AssemblyLinearVelocity=Vector3.new(mirror*-26.638669967651367,0,-4.294407844543457)}
+            f.context.opponent={FindFirstChild=function() return other end,
+                FindFirstChildOfClass=function() return {Health=100} end}
+            f.directive.direction=Vector3.new(-mirror,0,0);f.now=1795376535.353749
+            f.api.navigate(f.context,.016310250386595726)
+            local input=f.helperCalls[#f.helperCalls].input
+            equal(input.currentDirection,nil,"stationary restart kept stale steering")
+            local output=f.moves[#f.moves]
+            assert(output:Dot(f.directive.direction)>.98,"restart initially walked away from the coverage target")
+            assert(f.api.status().active and not f.sprinting,"restart bypassed obstacle arbitration")
+            local relative=(other.Position-f.root.Position)*Vector3.new(1,0,1)
+            local minimum=relative.Magnitude
+            for step=0,50 do
+                local gap=(relative+(other.AssemblyLinearVelocity-output*20)*(step*.005)).Magnitude
+                minimum=math.min(minimum,gap)
+            end
+            assert(minimum>=relative.Magnitude-.15,"restart deepened native body overlap")
+        end
+    end)
+    test("short stationary restart still waits when its bounded obstacle turn is unsafe",function()
+        local f=fixture();f.realAvoidance=Avoidance
+        f.directive={direction=Vector3.new(1,0,0),sprint=false};f.api.navigate(f.context)
+        f.now=10.02;f.directive.direction=Vector3.zero;f.api.navigate(f.context)
+        local other={Position=f.root.Position+Vector3.new(-2.4,0,0),AssemblyLinearVelocity=Vector3.zero}
+        f.context.opponent={FindFirstChild=function() return other end,
+            FindFirstChildOfClass=function() return {Health=100} end}
+        f.now=10.04;f.directive.direction=Vector3.new(-1,0,0);f.api.navigate(f.context)
+        close(f.moves[#f.moves],Vector3.zero,"restart bypassed the blocked approach instead of waiting")
+        assert(f.api.status().active and not f.sprinting)
+    end)
+    test("a short navigation restart needs two same-root grounded physical stop observations",function()
+        for _,gate in ipairs({"same time","backward time","moving now","moving before","nonzero before",
+            "new root","manual","arc","air","jumped","jumpRequest","dived","missing velocity"}) do
+            local f=fixture();f.directive={direction=Vector3.new(1,0,0),sprint=false}
+            f.api.navigate(f.context)
+            f.now=10.02;f.directive.direction=gate=="nonzero before" and Vector3.new(1,0,0) or Vector3.zero
+            if gate=="moving before" then f.root.AssemblyLinearVelocity=Vector3.new(2,0,0) end
+            f.api.navigate(f.context)
+            f.root.AssemblyLinearVelocity=Vector3.zero
+            f.now=gate=="same time" and 10.02 or gate=="backward time" and 10.01 or 10.04
+            if gate=="moving now" then f.root.AssemblyLinearVelocity=Vector3.new(2,0,0)
+            elseif gate=="new root" then f.root={Position=f.root.Position,AssemblyLinearVelocity=Vector3.zero}
+            elseif gate=="manual" then f.context.playBudget=nil
+            elseif gate=="arc" then f.context.arc={}
+            elseif gate=="air" then f.h.FloorMaterial="Air"
+            elseif gate=="missing velocity" then f.root.AssemblyLinearVelocity=nil
+            elseif gate=="jumped" or gate=="jumpRequest" or gate=="dived" then f[gate]=true end
+            f.directive.direction=Vector3.new(-1,0,0);f.api.navigate(f.context)
+            assert(f.moves[#f.moves].X>0,gate.." discarded a heading without two eligible stops")
         end
     end)
     test("manual catch airborne and committed action states cannot clear navigation steering",function()

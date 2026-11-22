@@ -559,22 +559,29 @@ return function(ctx, Planner, createTackle, WRApproach, Motion, createCarrierMov
             end
         end
         local velocity=root.AssemblyLinearVelocity
-        local stopped=s.playBudget~=nil and not s.arc and not jumped and not jumpRequest and not dived
-            and h.FloorMaterial~=Enum.Material.Air and strength<.001
+        local stationary=s.playBudget~=nil and not s.arc and not jumped and not jumpRequest and not dived
+            and h.FloorMaterial~=Enum.Material.Air
             and typeof(velocity)=="Vector3" and (velocity*Vector3.new(1,0,1)).Magnitude<1
+        local stopped=stationary and strength<.001
+        -- A new request can arrive before the settled-stop timer expires. If
+        -- the last navigation frame requested zero input and this same body
+        -- is still physically stopped, there is no travel heading to smooth
+        -- from. Collision checks below still choose the actual restart path.
+        local clearStoppedHeading=stationary and strength>=.001 and navigationIdleRoot==root
+            and navigationIdleSince~=nil and now>navigationIdleSince
         if stopped then
             if navigationIdleRoot~=root or not navigationIdleSince or now<navigationIdleSince then
                 navigationIdleRoot,navigationIdleSince=root,now
-            elseif now-navigationIdleSince>=.15 then
-                -- A settled stop has no previous travel direction. Retaining
-                -- one can restart forward coverage by walking backward first.
-                -- Moving reversals and committed catch actions keep smoothing.
-                steering=nil
-                avoidanceState,avoidanceRoot,avoidancePhase,lastAvoidanceReason=nil,nil,nil,nil
-                avoidanceStatus={active=false,blocked=false}
-            end
+            elseif now-navigationIdleSince>=.15 then clearStoppedHeading=true end
         else
             navigationIdleSince,navigationIdleRoot=nil,nil
+        end
+        if clearStoppedHeading then
+            -- Moving reversals, blocked nonzero input and committed catch
+            -- actions retain their normal bounded turns.
+            steering=nil
+            avoidanceState,avoidanceRoot,avoidancePhase,lastAvoidanceReason=nil,nil,nil,nil
+            avoidanceStatus={active=false,blocked=false}
         end
         local budget=sprintBudget(s)
         local avoid=avoidPlayers(s,root,h,now,dt,flat,strength>0.001 and directive.sprint==true and budget.canSprint,true,

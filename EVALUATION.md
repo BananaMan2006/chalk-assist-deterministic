@@ -1,6 +1,14 @@
-# Evaluation scope · 5.1.25
+# Evaluation scope · 5.1.26
 
 This release continues the authored, deterministic controller. Its checks establish local rule behavior and packaging properties. **They do not demonstrate a live win rate, a winning streak, perfect catching, or improvement through training.** The release has no training system or shared model.
+
+## 5.1.26 scope
+
+A defensive Bullet touchdown followed a brief stopped interval: coverage requested left, but steering resumed from an old rightward heading. The recorded helper input reproduced a rightward command with about -19.88 studs/second of progress toward the requested direction. Resetting only that stale heading allowed the unchanged body checks to choose a shallow leftward bypass with about +19.83 studs/second of progress, without sprint.
+
+The controller now clears old steering when a new nonzero request follows an explicit zero-input physical stop on the same root and the current observation is still grounded and physically stopped. It requires Full Auto ownership and no ball flight or pending/committed jump or dive. A moving reversal, blocked nonzero intent, new root, invalid time sequence or action-owned movement retains the old behavior. The longer settled-stop cleanup remains. Fresh collision arbitration follows the reset; an unsafe overlapping restart still returns zero translation.
+
+This addresses the reproduced wrong-way restart, not the entire defensive touchdown. The later missed tackle and server possession decisions are separate. The [short-stop review](evaluation/5.1.26-short-stop-review.json) records old/new controller regressions and the limits of fixed-state replay. Validation passed 547 rule checks, 93 deterministic checks, 71 airborne checks and 36 build, installer and preference checks. Live observations remain separated by exact build.
 
 ## 5.1.25 scope
 
