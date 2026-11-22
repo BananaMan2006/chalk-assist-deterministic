@@ -2,6 +2,12 @@
 
 This release continues the authored, deterministic controller. Its checks establish local rule behavior and packaging properties. **They do not demonstrate a live win rate, a winning streak, perfect catching, or improvement through training.** The release has no training system or shared model.
 
+## November 22 completed one-hour review
+
+The [full live review](evaluation/2026-11-22-hour-review.md) covers 171 throws across four exact builds, with 26 nonforfeit winning endings, one losing ending and 18 conceded point events. Fourteen forfeits are excluded. Every one of the 14 WR noncatches and 18 opponent catches on defense has a case-level audit; six of those defensive catches were recovered with a tackle. No runtime or observer errors were recorded.
+
+The final 5.1.24 segment had 16 catches from 17 WR throws, 16 DB interceptions, three swats, two incompletes and three opponent catches. Six nonforfeit endings were wins: five at 4–0 and one at 4–2. Its remaining WR incomplete followed opening obstruction and lost travel, not an omitted reachable jump. Two defensive touchdowns remain, including a native airborne-state disagreement before a required dive and a contested local claim. Different opponents and exposure lengths prevent a causal performance claim. All observed WR throws were Floaters; the rare WR Bullet counter was not exercised.
+
 ## 5.1.24 scope
 
 Two WR dive traces advertised a brief initial upright contact, then lost overlap for roughly 62–65 ms as the body tipped, before reaching the later robust contact window. The native client sends its catch request on the first overlap. The planner now checks that this first overlap connects to the later window, including the exact upright-to-dive capsule boundary and sampled action delays. Some accepted historical catches also contained disconnected modeled windows, so this corrects the forecast contract without claiming to prove the server’s rejection rule. Earlier recorded WR snapshots retain connected alternatives; a late already-committed snapshot need not be rescuable. The [connected-contact review](evaluation/5.1.24-connected-contact-review.json) retains the failing-before/passing-after cases, matched controls and offline timing limits.
@@ -12,7 +18,7 @@ The [paced-movement review](evaluation/5.1.24-paced-movement-review.json) separa
 
 A later WR interception contained a 2.329-second event gap spanning the jump deadline, with no jump or dive issued. This does not establish a planner timing error or the source of the interruption. Passive diagnostics now distinguish render callback gaps, the preceding controller duration and current controller duration; stale-action validation remains enforced.
 
-Validation passed 541 rule checks, 90 deterministic checks, 64 airborne checks and 36 build, installer and preference checks. Live checks remain ongoing in the one-hour window. Jams, contested server awards and execution stalls remain possible; the changes do not establish guaranteed catches or zero conceded points.
+Validation passed 541 rule checks, 90 deterministic checks, 64 airborne checks and 36 build, installer and preference checks. The completed one-hour live review is linked below. Jams, contested server awards and execution stalls remain possible; the changes do not establish guaranteed catches or zero conceded points.
 
 ## 5.1.23 scope
 
