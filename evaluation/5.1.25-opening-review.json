@@ -1,0 +1,215 @@
+{
+  "schemaVersion": 1,
+  "release": "5.1.25",
+  "change": "Choose a legal nearby native receiving start before the snap when a centered defender can crowd that opening during setup; retain the deep middle cut, centered quarterback origin and complete route funding checks.",
+  "scope": {
+    "startShiftYards": 1.5,
+    "setupOnly": true,
+    "shortFieldsUnchanged": true,
+    "centerFallbacksMaximum": 1,
+    "newLiveMovementOverrides": false,
+    "settingsChanged": false
+  },
+  "recordedRouteComparison": [
+    {
+      "policy": "old",
+      "cycle": 0,
+      "startX": 18.893925666809082,
+      "shift": 0.0,
+      "stem": 17.500001852249916,
+      "cutDegrees": 43.01444408147502,
+      "cutAt": 4.173101410027766,
+      "launch": 3.690588863882479,
+      "firstContact": 6.543438402637758,
+      "catchX": -24.344966133085638,
+      "catchZ": 111.56220263933096,
+      "finalStamina": 17.56758319299979,
+      "stemSprint": 1.2,
+      "earlySprint": 1.05,
+      "forecastCount": 24,
+      "reachable": true,
+      "targetInset": 1.0,
+      "catchInset": 5.867164115460962,
+      "medianOfflineMs": 146.81479200953618
+    },
+    {
+      "policy": "old",
+      "cycle": 1,
+      "startX": 18.893925666809082,
+      "shift": 0.0,
+      "stem": 17.500001852249916,
+      "cutDegrees": 43.01444408147502,
+      "cutAt": 4.173101410027766,
+      "launch": 3.690588863882479,
+      "firstContact": 6.543438402637758,
+      "catchX": 62.13278226563118,
+      "catchZ": 111.56217006082898,
+      "finalStamina": 17.56758319299979,
+      "stemSprint": 1.2,
+      "earlySprint": 1.05,
+      "forecastCount": 24,
+      "reachable": true,
+      "targetInset": 1.0,
+      "catchInset": 5.867199316533586,
+      "medianOfflineMs": 146.50054095545784
+    },
+    {
+      "policy": "candidate",
+      "cycle": 0,
+      "startX": 11.528017279505729,
+      "shift": -7.365908387303353,
+      "stem": 20.00000264607131,
+      "cutDegrees": 52.518275665556665,
+      "cutAt": 4.602887028243248,
+      "launch": 3.790171681996332,
+      "firstContact": 6.6486993911051435,
+      "catchX": -23.755238501846364,
+      "catchZ": 110.63582594452805,
+      "finalStamina": 16.1974743208785,
+      "stemSprint": 1.6,
+      "earlySprint": 1.05,
+      "forecastCount": 23,
+      "reachable": true,
+      "targetInset": 1.0,
+      "catchInset": 6.4568917467002365,
+      "medianOfflineMs": 381.71070895623416
+    },
+    {
+      "policy": "candidate",
+      "cycle": 1,
+      "startX": 26.259834054112435,
+      "shift": 7.365908387303353,
+      "stem": 20.00000264607131,
+      "cutDegrees": 52.518275665556665,
+      "cutAt": 4.603003081581469,
+      "launch": 3.790171681996332,
+      "firstContact": 6.6488014129602755,
+      "catchX": 61.5417850853201,
+      "catchZ": 110.63705271284479,
+      "finalStamina": 16.20127226534148,
+      "stemSprint": 1.6,
+      "earlySprint": 1.05,
+      "forecastCount": 37,
+      "reachable": true,
+      "targetInset": 1.0,
+      "catchInset": 6.458196496844664,
+      "medianOfflineMs": 595.3564170049503
+    }
+  ],
+  "controlComparison": {
+    "recordedInputs": 17,
+    "shiftedInputs": 15,
+    "fundedRoutesLost": 0,
+    "minimumFinalReserve": 14.769245055075451,
+    "maximumForecastCount": 56,
+    "oldOfflineMedianMs": 149.5139580219984,
+    "newOfflineMedianMs": 438.90941701829433,
+    "newOfflineMaximumMs": 633.473124995362
+  },
+  "movementReplay": [
+    {
+      "shift": 0,
+      "opponentModel": "fixed_trace",
+      "minimumGap": 0.12666924749046815,
+      "forwardProgress": 24.55871143131961,
+      "stoppedSeconds": 0.41666666666666663,
+      "sprintSeconds": 0.4333333333333333
+    },
+    {
+      "shift": 0,
+      "opponentModel": "defender_tracks_start",
+      "minimumGap": 0.12666924749046815,
+      "forwardProgress": 24.55871143131961,
+      "stoppedSeconds": 0.41666666666666663,
+      "sprintSeconds": 0.4333333333333333
+    },
+    {
+      "shift": -7.365908,
+      "opponentModel": "fixed_trace",
+      "minimumGap": 7.0499707516523795,
+      "forwardProgress": 36.55133670903482,
+      "stoppedSeconds": 0,
+      "sprintSeconds": 0.9500000000000013
+    },
+    {
+      "shift": -7.365908,
+      "opponentModel": "defender_tracks_start",
+      "minimumGap": 0.12666924749046815,
+      "forwardProgress": 24.45935432255589,
+      "stoppedSeconds": 0.41666666666666663,
+      "sprintSeconds": 0.4333333333333333
+    },
+    {
+      "shift": 7.365908,
+      "opponentModel": "fixed_trace",
+      "minimumGap": 7.107851875702833,
+      "forwardProgress": 36.55133670903482,
+      "stoppedSeconds": 0,
+      "sprintSeconds": 0.9500000000000013
+    },
+    {
+      "shift": 7.365908,
+      "opponentModel": "defender_tracks_start",
+      "minimumGap": 0.12666924749046815,
+      "forwardProgress": 23.976441622342342,
+      "stoppedSeconds": 0.41666666666666663,
+      "sprintSeconds": 0.39999999999999997
+    }
+  ],
+  "tests": {
+    "authored": {
+      "passed": 93,
+      "total": 93
+    },
+    "authorizedNativeRouteMath": {
+      "passed": 184,
+      "total": 184
+    },
+    "targetedOld": {
+      "passed": 1,
+      "total": 3
+    },
+    "targetedNew": {
+      "passed": 3,
+      "total": 3
+    }
+  },
+  "limits": [
+    "Fixed-trace movement replay uses the actual avoidance function but kinematic movement; native body pushing, jams and opponent counter-reactions are not simulated.",
+    "A control translating the defender to follow the changed start reproduces the blockage. This is not jam immunity.",
+    "Recorded control inputs use a bounded 3.1-second setup interval; they validate funding and geometry, not actual future outcomes.",
+    "Offline timings are not live frame timings. The finite route search runs once per selection, with at most one centered fallback if a shifted route has no funded catch.",
+    "No raw client game source, account names or account identifiers are included."
+  ],
+  "firstLiveVerification": {
+    "release": "5.1.25",
+    "requestedStartX": 26.259834054,
+    "firstLiveRootX": 26.25983429,
+    "absoluteStartErrorStuds": 2.3600000176315916e-07,
+    "firstLiveElapsedSeconds": 0.0526,
+    "stemTargetX": 18.893924713,
+    "stemTargetZ": 78.753,
+    "nativeSprintSpeedObservedBySeconds": 0.468,
+    "routeSolveMs": 128.26,
+    "targetSidelineInsetStuds": 1,
+    "nativeOutcome": "Catch",
+    "reachableForecasts": 10,
+    "totalForecasts": 10,
+    "scope": "Single observed route; does not establish performance against a following defender or eliminate later misses."
+  },
+  "finalRevisionLiveVerification": {
+    "release": "5.1.25",
+    "observedRevision": 2,
+    "requestedStartX": 26.259834054112435,
+    "firstLiveRootX": 26.25983428955078,
+    "absoluteStartErrorStuds": 2.3543834615225023e-07,
+    "firstLiveElapsedSeconds": 0.08687806129455566,
+    "stemTargetX": 18.893924713134766,
+    "stemTargetZ": 78.75302124023438,
+    "routeSolveMs": 112.47108335373923,
+    "targetSidelineInsetStuds": 0.9999968409538269,
+    "nativeOutcome": "Catch",
+    "terminalOutcome": "Touchdown",
+    "scope": "One final-build observed receiving play; not a controlled success-rate estimate."
+  }
+}

@@ -1,0 +1,403 @@
+{
+  "schemaVersion": 1,
+  "syntheticOnly": true,
+  "limitations": [
+    "Offline authored math/services; no Roblox physics, network, or live win proof."
+  ],
+  "suites": {
+    "defensive-cuts": {
+      "results": [
+        {
+          "name": "DB recorded sideways release recovers alignment after the receiver turns upfield",
+          "passed": true
+        },
+        {
+          "name": "DB opening alignment burst has spatial hysteresis and a bounded live window",
+          "passed": true
+        },
+        {
+          "name": "recorded opening diagonal sprint gets a burst before the old three-yard forecast gate",
+          "passed": true
+        },
+        {
+          "name": "nearby opening coverage and walking matched or retreating runs do not start a range burst",
+          "passed": true
+        },
+        {
+          "name": "range recovery retains85-start70-stop and does not stop merely because speed matches",
+          "passed": true
+        },
+        {
+          "name": "range recovery releases when the receiver slows or runs back toward the defender",
+          "passed": true
+        },
+        {
+          "name": "range recovery is symmetric and unchanged by translated field coordinates",
+          "passed": true
+        },
+        {
+          "name": "recorded outward cut starts lateral follow before the old1.5-yard gate",
+          "passed": true
+        },
+        {
+          "name": "mirrored and translated cuts receive symmetric coverage",
+          "passed": true
+        },
+        {
+          "name": "lateral recovery retains85-start70-stop stamina hysteresis",
+          "passed": true
+        },
+        {
+          "name": "inward slow idle and safely retreating motion do not cause new side bursts",
+          "passed": true
+        },
+        {
+          "name": "closing the lateral gap releases the burst rather than maintaining a fixed offset",
+          "passed": true
+        },
+        {
+          "name": "routine alignment follows directly behind with only a small open-field shade",
+          "passed": true
+        },
+        {
+          "name": "lineup retains non-crowding unsprinted behavior",
+          "passed": true
+        },
+        {
+          "name": "fast outward sideways retreat preserves lateral recovery on both sides without changing depth",
+          "passed": true
+        },
+        {
+          "name": "retreating lateral recovery retains85-start70-stop and releases for safe motion or small gaps",
+          "passed": true
+        },
+        {
+          "name": "confirmed opposing possession funds the DB chase without spending the native sprint floor",
+          "passed": true
+        },
+        {
+          "name": "low pursuit reserve requires known enemy possession and keeps Live and WR reserves",
+          "passed": true
+        }
+      ],
+      "passed": 18,
+      "total": 18,
+      "failed": 0
+    },
+    "scheduled-route-mix": {
+      "results": [
+        {
+          "name": "automatic WR keeps Floaters at every cycle without observed camping",
+          "passed": true
+        },
+        {
+          "name": "third qualifying play responds immediately with a funded moving Bullet before goal",
+          "passed": true
+        },
+        {
+          "name": "camping evidence must cover two distinct recent plays and the opponent must still wait",
+          "passed": true
+        },
+        {
+          "name": "used or missing session allowance cannot be revived by the old cycle slot",
+          "passed": true
+        },
+        {
+          "name": "unfunded or parked Bullet counter-route preserves the Floater fallback",
+          "passed": true
+        },
+        {
+          "name": "both sharp-cut sides remain available without changing the middle start",
+          "passed": true
+        },
+        {
+          "name": "crowded setup selects a legal near-center start with a funded deep cut",
+          "passed": true
+        },
+        {
+          "name": "uncrowded or already-started routes retain the centered setup",
+          "passed": true
+        },
+        {
+          "name": "rejected lateral setup falls back once to the existing funded center route",
+          "passed": true
+        },
+        {
+          "name": "deep inset route does not hide a funded sideline airborne catch",
+          "passed": true
+        },
+        {
+          "name": "unfunded wider catch preserves the existing reachable inset fallback",
+          "passed": true
+        },
+        {
+          "name": "post-throw stem survives native sanitation and has a funded jump witness",
+          "passed": true
+        },
+        {
+          "name": "missing contact planner fails closed instead of restoring Bullets",
+          "passed": true
+        },
+        {
+          "name": "low and unknown stamina mark legal deep Floater attempts as unverified",
+          "passed": true
+        },
+        {
+          "name": "explicit failed lane changes side; unknown outcomes do not invent failure",
+          "passed": true
+        },
+        {
+          "name": "stationary deep middle blocker is included in travel budget",
+          "passed": true
+        },
+        {
+          "name": "middle pressure funds a longer opening on either cut side at actual75",
+          "passed": true
+        },
+        {
+          "name": "no opponent or a defender outside the middle approach keeps the shorter opening",
+          "passed": true
+        },
+        {
+          "name": "spawn gap and world offset remain part of the forecast",
+          "passed": true
+        },
+        {
+          "name": "live ball never grants route control without fresh explicit stem permission",
+          "passed": true
+        },
+        {
+          "name": "stem sprint is scheduled and retains the forecast final reserve",
+          "passed": true
+        },
+        {
+          "name": "long opening sprint reallocates the late burst and later spending needs current stamina",
+          "passed": true
+        },
+        {
+          "name": "hard cut is a one-time movement directive and catch position uses first touch",
+          "passed": true
+        },
+        {
+          "name": "measured stem debt permits a bounded funded burst and counts scheduled sprint",
+          "passed": true
+        },
+        {
+          "name": "partial recovery uses idle funded budget without spending the catch allowance",
+          "passed": true
+        },
+        {
+          "name": "partial recovery rejects an unfunded minimum and honors the route reserve and total cap",
+          "passed": true
+        },
+        {
+          "name": "new partial recovery needs observed normal speed while previously funded bursts are unchanged",
+          "passed": true
+        },
+        {
+          "name": "recovery ends before scheduled sprint and cannot begin after throw or a committed cut",
+          "passed": true
+        },
+        {
+          "name": "short remaining downs use a paced side Floater with no parked first contact",
+          "passed": true
+        },
+        {
+          "name": "opening reallocation retains funded Floaters across remaining field lengths",
+          "passed": true
+        },
+        {
+          "name": "regeneration forecast is bounded to spent opening sprint and needs native constants",
+          "passed": true
+        },
+        {
+          "name": "new deep stem does not use the legacy opposite-side feint",
+          "passed": true
+        },
+        {
+          "name": "setup stamina budgets preserve lower actual values and reject invalid observations",
+          "passed": true
+        },
+        {
+          "name": "reduced setup stamina funds an executable opening and only bounded rest regeneration",
+          "passed": true
+        },
+        {
+          "name": "missing or disabled regeneration cannot fund a low-budget route",
+          "passed": true
+        }
+      ],
+      "passed": 35,
+      "total": 35,
+      "failed": 0
+    },
+    "deterministic-isolation": {
+      "passed": 40,
+      "total": 40,
+      "fixture": "Authored offline services and geometry; locally supplied RouteMath is not copied or published. No server outcome claim.",
+      "failed": 0,
+      "results": [
+        {
+          "name": "logs carry injected release identity and exact native final scores",
+          "passed": true
+        },
+        {
+          "name": "terminal lobby packet preserves unknown scores without inferring a winner",
+          "passed": true
+        },
+        {
+          "name": "native contact notices log only local observations without enabling control or copying packet identities",
+          "passed": true
+        },
+        {
+          "name": "native contact diagnostics filter unknown types and bound repeated notifications",
+          "passed": true
+        },
+        {
+          "name": "old enabled settings and model histories cannot enable or seed this product",
+          "passed": true
+        },
+        {
+          "name": "explicit enable writes only isolated non-resuming settings",
+          "passed": true
+        },
+        {
+          "name": "actual route selection is repeatable without model or RNG calls",
+          "passed": true
+        },
+        {
+          "name": "legacy learned policy overrides cannot replace deterministic choices",
+          "passed": true
+        },
+        {
+          "name": "route session observations are bounded and never persisted",
+          "passed": true
+        },
+        {
+          "name": "lobby clears session outcomes even when the old opponent remains in context",
+          "passed": true
+        },
+        {
+          "name": "unknown catch ownership does not fabricate a successful route",
+          "passed": true
+        },
+        {
+          "name": "known opponent catches count as failed route outcomes",
+          "passed": true
+        },
+        {
+          "name": "pause and 1v1-only gates prevent setup or movement without changing native speed",
+          "passed": true
+        },
+        {
+          "name": "normal movement keeps native speed and stamina reserves",
+          "passed": true
+        },
+        {
+          "name": "failed submissions do not create successful or selected session history",
+          "passed": true
+        },
+        {
+          "name": "observed defensive outcomes update fixed rules once within this session",
+          "passed": true
+        },
+        {
+          "name": "ambiguous or missing defensive throw information cannot alter session rules",
+          "passed": true
+        },
+        {
+          "name": "settings write failure is visible and does not call legacy storage",
+          "passed": true
+        },
+        {
+          "name": "selected starting X is submitted and steering distinguishes request from observed placement",
+          "passed": true
+        },
+        {
+          "name": "fixed route cycle persists across sessions while Full Auto still starts off",
+          "passed": true
+        },
+        {
+          "name": "catchIntent before navigation preserves exactly one hard cut and absolute stem timing",
+          "passed": true
+        },
+        {
+          "name": "unfunded legal Floater is explicitly best effort instead of native default Bullet",
+          "passed": true
+        },
+        {
+          "name": "near-goal next down submits an airborne Floater before native default timeout",
+          "passed": true
+        },
+        {
+          "name": "corrupt route cycle defaults to zero and never enables automatic play",
+          "passed": true
+        },
+        {
+          "name": "unload stops callbacks and releases control",
+          "passed": true
+        },
+        {
+          "name": "two completed camping observations are ephemeral, bounded and frozen at the throw",
+          "passed": true
+        },
+        {
+          "name": "following, transient deep alignment and out-and-back travel do not qualify as camping",
+          "passed": true
+        },
+        {
+          "name": "insufficient progress, short windows, missing observations and pauses stay unknown",
+          "passed": true
+        },
+        {
+          "name": "camping evidence uses the world goal offset and completed following resets the recent pair",
+          "passed": true
+        },
+        {
+          "name": "explicit off, changed opponent and unload revoke camping evidence",
+          "passed": true
+        },
+        {
+          "name": "continuous Bullet catch intent is restricted to an explicitly selected rare camping Bullet",
+          "passed": true
+        },
+        {
+          "name": "rare camping Bullet preserves its move reserve only until confirmed own possession",
+          "passed": true
+        },
+        {
+          "name": "only WR route navigation forwards an absolute observed avoidance arrival deadline",
+          "passed": true
+        },
+        {
+          "name": "only a submitted reachable current route marks prethrow sprint eligibility",
+          "passed": true
+        },
+        {
+          "name": "one successfully submitted camping counter remains spent across OFF and the next round",
+          "passed": true
+        },
+        {
+          "name": "unavailable candidates and failed submissions do not consume the camping counter",
+          "passed": true
+        },
+        {
+          "name": "first setup uses a conservative budget and retains the original observed HUD value",
+          "passed": true
+        },
+        {
+          "name": "early live stamina only lowers this match budget and late refills cannot raise it",
+          "passed": true
+        },
+        {
+          "name": "late or invalid stamina samples cannot seed a live-start budget",
+          "passed": true
+        },
+        {
+          "name": "recovery allocations are free until bounded native sprint intervals are observed",
+          "passed": true
+        }
+      ]
+    }
+  }
+}

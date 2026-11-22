@@ -1,0 +1,104 @@
+{
+  "schemaVersion": 1,
+  "release": "5.1.25",
+  "change": "Retain fine, clearance-checked detour candidates during live WR/DB ball pursuit, without granting a catch deadline or reachable plan.",
+  "snapshotComparison": [
+    {
+      "secondsAfterThrow": -0.019787073135375977,
+      "old": {
+        "x": 0.162331853286889,
+        "z": 0.9867361883790287,
+        "sprint": true,
+        "reason": "passing player",
+        "forwardSpeed": 22.11710378137697
+      },
+      "fine": {
+        "x": 0.162331853286889,
+        "z": 0.9867361883790287,
+        "sprint": true,
+        "reason": "passing player",
+        "forwardSpeed": 22.11710378137697
+      },
+      "reproductionError": 5.0817699082200013e-08
+    },
+    {
+      "secondsAfterThrow": 0.08845996856689453,
+      "old": {
+        "x": -0.4239501782862472,
+        "z": 0.6186810537999845,
+        "sprint": false,
+        "reason": "passing player",
+        "forwardSpeed": 14.855116613462453
+      },
+      "fine": {
+        "x": -0.4239501782862472,
+        "z": 0.6186810537999845,
+        "sprint": false,
+        "reason": "passing player",
+        "forwardSpeed": 14.855116613462453
+      },
+      "reproductionError": 2.5803463769196e-08
+    },
+    {
+      "secondsAfterThrow": 0.44904303550720215,
+      "old": {
+        "x": 0.3636295843774118,
+        "z": 0.9315436250468954,
+        "sprint": true,
+        "reason": "passing player",
+        "forwardSpeed": 11.410693625805296
+      },
+      "fine": {
+        "x": 0.3636295843774118,
+        "z": 0.9315436250468954,
+        "sprint": true,
+        "reason": "passing player",
+        "forwardSpeed": 11.410693625805296
+      },
+      "reproductionError": 3.4080886627295755e-08
+    },
+    {
+      "secondsAfterThrow": 0.7336409091949463,
+      "old": {
+        "x": 0.4425158679639172,
+        "z": 0.8967606575630432,
+        "sprint": true,
+        "reason": "passing player",
+        "forwardSpeed": 6.988114010589765
+      },
+      "fine": {
+        "x": 0.4425158679639172,
+        "z": 0.8967606575630432,
+        "sprint": true,
+        "reason": "passing player",
+        "forwardSpeed": 6.988114010589765
+      },
+      "reproductionError": 1.9177550552489304e-08
+    },
+    {
+      "secondsAfterThrow": 1.0339269638061523,
+      "old": {
+        "x": -0.3196761772589737,
+        "z": 0.9475268553941303,
+        "sprint": true,
+        "reason": "passing player",
+        "forwardSpeed": 22.117105862202457
+      },
+      "fine": {
+        "x": -0.4404051274896441,
+        "z": 0.8977991555358193,
+        "sprint": true,
+        "reason": "passing player",
+        "forwardSpeed": 23.94633111566733
+      },
+      "reproductionError": 2.1433722406125226e-08
+    }
+  ],
+  "maximumOldOutputReproductionError": 5.0817699082200013e-08,
+  "limits": [
+    "Five fixed input snapshots, not a replay of the entire failed play or opponent response.",
+    "Previous progress sample reconstructed to reproduce the recorded scalar progress speed; full private movement history is not simulated.",
+    "Four earlier outputs are unchanged; one later output makes more progress toward the ball. This does not prove the missed pass becomes a catch.",
+    "Field bounds, turn limit, side lock, native sprint checks and clearance bands remain."
+  ]
+}

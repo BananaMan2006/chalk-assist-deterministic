@@ -1,0 +1,742 @@
+{
+  "schemaVersion": 1,
+  "release": "5.1.25",
+  "scope": "Current-origin, one-sided DB airborne dive rejection. False retains the existing plan; it is not a new validated catch.",
+  "matchedAttempts": 69,
+  "authoritativeOutcomes": {
+    "Intercepted": 54,
+    "Catch": 5,
+    "Swatted": 10
+  },
+  "boundedGuardRejects": 1,
+  "rejectedAuthoritativeSuccesses": 0,
+  "offlineGuardMs": {
+    "median": 0.3589999978430569,
+    "max": 3.583041951060295
+  },
+  "maximumSampledPoses": 153,
+  "cases": [
+    {
+      "version": "5.1.21",
+      "result": "Intercepted",
+      "claimObserved": true,
+      "noContactReject": false,
+      "checkReason": "Possible DB contact retained",
+      "checks": 2,
+      "minimumGap": -0.3966346885523717,
+      "offlineGuardMs": 0.0813750084489584
+    },
+    {
+      "version": "5.1.21",
+      "result": "Catch",
+      "claimObserved": true,
+      "noContactReject": false,
+      "checkReason": "Possible DB contact retained",
+      "checks": 2,
+      "minimumGap": -2.006626301579955,
+      "offlineGuardMs": 0.05262502236291766
+    },
+    {
+      "version": "5.1.21",
+      "result": "Intercepted",
+      "claimObserved": true,
+      "noContactReject": false,
+      "checkReason": "Possible DB contact retained",
+      "checks": 59,
+      "minimumGap": 0.4261254042919056,
+      "offlineGuardMs": 1.4032080071046948
+    },
+    {
+      "version": "5.1.21",
+      "result": "Intercepted",
+      "claimObserved": true,
+      "noContactReject": false,
+      "checkReason": "Possible DB contact retained",
+      "checks": 2,
+      "minimumGap": -0.29715039390411047,
+      "offlineGuardMs": 0.0867500202730298
+    },
+    {
+      "version": "5.1.21",
+      "result": "Swatted",
+      "claimObserved": true,
+      "noContactReject": false,
+      "checkReason": "Possible DB contact retained",
+      "checks": 58,
+      "minimumGap": 0.1524360990844169,
+      "offlineGuardMs": 1.2517920113168657
+    },
+    {
+      "version": "5.1.21",
+      "result": "Intercepted",
+      "claimObserved": true,
+      "noContactReject": false,
+      "checkReason": "Possible DB contact retained",
+      "checks": 14,
+      "minimumGap": -0.0947355376301986,
+      "offlineGuardMs": 0.2833330072462559
+    },
+    {
+      "version": "5.1.21",
+      "result": "Swatted",
+      "claimObserved": true,
+      "noContactReject": false,
+      "checkReason": "Possible DB contact retained",
+      "checks": 2,
+      "minimumGap": -0.6443021283572055,
+      "offlineGuardMs": 0.04991702735424042
+    },
+    {
+      "version": "5.1.21",
+      "result": "Catch",
+      "claimObserved": true,
+      "noContactReject": false,
+      "checkReason": "Possible DB contact retained",
+      "checks": 55,
+      "minimumGap": 0.4615058117830091,
+      "offlineGuardMs": 1.2195000308565795
+    },
+    {
+      "version": "5.1.21",
+      "result": "Intercepted",
+      "claimObserved": true,
+      "noContactReject": false,
+      "checkReason": "Possible DB contact retained",
+      "checks": 2,
+      "minimumGap": -0.1388805476189301,
+      "offlineGuardMs": 0.06316695362329483
+    },
+    {
+      "version": "5.1.21",
+      "result": "Intercepted",
+      "claimObserved": true,
+      "noContactReject": false,
+      "checkReason": "Possible DB contact retained",
+      "checks": 15,
+      "minimumGap": 0.286371711632885,
+      "offlineGuardMs": 0.2976670511998236
+    },
+    {
+      "version": "5.1.22",
+      "result": "Intercepted",
+      "claimObserved": true,
+      "noContactReject": false,
+      "checkReason": "Possible DB contact retained",
+      "checks": 15,
+      "minimumGap": 0.41816788772626623,
+      "offlineGuardMs": 0.3774579963646829
+    },
+    {
+      "version": "5.1.22",
+      "result": "Intercepted",
+      "claimObserved": true,
+      "noContactReject": false,
+      "checkReason": "Possible DB contact retained",
+      "checks": 43,
+      "minimumGap": 0.29257452292479114,
+      "offlineGuardMs": 0.9538329904899001
+    },
+    {
+      "version": "5.1.22",
+      "result": "Intercepted",
+      "claimObserved": true,
+      "noContactReject": false,
+      "checkReason": "Possible DB contact retained",
+      "checks": 15,
+      "minimumGap": 0.04943310197065154,
+      "offlineGuardMs": 0.4266250180080533
+    },
+    {
+      "version": "5.1.22",
+      "result": "Intercepted",
+      "claimObserved": true,
+      "noContactReject": false,
+      "checkReason": "Possible DB contact retained",
+      "checks": 2,
+      "minimumGap": -0.5972173794384217,
+      "offlineGuardMs": 0.049333961214870214
+    },
+    {
+      "version": "5.1.22",
+      "result": "Intercepted",
+      "claimObserved": true,
+      "noContactReject": false,
+      "checkReason": "Possible DB contact retained",
+      "checks": 52,
+      "minimumGap": 0.27383767891419364,
+      "offlineGuardMs": 1.2491249945014715
+    },
+    {
+      "version": "5.1.22",
+      "result": "Intercepted",
+      "claimObserved": true,
+      "noContactReject": false,
+      "checkReason": "Possible DB contact retained",
+      "checks": 45,
+      "minimumGap": 0.20397340090227667,
+      "offlineGuardMs": 0.9522499749436975
+    },
+    {
+      "version": "5.1.22",
+      "result": "Intercepted",
+      "claimObserved": true,
+      "noContactReject": false,
+      "checkReason": "Possible DB contact retained",
+      "checks": 15,
+      "minimumGap": 0.29059425506256353,
+      "offlineGuardMs": 0.3876659902743995
+    },
+    {
+      "version": "5.1.22",
+      "result": "Intercepted",
+      "claimObserved": true,
+      "noContactReject": false,
+      "checkReason": "Possible DB contact retained",
+      "checks": 59,
+      "minimumGap": 0.1555465406806542,
+      "offlineGuardMs": 1.282833982259035
+    },
+    {
+      "version": "5.1.22",
+      "result": "Intercepted",
+      "claimObserved": true,
+      "noContactReject": false,
+      "checkReason": "Possible DB contact retained",
+      "checks": 59,
+      "minimumGap": 0.3886012674839736,
+      "offlineGuardMs": 1.2462500017136335
+    },
+    {
+      "version": "5.1.22",
+      "result": "Intercepted",
+      "claimObserved": true,
+      "noContactReject": false,
+      "checkReason": "Possible DB contact retained",
+      "checks": 30,
+      "minimumGap": 0.02089976518807024,
+      "offlineGuardMs": 0.6604170193895698
+    },
+    {
+      "version": "5.1.22",
+      "result": "Intercepted",
+      "claimObserved": true,
+      "noContactReject": false,
+      "checkReason": "Possible DB contact retained",
+      "checks": 14,
+      "minimumGap": -0.004719245480410361,
+      "offlineGuardMs": 0.3589999978430569
+    },
+    {
+      "version": "5.1.22",
+      "result": "Intercepted",
+      "claimObserved": true,
+      "noContactReject": false,
+      "checkReason": "Possible DB contact retained",
+      "checks": 59,
+      "minimumGap": 0.2200215914559145,
+      "offlineGuardMs": 1.3952080043964088
+    },
+    {
+      "version": "5.1.22",
+      "result": "Intercepted",
+      "claimObserved": true,
+      "noContactReject": false,
+      "checkReason": "Possible DB contact retained",
+      "checks": 55,
+      "minimumGap": 0.4583082572725452,
+      "offlineGuardMs": 1.1231249663978815
+    },
+    {
+      "version": "5.1.23",
+      "result": "Intercepted",
+      "claimObserved": true,
+      "noContactReject": false,
+      "checkReason": "Possible DB contact retained",
+      "checks": 16,
+      "minimumGap": 0.2514680099754889,
+      "offlineGuardMs": 0.3512079711072147
+    },
+    {
+      "version": "5.1.23",
+      "result": "Catch",
+      "claimObserved": false,
+      "noContactReject": true,
+      "checkReason": "Observed DB dive has no modeled contact before turf",
+      "checks": 153,
+      "minimumGap": 0.9497565122359966,
+      "offlineGuardMs": 3.583041951060295
+    },
+    {
+      "version": "5.1.23",
+      "result": "Intercepted",
+      "claimObserved": true,
+      "noContactReject": false,
+      "checkReason": "Possible DB contact retained",
+      "checks": 31,
+      "minimumGap": -0.5599297708249047,
+      "offlineGuardMs": 0.6732920301146805
+    },
+    {
+      "version": "5.1.23",
+      "result": "Swatted",
+      "claimObserved": true,
+      "noContactReject": false,
+      "checkReason": "Possible DB contact retained",
+      "checks": 2,
+      "minimumGap": -1.821839879386517,
+      "offlineGuardMs": 0.09241601219400764
+    },
+    {
+      "version": "5.1.23",
+      "result": "Catch",
+      "claimObserved": true,
+      "noContactReject": false,
+      "checkReason": "Possible DB contact retained",
+      "checks": 2,
+      "minimumGap": -1.6992170639258664,
+      "offlineGuardMs": 0.1242909929715097
+    },
+    {
+      "version": "5.1.23",
+      "result": "Swatted",
+      "claimObserved": true,
+      "noContactReject": false,
+      "checkReason": "Possible DB contact retained",
+      "checks": 60,
+      "minimumGap": 0.4020290843308243,
+      "offlineGuardMs": 1.3554589822888374
+    },
+    {
+      "version": "5.1.23",
+      "result": "Swatted",
+      "claimObserved": true,
+      "noContactReject": false,
+      "checkReason": "Possible DB contact retained",
+      "checks": 30,
+      "minimumGap": 0.3082106379356242,
+      "offlineGuardMs": 0.8902080007828772
+    },
+    {
+      "version": "5.1.23",
+      "result": "Swatted",
+      "claimObserved": true,
+      "noContactReject": false,
+      "checkReason": "Possible DB contact retained",
+      "checks": 2,
+      "minimumGap": -0.9810503058751223,
+      "offlineGuardMs": 0.08399999933317304
+    },
+    {
+      "version": "5.1.23",
+      "result": "Intercepted",
+      "claimObserved": true,
+      "noContactReject": false,
+      "checkReason": "Possible DB contact retained",
+      "checks": 2,
+      "minimumGap": -2.6050926463080133,
+      "offlineGuardMs": 0.05891697946935892
+    },
+    {
+      "version": "5.1.23",
+      "result": "Intercepted",
+      "claimObserved": true,
+      "noContactReject": false,
+      "checkReason": "Possible DB contact retained",
+      "checks": 60,
+      "minimumGap": 0.07372959328584283,
+      "offlineGuardMs": 1.310999970883131
+    },
+    {
+      "version": "5.1.23",
+      "result": "Intercepted",
+      "claimObserved": true,
+      "noContactReject": false,
+      "checkReason": "Possible DB contact retained",
+      "checks": 60,
+      "minimumGap": 0.09791855364216229,
+      "offlineGuardMs": 1.3063750229775906
+    },
+    {
+      "version": "5.1.23",
+      "result": "Intercepted",
+      "claimObserved": true,
+      "noContactReject": false,
+      "checkReason": "Possible DB contact retained",
+      "checks": 2,
+      "minimumGap": -2.2399341627849467,
+      "offlineGuardMs": 0.054500007536262274
+    },
+    {
+      "version": "5.1.23",
+      "result": "Intercepted",
+      "claimObserved": true,
+      "noContactReject": false,
+      "checkReason": "Possible DB contact retained",
+      "checks": 14,
+      "minimumGap": 0.3223117237496984,
+      "offlineGuardMs": 0.2720420015975833
+    },
+    {
+      "version": "5.1.23",
+      "result": "Catch",
+      "claimObserved": true,
+      "noContactReject": false,
+      "checkReason": "Possible DB contact retained",
+      "checks": 2,
+      "minimumGap": -0.3012230352800551,
+      "offlineGuardMs": 0.056374992709606886
+    },
+    {
+      "version": "5.1.23",
+      "result": "Intercepted",
+      "claimObserved": true,
+      "noContactReject": false,
+      "checkReason": "Possible DB contact retained",
+      "checks": 30,
+      "minimumGap": 0.1762130696867663,
+      "offlineGuardMs": 0.6845419993624091
+    },
+    {
+      "version": "5.1.23",
+      "result": "Intercepted",
+      "claimObserved": true,
+      "noContactReject": false,
+      "checkReason": "Possible DB contact retained",
+      "checks": 56,
+      "minimumGap": 0.3470061201486998,
+      "offlineGuardMs": 1.3275420060381293
+    },
+    {
+      "version": "5.1.23",
+      "result": "Intercepted",
+      "claimObserved": true,
+      "noContactReject": false,
+      "checkReason": "Possible DB contact retained",
+      "checks": 53,
+      "minimumGap": 0.3860642645474748,
+      "offlineGuardMs": 1.2909579672850668
+    },
+    {
+      "version": "5.1.24",
+      "result": "Intercepted",
+      "claimObserved": true,
+      "noContactReject": false,
+      "checkReason": "Possible DB contact retained",
+      "checks": 2,
+      "minimumGap": -0.20444263804374607,
+      "offlineGuardMs": 0.05774997407570481
+    },
+    {
+      "version": "5.1.24",
+      "result": "Intercepted",
+      "claimObserved": true,
+      "noContactReject": false,
+      "checkReason": "Possible DB contact retained",
+      "checks": 2,
+      "minimumGap": -2.533391800482169,
+      "offlineGuardMs": 0.05020800745114684
+    },
+    {
+      "version": "5.1.24",
+      "result": "Intercepted",
+      "claimObserved": true,
+      "noContactReject": false,
+      "checkReason": "Possible DB contact retained",
+      "checks": 58,
+      "minimumGap": 0.4232873545247564,
+      "offlineGuardMs": 1.229209010489285
+    },
+    {
+      "version": "5.1.24",
+      "result": "Intercepted",
+      "claimObserved": true,
+      "noContactReject": false,
+      "checkReason": "Possible DB contact retained",
+      "checks": 2,
+      "minimumGap": -1.2475479706795376,
+      "offlineGuardMs": 0.05370797589421272
+    },
+    {
+      "version": "5.1.24",
+      "result": "Intercepted",
+      "claimObserved": true,
+      "noContactReject": false,
+      "checkReason": "Possible DB contact retained",
+      "checks": 2,
+      "minimumGap": -0.21218311664063805,
+      "offlineGuardMs": 0.04779204027727246
+    },
+    {
+      "version": "5.1.24",
+      "result": "Intercepted",
+      "claimObserved": true,
+      "noContactReject": false,
+      "checkReason": "Possible DB contact retained",
+      "checks": 14,
+      "minimumGap": 0.43841952538630213,
+      "offlineGuardMs": 0.3504999913275242
+    },
+    {
+      "version": "5.1.24",
+      "result": "Intercepted",
+      "claimObserved": true,
+      "noContactReject": false,
+      "checkReason": "Possible DB contact retained",
+      "checks": 31,
+      "minimumGap": 0.25511460563385757,
+      "offlineGuardMs": 0.71162503445521
+    },
+    {
+      "version": "5.1.24",
+      "result": "Swatted",
+      "claimObserved": true,
+      "noContactReject": false,
+      "checkReason": "Possible DB contact retained",
+      "checks": 55,
+      "minimumGap": 0.25453380256195013,
+      "offlineGuardMs": 1.2248329585418105
+    },
+    {
+      "version": "5.1.24",
+      "result": "Swatted",
+      "claimObserved": true,
+      "noContactReject": false,
+      "checkReason": "Possible DB contact retained",
+      "checks": 57,
+      "minimumGap": 0.26432905295241715,
+      "offlineGuardMs": 1.2997499434277415
+    },
+    {
+      "version": "5.1.24",
+      "result": "Intercepted",
+      "claimObserved": true,
+      "noContactReject": false,
+      "checkReason": "Possible DB contact retained",
+      "checks": 14,
+      "minimumGap": 0.3366769388189681,
+      "offlineGuardMs": 0.2923329593613744
+    },
+    {
+      "version": "5.1.24",
+      "result": "Intercepted",
+      "claimObserved": true,
+      "noContactReject": false,
+      "checkReason": "Possible DB contact retained",
+      "checks": 14,
+      "minimumGap": 0.4707996960360905,
+      "offlineGuardMs": 0.2792080049403012
+    },
+    {
+      "version": "5.1.24",
+      "result": "Intercepted",
+      "claimObserved": true,
+      "noContactReject": false,
+      "checkReason": "Possible DB contact retained",
+      "checks": 2,
+      "minimumGap": -0.7296468239738734,
+      "offlineGuardMs": 0.04758400609716773
+    },
+    {
+      "version": "5.1.24",
+      "result": "Intercepted",
+      "claimObserved": true,
+      "noContactReject": false,
+      "checkReason": "Possible DB contact retained",
+      "checks": 2,
+      "minimumGap": -0.3047024756307648,
+      "offlineGuardMs": 0.050291011575609446
+    },
+    {
+      "version": "5.1.24",
+      "result": "Intercepted",
+      "claimObserved": true,
+      "noContactReject": false,
+      "checkReason": "Possible DB contact retained",
+      "checks": 14,
+      "minimumGap": -0.07232908881204203,
+      "offlineGuardMs": 0.2845840062946081
+    },
+    {
+      "version": "5.1.24",
+      "result": "Intercepted",
+      "claimObserved": true,
+      "noContactReject": false,
+      "checkReason": "Possible DB contact retained",
+      "checks": 40,
+      "minimumGap": 0.2808235871026459,
+      "offlineGuardMs": 0.8599580032750964
+    },
+    {
+      "version": "5.1.24",
+      "result": "Swatted",
+      "claimObserved": true,
+      "noContactReject": false,
+      "checkReason": "Possible DB contact retained",
+      "checks": 43,
+      "minimumGap": 0.330693759439487,
+      "offlineGuardMs": 1.0144590050913393
+    },
+    {
+      "version": "5.1.24",
+      "result": "Intercepted",
+      "claimObserved": true,
+      "noContactReject": false,
+      "checkReason": "Possible DB contact retained",
+      "checks": 2,
+      "minimumGap": -2.298630663033027,
+      "offlineGuardMs": 0.058125006034970284
+    },
+    {
+      "version": "5.1.24",
+      "result": "Intercepted",
+      "claimObserved": true,
+      "noContactReject": false,
+      "checkReason": "Possible DB contact retained",
+      "checks": 2,
+      "minimumGap": -1.7297797075178134,
+      "offlineGuardMs": 0.05216599674895406
+    },
+    {
+      "version": "5.1.24",
+      "result": "Intercepted",
+      "claimObserved": true,
+      "noContactReject": false,
+      "checkReason": "Possible DB contact retained",
+      "checks": 2,
+      "minimumGap": -2.5372183116155274,
+      "offlineGuardMs": 0.04920799983665347
+    },
+    {
+      "version": "5.1.24",
+      "result": "Intercepted",
+      "claimObserved": true,
+      "noContactReject": false,
+      "checkReason": "Possible DB contact retained",
+      "checks": 15,
+      "minimumGap": 0.581789966193794,
+      "offlineGuardMs": 0.39083301089704037
+    },
+    {
+      "version": "5.1.24",
+      "result": "Intercepted",
+      "claimObserved": true,
+      "noContactReject": false,
+      "checkReason": "Possible DB contact retained",
+      "checks": 44,
+      "minimumGap": 0.3951224268167821,
+      "offlineGuardMs": 0.9247499983757734
+    },
+    {
+      "version": "5.1.24",
+      "result": "Intercepted",
+      "claimObserved": true,
+      "noContactReject": false,
+      "checkReason": "Possible DB contact retained",
+      "checks": 2,
+      "minimumGap": -0.023587115197237107,
+      "offlineGuardMs": 0.05345797399058938
+    },
+    {
+      "version": "5.1.24",
+      "result": "Intercepted",
+      "claimObserved": true,
+      "noContactReject": false,
+      "checkReason": "Possible DB contact retained",
+      "checks": 14,
+      "minimumGap": 0.12840124314663548,
+      "offlineGuardMs": 0.2804169780574739
+    },
+    {
+      "version": "5.1.24",
+      "result": "Intercepted",
+      "claimObserved": true,
+      "noContactReject": false,
+      "checkReason": "Possible DB contact retained",
+      "checks": 48,
+      "minimumGap": 0.2851926612217417,
+      "offlineGuardMs": 1.091625017579645
+    },
+    {
+      "version": "5.1.24",
+      "result": "Intercepted",
+      "claimObserved": true,
+      "noContactReject": false,
+      "checkReason": "Possible DB contact retained",
+      "checks": 2,
+      "minimumGap": -0.5423100829696899,
+      "offlineGuardMs": 0.05445798160508275
+    },
+    {
+      "version": "5.1.24",
+      "result": "Intercepted",
+      "claimObserved": true,
+      "noContactReject": false,
+      "checkReason": "Possible DB contact retained",
+      "checks": 16,
+      "minimumGap": 0.531553731877775,
+      "offlineGuardMs": 0.33420900581404567
+    },
+    {
+      "version": "5.1.24",
+      "result": "Swatted",
+      "claimObserved": true,
+      "noContactReject": false,
+      "checkReason": "Possible DB contact retained",
+      "checks": 57,
+      "minimumGap": 0.31944165607017805,
+      "offlineGuardMs": 1.2699579820036888
+    },
+    {
+      "version": "5.1.24",
+      "result": "Intercepted",
+      "claimObserved": true,
+      "noContactReject": false,
+      "checkReason": "Possible DB contact retained",
+      "checks": 2,
+      "minimumGap": -0.6811987518567086,
+      "offlineGuardMs": 0.050499977078288794
+    },
+    {
+      "version": "5.1.24",
+      "result": "Intercepted",
+      "claimObserved": true,
+      "noContactReject": false,
+      "checkReason": "Possible DB contact retained",
+      "checks": 58,
+      "minimumGap": 0.48000578998014376,
+      "offlineGuardMs": 1.2937909923493862
+    }
+  ],
+  "dispatchDifferential": {
+    "beforeControllerGuard": [
+      {
+        "name": "live DB impossible-contact check replans before diving and retains uncertain dives",
+        "passed": false,
+        "error": "[string \"<python>\"]:1014: assertion failed!"
+      },
+      {
+        "name": "native dive guards precede the DB model check and grounded dives remain available",
+        "passed": true,
+        "error": null
+      }
+    ],
+    "integrated": [
+      {
+        "name": "live DB impossible-contact check replans before diving and retains uncertain dives",
+        "passed": true,
+        "error": null
+      },
+      {
+        "name": "native dive guards precede the DB model check and grounded dives remain available",
+        "passed": true,
+        "error": null
+      }
+    ]
+  },
+  "limitations": [
+    "Observed dive-dispatch origin and velocity with recorded plans; native physics and server catch decisions are not simulated.",
+    "The historical wall-clipping callback cannot be reconstructed. The live guard uses the existing callback when available.",
+    "The guard skips remaining flights beyond its bounded horizon and preserves actions on uncertainty or sample-budget exhaustion.",
+    "Rejecting an unreachable dive prevents that wasted commitment; it does not establish that the subsequent replan wins possession."
+  ]
+}
