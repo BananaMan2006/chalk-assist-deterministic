@@ -1,0 +1,269 @@
+{
+  "syntheticOnly": true,
+  "results": {
+    "total": 64,
+    "results": [
+      {
+        "name": "WR times jump and dive for airborne first contact, not early prone arrival",
+        "passed": true
+      },
+      {
+        "name": "unavailable dive retains an airborne jump catch",
+        "passed": true
+      },
+      {
+        "name": "receiving with distance to carry prefers a robust upright jump over an optional dive",
+        "passed": true
+      },
+      {
+        "name": "explicit counter-camping Bullet keeps moving through an airborne catch before goal",
+        "passed": true
+      },
+      {
+        "name": "failed Floater replay chooses a connected first catch instead of bridging a dive-tip gap",
+        "passed": true
+      },
+      {
+        "name": "DB first contact includes the brief upright overlap before a dive tips",
+        "passed": true
+      },
+      {
+        "name": "the earlier WR8 snapshot retains a connected airborne dive",
+        "passed": true
+      },
+      {
+        "name": "fresh jump and dive validators reject a disconnected first claim for WR and DB",
+        "passed": true
+      },
+      {
+        "name": "WR dive starts inside the endzone rather than merely finishing there",
+        "passed": true
+      },
+      {
+        "name": "inside-endzone airborne dives remain available and world translation preserves the boundary",
+        "passed": true
+      },
+      {
+        "name": "missing or nonfinite WR endzone forbids dives while preserving ordinary jump catches",
+        "passed": true
+      },
+      {
+        "name": "actual airborne dive origin must remain inside both goal and provided field bounds",
+        "passed": true
+      },
+      {
+        "name": "scheduled dive delays cannot carry a backward-moving WR outside the endzone",
+        "passed": true
+      },
+      {
+        "name": "WR dive boundary does not change DB earliest interception or dive validation",
+        "passed": true
+      },
+      {
+        "name": "grounded WR Floater paces a continuous airborne contact instead of stopping in midair",
+        "passed": true
+      },
+      {
+        "name": "fresh continuous jump validation keeps scaled movement and rejects a displaced actual root",
+        "passed": true
+      },
+      {
+        "name": "continuous Floater pacing leaves DB Bullet and airborne-start action models unchanged",
+        "passed": true
+      },
+      {
+        "name": "fresh continuous jump rejects a small sideline shift despite valid ball overlap",
+        "passed": true
+      },
+      {
+        "name": "continuous catch preserves explicit zero small and sufficient movement limits",
+        "passed": true
+      },
+      {
+        "name": "endzone Floater rejects a pre-goal first touch despite later in-zone central contact",
+        "passed": true
+      },
+      {
+        "name": "honest in-zone Floater keeps its jump witness and all contact-window samples",
+        "passed": true
+      },
+      {
+        "name": "a delayed dive variant cannot move a nominal endzone catch back outside",
+        "passed": true
+      },
+      {
+        "name": "fresh jump validation rejects the old pre-goal Floater witness",
+        "passed": true
+      },
+      {
+        "name": "fresh airborne dive needs in-zone contact in addition to an in-zone dive start",
+        "passed": true
+      },
+      {
+        "name": "required endzone catch fails closed on missing or invalid goal without changing Bullet or DB",
+        "passed": true
+      },
+      {
+        "name": "earliest Floater reserves real jump dispatch slack instead of a submillisecond frontier",
+        "passed": true
+      },
+      {
+        "name": "DB jumps keep contact margin through a 60 ms takeoff delay and fresh movement",
+        "passed": true
+      },
+      {
+        "name": "larger DB takeoff reserve leaves WR jump and dive timing budgets unchanged",
+        "passed": true
+      },
+      {
+        "name": "DB chooses a later valid contact when 35 ms reserve would miss an overhead ball",
+        "passed": true
+      },
+      {
+        "name": "jump dive witnesses survive separate action delays and preserve takeoff time",
+        "passed": true
+      },
+      {
+        "name": "already airborne dive reserves dive dispatch time without inventing a new jump",
+        "passed": true
+      },
+      {
+        "name": "opponent possible reach is not delayed by the own action timing reserve",
+        "passed": true
+      },
+      {
+        "name": "already grounded overlap has no deliberate catch plan and reports that limitation",
+        "passed": true
+      },
+      {
+        "name": "grounded dive recovery is never called an airborne catch",
+        "passed": true
+      },
+      {
+        "name": "later airborne pose cannot hide contact before the dive",
+        "passed": true
+      },
+      {
+        "name": "dispatch check uses observed current position and rejects changed trajectory",
+        "passed": true
+      },
+      {
+        "name": "dispatch check refuses grounded or shortened native-air reach",
+        "passed": true
+      },
+      {
+        "name": "WR aerial flags leave DB earliest-contact selection unchanged",
+        "passed": true
+      },
+      {
+        "name": "no arc and unreachable pursuit never invent a jump or dive",
+        "passed": true
+      },
+      {
+        "name": "floater takes earlier robust airborne contact instead of later downfield contact",
+        "passed": true
+      },
+      {
+        "name": "late dispatch is rejected instead of chasing a missed airborne contact",
+        "passed": true
+      },
+      {
+        "name": "adaptive first contact finds short grounded bullet overlap before a later jump",
+        "passed": true
+      },
+      {
+        "name": "first-contact sampling budget fails closed",
+        "passed": true
+      },
+      {
+        "name": "slow planning cancels overdue jump and dive before inputs for both roles",
+        "passed": true
+      },
+      {
+        "name": "elapsed contact blocks an action even inside its 75 ms action grace",
+        "passed": true
+      },
+      {
+        "name": "clock delay during pre-jump native checks is caught at actual dispatch",
+        "passed": true
+      },
+      {
+        "name": "clock delay during pre-dive validation is caught at actual dispatch",
+        "passed": true
+      },
+      {
+        "name": "future and timely actions retain their original dispatch behavior",
+        "passed": true
+      },
+      {
+        "name": "live WR dive dispatch uses actual origin instead of stale plan or in-goal contact",
+        "passed": true
+      },
+      {
+        "name": "unconfirmed jump cannot retry or remain held after contact for either role",
+        "passed": true
+      },
+      {
+        "name": "unconfirmed jump beyond action grace cancels even with contact still future",
+        "passed": true
+      },
+      {
+        "name": "unconfirmed retry uses fresh clock instead of old frame time",
+        "passed": true
+      },
+      {
+        "name": "timely pending native request may retry once while contact remains future",
+        "passed": true
+      },
+      {
+        "name": "observed timely takeoff confirms even when confirmation frame comes later",
+        "passed": true
+      },
+      {
+        "name": "fresh jump check accepts timely native contact for both roles",
+        "passed": true
+      },
+      {
+        "name": "50 ms late jump within blanket deadline still fails its real contact geometry",
+        "passed": true
+      },
+      {
+        "name": "late but geometrically valid jump is accepted instead of tightening every deadline",
+        "passed": true
+      },
+      {
+        "name": "fresh jump rejects displaced position or unavailable native jump",
+        "passed": true
+      },
+      {
+        "name": "jump check preserves future dive time and refuses compressed takeoff interval",
+        "passed": true
+      },
+      {
+        "name": "jump validation projects only remaining travel after reaching the target",
+        "passed": true
+      },
+      {
+        "name": "controller exits catch actions outside live ball phase",
+        "passed": true
+      },
+      {
+        "name": "recorded DB floater keeps moving through contact instead of stopping during its jump",
+        "passed": true
+      },
+      {
+        "name": "fresh paced DB jump rejects a shifted remaining path outside the field",
+        "passed": true
+      },
+      {
+        "name": "DB pacing excludes stationary holds bullet arcs dives and optimistic opponent envelopes",
+        "passed": true
+      }
+    ],
+    "passed": 64,
+    "failed": 0
+  },
+  "limitations": [
+    "Authored geometry and mocked controller guards; no native catch or win proof."
+  ]
+}

@@ -1,0 +1,1922 @@
+{
+  "schemaVersion": 1,
+  "scope": "Offline replay of narrow defensive Floater moving-jump pacing, compared with the connectivity-corrected planner before pacing.",
+  "cases": [
+    {
+      "case": 1,
+      "observedNativeOutcome": "Intercepted",
+      "loggedAction": "jumpDive",
+      "base": {
+        "kind": "jumpDive",
+        "contactAt": 0.7668023109436035,
+        "jumpAt": 0.46680235862731934,
+        "diveAt": 0.6368024349212646,
+        "stopAt": 0.6368024349212646,
+        "movementScale": null,
+        "continuousCatch": null,
+        "margin": 0.4016428263514671,
+        "jumpTimingBudget": 0.06,
+        "risk": null,
+        "offlineSolveMs": 81.63349999813363
+      },
+      "candidate": {
+        "kind": "jumpDive",
+        "contactAt": 0.7668023109436035,
+        "jumpAt": 0.46680235862731934,
+        "diveAt": 0.6368024349212646,
+        "stopAt": 0.6368024349212646,
+        "movementScale": null,
+        "continuousCatch": null,
+        "margin": 0.4016428263514671,
+        "jumpTimingBudget": 0.06,
+        "risk": null,
+        "offlineSolveMs": 80.72379103396088
+      }
+    },
+    {
+      "case": 2,
+      "observedNativeOutcome": "Catch",
+      "loggedAction": "jumpDive",
+      "base": {
+        "kind": "jumpDive",
+        "contactAt": 2.874181032180786,
+        "jumpAt": 2.574181079864502,
+        "diveAt": 2.8041810989379883,
+        "stopAt": 2.8041810989379883,
+        "movementScale": null,
+        "continuousCatch": null,
+        "margin": 0.40054457719964853,
+        "jumpTimingBudget": 0.06,
+        "risk": null,
+        "offlineSolveMs": 66.78241700865328
+      },
+      "candidate": {
+        "kind": "jumpDive",
+        "contactAt": 2.874181032180786,
+        "jumpAt": 2.574181079864502,
+        "diveAt": 2.8041810989379883,
+        "stopAt": 2.8041810989379883,
+        "movementScale": null,
+        "continuousCatch": null,
+        "margin": 0.40054457719964853,
+        "jumpTimingBudget": 0.06,
+        "risk": null,
+        "offlineSolveMs": 68.0589170078747
+      }
+    },
+    {
+      "case": 3,
+      "observedNativeOutcome": "Catch",
+      "loggedAction": "dive",
+      "base": {
+        "kind": "dive",
+        "contactAt": 1.0767152309417725,
+        "jumpAt": null,
+        "diveAt": 0.8867151737213135,
+        "stopAt": 0.8867151737213135,
+        "movementScale": null,
+        "continuousCatch": null,
+        "margin": 0.40107113765344726,
+        "jumpTimingBudget": 0,
+        "risk": null,
+        "offlineSolveMs": 45.37391697522253
+      },
+      "candidate": {
+        "kind": "dive",
+        "contactAt": 1.0767152309417725,
+        "jumpAt": null,
+        "diveAt": 0.8867151737213135,
+        "stopAt": 0.8867151737213135,
+        "movementScale": null,
+        "continuousCatch": null,
+        "margin": 0.40107113765344726,
+        "jumpTimingBudget": 0,
+        "risk": null,
+        "offlineSolveMs": 45.50549999112263
+      }
+    },
+    {
+      "case": 4,
+      "observedNativeOutcome": "Intercepted",
+      "loggedAction": "jumpDive",
+      "base": {
+        "kind": "jumpDive",
+        "contactAt": 0.7914474010467529,
+        "jumpAt": 0.41144752502441406,
+        "diveAt": 0.5414474010467529,
+        "stopAt": 0.5414474010467529,
+        "movementScale": null,
+        "continuousCatch": null,
+        "margin": 0.4054547931349326,
+        "jumpTimingBudget": 0.06,
+        "risk": null,
+        "offlineSolveMs": 69.87987499451265
+      },
+      "candidate": {
+        "kind": "jumpDive",
+        "contactAt": 0.7914474010467529,
+        "jumpAt": 0.41144752502441406,
+        "diveAt": 0.5414474010467529,
+        "stopAt": 0.5414474010467529,
+        "movementScale": null,
+        "continuousCatch": null,
+        "margin": 0.4054547931349326,
+        "jumpTimingBudget": 0.06,
+        "risk": null,
+        "offlineSolveMs": 71.90729101421311
+      }
+    },
+    {
+      "case": 5,
+      "observedNativeOutcome": "Catch",
+      "loggedAction": "jump",
+      "base": {
+        "kind": "jump",
+        "contactAt": 2.8727264404296875,
+        "jumpAt": 2.572726249694824,
+        "diveAt": null,
+        "stopAt": 2.869232177734375,
+        "movementScale": null,
+        "continuousCatch": null,
+        "margin": 0.4031624192128702,
+        "jumpTimingBudget": 0.06,
+        "risk": null,
+        "offlineSolveMs": 11.275333003140986
+      },
+      "candidate": {
+        "kind": "jump",
+        "contactAt": 2.872452974319458,
+        "jumpAt": 2.572453022003174,
+        "diveAt": null,
+        "stopAt": 2.9524528980255127,
+        "movementScale": 0.9910567826665395,
+        "continuousCatch": true,
+        "margin": 0.40042301906551847,
+        "jumpTimingBudget": 0.06,
+        "risk": null,
+        "offlineSolveMs": 9.9149159505032
+      }
+    },
+    {
+      "case": 6,
+      "observedNativeOutcome": "Intercepted",
+      "loggedAction": "jumpDive",
+      "base": {
+        "kind": "jumpDive",
+        "contactAt": 0.6231341361999512,
+        "jumpAt": 0.323134183883667,
+        "diveAt": 0.4931340217590332,
+        "stopAt": 0.4931340217590332,
+        "movementScale": null,
+        "continuousCatch": null,
+        "margin": 0.4012927068836576,
+        "jumpTimingBudget": 0.06,
+        "risk": null,
+        "offlineSolveMs": 92.65337500255555
+      },
+      "candidate": {
+        "kind": "jumpDive",
+        "contactAt": 0.6231341361999512,
+        "jumpAt": 0.323134183883667,
+        "diveAt": 0.4931340217590332,
+        "stopAt": 0.4931340217590332,
+        "movementScale": null,
+        "continuousCatch": null,
+        "margin": 0.4012927068836576,
+        "jumpTimingBudget": 0.06,
+        "risk": null,
+        "offlineSolveMs": 92.25370903732255
+      }
+    },
+    {
+      "case": 7,
+      "observedNativeOutcome": "Catch",
+      "loggedAction": "jump",
+      "base": {
+        "kind": "jump",
+        "contactAt": 2.8739066123962402,
+        "jumpAt": 2.573906660079956,
+        "diveAt": null,
+        "stopAt": 2.2950475215911865,
+        "movementScale": null,
+        "continuousCatch": null,
+        "margin": 0.40001692641732056,
+        "jumpTimingBudget": 0.06,
+        "risk": null,
+        "offlineSolveMs": 8.580541994888335
+      },
+      "candidate": {
+        "kind": "jump",
+        "contactAt": 2.8739066123962402,
+        "jumpAt": 2.573906660079956,
+        "diveAt": null,
+        "stopAt": 2.2950475215911865,
+        "movementScale": null,
+        "continuousCatch": null,
+        "margin": 0.40001692641732056,
+        "jumpTimingBudget": 0.06,
+        "risk": null,
+        "offlineSolveMs": 8.068917028140277
+      }
+    },
+    {
+      "case": 8,
+      "observedNativeOutcome": "Swatted",
+      "loggedAction": "jumpDive",
+      "base": {
+        "kind": "jumpDive",
+        "contactAt": 0.9479379653930664,
+        "jumpAt": 0.48793792724609375,
+        "diveAt": 0.6979379653930664,
+        "stopAt": 0.6979379653930664,
+        "movementScale": null,
+        "continuousCatch": null,
+        "margin": 0.40160244657962574,
+        "jumpTimingBudget": 0.06,
+        "risk": null,
+        "offlineSolveMs": 71.03674998506904
+      },
+      "candidate": {
+        "kind": "jumpDive",
+        "contactAt": 0.9479379653930664,
+        "jumpAt": 0.48793792724609375,
+        "diveAt": 0.6979379653930664,
+        "stopAt": 0.6979379653930664,
+        "movementScale": null,
+        "continuousCatch": null,
+        "margin": 0.40160244657962574,
+        "jumpTimingBudget": 0.06,
+        "risk": null,
+        "offlineSolveMs": 70.7878340035677
+      }
+    },
+    {
+      "case": 9,
+      "observedNativeOutcome": "Intercepted",
+      "loggedAction": "jumpDive",
+      "base": {
+        "kind": "jumpDive",
+        "contactAt": 0.8427150249481201,
+        "jumpAt": 0.6127150058746338,
+        "diveAt": 0.7727150917053223,
+        "stopAt": 0.7727150917053223,
+        "movementScale": null,
+        "continuousCatch": null,
+        "margin": 0.4015397469312303,
+        "jumpTimingBudget": 0.06,
+        "risk": null,
+        "offlineSolveMs": 61.14395899930969
+      },
+      "candidate": {
+        "kind": "jumpDive",
+        "contactAt": 0.8427150249481201,
+        "jumpAt": 0.6127150058746338,
+        "diveAt": 0.7727150917053223,
+        "stopAt": 0.7727150917053223,
+        "movementScale": null,
+        "continuousCatch": null,
+        "margin": 0.4015397469312303,
+        "jumpTimingBudget": 0.06,
+        "risk": null,
+        "offlineSolveMs": 61.33337499340996
+      }
+    },
+    {
+      "case": 10,
+      "observedNativeOutcome": "Swatted",
+      "loggedAction": "jumpDive",
+      "base": {
+        "kind": "jumpDive",
+        "contactAt": 2.978147029876709,
+        "jumpAt": 2.598146915435791,
+        "diveAt": 2.6981470584869385,
+        "stopAt": 2.6981470584869385,
+        "movementScale": null,
+        "continuousCatch": null,
+        "margin": 0.09819625607330718,
+        "jumpTimingBudget": 0.035,
+        "risk": "last-resort",
+        "offlineSolveMs": 247.38162499852479
+      },
+      "candidate": {
+        "kind": "jumpDive",
+        "contactAt": 2.978147029876709,
+        "jumpAt": 2.598146915435791,
+        "diveAt": 2.6981470584869385,
+        "stopAt": 2.6981470584869385,
+        "movementScale": null,
+        "continuousCatch": null,
+        "margin": 0.09819625607330718,
+        "jumpTimingBudget": 0.035,
+        "risk": "last-resort",
+        "offlineSolveMs": 249.09391603432596
+      }
+    },
+    {
+      "case": 11,
+      "observedNativeOutcome": "Catch",
+      "loggedAction": "jumpDive",
+      "base": {
+        "kind": "jumpDive",
+        "contactAt": 2.9484410285949707,
+        "jumpAt": 2.6484408378601074,
+        "diveAt": 2.8184409141540527,
+        "stopAt": 2.8184409141540527,
+        "movementScale": null,
+        "continuousCatch": null,
+        "margin": 0.20371846154687745,
+        "jumpTimingBudget": 0.035,
+        "risk": "last-resort",
+        "offlineSolveMs": 211.5027090185322
+      },
+      "candidate": {
+        "kind": "jumpDive",
+        "contactAt": 2.9484410285949707,
+        "jumpAt": 2.6484408378601074,
+        "diveAt": 2.8184409141540527,
+        "stopAt": 2.8184409141540527,
+        "movementScale": null,
+        "continuousCatch": null,
+        "margin": 0.20371846154687745,
+        "jumpTimingBudget": 0.035,
+        "risk": "last-resort",
+        "offlineSolveMs": 211.60733298165724
+      }
+    },
+    {
+      "case": 12,
+      "observedNativeOutcome": "Intercepted",
+      "loggedAction": "jump",
+      "base": {
+        "kind": "jump",
+        "contactAt": 2.8734166622161865,
+        "jumpAt": 2.5734167098999023,
+        "diveAt": null,
+        "stopAt": 2.4153826236724854,
+        "movementScale": null,
+        "continuousCatch": null,
+        "margin": 0.4021197008863453,
+        "jumpTimingBudget": 0.06,
+        "risk": null,
+        "offlineSolveMs": 18.380999972578138
+      },
+      "candidate": {
+        "kind": "jump",
+        "contactAt": 2.8734166622161865,
+        "jumpAt": 2.5734167098999023,
+        "diveAt": null,
+        "stopAt": 2.4153826236724854,
+        "movementScale": null,
+        "continuousCatch": null,
+        "margin": 0.4021197008863453,
+        "jumpTimingBudget": 0.06,
+        "risk": null,
+        "offlineSolveMs": 17.676167015451938
+      }
+    },
+    {
+      "case": 13,
+      "observedNativeOutcome": "Intercepted",
+      "loggedAction": "jumpDive",
+      "base": {
+        "kind": "jumpDive",
+        "contactAt": 0.7245426177978516,
+        "jumpAt": 0.4245426654815674,
+        "diveAt": 0.5945425033569336,
+        "stopAt": 0.5945425033569336,
+        "movementScale": null,
+        "continuousCatch": null,
+        "margin": 0.405866177840811,
+        "jumpTimingBudget": 0.06,
+        "risk": null,
+        "offlineSolveMs": 51.91545799607411
+      },
+      "candidate": {
+        "kind": "jumpDive",
+        "contactAt": 0.7245426177978516,
+        "jumpAt": 0.4245426654815674,
+        "diveAt": 0.5945425033569336,
+        "stopAt": 0.5945425033569336,
+        "movementScale": null,
+        "continuousCatch": null,
+        "margin": 0.405866177840811,
+        "jumpTimingBudget": 0.06,
+        "risk": null,
+        "offlineSolveMs": 50.81212497316301
+      }
+    },
+    {
+      "case": 14,
+      "observedNativeOutcome": "Intercepted",
+      "loggedAction": "jump",
+      "base": {
+        "kind": "jump",
+        "contactAt": 2.87351131439209,
+        "jumpAt": 2.5735113620758057,
+        "diveAt": null,
+        "stopAt": 2.330867290496826,
+        "movementScale": null,
+        "continuousCatch": null,
+        "margin": 0.40154733095431583,
+        "jumpTimingBudget": 0.06,
+        "risk": null,
+        "offlineSolveMs": 17.794290964957327
+      },
+      "candidate": {
+        "kind": "jump",
+        "contactAt": 2.87351131439209,
+        "jumpAt": 2.5735113620758057,
+        "diveAt": null,
+        "stopAt": 2.330867290496826,
+        "movementScale": null,
+        "continuousCatch": null,
+        "margin": 0.40154733095431583,
+        "jumpTimingBudget": 0.06,
+        "risk": null,
+        "offlineSolveMs": 17.276625032536685
+      }
+    },
+    {
+      "case": 15,
+      "observedNativeOutcome": "Intercepted",
+      "loggedAction": "jumpDive",
+      "base": {
+        "kind": "jumpDive",
+        "contactAt": 0.4899165630340576,
+        "jumpAt": 0.2599165439605713,
+        "diveAt": 0.41991662979125977,
+        "stopAt": 0.41991662979125977,
+        "movementScale": null,
+        "continuousCatch": null,
+        "margin": 0.40484118188299645,
+        "jumpTimingBudget": 0.06,
+        "risk": null,
+        "offlineSolveMs": 40.5612500035204
+      },
+      "candidate": {
+        "kind": "jumpDive",
+        "contactAt": 0.4899165630340576,
+        "jumpAt": 0.2599165439605713,
+        "diveAt": 0.41991662979125977,
+        "stopAt": 0.41991662979125977,
+        "movementScale": null,
+        "continuousCatch": null,
+        "margin": 0.40484118188299645,
+        "jumpTimingBudget": 0.06,
+        "risk": null,
+        "offlineSolveMs": 40.253749990370125
+      }
+    },
+    {
+      "case": 16,
+      "observedNativeOutcome": "Intercepted",
+      "loggedAction": "jumpDive",
+      "base": {
+        "kind": "jumpDive",
+        "contactAt": 0.6746830940246582,
+        "jumpAt": 0.4446830749511719,
+        "diveAt": 0.6046831607818604,
+        "stopAt": 0.6046831607818604,
+        "movementScale": null,
+        "continuousCatch": null,
+        "margin": 0.4076121714328411,
+        "jumpTimingBudget": 0.06,
+        "risk": null,
+        "offlineSolveMs": 74.97620896901935
+      },
+      "candidate": {
+        "kind": "jumpDive",
+        "contactAt": 0.6746830940246582,
+        "jumpAt": 0.4446830749511719,
+        "diveAt": 0.6046831607818604,
+        "stopAt": 0.6046831607818604,
+        "movementScale": null,
+        "continuousCatch": null,
+        "margin": 0.4076121714328411,
+        "jumpTimingBudget": 0.06,
+        "risk": null,
+        "offlineSolveMs": 75.29687497299165
+      }
+    },
+    {
+      "case": 17,
+      "observedNativeOutcome": "Intercepted",
+      "loggedAction": "jump",
+      "base": {
+        "kind": "jump",
+        "contactAt": 2.8733065128326416,
+        "jumpAt": 2.5733065605163574,
+        "diveAt": null,
+        "stopAt": 2.1390597820281982,
+        "movementScale": null,
+        "continuousCatch": null,
+        "margin": 0.40194045277840074,
+        "jumpTimingBudget": 0.06,
+        "risk": null,
+        "offlineSolveMs": 14.053416962269694
+      },
+      "candidate": {
+        "kind": "jump",
+        "contactAt": 2.8733065128326416,
+        "jumpAt": 2.5733065605163574,
+        "diveAt": null,
+        "stopAt": 2.1390597820281982,
+        "movementScale": null,
+        "continuousCatch": null,
+        "margin": 0.40194045277840074,
+        "jumpTimingBudget": 0.06,
+        "risk": null,
+        "offlineSolveMs": 14.322541013825685
+      }
+    },
+    {
+      "case": 18,
+      "observedNativeOutcome": "Incomplete",
+      "loggedAction": "jumpDive",
+      "base": {
+        "kind": "jumpDive",
+        "contactAt": 0.9418919086456299,
+        "jumpAt": 0.4818918704986572,
+        "diveAt": 0.6918919086456299,
+        "stopAt": 0.6918919086456299,
+        "movementScale": null,
+        "continuousCatch": null,
+        "margin": 0.07003792097479078,
+        "jumpTimingBudget": 0.035,
+        "risk": "last-resort",
+        "offlineSolveMs": 186.34229101007804
+      },
+      "candidate": {
+        "kind": "jumpDive",
+        "contactAt": 0.9418919086456299,
+        "jumpAt": 0.4818918704986572,
+        "diveAt": 0.6918919086456299,
+        "stopAt": 0.6918919086456299,
+        "movementScale": null,
+        "continuousCatch": null,
+        "margin": 0.07003792097479078,
+        "jumpTimingBudget": 0.035,
+        "risk": "last-resort",
+        "offlineSolveMs": 184.25562500488013
+      }
+    },
+    {
+      "case": 19,
+      "observedNativeOutcome": "Intercepted",
+      "loggedAction": "jumpDive",
+      "base": {
+        "kind": "jumpDive",
+        "contactAt": 0.8887982368469238,
+        "jumpAt": 0.4287984371185303,
+        "diveAt": 0.698798418045044,
+        "stopAt": 0.698798418045044,
+        "movementScale": null,
+        "continuousCatch": null,
+        "margin": 0.4016512830580954,
+        "jumpTimingBudget": 0.06,
+        "risk": null,
+        "offlineSolveMs": 109.28283300017938
+      },
+      "candidate": {
+        "kind": "jumpDive",
+        "contactAt": 0.8887982368469238,
+        "jumpAt": 0.4287984371185303,
+        "diveAt": 0.698798418045044,
+        "stopAt": 0.698798418045044,
+        "movementScale": null,
+        "continuousCatch": null,
+        "margin": 0.4016512830580954,
+        "jumpTimingBudget": 0.06,
+        "risk": null,
+        "offlineSolveMs": 110.45350000495091
+      }
+    },
+    {
+      "case": 20,
+      "observedNativeOutcome": "Intercepted",
+      "loggedAction": "jump",
+      "base": {
+        "kind": "jump",
+        "contactAt": 2.8738882541656494,
+        "jumpAt": 2.5738883018493652,
+        "diveAt": null,
+        "stopAt": 2.5705723762512207,
+        "movementScale": null,
+        "continuousCatch": null,
+        "margin": 0.4017311078510035,
+        "jumpTimingBudget": 0.06,
+        "risk": null,
+        "offlineSolveMs": 16.562792006880045
+      },
+      "candidate": {
+        "kind": "jump",
+        "contactAt": 2.880997657775879,
+        "jumpAt": 2.5809977054595947,
+        "diveAt": null,
+        "stopAt": 2.9609975814819336,
+        "movementScale": 0.4501963294258047,
+        "continuousCatch": true,
+        "margin": 0.7565816944517514,
+        "jumpTimingBudget": 0.06,
+        "risk": null,
+        "offlineSolveMs": 20.966125011909753
+      }
+    },
+    {
+      "case": 21,
+      "observedNativeOutcome": "Intercepted",
+      "loggedAction": "jumpDive",
+      "base": {
+        "kind": "jumpDive",
+        "contactAt": 0.7240045070648193,
+        "jumpAt": 0.494004487991333,
+        "diveAt": 0.6540045738220215,
+        "stopAt": 0.6540045738220215,
+        "movementScale": null,
+        "continuousCatch": null,
+        "margin": 0.4078603924448738,
+        "jumpTimingBudget": 0.06,
+        "risk": null,
+        "offlineSolveMs": 72.27408397011459
+      },
+      "candidate": {
+        "kind": "jumpDive",
+        "contactAt": 0.7240045070648193,
+        "jumpAt": 0.494004487991333,
+        "diveAt": 0.6540045738220215,
+        "stopAt": 0.6540045738220215,
+        "movementScale": null,
+        "continuousCatch": null,
+        "margin": 0.4078603924448738,
+        "jumpTimingBudget": 0.06,
+        "risk": null,
+        "offlineSolveMs": 71.42137497430667
+      }
+    },
+    {
+      "case": 22,
+      "observedNativeOutcome": "Intercepted",
+      "loggedAction": "jump",
+      "base": {
+        "kind": "jump",
+        "contactAt": 2.8723459243774414,
+        "jumpAt": 2.572345733642578,
+        "diveAt": null,
+        "stopAt": 2.8957083225250244,
+        "movementScale": null,
+        "continuousCatch": null,
+        "margin": 0.4011778874871643,
+        "jumpTimingBudget": 0.06,
+        "risk": null,
+        "offlineSolveMs": 20.38191701285541
+      },
+      "candidate": {
+        "kind": "jump",
+        "contactAt": 2.8723459243774414,
+        "jumpAt": 2.572345733642578,
+        "diveAt": null,
+        "stopAt": 2.8957083225250244,
+        "movementScale": null,
+        "continuousCatch": null,
+        "margin": 0.4011778874871643,
+        "jumpTimingBudget": 0.06,
+        "risk": null,
+        "offlineSolveMs": 20.651625003665686
+      }
+    },
+    {
+      "case": 23,
+      "observedNativeOutcome": "Intercepted",
+      "loggedAction": "jump",
+      "base": {
+        "kind": "jump",
+        "contactAt": 2.8729782104492188,
+        "jumpAt": 2.5729780197143555,
+        "diveAt": null,
+        "stopAt": 2.602415084838867,
+        "movementScale": null,
+        "continuousCatch": null,
+        "margin": 0.40257488777211226,
+        "jumpTimingBudget": 0.06,
+        "risk": null,
+        "offlineSolveMs": 18.217540986370295
+      },
+      "candidate": {
+        "kind": "jump",
+        "contactAt": 2.872567892074585,
+        "jumpAt": 2.572567939758301,
+        "diveAt": null,
+        "stopAt": 2.9525678157806396,
+        "movementScale": 0.4587226003951926,
+        "continuousCatch": true,
+        "margin": 0.4004763023784199,
+        "jumpTimingBudget": 0.06,
+        "risk": null,
+        "offlineSolveMs": 18.477541976608336
+      }
+    },
+    {
+      "case": 24,
+      "observedNativeOutcome": "Intercepted",
+      "loggedAction": "jumpDive",
+      "base": {
+        "kind": "jumpDive",
+        "contactAt": 0.6054060459136963,
+        "jumpAt": 0.3054060935974121,
+        "diveAt": 0.4754061698913574,
+        "stopAt": 0.4754061698913574,
+        "movementScale": null,
+        "continuousCatch": null,
+        "margin": 0.40176213631809654,
+        "jumpTimingBudget": 0.06,
+        "risk": null,
+        "offlineSolveMs": 70.44441602192819
+      },
+      "candidate": {
+        "kind": "jumpDive",
+        "contactAt": 0.6054060459136963,
+        "jumpAt": 0.3054060935974121,
+        "diveAt": 0.4754061698913574,
+        "stopAt": 0.4754061698913574,
+        "movementScale": null,
+        "continuousCatch": null,
+        "margin": 0.40176213631809654,
+        "jumpTimingBudget": 0.06,
+        "risk": null,
+        "offlineSolveMs": 68.86599998688325
+      }
+    },
+    {
+      "case": 25,
+      "observedNativeOutcome": "Swatted",
+      "loggedAction": "jump",
+      "base": {
+        "kind": "jump",
+        "contactAt": 2.8736300468444824,
+        "jumpAt": 2.5736300945281982,
+        "diveAt": null,
+        "stopAt": 2.7197158336639404,
+        "movementScale": null,
+        "continuousCatch": null,
+        "margin": 0.4012394130444803,
+        "jumpTimingBudget": 0.06,
+        "risk": null,
+        "offlineSolveMs": 14.298875001259148
+      },
+      "candidate": {
+        "kind": "jump",
+        "contactAt": 2.872809648513794,
+        "jumpAt": 2.5728096961975098,
+        "diveAt": null,
+        "stopAt": 2.9528095722198486,
+        "movementScale": 0.705594904724085,
+        "continuousCatch": true,
+        "margin": 0.40005734672668103,
+        "jumpTimingBudget": 0.06,
+        "risk": null,
+        "offlineSolveMs": 14.552375010680407
+      }
+    },
+    {
+      "case": 26,
+      "observedNativeOutcome": "Intercepted",
+      "loggedAction": "jumpDive",
+      "base": {
+        "kind": "jumpDive",
+        "contactAt": 0.9706850051879883,
+        "jumpAt": 0.4806849956512451,
+        "diveAt": 0.7506849765777588,
+        "stopAt": 0.7506849765777588,
+        "movementScale": null,
+        "continuousCatch": null,
+        "margin": 0.05780137831491183,
+        "jumpTimingBudget": 0.035,
+        "risk": "last-resort",
+        "offlineSolveMs": 186.27125001512468
+      },
+      "candidate": {
+        "kind": "jumpDive",
+        "contactAt": 0.9706850051879883,
+        "jumpAt": 0.4806849956512451,
+        "diveAt": 0.7506849765777588,
+        "stopAt": 0.7506849765777588,
+        "movementScale": null,
+        "continuousCatch": null,
+        "margin": 0.05780137831491183,
+        "jumpTimingBudget": 0.035,
+        "risk": "last-resort",
+        "offlineSolveMs": 184.35304204467684
+      }
+    },
+    {
+      "case": 27,
+      "observedNativeOutcome": "Intercepted",
+      "loggedAction": "jumpDive",
+      "base": {
+        "kind": "jumpDive",
+        "contactAt": 0.7783188819885254,
+        "jumpAt": 0.4469320774078369,
+        "diveAt": 0.5883188247680664,
+        "stopAt": 0.5883188247680664,
+        "movementScale": null,
+        "continuousCatch": null,
+        "margin": 0.40295071104059677,
+        "jumpTimingBudget": 0.06,
+        "risk": null,
+        "offlineSolveMs": 82.85091700963676
+      },
+      "candidate": {
+        "kind": "jumpDive",
+        "contactAt": 0.7783188819885254,
+        "jumpAt": 0.4469320774078369,
+        "diveAt": 0.5883188247680664,
+        "stopAt": 0.5883188247680664,
+        "movementScale": null,
+        "continuousCatch": null,
+        "margin": 0.40295071104059677,
+        "jumpTimingBudget": 0.06,
+        "risk": null,
+        "offlineSolveMs": 81.8057080032304
+      }
+    },
+    {
+      "case": 28,
+      "observedNativeOutcome": "Intercepted",
+      "loggedAction": "jumpDive",
+      "base": {
+        "kind": "jumpDive",
+        "contactAt": 0.6285250186920166,
+        "jumpAt": 0.3985249996185303,
+        "diveAt": 0.5585250854492188,
+        "stopAt": 0.5585250854492188,
+        "movementScale": null,
+        "continuousCatch": null,
+        "margin": 0.4017391565352426,
+        "jumpTimingBudget": 0.06,
+        "risk": null,
+        "offlineSolveMs": 57.86916700890288
+      },
+      "candidate": {
+        "kind": "jumpDive",
+        "contactAt": 0.6285250186920166,
+        "jumpAt": 0.3985249996185303,
+        "diveAt": 0.5585250854492188,
+        "stopAt": 0.5585250854492188,
+        "movementScale": null,
+        "continuousCatch": null,
+        "margin": 0.4017391565352426,
+        "jumpTimingBudget": 0.06,
+        "risk": null,
+        "offlineSolveMs": 57.89562501013279
+      }
+    },
+    {
+      "case": 29,
+      "observedNativeOutcome": "Intercepted",
+      "loggedAction": "jump",
+      "base": {
+        "kind": "jump",
+        "contactAt": 2.8735013008117676,
+        "jumpAt": 2.5735013484954834,
+        "diveAt": null,
+        "stopAt": 2.567592144012451,
+        "movementScale": null,
+        "continuousCatch": null,
+        "margin": 0.4000738802844759,
+        "jumpTimingBudget": 0.06,
+        "risk": null,
+        "offlineSolveMs": 16.61391695961356
+      },
+      "candidate": {
+        "kind": "jump",
+        "contactAt": 2.8735013008117676,
+        "jumpAt": 2.5735013484954834,
+        "diveAt": null,
+        "stopAt": 2.567592144012451,
+        "movementScale": null,
+        "continuousCatch": null,
+        "margin": 0.4000738802844759,
+        "jumpTimingBudget": 0.06,
+        "risk": null,
+        "offlineSolveMs": 15.83775004837662
+      }
+    },
+    {
+      "case": 30,
+      "observedNativeOutcome": "Intercepted",
+      "loggedAction": "jumpDive",
+      "base": {
+        "kind": "jumpDive",
+        "contactAt": 0.7361040115356445,
+        "jumpAt": 0.35610389709472656,
+        "diveAt": 0.48610401153564453,
+        "stopAt": 0.48610401153564453,
+        "movementScale": null,
+        "continuousCatch": null,
+        "margin": 0.4009444867792378,
+        "jumpTimingBudget": 0.06,
+        "risk": null,
+        "offlineSolveMs": 76.38375001261011
+      },
+      "candidate": {
+        "kind": "jumpDive",
+        "contactAt": 0.7361040115356445,
+        "jumpAt": 0.35610389709472656,
+        "diveAt": 0.48610401153564453,
+        "stopAt": 0.48610401153564453,
+        "movementScale": null,
+        "continuousCatch": null,
+        "margin": 0.4009444867792378,
+        "jumpTimingBudget": 0.06,
+        "risk": null,
+        "offlineSolveMs": 75.03912498941645
+      }
+    },
+    {
+      "case": 31,
+      "observedNativeOutcome": "Intercepted",
+      "loggedAction": "jumpDive",
+      "base": {
+        "kind": "jumpDive",
+        "contactAt": 0.8136892318725586,
+        "jumpAt": 0.4336891174316406,
+        "diveAt": 0.5636892318725586,
+        "stopAt": 0.5636892318725586,
+        "movementScale": null,
+        "continuousCatch": null,
+        "margin": 0.4001673604947573,
+        "jumpTimingBudget": 0.06,
+        "risk": null,
+        "offlineSolveMs": 92.85870898747817
+      },
+      "candidate": {
+        "kind": "jumpDive",
+        "contactAt": 0.8136892318725586,
+        "jumpAt": 0.4336891174316406,
+        "diveAt": 0.5636892318725586,
+        "stopAt": 0.5636892318725586,
+        "movementScale": null,
+        "continuousCatch": null,
+        "margin": 0.4001673604947573,
+        "jumpTimingBudget": 0.06,
+        "risk": null,
+        "offlineSolveMs": 92.46466599870473
+      }
+    },
+    {
+      "case": 32,
+      "observedNativeOutcome": "Intercepted",
+      "loggedAction": "jumpDive",
+      "base": {
+        "kind": "jumpDive",
+        "contactAt": 0.6930665969848633,
+        "jumpAt": 0.3930666446685791,
+        "diveAt": 0.5630667209625244,
+        "stopAt": 0.5630667209625244,
+        "movementScale": null,
+        "continuousCatch": null,
+        "margin": 0.4036244670662126,
+        "jumpTimingBudget": 0.06,
+        "risk": null,
+        "offlineSolveMs": 63.23658302426338
+      },
+      "candidate": {
+        "kind": "jumpDive",
+        "contactAt": 0.6930665969848633,
+        "jumpAt": 0.3930666446685791,
+        "diveAt": 0.5630667209625244,
+        "stopAt": 0.5630667209625244,
+        "movementScale": null,
+        "continuousCatch": null,
+        "margin": 0.4036244670662126,
+        "jumpTimingBudget": 0.06,
+        "risk": null,
+        "offlineSolveMs": 62.996082997415215
+      }
+    },
+    {
+      "case": 33,
+      "observedNativeOutcome": "Intercepted",
+      "loggedAction": "jumpDive",
+      "base": {
+        "kind": "jumpDive",
+        "contactAt": 0.5161705017089844,
+        "jumpAt": 0.28617048263549805,
+        "diveAt": 0.4461703300476074,
+        "stopAt": 0.4461703300476074,
+        "movementScale": null,
+        "continuousCatch": null,
+        "margin": 0.40380026443158323,
+        "jumpTimingBudget": 0.06,
+        "risk": null,
+        "offlineSolveMs": 43.44741703243926
+      },
+      "candidate": {
+        "kind": "jumpDive",
+        "contactAt": 0.5161705017089844,
+        "jumpAt": 0.28617048263549805,
+        "diveAt": 0.4461703300476074,
+        "stopAt": 0.4461703300476074,
+        "movementScale": null,
+        "continuousCatch": null,
+        "margin": 0.40380026443158323,
+        "jumpTimingBudget": 0.06,
+        "risk": null,
+        "offlineSolveMs": 42.99725004239008
+      }
+    },
+    {
+      "case": 34,
+      "observedNativeOutcome": "Intercepted",
+      "loggedAction": "jumpDive",
+      "base": {
+        "kind": "jumpDive",
+        "contactAt": 0.7542209625244141,
+        "jumpAt": 0.3742210865020752,
+        "diveAt": 0.5042209625244141,
+        "stopAt": 0.5042209625244141,
+        "movementScale": null,
+        "continuousCatch": null,
+        "margin": 0.40248468905248336,
+        "jumpTimingBudget": 0.06,
+        "risk": null,
+        "offlineSolveMs": 69.00404195766896
+      },
+      "candidate": {
+        "kind": "jumpDive",
+        "contactAt": 0.7542209625244141,
+        "jumpAt": 0.3742210865020752,
+        "diveAt": 0.5042209625244141,
+        "stopAt": 0.5042209625244141,
+        "movementScale": null,
+        "continuousCatch": null,
+        "margin": 0.40248468905248336,
+        "jumpTimingBudget": 0.06,
+        "risk": null,
+        "offlineSolveMs": 68.51000001188368
+      }
+    },
+    {
+      "case": 35,
+      "observedNativeOutcome": "Intercepted",
+      "loggedAction": "jumpDive",
+      "base": {
+        "kind": "jumpDive",
+        "contactAt": 0.7221193313598633,
+        "jumpAt": 0.3421192169189453,
+        "diveAt": 0.4721193313598633,
+        "stopAt": 0.4721193313598633,
+        "movementScale": null,
+        "continuousCatch": null,
+        "margin": 0.40070248082077864,
+        "jumpTimingBudget": 0.06,
+        "risk": null,
+        "offlineSolveMs": 59.95608400553465
+      },
+      "candidate": {
+        "kind": "jumpDive",
+        "contactAt": 0.7221193313598633,
+        "jumpAt": 0.3421192169189453,
+        "diveAt": 0.4721193313598633,
+        "stopAt": 0.4721193313598633,
+        "movementScale": null,
+        "continuousCatch": null,
+        "margin": 0.40070248082077864,
+        "jumpTimingBudget": 0.06,
+        "risk": null,
+        "offlineSolveMs": 61.090458009857684
+      }
+    },
+    {
+      "case": 36,
+      "observedNativeOutcome": "Intercepted",
+      "loggedAction": "jumpDive",
+      "base": {
+        "kind": "jumpDive",
+        "contactAt": 0.5521345138549805,
+        "jumpAt": 0.32213449478149414,
+        "diveAt": 0.4821345806121826,
+        "stopAt": 0.4821345806121826,
+        "movementScale": null,
+        "continuousCatch": null,
+        "margin": 0.4052701102959535,
+        "jumpTimingBudget": 0.06,
+        "risk": null,
+        "offlineSolveMs": 46.63620796054602
+      },
+      "candidate": {
+        "kind": "jumpDive",
+        "contactAt": 0.5521345138549805,
+        "jumpAt": 0.32213449478149414,
+        "diveAt": 0.4821345806121826,
+        "stopAt": 0.4821345806121826,
+        "movementScale": null,
+        "continuousCatch": null,
+        "margin": 0.4052701102959535,
+        "jumpTimingBudget": 0.06,
+        "risk": null,
+        "offlineSolveMs": 46.83579195989296
+      }
+    },
+    {
+      "case": 37,
+      "observedNativeOutcome": "Intercepted",
+      "loggedAction": "jump",
+      "base": {
+        "kind": "jump",
+        "contactAt": 2.8726425170898438,
+        "jumpAt": 2.5726425647735596,
+        "diveAt": null,
+        "stopAt": 2.0578322410583496,
+        "movementScale": null,
+        "continuousCatch": null,
+        "margin": 0.4027258501818731,
+        "jumpTimingBudget": 0.06,
+        "risk": null,
+        "offlineSolveMs": 20.358834008220583
+      },
+      "candidate": {
+        "kind": "jump",
+        "contactAt": 2.8726425170898438,
+        "jumpAt": 2.5726425647735596,
+        "diveAt": null,
+        "stopAt": 2.0578322410583496,
+        "movementScale": null,
+        "continuousCatch": null,
+        "margin": 0.4027258501818731,
+        "jumpTimingBudget": 0.06,
+        "risk": null,
+        "offlineSolveMs": 20.059791044332087
+      }
+    },
+    {
+      "case": 38,
+      "observedNativeOutcome": "Intercepted",
+      "loggedAction": "jump",
+      "base": {
+        "kind": "jump",
+        "contactAt": 0.7541513442993164,
+        "jumpAt": 0.6725401878356934,
+        "diveAt": null,
+        "stopAt": 0.7579350471496582,
+        "movementScale": null,
+        "continuousCatch": null,
+        "margin": 0.40381357101346316,
+        "jumpTimingBudget": 0.06,
+        "risk": null,
+        "offlineSolveMs": 1.7994589870795608
+      },
+      "candidate": {
+        "kind": "jump",
+        "contactAt": 0.7541513442993164,
+        "jumpAt": 0.6725401878356934,
+        "diveAt": null,
+        "stopAt": 0.7579350471496582,
+        "movementScale": null,
+        "continuousCatch": null,
+        "margin": 0.40381357101346316,
+        "jumpTimingBudget": 0.06,
+        "risk": null,
+        "offlineSolveMs": 1.8286670092493296
+      }
+    },
+    {
+      "case": 39,
+      "observedNativeOutcome": "Catch",
+      "loggedAction": "jumpDive",
+      "base": {
+        "kind": "jumpDive",
+        "contactAt": 0.8245770931243896,
+        "jumpAt": 0.4454071521759033,
+        "diveAt": 0.5745770931243896,
+        "stopAt": 0.5745770931243896,
+        "movementScale": null,
+        "continuousCatch": null,
+        "margin": 0.4008712412322679,
+        "jumpTimingBudget": 0.06,
+        "risk": null,
+        "offlineSolveMs": 58.115041989367455
+      },
+      "candidate": {
+        "kind": "jumpDive",
+        "contactAt": 0.8245770931243896,
+        "jumpAt": 0.4454071521759033,
+        "diveAt": 0.5745770931243896,
+        "stopAt": 0.5745770931243896,
+        "movementScale": null,
+        "continuousCatch": null,
+        "margin": 0.4008712412322679,
+        "jumpTimingBudget": 0.06,
+        "risk": null,
+        "offlineSolveMs": 57.741958007682115
+      }
+    },
+    {
+      "case": 40,
+      "observedNativeOutcome": "Intercepted",
+      "loggedAction": "jumpDive",
+      "base": {
+        "kind": "jumpDive",
+        "contactAt": 0.615715742111206,
+        "jumpAt": 0.3387429714202881,
+        "diveAt": 0.4857156276702881,
+        "stopAt": 0.4857156276702881,
+        "movementScale": null,
+        "continuousCatch": null,
+        "margin": 0.40160185977408336,
+        "jumpTimingBudget": 0.06,
+        "risk": null,
+        "offlineSolveMs": 48.772916954476386
+      },
+      "candidate": {
+        "kind": "jumpDive",
+        "contactAt": 0.615715742111206,
+        "jumpAt": 0.3387429714202881,
+        "diveAt": 0.4857156276702881,
+        "stopAt": 0.4857156276702881,
+        "movementScale": null,
+        "continuousCatch": null,
+        "margin": 0.40160185977408336,
+        "jumpTimingBudget": 0.06,
+        "risk": null,
+        "offlineSolveMs": 48.19649999262765
+      }
+    },
+    {
+      "case": 41,
+      "observedNativeOutcome": "Catch",
+      "loggedAction": "jump",
+      "base": {
+        "kind": "jump",
+        "contactAt": 2.8739521503448486,
+        "jumpAt": 2.5739521980285645,
+        "diveAt": null,
+        "stopAt": 2.816596746444702,
+        "movementScale": null,
+        "continuousCatch": null,
+        "margin": 0.4019779096923646,
+        "jumpTimingBudget": 0.06,
+        "risk": null,
+        "offlineSolveMs": 15.800833003595471
+      },
+      "candidate": {
+        "kind": "jump",
+        "contactAt": 2.872995138168335,
+        "jumpAt": 2.572995185852051,
+        "diveAt": null,
+        "stopAt": 2.9529950618743896,
+        "movementScale": 0.9031046209735819,
+        "continuousCatch": true,
+        "margin": 0.40177909643149023,
+        "jumpTimingBudget": 0.06,
+        "risk": null,
+        "offlineSolveMs": 16.639709006994963
+      }
+    },
+    {
+      "case": 42,
+      "observedNativeOutcome": "Swatted",
+      "loggedAction": "jump",
+      "base": {
+        "kind": "jump",
+        "contactAt": 2.8734500408172607,
+        "jumpAt": 2.5734500885009766,
+        "diveAt": null,
+        "stopAt": 2.640270471572876,
+        "movementScale": null,
+        "continuousCatch": null,
+        "margin": 0.4006076147665887,
+        "jumpTimingBudget": 0.06,
+        "risk": null,
+        "offlineSolveMs": 12.484834005590528
+      },
+      "candidate": {
+        "kind": "jump",
+        "contactAt": 2.873039722442627,
+        "jumpAt": 2.5730397701263428,
+        "diveAt": null,
+        "stopAt": 2.9530396461486816,
+        "movementScale": 0.551176440138947,
+        "continuousCatch": true,
+        "margin": 0.4015579175956612,
+        "jumpTimingBudget": 0.06,
+        "risk": null,
+        "offlineSolveMs": 13.000708015169948
+      }
+    },
+    {
+      "case": 43,
+      "observedNativeOutcome": "Catch",
+      "loggedAction": "jump",
+      "base": {
+        "kind": "jump",
+        "contactAt": 2.8739025592803955,
+        "jumpAt": 2.5739026069641113,
+        "diveAt": null,
+        "stopAt": 2.5759620666503906,
+        "movementScale": null,
+        "continuousCatch": null,
+        "margin": 0.4013032673283101,
+        "jumpTimingBudget": 0.06,
+        "risk": null,
+        "offlineSolveMs": 10.107042035087943
+      },
+      "candidate": {
+        "kind": "jump",
+        "contactAt": 2.8870959281921387,
+        "jumpAt": 2.6570959091186523,
+        "diveAt": null,
+        "stopAt": 2.6058199405670166,
+        "movementScale": null,
+        "continuousCatch": null,
+        "margin": 0.4001360702318051,
+        "jumpTimingBudget": 0.06,
+        "risk": null,
+        "offlineSolveMs": 14.535832975525409
+      }
+    },
+    {
+      "case": 44,
+      "observedNativeOutcome": "Catch",
+      "loggedAction": "jump",
+      "base": {
+        "kind": "jump",
+        "contactAt": 2.8735814094543457,
+        "jumpAt": 2.5735814571380615,
+        "diveAt": null,
+        "stopAt": 2.6597979068756104,
+        "movementScale": null,
+        "continuousCatch": null,
+        "margin": 0.4005813816828616,
+        "jumpTimingBudget": 0.06,
+        "risk": null,
+        "offlineSolveMs": 19.900874991435558
+      },
+      "candidate": {
+        "kind": "jump",
+        "contactAt": 2.873102903366089,
+        "jumpAt": 2.5731029510498047,
+        "diveAt": null,
+        "stopAt": 2.9531028270721436,
+        "movementScale": 0.5061150641358542,
+        "continuousCatch": true,
+        "margin": 0.40229914631555896,
+        "jumpTimingBudget": 0.06,
+        "risk": null,
+        "offlineSolveMs": 15.594791970215738
+      }
+    },
+    {
+      "case": 45,
+      "observedNativeOutcome": "Catch",
+      "loggedAction": "jump",
+      "base": {
+        "kind": "jump",
+        "contactAt": 2.8732125759124756,
+        "jumpAt": 2.5732126235961914,
+        "diveAt": null,
+        "stopAt": 2.110999822616577,
+        "movementScale": null,
+        "continuousCatch": null,
+        "margin": 0.40278727494213706,
+        "jumpTimingBudget": 0.06,
+        "risk": null,
+        "offlineSolveMs": 12.50570802949369
+      },
+      "candidate": {
+        "kind": "jump",
+        "contactAt": 2.8732125759124756,
+        "jumpAt": 2.5732126235961914,
+        "diveAt": null,
+        "stopAt": 2.110999822616577,
+        "movementScale": null,
+        "continuousCatch": null,
+        "margin": 0.40278727494213706,
+        "jumpTimingBudget": 0.06,
+        "risk": null,
+        "offlineSolveMs": 12.484624981880188
+      }
+    },
+    {
+      "case": 46,
+      "observedNativeOutcome": "Swatted",
+      "loggedAction": "jump",
+      "base": {
+        "kind": "jump",
+        "contactAt": 2.8867406845092773,
+        "jumpAt": 2.658566951751709,
+        "diveAt": null,
+        "stopAt": 2.748152494430542,
+        "movementScale": null,
+        "continuousCatch": null,
+        "margin": 0.4021082533184126,
+        "jumpTimingBudget": 0.06,
+        "risk": null,
+        "offlineSolveMs": 5.423584021627903
+      },
+      "candidate": {
+        "kind": "jump",
+        "contactAt": 2.9026684761047363,
+        "jumpAt": 2.658566951751709,
+        "diveAt": null,
+        "stopAt": 2.982668399810791,
+        "movementScale": 0.45000808675831844,
+        "continuousCatch": true,
+        "margin": 1.4236148536353057,
+        "jumpTimingBudget": 0.06,
+        "risk": null,
+        "offlineSolveMs": 5.308332969434559
+      }
+    },
+    {
+      "case": 47,
+      "observedNativeOutcome": "Catch",
+      "loggedAction": "jumpDive",
+      "base": null,
+      "candidate": null
+    },
+    {
+      "case": 48,
+      "observedNativeOutcome": "Swatted",
+      "loggedAction": "jumpDive",
+      "base": {
+        "kind": "jumpDive",
+        "contactAt": 0.9568297863006592,
+        "jumpAt": 0.4968297481536865,
+        "diveAt": 0.7068297863006592,
+        "stopAt": 0.7068297863006592,
+        "movementScale": null,
+        "continuousCatch": null,
+        "margin": 0.08234071448006253,
+        "jumpTimingBudget": 0.035,
+        "risk": "last-resort",
+        "offlineSolveMs": 175.4011659650132
+      },
+      "candidate": {
+        "kind": "jumpDive",
+        "contactAt": 0.9568297863006592,
+        "jumpAt": 0.4968297481536865,
+        "diveAt": 0.7068297863006592,
+        "stopAt": 0.7068297863006592,
+        "movementScale": null,
+        "continuousCatch": null,
+        "margin": 0.08234071448006253,
+        "jumpTimingBudget": 0.035,
+        "risk": "last-resort",
+        "offlineSolveMs": 177.40570905152708
+      }
+    },
+    {
+      "case": 49,
+      "observedNativeOutcome": "Swatted",
+      "loggedAction": "jumpDive",
+      "base": {
+        "kind": "jumpDive",
+        "contactAt": 2.9800539016723633,
+        "jumpAt": 2.6000540256500244,
+        "diveAt": 2.7300539016723633,
+        "stopAt": 2.7300539016723633,
+        "movementScale": null,
+        "continuousCatch": null,
+        "margin": 0.18732680843318095,
+        "jumpTimingBudget": 0.035,
+        "risk": "last-resort",
+        "offlineSolveMs": 236.94991698721424
+      },
+      "candidate": {
+        "kind": "jumpDive",
+        "contactAt": 2.9800539016723633,
+        "jumpAt": 2.6000540256500244,
+        "diveAt": 2.7300539016723633,
+        "stopAt": 2.7300539016723633,
+        "movementScale": null,
+        "continuousCatch": null,
+        "margin": 0.18732680843318095,
+        "jumpTimingBudget": 0.035,
+        "risk": "last-resort",
+        "offlineSolveMs": 234.92237500613555
+      }
+    },
+    {
+      "case": 50,
+      "observedNativeOutcome": "Swatted",
+      "loggedAction": "jumpDive",
+      "base": {
+        "kind": "jumpDive",
+        "contactAt": 2.9755680561065674,
+        "jumpAt": 2.5955679416656494,
+        "diveAt": 2.8455679416656494,
+        "stopAt": 2.8455679416656494,
+        "movementScale": null,
+        "continuousCatch": null,
+        "margin": 0.4626584916828973,
+        "jumpTimingBudget": 0.06,
+        "risk": null,
+        "offlineSolveMs": 95.04762501455843
+      },
+      "candidate": {
+        "kind": "jumpDive",
+        "contactAt": 2.9755680561065674,
+        "jumpAt": 2.5955679416656494,
+        "diveAt": 2.8455679416656494,
+        "stopAt": 2.8455679416656494,
+        "movementScale": null,
+        "continuousCatch": null,
+        "margin": 0.4626584916828973,
+        "jumpTimingBudget": 0.06,
+        "risk": null,
+        "offlineSolveMs": 95.05520900711417
+      }
+    },
+    {
+      "case": 51,
+      "observedNativeOutcome": "Catch",
+      "loggedAction": "jump",
+      "base": {
+        "kind": "jump",
+        "contactAt": 2.873533010482788,
+        "jumpAt": 2.573533058166504,
+        "diveAt": null,
+        "stopAt": 2.523618698120117,
+        "movementScale": null,
+        "continuousCatch": null,
+        "margin": 0.4020556345849129,
+        "jumpTimingBudget": 0.06,
+        "risk": null,
+        "offlineSolveMs": 24.159541993867606
+      },
+      "candidate": {
+        "kind": "jump",
+        "contactAt": 2.873533010482788,
+        "jumpAt": 2.573533058166504,
+        "diveAt": null,
+        "stopAt": 2.523618698120117,
+        "movementScale": null,
+        "continuousCatch": null,
+        "margin": 0.4020556345849129,
+        "jumpTimingBudget": 0.06,
+        "risk": null,
+        "offlineSolveMs": 24.024332989938557
+      }
+    },
+    {
+      "case": 52,
+      "observedNativeOutcome": "Swatted",
+      "loggedAction": "dive",
+      "base": {
+        "kind": "dive",
+        "contactAt": 1.0868048667907715,
+        "jumpAt": null,
+        "diveAt": 0.8368048667907715,
+        "stopAt": 0.8368048667907715,
+        "movementScale": null,
+        "continuousCatch": null,
+        "margin": 0.40105863503597305,
+        "jumpTimingBudget": 0,
+        "risk": null,
+        "offlineSolveMs": 44.94066699407995
+      },
+      "candidate": {
+        "kind": "dive",
+        "contactAt": 1.0868048667907715,
+        "jumpAt": null,
+        "diveAt": 0.8368048667907715,
+        "stopAt": 0.8368048667907715,
+        "movementScale": null,
+        "continuousCatch": null,
+        "margin": 0.40105863503597305,
+        "jumpTimingBudget": 0,
+        "risk": null,
+        "offlineSolveMs": 45.09687499376014
+      }
+    },
+    {
+      "case": 53,
+      "observedNativeOutcome": "Intercepted",
+      "loggedAction": "jumpDive",
+      "base": {
+        "kind": "jumpDive",
+        "contactAt": 2.882288932800293,
+        "jumpAt": 2.582288980484009,
+        "diveAt": 2.812288999557495,
+        "stopAt": 2.812288999557495,
+        "movementScale": null,
+        "continuousCatch": null,
+        "margin": 0.4011331821219959,
+        "jumpTimingBudget": 0.06,
+        "risk": null,
+        "offlineSolveMs": 44.757665949873626
+      },
+      "candidate": {
+        "kind": "jumpDive",
+        "contactAt": 2.882288932800293,
+        "jumpAt": 2.582288980484009,
+        "diveAt": 2.812288999557495,
+        "stopAt": 2.812288999557495,
+        "movementScale": null,
+        "continuousCatch": null,
+        "margin": 0.4011331821219959,
+        "jumpTimingBudget": 0.06,
+        "risk": null,
+        "offlineSolveMs": 43.841500009875745
+      }
+    },
+    {
+      "case": 54,
+      "observedNativeOutcome": "Intercepted",
+      "loggedAction": "jump",
+      "base": {
+        "kind": "jump",
+        "contactAt": 2.874008893966675,
+        "jumpAt": 2.5740089416503906,
+        "diveAt": null,
+        "stopAt": 2.589555025100708,
+        "movementScale": null,
+        "continuousCatch": null,
+        "margin": 0.4017167012511673,
+        "jumpTimingBudget": 0.06,
+        "risk": null,
+        "offlineSolveMs": 16.022375028114766
+      },
+      "candidate": {
+        "kind": "jump",
+        "contactAt": 2.8733253479003906,
+        "jumpAt": 2.5733253955841064,
+        "diveAt": null,
+        "stopAt": 2.9533252716064453,
+        "movementScale": 0.6179095363523963,
+        "continuousCatch": true,
+        "margin": 0.40031298994928477,
+        "jumpTimingBudget": 0.06,
+        "risk": null,
+        "offlineSolveMs": 17.722916963975877
+      }
+    },
+    {
+      "case": 55,
+      "observedNativeOutcome": "Intercepted",
+      "loggedAction": "jumpDive",
+      "base": {
+        "kind": "jumpDive",
+        "contactAt": 0.8512856960296631,
+        "jumpAt": 0.4712855815887451,
+        "diveAt": 0.6012856960296631,
+        "stopAt": 0.6012856960296631,
+        "movementScale": null,
+        "continuousCatch": null,
+        "margin": 0.4003125997411896,
+        "jumpTimingBudget": 0.06,
+        "risk": null,
+        "offlineSolveMs": 85.5800419813022
+      },
+      "candidate": {
+        "kind": "jumpDive",
+        "contactAt": 0.8512856960296631,
+        "jumpAt": 0.4712855815887451,
+        "diveAt": 0.6012856960296631,
+        "stopAt": 0.6012856960296631,
+        "movementScale": null,
+        "continuousCatch": null,
+        "margin": 0.4003125997411896,
+        "jumpTimingBudget": 0.06,
+        "risk": null,
+        "offlineSolveMs": 85.53612499963492
+      }
+    },
+    {
+      "case": 56,
+      "observedNativeOutcome": "Intercepted",
+      "loggedAction": "jump",
+      "base": {
+        "kind": "jump",
+        "contactAt": 2.8737072944641113,
+        "jumpAt": 2.573707342147827,
+        "diveAt": null,
+        "stopAt": 2.1058359146118164,
+        "movementScale": null,
+        "continuousCatch": null,
+        "margin": 0.4001535489020549,
+        "jumpTimingBudget": 0.06,
+        "risk": null,
+        "offlineSolveMs": 5.916458030696958
+      },
+      "candidate": {
+        "kind": "jump",
+        "contactAt": 2.8737072944641113,
+        "jumpAt": 2.573707342147827,
+        "diveAt": null,
+        "stopAt": 2.1058359146118164,
+        "movementScale": null,
+        "continuousCatch": null,
+        "margin": 0.4001535489020549,
+        "jumpTimingBudget": 0.06,
+        "risk": null,
+        "offlineSolveMs": 5.902250006329268
+      }
+    },
+    {
+      "case": 57,
+      "observedNativeOutcome": "Intercepted",
+      "loggedAction": "jumpDive",
+      "base": {
+        "kind": "jumpDive",
+        "contactAt": 0.8451313972473145,
+        "jumpAt": 0.4651312828063965,
+        "diveAt": 0.5951313972473145,
+        "stopAt": 0.5951313972473145,
+        "movementScale": null,
+        "continuousCatch": null,
+        "margin": 0.4030072999821108,
+        "jumpTimingBudget": 0.06,
+        "risk": null,
+        "offlineSolveMs": 72.60245899669826
+      },
+      "candidate": {
+        "kind": "jumpDive",
+        "contactAt": 0.8451313972473145,
+        "jumpAt": 0.4651312828063965,
+        "diveAt": 0.5951313972473145,
+        "stopAt": 0.5951313972473145,
+        "movementScale": null,
+        "continuousCatch": null,
+        "margin": 0.4030072999821108,
+        "jumpTimingBudget": 0.06,
+        "risk": null,
+        "offlineSolveMs": 72.29879195801914
+      }
+    },
+    {
+      "case": 58,
+      "observedNativeOutcome": "Catch",
+      "loggedAction": "jump",
+      "base": {
+        "kind": "jump",
+        "contactAt": 2.8737478256225586,
+        "jumpAt": 2.5737476348876953,
+        "diveAt": null,
+        "stopAt": 2.760441303253174,
+        "movementScale": null,
+        "continuousCatch": null,
+        "margin": 0.4000479130324357,
+        "jumpTimingBudget": 0.06,
+        "risk": null,
+        "offlineSolveMs": 20.020625030156225
+      },
+      "candidate": {
+        "kind": "jump",
+        "contactAt": 2.87292742729187,
+        "jumpAt": 2.572927474975586,
+        "diveAt": null,
+        "stopAt": 2.952927350997925,
+        "movementScale": 0.7719054836772044,
+        "continuousCatch": true,
+        "margin": 0.40066700554667367,
+        "jumpTimingBudget": 0.06,
+        "risk": null,
+        "offlineSolveMs": 20.54583397693932
+      }
+    },
+    {
+      "case": 59,
+      "observedNativeOutcome": "Intercepted",
+      "loggedAction": "jumpDive",
+      "base": {
+        "kind": "jumpDive",
+        "contactAt": 0.6386079788208008,
+        "jumpAt": 0.37011194229125977,
+        "diveAt": 0.5086081027984619,
+        "stopAt": 0.5086081027984619,
+        "movementScale": null,
+        "continuousCatch": null,
+        "margin": 0.4083924045567331,
+        "jumpTimingBudget": 0.06,
+        "risk": null,
+        "offlineSolveMs": 43.82991703459993
+      },
+      "candidate": {
+        "kind": "jumpDive",
+        "contactAt": 0.6386079788208008,
+        "jumpAt": 0.37011194229125977,
+        "diveAt": 0.5086081027984619,
+        "stopAt": 0.5086081027984619,
+        "movementScale": null,
+        "continuousCatch": null,
+        "margin": 0.4083924045567331,
+        "jumpTimingBudget": 0.06,
+        "risk": null,
+        "offlineSolveMs": 44.421125028748065
+      }
+    },
+    {
+      "case": 60,
+      "observedNativeOutcome": "Intercepted",
+      "loggedAction": "jumpDive",
+      "base": {
+        "kind": "jumpDive",
+        "contactAt": 0.6023006439208984,
+        "jumpAt": 0.3723006248474121,
+        "diveAt": 0.5323004722595215,
+        "stopAt": 0.5323004722595215,
+        "movementScale": null,
+        "continuousCatch": null,
+        "margin": 0.4045606906506225,
+        "jumpTimingBudget": 0.06,
+        "risk": null,
+        "offlineSolveMs": 63.1049579824321
+      },
+      "candidate": {
+        "kind": "jumpDive",
+        "contactAt": 0.6023006439208984,
+        "jumpAt": 0.3723006248474121,
+        "diveAt": 0.5323004722595215,
+        "stopAt": 0.5323004722595215,
+        "movementScale": null,
+        "continuousCatch": null,
+        "margin": 0.4045606906506225,
+        "jumpTimingBudget": 0.06,
+        "risk": null,
+        "offlineSolveMs": 62.63362499885261
+      }
+    },
+    {
+      "case": 61,
+      "observedNativeOutcome": "Catch",
+      "loggedAction": "jumpDive",
+      "base": {
+        "kind": "jumpDive",
+        "contactAt": 0.5486116409301758,
+        "jumpAt": 0.31861162185668945,
+        "diveAt": 0.47861170768737793,
+        "stopAt": 0.47861170768737793,
+        "movementScale": null,
+        "continuousCatch": null,
+        "margin": 0.40190236130031787,
+        "jumpTimingBudget": 0.06,
+        "risk": null,
+        "offlineSolveMs": 67.63895798940212
+      },
+      "candidate": {
+        "kind": "jumpDive",
+        "contactAt": 0.5486116409301758,
+        "jumpAt": 0.31861162185668945,
+        "diveAt": 0.47861170768737793,
+        "stopAt": 0.47861170768737793,
+        "movementScale": null,
+        "continuousCatch": null,
+        "margin": 0.40190236130031787,
+        "jumpTimingBudget": 0.06,
+        "risk": null,
+        "offlineSolveMs": 67.52808298915625
+      }
+    }
+  ],
+  "limitations": [
+    "Snapshot solves are offline double precision, not native physics, steering, or guaranteed wins.",
+    "Current candidate includes the separately reviewed first-contact connectivity work.",
+    "No production files were edited by this prototype."
+  ],
+  "regressions": {
+    "beforeDBpacing": {
+      "passed": 1,
+      "failed": 2,
+      "cases": [
+        {
+          "name": "recorded DB floater keeps moving through contact instead of stopping during its jump",
+          "passed": false,
+          "error": "[string \"<python>\"]:901: assertion failed!"
+        },
+        {
+          "name": "fresh paced DB jump rejects a shifted remaining path outside the field",
+          "passed": false,
+          "error": "[string \"<python>\"]:917: Observed jump contact remains reachable"
+        },
+        {
+          "name": "DB pacing excludes stationary holds bullet arcs dives and optimistic opponent envelopes",
+          "passed": true,
+          "error": null
+        }
+      ]
+    },
+    "integrated": {
+      "passed": 3,
+      "failed": 0,
+      "cases": [
+        {
+          "name": "recorded DB floater keeps moving through contact instead of stopping during its jump",
+          "passed": true,
+          "error": null
+        },
+        {
+          "name": "fresh paced DB jump rejects a shifted remaining path outside the field",
+          "passed": true,
+          "error": null
+        },
+        {
+          "name": "DB pacing excludes stationary holds bullet arcs dives and optimistic opponent envelopes",
+          "passed": true,
+          "error": null
+        }
+      ]
+    }
+  }
+}

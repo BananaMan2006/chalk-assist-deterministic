@@ -1,0 +1,89 @@
+{
+  "schemaVersion": 1,
+  "candidateVersion": "5.1.24",
+  "syntheticOnly": true,
+  "issue": "An early upright dive overlap could disappear during tipping before the later robust contact window, although the native client could already have sent its first claim.",
+  "changes": [
+    "First-touch sampling includes both sides of the analytic upright-to-tipped capsule boundary and adapts for DB dives.",
+    "A bounded 6ms/128-sample scan requires the first overlap to connect to the selected contact window. Nominal, dispatch-delay variants, and fresh jump/dive validation retain this check.",
+    "DB connection scans run only when a candidate can improve the existing action score. Opponent possible-reach predictions remain optimistic."
+  ],
+  "evidence": [
+    {
+      "episode": 8,
+      "role": "WR",
+      "gapMs": 62,
+      "minimumGapMarginStuds": -1.959,
+      "lastSnapshotAlternative": false,
+      "earlierSnapshotAlternative": true,
+      "earlierSnapshotAfterLaunch": 2.19874882698059
+    },
+    {
+      "episode": 33,
+      "role": "WR",
+      "gapMs": 64,
+      "minimumGapMarginStuds": -3.2821,
+      "jumpDispatchLatenessMs": 12.6224,
+      "diveDispatchLatenessMs": 2.6221,
+      "diveOriginErrorStuds": 0.27848,
+      "lastSnapshotAlternative": true,
+      "candidateFirstTouchAfterLaunch": 3.0136170387268066,
+      "candidateContactAfterLaunch": 3.0438759326934814
+    }
+  ],
+  "regressions": {
+    "focusedBefore": {
+      "passed": 0,
+      "total": 4
+    },
+    "focusedCandidate": {
+      "passed": 4,
+      "total": 4
+    },
+    "airborneBeforeSeparateDBPacingIntegration": {
+      "passed": 61,
+      "total": 61
+    },
+    "coreAfterDBPacingIntegration": {
+      "passed": 119,
+      "total": 119
+    },
+    "routeSuiteBeforeDBPacingIntegration": {
+      "passed": 90,
+      "total": 90
+    }
+  },
+  "matchedControls": {
+    "WR": {
+      "snapshots": 6,
+      "oldAvailable": 6,
+      "candidateAvailable": 5,
+      "successfulNativeControls": 4,
+      "successfulControlsWithCandidate": 4,
+      "oldMedianSolveMs": 90.23287499439903,
+      "candidateMedianSolveMs": 160.74462496908382,
+      "candidateMaxSolveMs": 328.7332920008339,
+      "normalToRisky": 0,
+      "unchangedActionAndContact": 1
+    },
+    "DB": {
+      "snapshots": 34,
+      "oldAvailable": 34,
+      "candidateAvailable": 34,
+      "successfulNativeControls": 29,
+      "successfulControlsWithCandidate": 29,
+      "oldMedianSolveMs": 39.9931040010415,
+      "candidateMedianSolveMs": 68.59239647747017,
+      "candidateMaxSolveMs": 251.10912503441796,
+      "normalToRisky": 3,
+      "unchangedActionAndContact": 30
+    }
+  },
+  "performanceScope": "Single offline runs of the connection change before the separately validated DB continuous-jump integration. Concurrent host workloads affect timing. These are not Roblox frame-time measurements or a guarantee of a sub200ms live solve.",
+  "limitations": [
+    "Contact/ball positions are predictions from logged throw data; server-side rejection reasons are not available.",
+    "Some successful native catches also had disconnected nominal windows, so the gap is a robustness defect, not proof that it caused every failure.",
+    "A sampled connection check is not a mathematical continuous-collision or network guarantee.",
+    "No native extracted source, player identities, or credentials included."
+  ]
+}

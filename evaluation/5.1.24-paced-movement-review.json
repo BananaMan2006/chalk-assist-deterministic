@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 1,
+  "finding": "Avoidance applied the walking speed ratio twice when a direction vector already encoded a lower requested speed during native sprint.",
+  "example": {
+    "nativeSpeed": 27,
+    "requestedPhysicalSpeed": 20,
+    "inputMagnitude": 0.7407407407407407,
+    "oldClearReturnPhysicalSpeed": 14.814814814814815,
+    "correctedClearReturnPhysicalSpeed": 20
+  },
+  "validation": {
+    "oldAgainstCurrentAvoidanceTests": {
+      "passed": 56,
+      "total": 57
+    },
+    "newAgainstCurrentAvoidanceTests": {
+      "passed": 57,
+      "total": 57
+    },
+    "controllerIntegration": {
+      "passed": 39,
+      "total": 39
+    }
+  },
+  "scope": [
+    "Cap nativeSpeed \u00d7 requestedStrength at ordinary running speed once.",
+    "Candidate and actual bounded-heading checks use the same physical speed.",
+    "Never increase the requested vector magnitude or enable unrequested sprint.",
+    "Crossing bodies, field limits and unsafe turn fractions still restrict movement."
+  ],
+  "limits": [
+    "A clear-return execution regression, not proof that a logged failed catch becomes successful.",
+    "Native speed changes and reactive opponents are not simulated by isolated Lua tests."
+  ]
+}
