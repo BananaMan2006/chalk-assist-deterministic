@@ -139,6 +139,62 @@ return function(Policy,create,routeSource,Planner)
             assert(angle>=40 and angle<=115)
         end
     end)
+    local function narrowRouteFixture(cycle)
+        -- Numeric geometry from the inset-route regression, independent of
+        -- player identity. Native and authored route contracts both shorten
+        -- the deepest requested sideline leg under the ink budget.
+        local f={MinX=-30.2121302485466,MaxX=67.99998158216476,MidX=18.893925666809082,
+            BackZ=-44.012135207653046,LOSZ=-19.459107249975204,GoalZ=103.30604553222656,
+            EndZ=152.4120985865593,YD=4.910605591535568,TurfY=1.63686865568161}
+        local e=setmetatable({script={Parent={Config="config",Field="field"}},
+            require=function(module)
+                assert(module=="config" or module=="field")
+                return module=="config" and Config or f
+            end},{__index=_G})
+        local routeMath=assert(load(routeSource,"wide route regression","t",e))()
+        local p=input({LOS=f.LOSZ,stamina=75,routeCycle=cycle or 0,
+            position=Vector3.new(18.894983291625977,4.636867523193359,-20.977327346801758),
+            opponentPosition=Vector3.new(18.882123947143555,4.636789321899414,20.03057861328125),
+            opponentVelocity=Vector3.zero})
+        return p,f,routeMath
+    end
+    test("deep inset route does not hide a funded sideline airborne catch",function()
+        for _,cycle in ipairs({0,1}) do
+            local p,f,routeMath=narrowRouteFixture(cycle)
+            local c=assert(Policy.chooseScheduledRoute(p,Config,f,routeMath,Planner))
+            local side=c.side
+            local targetInset=side<0 and c.plan.Target.X-f.MinX or f.MaxX-c.plan.Target.X
+            assert(targetInset<=Config.RouteEdgeMargin+.1,"deeper inset route ended the width search")
+            assert(c.catchSidelineInset<=1.5*f.YD and c.targetSidelineInset<=f.YD)
+            assert(c.stemYards>=(f.GoalZ-f.LOSZ)/f.YD*.65,"wider route cut too early")
+            assert(c.reachable and c.finishReachable and c.estimatedCatchInsideGoal and c.requireAirborne)
+            assert(c.finalSprintStamina>=10 and c.estimatedContactMargin>=.6)
+            assert(c.estimatedStopAt>=c.estimatedFirstTouchAt and c.estimatedCatchZ>=f.GoalZ)
+            assert(c.forecastCount<=50,"bounded sideline search expanded excessively")
+            local points=c.payload.Points
+            assert(c.sanitizedEndpointX==points[#points].X and c.ballTargetX==c.plan.Target.X)
+            assert(c.estimatedCatchX>=f.MinX+.5 and c.estimatedCatchX<=f.MaxX-.5)
+            assert(c.side==(cycle==0 and -1 or 1),"width preference erased available mirrored side")
+        end
+    end)
+    test("unfunded wider catch preserves the existing reachable inset fallback",function()
+        local p,f,routeMath=narrowRouteFixture(0)
+        local function wide(s) return math.abs(s.arc.P1.X-f.MidX)>(f.MaxX-f.MinX)*.46 end
+        local constrained={pose=Planner.pose}
+        constrained.solve=function(s)
+            if wide(s) then return nil,"fixture rejects wider contact" end
+            return Planner.solve(s)
+        end
+        constrained.forecastStem=function(s,...)
+            if wide(s) then return nil,"fixture rejects wider handoff" end
+            return Planner.forecastStem(s,...)
+        end
+        local c=assert(Policy.chooseScheduledRoute(p,Config,f,routeMath,constrained))
+        assert(c.reachable and c.finishReachable and not c.bestEffort,"rejected width erased funded fallback")
+        local inset=c.side<0 and c.plan.Target.X-f.MinX or f.MaxX-c.plan.Target.X
+        assert(inset>Config.RouteEdgeMargin+.1)
+        assert(c.requireAirborne and c.estimatedCatchInsideGoal and c.finalSprintStamina>=10)
+    end)
     test("post-throw stem survives native sanitation and has a funded jump witness",function()
         local c=choose(input({position=Vector3.new(0,3,-2)}))
         assert(c.postThrowStem and c.cutAt>c.plan.Launch)

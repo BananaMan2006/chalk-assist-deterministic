@@ -584,8 +584,17 @@ function Policy.chooseScheduledRoute(input,Config,Field,RouteMath,Planner)
     local observedStart=vec(input.position) and input.position or start
     local forecastCount=0
     local preferredDeep,deepestFeasible,bestEffort
+    -- Native ink sanitation can shorten the drawn final leg even when its
+    -- requested endpoint was the sideline. Rank the actual pass target and
+    -- first airborne player pose, not the unprocessed endpoint request.
+    local function sideReached(candidate)
+        return candidate and finite(candidate.targetSidelineInset) and finite(candidate.catchSidelineInset)
+            and candidate.targetSidelineInset<=math.max(edge,yd)
+            and candidate.catchSidelineInset<=1.5*yd
+    end
+    local lateralSearchFloor=goalDepth*.65
     for _,stemYards in ipairs(stems) do
-        local best,bestClear,bestInside,bestInsideClear
+        local best,bestClear,bestInside,bestInsideClear,bestInsideWide,bestInsideWideClear
         for _,side in ipairs({preferredSide,-preferredSide}) do
             local sideDone=false
             for _,beyond in ipairs(shortField and {5,4,3,2,1} or {1,2,3,4,5,6}) do
@@ -757,6 +766,9 @@ function Policy.chooseScheduledRoute(input,Config,Field,RouteMath,Planner)
                                                     local depth=(points[3].Y-los)/yd
                                                     local family,signature=routeKeys("Floater",shape,depth,side)
                                                     local insideGoal=catchPoint.Z>=Field.GoalZ+offset.Z
+                                                    local catchX=catchPoint.X-offset.X
+                                                    local targetInset=side<0 and plan.Target.X-Field.MinX or Field.MaxX-plan.Target.X
+                                                    local catchInset=side<0 and catchX-Field.MinX or Field.MaxX-catchX
                                                     local score=clamp(margin/yd,-30,20)*.5+remaining*.04-stemSprint
                                                         +math.min(angle,90)*.08+(insideGoal and 12 or 0)
                                                         +(side==preferredSide and .3 or 0)-failures[side]*12-(waiting and 15 or 0)
@@ -770,6 +782,9 @@ function Policy.chooseScheduledRoute(input,Config,Field,RouteMath,Planner)
                                                         stemSprintSeconds=stemSprint,stemSprintStart=lateStart,
                                                         earlyStemSprintSeconds=earlySprint,shortField=shortField,stemRunSpeed=stemRun,
                                                         estimatedStemRegeneration=regenerated,ballTargetZ=plan.Target.Y,
+                                                        sanitizedEndpointX=points[3].X,ballTargetX=plan.Target.X,
+                                                        estimatedCatchX=catchX,targetSidelineInset=targetInset,
+                                                        catchSidelineInset=catchInset,
                                                         stemTravelDistance=detourDistance,postThrowStem=cutAt>plan.Launch,
                                                         estimatedCatchAt=contact.contactAt,estimatedCatchZ=catchPoint.Z-offset.Z,
                                                         estimatedFirstTouchAt=firstAt,estimatedStopAt=contact.stopAt,
@@ -787,6 +802,10 @@ function Policy.chooseScheduledRoute(input,Config,Field,RouteMath,Planner)
                                                     if not waiting and (not bestClear or c.score>bestClear.score) then bestClear=c end
                                                     if insideGoal and (not bestInside or c.score>bestInside.score) then bestInside=c end
                                                     if insideGoal and not waiting and (not bestInsideClear or c.score>bestInsideClear.score) then bestInsideClear=c end
+                                                    if insideGoal and sideReached(c) then
+                                                        if not bestInsideWide or c.score>bestInsideWide.score then bestInsideWide=c end
+                                                        if not waiting and (not bestInsideWideClear or c.score>bestInsideWideClear.score) then bestInsideWideClear=c end
+                                                    end
                                                     if not waiting and insideGoal and angle>=60 then sideDone=true end
                                                     break
                                                 end
@@ -804,11 +823,27 @@ function Policy.chooseScheduledRoute(input,Config,Field,RouteMath,Planner)
         -- so a meaningfully sharper turn can beat a slightly deeper slant.
         -- Every Floater witness already requires an endzone first contact.
         local c=bestInsideClear or bestClear or bestInside or best
+        local wide=bestInsideWideClear or (not bestInsideClear and bestInsideWide)
+        if wide and c and wide.score>=c.score-5 then c=wide end
         if c and not preferredDeep then preferredDeep,deepestFeasible=c,stemYards
         elseif c and stemYards>=deepestFeasible-2 and
             (c.cutAngle>=preferredDeep.cutAngle+5 and not (c.anticipatedLane and not preferredDeep.anticipatedLane)
                 or preferredDeep.anticipatedLane and not c.anticipatedLane) then preferredDeep=c end
-        c=preferredDeep and (shortField or preferredDeep.cutAngle>=60 or stemYards<=deepestFeasible-2
+        -- A deep but narrow catch must not end the search before an already
+        -- bounded, funded wider middle cut is considered. Keep lane/history
+        -- quality and the deep-middle floor; the existing finite stem list is
+        -- unchanged. An inset fallback remains available if none qualifies.
+        if c and preferredDeep and not shortField and not sideReached(preferredDeep)
+            and stemYards>=lateralSearchFloor and sideReached(c)
+            and c.score>=preferredDeep.score-5
+            and not (c.anticipatedLane and not preferredDeep.anticipatedLane)
+            and c.catchSidelineInset<=preferredDeep.catchSidelineInset-.5*yd then
+            c.lateralSearchExtended=stemYards<deepestFeasible-2
+            preferredDeep=c
+        end
+        c=preferredDeep and (shortField or sideReached(preferredDeep)
+            and (preferredDeep.cutAngle>=60 or stemYards<=deepestFeasible-2)
+            or stemYards<lateralSearchFloor
             or stemYards==stems[#stems]) and preferredDeep or nil
         if c then
             c.forecastCount=forecastCount

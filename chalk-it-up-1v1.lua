@@ -1,4 +1,4 @@
--- Chalk-Release: 5.1.21
+-- Chalk-Release: 5.1.22
 -- Chalk-Product: deterministic
 -- Chalk It Up DB/WR ball assist using normal sprint/jump/dive controls.
 -- Cyan: replicated route (when supplied). Yellow: movement estimate.
@@ -47,7 +47,7 @@ assert(matchEvent and fxEvent and matchEvent:IsA("RemoteEvent") and fxEvent:IsA(
     "Chalk It Up Match/Fx events were not found")
 
 local api = {}
-local RELEASE_VERSION="5.1.21"
+local RELEASE_VERSION="5.1.22"
 local loadedGameId,loadedPlaceId,loadedJobId=game.GameId,game.PlaceId,game.JobId
 env.ChalkDB = api
 local alive, enabled = true, true
@@ -967,7 +967,7 @@ end
 function api.status()
     local ch = characterOf(opponent)
     local holder,isEnemy,holderRole=carrierContext()
-    return {product="deterministic",version=RELEASE_VERSION,buildId="5958b21322549383bc7339b61ab0ab86cf45f1607ba2246faecd470779700d14",policyMode="deterministic", enabled=enabled, role=role or "unknown",rawRole=rawRole or "unknown", phase=phase,
+    return {product="deterministic",version=RELEASE_VERSION,buildId="83b53cd409e035ae7d089a0c6b737cc77c643356d37fecc5a3c07ef74bd07a9a",policyMode="deterministic", enabled=enabled, role=role or "unknown",rawRole=rawRole or "unknown", phase=phase,
         ui={visible=windowVisible,minimized=minimized,x=panel.Position.X.Offset,y=panel.Position.Y.Offset},
         matchAlerts={enabled=alertSettings.enabled,saveError=alertSettings.saveError},
         preferences=preferences and preferences.status() or nil,
@@ -4565,6 +4565,9 @@ return function(ctx, Planner, createTackle, WRApproach, Motion, createCarrierMov
                 and (s.catchIntent.continuousSprint==true or s.arc~=nil)
             or s.role=="DB" and s.arc~=nil)
         local decision
+        local inputSteering=steering
+        local previousAvoidanceHeading=avoidanceState and avoidanceState.heading
+        local previousAvoidanceSide=avoidanceState and avoidanceState.side
         avoidanceState,decision=PlayerAvoidance.update(avoidanceState,{now=now,dt=dt,
             position=root.Position,velocity=root.AssemblyLinearVelocity,desiredDirection=direction,
             opponents=opponents,bounds=bounds,requestedSprint=requestedSprint,walkSpeed=h.WalkSpeed,
@@ -4584,9 +4587,16 @@ return function(ctx, Planner, createTackle, WRApproach, Motion, createCarrierMov
         avoidanceStatus={active=decision.active,blocked=decision.blocked,reason=decision.reason}
         if decision.active and (decision.reason~=lastAvoidanceReason or now-lastAvoidanceLog>.3)
             or not decision.active and lastAvoidanceReason then
+            local observedBodies={}
+            for _,other in ipairs(opponents) do
+                observedBodies[#observedBodies+1]={position=xyz(other.position),velocity=xyz(other.velocity)}
+            end
             log("playerAvoidance",{active=decision.active,blocked=decision.blocked,reason=decision.reason,
                 role=s.role,phase=s.phase,position=xyz(root.Position),velocity=xyz(root.AssemblyLinearVelocity),
                 requestedDirection=xyz(direction),direction=xyz(decision.direction),
+                inputSteering=xyz(inputSteering),previousHeading=xyz(previousAvoidanceHeading),
+                previousSide=previousAvoidanceSide,side=decision.side,progressSpeed=decision.progressSpeed,
+                dt=dt,bounds=bounds,observedBodies=observedBodies,
                 allowSprintDetour=allowSprintDetour,walkSpeed=h.WalkSpeed,
                 approachTarget=arrival and xyz(arrival.targetPosition),arriveBy=arrival and arrival.arriveBy,
                 requestedSprint=requestedSprint,sprint=decision.sprint,stamina=me:GetAttribute("Stamina")})
@@ -5560,6 +5570,13 @@ return function(ctx, Planner, createTackle, WRApproach, Motion, createCarrierMov
     end
     function controller.onFx(data)
         if type(data)~="table" then return end
+        if data.Type=="Knocked" or data.Type=="TruckHit" then
+            local observed=ctx.snapshot()
+            local duration=type(data.Duration)=="number" and data.Duration==data.Duration
+                and math.abs(data.Duration)<math.huge and data.Duration or nil
+            log("nativeContactEffect",{effect=data.Type,role=observed.role,phase=observed.phase,
+                duration=duration,direction=typeof(data.Dir)=="Vector3" and xyz(data.Dir) or nil})
+        end
         if data.Type=="Throw" then
             local received=workspace:GetServerTimeNow()
             log("throwReceived",{launchAt=data.LaunchAt,
@@ -6936,8 +6953,17 @@ function Policy.chooseScheduledRoute(input,Config,Field,RouteMath,Planner)
     local observedStart=vec(input.position) and input.position or start
     local forecastCount=0
     local preferredDeep,deepestFeasible,bestEffort
+    -- Native ink sanitation can shorten the drawn final leg even when its
+    -- requested endpoint was the sideline. Rank the actual pass target and
+    -- first airborne player pose, not the unprocessed endpoint request.
+    local function sideReached(candidate)
+        return candidate and finite(candidate.targetSidelineInset) and finite(candidate.catchSidelineInset)
+            and candidate.targetSidelineInset<=math.max(edge,yd)
+            and candidate.catchSidelineInset<=1.5*yd
+    end
+    local lateralSearchFloor=goalDepth*.65
     for _,stemYards in ipairs(stems) do
-        local best,bestClear,bestInside,bestInsideClear
+        local best,bestClear,bestInside,bestInsideClear,bestInsideWide,bestInsideWideClear
         for _,side in ipairs({preferredSide,-preferredSide}) do
             local sideDone=false
             for _,beyond in ipairs(shortField and {5,4,3,2,1} or {1,2,3,4,5,6}) do
@@ -7109,6 +7135,9 @@ function Policy.chooseScheduledRoute(input,Config,Field,RouteMath,Planner)
                                                     local depth=(points[3].Y-los)/yd
                                                     local family,signature=routeKeys("Floater",shape,depth,side)
                                                     local insideGoal=catchPoint.Z>=Field.GoalZ+offset.Z
+                                                    local catchX=catchPoint.X-offset.X
+                                                    local targetInset=side<0 and plan.Target.X-Field.MinX or Field.MaxX-plan.Target.X
+                                                    local catchInset=side<0 and catchX-Field.MinX or Field.MaxX-catchX
                                                     local score=clamp(margin/yd,-30,20)*.5+remaining*.04-stemSprint
                                                         +math.min(angle,90)*.08+(insideGoal and 12 or 0)
                                                         +(side==preferredSide and .3 or 0)-failures[side]*12-(waiting and 15 or 0)
@@ -7122,6 +7151,9 @@ function Policy.chooseScheduledRoute(input,Config,Field,RouteMath,Planner)
                                                         stemSprintSeconds=stemSprint,stemSprintStart=lateStart,
                                                         earlyStemSprintSeconds=earlySprint,shortField=shortField,stemRunSpeed=stemRun,
                                                         estimatedStemRegeneration=regenerated,ballTargetZ=plan.Target.Y,
+                                                        sanitizedEndpointX=points[3].X,ballTargetX=plan.Target.X,
+                                                        estimatedCatchX=catchX,targetSidelineInset=targetInset,
+                                                        catchSidelineInset=catchInset,
                                                         stemTravelDistance=detourDistance,postThrowStem=cutAt>plan.Launch,
                                                         estimatedCatchAt=contact.contactAt,estimatedCatchZ=catchPoint.Z-offset.Z,
                                                         estimatedFirstTouchAt=firstAt,estimatedStopAt=contact.stopAt,
@@ -7139,6 +7171,10 @@ function Policy.chooseScheduledRoute(input,Config,Field,RouteMath,Planner)
                                                     if not waiting and (not bestClear or c.score>bestClear.score) then bestClear=c end
                                                     if insideGoal and (not bestInside or c.score>bestInside.score) then bestInside=c end
                                                     if insideGoal and not waiting and (not bestInsideClear or c.score>bestInsideClear.score) then bestInsideClear=c end
+                                                    if insideGoal and sideReached(c) then
+                                                        if not bestInsideWide or c.score>bestInsideWide.score then bestInsideWide=c end
+                                                        if not waiting and (not bestInsideWideClear or c.score>bestInsideWideClear.score) then bestInsideWideClear=c end
+                                                    end
                                                     if not waiting and insideGoal and angle>=60 then sideDone=true end
                                                     break
                                                 end
@@ -7156,11 +7192,27 @@ function Policy.chooseScheduledRoute(input,Config,Field,RouteMath,Planner)
         -- so a meaningfully sharper turn can beat a slightly deeper slant.
         -- Every Floater witness already requires an endzone first contact.
         local c=bestInsideClear or bestClear or bestInside or best
+        local wide=bestInsideWideClear or (not bestInsideClear and bestInsideWide)
+        if wide and c and wide.score>=c.score-5 then c=wide end
         if c and not preferredDeep then preferredDeep,deepestFeasible=c,stemYards
         elseif c and stemYards>=deepestFeasible-2 and
             (c.cutAngle>=preferredDeep.cutAngle+5 and not (c.anticipatedLane and not preferredDeep.anticipatedLane)
                 or preferredDeep.anticipatedLane and not c.anticipatedLane) then preferredDeep=c end
-        c=preferredDeep and (shortField or preferredDeep.cutAngle>=60 or stemYards<=deepestFeasible-2
+        -- A deep but narrow catch must not end the search before an already
+        -- bounded, funded wider middle cut is considered. Keep lane/history
+        -- quality and the deep-middle floor; the existing finite stem list is
+        -- unchanged. An inset fallback remains available if none qualifies.
+        if c and preferredDeep and not shortField and not sideReached(preferredDeep)
+            and stemYards>=lateralSearchFloor and sideReached(c)
+            and c.score>=preferredDeep.score-5
+            and not (c.anticipatedLane and not preferredDeep.anticipatedLane)
+            and c.catchSidelineInset<=preferredDeep.catchSidelineInset-.5*yd then
+            c.lateralSearchExtended=stemYards<deepestFeasible-2
+            preferredDeep=c
+        end
+        c=preferredDeep and (shortField or sideReached(preferredDeep)
+            and (preferredDeep.cutAngle>=60 or stemYards<=deepestFeasible-2)
+            or stemYards<lateralSearchFloor
             or stemYards==stems[#stems]) and preferredDeep or nil
         if c then
             c.forecastCount=forecastCount
@@ -8180,6 +8232,7 @@ return function(ctx,Policy,services)
         end
         for _,key in ipairs({"estimatedCatchAt","estimatedCatchZ","estimatedFirstTouchAt","estimatedStopAt","estimatedContactMargin","stemSprintSeconds","stemSprintStart",
             "earlyStemSprintSeconds","stemRunSpeed","estimatedStemRegeneration","ballTargetZ","shortField",
+            "sanitizedEndpointX","ballTargetX","estimatedCatchX","targetSidelineInset","catchSidelineInset","lateralSearchExtended",
             "stemTravelDistance","postThrowStem","stemDetour","forecastCount","cutAngle","estimatedCatchInsideGoal","rareBullet",
             "rareCampingBullet","continuousBulletCatch","carryMoveReserve","observedEndzoneCamping","campingObservationKnown",
             "campingEvidenceCount","campingCurrentKnown","campingCurrentWaiting","campingCounterUsed",
@@ -8680,6 +8733,9 @@ return function(ctx,Policy,services)
             earlyStemSprintSeconds=chosen.earlyStemSprintSeconds,
             stemRunSpeed=chosen.stemRunSpeed,estimatedStemRegeneration=chosen.estimatedStemRegeneration,
             ballTargetZ=chosen.ballTargetZ,shortField=chosen.shortField,
+            sanitizedEndpointX=chosen.sanitizedEndpointX,ballTargetX=chosen.ballTargetX,
+            estimatedCatchX=chosen.estimatedCatchX,targetSidelineInset=chosen.targetSidelineInset,
+            catchSidelineInset=chosen.catchSidelineInset,lateralSearchExtended=chosen.lateralSearchExtended,
             stemTravelDistance=chosen.stemTravelDistance,postThrowStem=chosen.postThrowStem,
             stemDetour=chosen.stemDetour,forecastCount=chosen.forecastCount,
             cutAngle=chosen.cutAngle,estimatedCatchInsideGoal=chosen.estimatedCatchInsideGoal,rareBullet=chosen.rareBullet,
@@ -8720,6 +8776,9 @@ return function(ctx,Policy,services)
             stemSprintStart=chosen.stemSprintStart,
             stemRunSpeed=chosen.stemRunSpeed,estimatedStemRegeneration=chosen.estimatedStemRegeneration,
             ballTargetZ=chosen.ballTargetZ,shortField=chosen.shortField,
+            sanitizedEndpointX=chosen.sanitizedEndpointX,ballTargetX=chosen.ballTargetX,
+            estimatedCatchX=chosen.estimatedCatchX,targetSidelineInset=chosen.targetSidelineInset,
+            catchSidelineInset=chosen.catchSidelineInset,lateralSearchExtended=chosen.lateralSearchExtended,
             estimatedFirstTouchAt=chosen.estimatedFirstTouchAt,estimatedStopAt=chosen.estimatedStopAt,
             shape=chosen.shape,depth=chosen.depth,family=chosen.family,signature=chosen.signature,
             adaptationPenalty=chosen.adaptationPenalty,recentFailureCount=chosen.recentFailureCount,
@@ -9726,7 +9785,7 @@ end
 end)()
 
 api.initializePreferences(createPreferences)
-assist = createAssist({snapshot=api.context,version=RELEASE_VERSION,buildId="5958b21322549383bc7339b61ab0ab86cf45f1607ba2246faecd470779700d14",fullplay=function(s,root,h,now,dt)
+assist = createAssist({snapshot=api.context,version=RELEASE_VERSION,buildId="83b53cd409e035ae7d089a0c6b737cc77c643356d37fecc5a3c07ef74bd07a9a",fullplay=function(s,root,h,now,dt)
     if fullplay then return fullplay.navigate(s,root,h,now,dt) end
 end},Planner,createTackle,WRApproach,Motion,createCarrierMoves,PlayerAvoidance)
 assist.setEnabled(false)
@@ -9742,7 +9801,7 @@ repeatWR = createWRRepeat({snapshot=api.context,
     autoplay=function() return autoplay.status() end,
     disableAutoplay=function() return api.setAutoplay(false) end})
 repeatWR.setEnabled(false)
-fullplay = createFullplay({Planner=Planner,snapshot=api.context,version=RELEASE_VERSION,buildId="5958b21322549383bc7339b61ab0ab86cf45f1607ba2246faecd470779700d14",
+fullplay = createFullplay({Planner=Planner,snapshot=api.context,version=RELEASE_VERSION,buildId="83b53cd409e035ae7d089a0c6b737cc77c643356d37fecc5a3c07ef74bd07a9a",
     assistEnabled=function() return assist.status().enabled end,
     release=function() if assist.releaseFullplay then assist.releaseFullplay() end end},FullplayPolicy)
 matchSkip = createMatchSkip({snapshot=api.context,startDisabled=true,preferencesManaged=true,
@@ -9765,7 +9824,7 @@ local GAME_ID,PLACE_ID=10770281752,116097127629859
 local MAIN_URL="https://raw.githubusercontent.com/BananaMan2006/chalk-assist-deterministic/main/chalk-it-up-1v1.lua"
 local CACHE_FILE="chalk-deterministic-cache.lua"
 local MAIN_FILE="chalk-it-up-1v1.lua"
-local MIN_RELEASE="5.1.21"
+local MIN_RELEASE="5.1.22"
 local MARKER="__ChalkDeterministicAutoBoot"
 local env=type(getgenv)=="function" and getgenv() or _G
 local boot

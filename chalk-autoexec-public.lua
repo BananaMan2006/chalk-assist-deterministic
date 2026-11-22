@@ -7,7 +7,7 @@ local GAME_ID,PLACE_ID=10770281752,116097127629859
 local MAIN_URL="https://raw.githubusercontent.com/BananaMan2006/chalk-assist-deterministic/main/chalk-it-up-1v1.lua"
 local CACHE_FILE="chalk-deterministic-cache.lua"
 local MAIN_FILE="chalk-it-up-1v1.lua"
-local MIN_RELEASE="5.1.21"
+local MIN_RELEASE="5.1.22"
 local MARKER="__ChalkDeterministicAutoBoot"
 local env=type(getgenv)=="function" and getgenv() or _G
 local boot

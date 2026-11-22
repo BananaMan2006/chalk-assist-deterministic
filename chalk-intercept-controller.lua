@@ -469,6 +469,9 @@ return function(ctx, Planner, createTackle, WRApproach, Motion, createCarrierMov
                 and (s.catchIntent.continuousSprint==true or s.arc~=nil)
             or s.role=="DB" and s.arc~=nil)
         local decision
+        local inputSteering=steering
+        local previousAvoidanceHeading=avoidanceState and avoidanceState.heading
+        local previousAvoidanceSide=avoidanceState and avoidanceState.side
         avoidanceState,decision=PlayerAvoidance.update(avoidanceState,{now=now,dt=dt,
             position=root.Position,velocity=root.AssemblyLinearVelocity,desiredDirection=direction,
             opponents=opponents,bounds=bounds,requestedSprint=requestedSprint,walkSpeed=h.WalkSpeed,
@@ -488,9 +491,16 @@ return function(ctx, Planner, createTackle, WRApproach, Motion, createCarrierMov
         avoidanceStatus={active=decision.active,blocked=decision.blocked,reason=decision.reason}
         if decision.active and (decision.reason~=lastAvoidanceReason or now-lastAvoidanceLog>.3)
             or not decision.active and lastAvoidanceReason then
+            local observedBodies={}
+            for _,other in ipairs(opponents) do
+                observedBodies[#observedBodies+1]={position=xyz(other.position),velocity=xyz(other.velocity)}
+            end
             log("playerAvoidance",{active=decision.active,blocked=decision.blocked,reason=decision.reason,
                 role=s.role,phase=s.phase,position=xyz(root.Position),velocity=xyz(root.AssemblyLinearVelocity),
                 requestedDirection=xyz(direction),direction=xyz(decision.direction),
+                inputSteering=xyz(inputSteering),previousHeading=xyz(previousAvoidanceHeading),
+                previousSide=previousAvoidanceSide,side=decision.side,progressSpeed=decision.progressSpeed,
+                dt=dt,bounds=bounds,observedBodies=observedBodies,
                 allowSprintDetour=allowSprintDetour,walkSpeed=h.WalkSpeed,
                 approachTarget=arrival and xyz(arrival.targetPosition),arriveBy=arrival and arrival.arriveBy,
                 requestedSprint=requestedSprint,sprint=decision.sprint,stamina=me:GetAttribute("Stamina")})
@@ -1464,6 +1474,13 @@ return function(ctx, Planner, createTackle, WRApproach, Motion, createCarrierMov
     end
     function controller.onFx(data)
         if type(data)~="table" then return end
+        if data.Type=="Knocked" or data.Type=="TruckHit" then
+            local observed=ctx.snapshot()
+            local duration=type(data.Duration)=="number" and data.Duration==data.Duration
+                and math.abs(data.Duration)<math.huge and data.Duration or nil
+            log("nativeContactEffect",{effect=data.Type,role=observed.role,phase=observed.phase,
+                duration=duration,direction=typeof(data.Dir)=="Vector3" and xyz(data.Dir) or nil})
+        end
         if data.Type=="Throw" then
             local received=workspace:GetServerTimeNow()
             log("throwReceived",{launchAt=data.LaunchAt,

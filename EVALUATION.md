@@ -1,6 +1,14 @@
-# Evaluation scope · 5.1.21
+# Evaluation scope · 5.1.22
 
 This release continues the authored, deterministic controller. Its checks establish local rule behavior and packaging properties. **They do not demonstrate a live win rate, a winning streak, perfect catching, or improvement through training.** The release has no training system or shared model.
+
+## 5.1.22 scope
+
+A route-selection replay found that stopping the search near the deepest funded middle run could retain a narrow catch despite an available wider funded route. Selection now checks native-sanitized target width and first airborne catch position. It extends the existing finite search only for materially inset catches, preserves lane/history constraints and a deep-stem floor, and retains the original reachable alternative when wider candidates fail.
+
+The [route-width review](evaluation/5.1.22-route-width-review.json) records a native-math replay changing target inset from 11.21 to 1 stud and airborne root inset from 15.99 to 5.87 studs. The middle run changes from 22 to 17.5 yards; forecast count increases from 18 to 20. Offline replay cost increases and does not measure live Roblox solve time. This is route geometry evidence, not proof of fewer breakups.
+
+The November 22 one-hour live session is ongoing; all failed plays and conceded points are retained separately by exact build.
 
 ## 5.1.21 scope
 
