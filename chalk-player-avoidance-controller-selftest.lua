@@ -80,7 +80,8 @@ return function(f)
         local decision=f.decision or {}
         return {token=#f.helperCalls},{direction=decision.direction or input.desiredDirection,
             sprint=decision.sprint==nil and input.requestedSprint or decision.sprint,
-            active=decision.active==true,blocked=decision.blocked==true,reason=decision.reason}
+            active=decision.active==true,blocked=decision.blocked==true,reason=decision.reason,
+            passingComparison=decision.passingComparison}
     end}
 ]]..helpers..navigation..[[
     return {
@@ -738,6 +739,26 @@ end
             equal(input.arriveBy,nil);equal(input.targetPosition,nil)
             equal(f.plan.reachable,false)
         end
+    end)
+    test("bounded side comparison is explicitly limited to WR live-ball approaches",function()
+        for _,gate in ipairs({"WR","DB","noBall","PreSnap","RAC","QB"}) do
+            local f=fixture();f.context.role=gate=="DB" and "DB" or gate=="QB" and "QB" or "WR"
+            f.context.arc=gate~="noBall" and {} or nil
+            if gate=="PreSnap" or gate=="RAC" then f.context.phase=gate end
+            f.context.catchIntent={};f.api.catch(f.context)
+            local input=f.helperCalls[#f.helperCalls].input
+            equal(input.comparePassingSides,gate=="WR",gate)
+        end
+    end)
+    test("bounded comparison diagnostics use the existing avoidance event",function()
+        local f=fixture();f.context.role="WR";f.context.arc={};f.context.catchIntent={}
+        local comparison={retainedSide=-1,chosenSide=1,retainedProgress=3.48,alternateProgress=4.48,
+            retainedClearance=4.13,alternateClearance=3.76,duration=.25,maximumStepsPerSide=15}
+        f.decision={active=true,sprint=false,reason="passing player",passingComparison=comparison}
+        f.api.catch(f.context)
+        equal(#f.logs,1,"diagnostics added another event")
+        equal(f.logs[1].kind,"playerAvoidance")
+        equal(f.logs[1].data.passingComparison,comparison)
     end)
     return report
 end

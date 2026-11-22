@@ -930,5 +930,123 @@ return function(Avoidance)
             else same(d.direction,p.desiredDirection);assert(d.sprint and not d.active) end
         end
     end)
+    do
+        local New=Avoidance
+        local Old={update=function(previous,input)
+            local unflagged={}
+            for key,value in pairs(input) do unflagged[key]=value end
+            unflagged.comparePassingSides=false
+            return Avoidance.update(previous,unflagged)
+        end}
+ local function fixture(mirror)
+  mirror=mirror or 1
+  return {now=0,dt=.016232624650001526,position=Vector3.zero,
+   desiredDirection=Vector3.new(.6458463668823242*mirror,0,.7634673714637756),
+   walkSpeed=27,runSpeed=20,sprintSpeed=27,requestedSprint=true,allowSprintDetour=true,
+   canDetour=true,precisePath=true,comparePassingSides=true,
+   targetPosition=Vector3.new(45.3989839553833*mirror,0,53.66701126098633),arriveBy=2.5190898,
+   bounds={minX=-80,maxX=80,minZ=-80,maxZ=100},
+   opponents={{position=Vector3.new(4.0099382400512695*mirror,0,1.9034156799316406),
+    velocity=Vector3.new(-1.8290181159973145*mirror,0,19.915971755981445)}}}
+ end
+ local function same(a,b) assert((a.direction-b.direction).Magnitude<1e-8 and a.sprint==b.sprint and a.side==b.side) end
+ test('recorded new catch encounter compares actual bounded turns instead of a slightly larger instantaneous score',function()
+  local p=fixture();local _,old=Old.update(nil,p);local _,new=New.update(nil,p);local c=new.passingComparison
+  assert(old.side==-1 and new.side==1 and c and c.chosenSide==1)
+  assert(c.retainedScore>c.alternateScore,'fixture must expose score-versus-turn mismatch')
+  assert(c.alternateProgress>c.retainedProgress+1 and c.alternateClearance>=3.75)
+  assert(not new.sprint and math.abs(new.direction.Magnitude-old.direction.Magnitude)<1e-8)
+  assert(new.direction.Unit:Dot(p.desiredDirection.Unit)>=math.cos(8*p.dt)-1e-8)
+  assert(c.maximumStepsPerSide==15 and c.duration<=.25)
+ end)
+ test('mirrored catch has the same checked progress and mirrored side',function()
+  local _,a=New.update(nil,fixture());local _,b=New.update(nil,fixture(-1))
+  assert(a.side==1 and b.side==-1 and math.abs(a.direction.X+b.direction.X)<1e-8)
+  assert(math.abs(a.passingComparison.alternateProgress-b.passingComparison.alternateProgress)<1e-8)
+ end)
+ test('a selected passing side remains locked on later observations',function()
+  local p=fixture();local state,d=New.update(nil,p);p.now=p.dt;p.currentDirection=state.heading
+  local _,a=Old.update(state,p);local _,b=New.update(state,p);same(a,b)
+  assert(b.passingComparison==nil and b.side==1)
+ end)
+ test('unflagged prethrow pursuit and missing target use the original policy',function()
+  for _,gate in ipairs({'optout','prethrow','no-target','no-deadline','expired','owned'}) do
+   local p=fixture()
+   if gate=='optout' then p.comparePassingSides=false elseif gate=='prethrow' then p.precisePath=false
+   elseif gate=='no-target' then p.targetPosition=nil elseif gate=='no-deadline' then p.arriveBy=nil elseif gate=='expired' then p.arriveBy=0 else p.canDetour=false end
+   local _,a=Old.update(nil,p);local _,b=New.update(nil,p);same(a,b);assert(b.passingComparison==nil)
+  end
+ end)
+ test('unknown opponent velocity cannot justify a new side',function()
+  local p=fixture();p.opponents[1].velocity=nil
+  local _,a=Old.update(nil,p);local _,b=New.update(nil,p);same(a,b)
+  assert(not b.passingComparison or b.passingComparison.alternateProgress==nil)
+ end)
+ test('an out of bounds alternative preserves the existing legal side',function()
+  local p=fixture();p.bounds.maxX=1.5
+  local _,a=Old.update(nil,p);local _,b=New.update(nil,p);same(a,b)
+  assert(b.side==-1 and b.direction.X<1.5)
+ end)
+ test('near-body escape does not invoke a new entry comparison',function()
+  local p=fixture();p.opponents[1].position=p.opponents[1].position.Unit*3.2
+  local _,a=Old.update(nil,p);local _,b=New.update(nil,p);same(a,b);assert(b.passingComparison==nil)
+ end)
+ test('projection never credits sprint speed above the current physical speed',function()
+  for _,speed in ipairs({9,20}) do
+   local p=fixture();p.walkSpeed=speed;local _,d=New.update(nil,p);local c=d.passingComparison
+   if c then
+    assert(not c.retainedProgress or c.retainedProgress<=speed*c.duration+1e-8)
+    assert(not c.alternateProgress or c.alternateProgress<=speed*c.duration+1e-8)
+   end
+  end
+ end)
+ test('projection leaves caller input opponent vectors and previous history unchanged',function()
+  local p=fixture();local pos=p.position;local body=p.opponents[1].position;local vel=p.opponents[1].velocity
+  local previous={now=-.01,active=false,samples={{time=-.2,position=Vector3.new(0,0,-4)}}};local sample=previous.samples[1].position
+  New.update(previous,p)
+  assert(p.position==pos and p.opponents[1].position==body and p.opponents[1].velocity==vel)
+  assert(previous.side==nil and previous.samples[1].position==sample and #previous.samples==1)
+ end)
+ test('projected walking output is interpreted once at dispatch speed',function()
+  local _,d=New.update(nil,fixture());local c=d.passingComparison
+  assert(c and c.retainedProgress>3.48 and c.retainedProgress<3.49,
+   'walking ratio was applied again after the helper encoded it')
+  assert(c.alternateProgress>4.48 and c.alternateProgress<4.50)
+ end)
+ test('unknown retained trajectory is not treated as worse than a known alternative',function()
+  local p=fixture();p.dt=1/60;p.desiredDirection=Vector3.new(.65,0,.76)
+  p.targetPosition=p.desiredDirection*70;p.arriveBy=2.5
+  p.opponents={{position=Vector3.new(3,0,4),velocity=Vector3.new(-10,0,10)}}
+  local _,a=Old.update(nil,p);local _,b=New.update(nil,p);same(a,b)
+  local c=b.passingComparison
+  assert(c and c.retainedProgress==nil and c.alternateProgress~=nil)
+  assert(c.chosenSide==c.retainedSide)
+ end)
+ test('inactive old heading does not replace the caller heading on the first projected step',function()
+  local p=fixture();p.currentDirection=p.desiredDirection.Unit
+  local previous={now=-.1,active=false,heading=Vector3.new(-1,0,0)}
+  local _,ordinary=New.update(nil,p);local _,resumed=New.update(previous,p)
+  same(ordinary,resumed)
+  local a,b=ordinary.passingComparison,resumed.passingComparison
+  assert(a and b and math.abs(a.retainedProgress-b.retainedProgress)<1e-8)
+  assert(math.abs(a.alternateProgress-b.alternateProgress)<1e-8)
+ end)
+ test('entry projection remains at most250ms with a larger caller lookahead',function()
+  local p=fixture();p.lookahead=.3
+  local _,d=New.update(nil,p)
+  assert(not d.passingComparison or d.passingComparison.duration<=.25)
+ end)
+ test('a catch continuation that differs from the supplied target keeps its original steering',function()
+  local p=fixture();p.desiredDirection=Vector3.new(0,0,1)
+  local _,a=Old.update(nil,p);local _,b=New.update(nil,p);same(a,b)
+  assert(b.passingComparison==nil,'probe invented a different first requested direction')
+ end)
+ test('a projected path passing its target does not invent later target reversal',function()
+  local p=fixture();p.targetPosition=p.desiredDirection.Unit*.15
+  local _,a=Old.update(nil,p);local _,b=New.update(nil,p);same(a,b)
+  local c=b.passingComparison
+  assert(not c or c.retainedProgress==nil or c.alternateProgress==nil)
+ end)
+    end
     return report
 end

@@ -1,4 +1,4 @@
--- Chalk-Release: 5.1.27
+-- Chalk-Release: 5.1.28
 -- Chalk-Product: deterministic
 -- Chalk It Up DB/WR ball assist using normal sprint/jump/dive controls.
 -- Cyan: replicated route (when supplied). Yellow: movement estimate.
@@ -47,7 +47,7 @@ assert(matchEvent and fxEvent and matchEvent:IsA("RemoteEvent") and fxEvent:IsA(
     "Chalk It Up Match/Fx events were not found")
 
 local api = {}
-local RELEASE_VERSION="5.1.27"
+local RELEASE_VERSION="5.1.28"
 local loadedGameId,loadedPlaceId,loadedJobId=game.GameId,game.PlaceId,game.JobId
 env.ChalkDB = api
 local alive, enabled = true, true
@@ -967,7 +967,7 @@ end
 function api.status()
     local ch = characterOf(opponent)
     local holder,isEnemy,holderRole=carrierContext()
-    return {product="deterministic",version=RELEASE_VERSION,buildId="565c77ca91aacce826d58be004c031d504a7013ea0c135ddec8f33ddfbc5dc93",policyMode="deterministic", enabled=enabled, role=role or "unknown",rawRole=rawRole or "unknown", phase=phase,
+    return {product="deterministic",version=RELEASE_VERSION,buildId="217d14b313328b9a4b300382847917ee3fd27e9d6e1e7a4502bf9637105b1930",policyMode="deterministic", enabled=enabled, role=role or "unknown",rawRole=rawRole or "unknown", phase=phase,
         ui={visible=windowVisible,minimized=minimized,x=panel.Position.X.Offset,y=panel.Position.Y.Offset},
         matchAlerts={enabled=alertSettings.enabled,saveError=alertSettings.saveError},
         preferences=preferences and preferences.status() or nil,
@@ -3637,8 +3637,10 @@ function Avoidance.update(previous,input)
     input=type(input)=="table" and input or {}
     local desired=vec(input.desiredDirection) and input.desiredDirection or ZERO
     local requested=input.requestedSprint==true
+    local sideComparison
     local function decision(direction,sprint,active,blocked,reason,extra)
         local result=extra or {}
+        if sideComparison then result.passingComparison=sideComparison end
         result.direction,result.sprint,result.active,result.blocked,result.reason=direction,sprint,active,blocked,reason
         result.changed=(direction-desired).Magnitude>.000001 or sprint~=requested
         return result
@@ -3924,6 +3926,87 @@ function Avoidance.update(previous,input)
         return best
     end
     local chosen=candidate(preferred)
+    -- Compare only a new, explicitly enabled live catch encounter. Existing
+    -- passing sides stay locked, and unknown projections retain the old choice.
+    if input.comparePassingSides==true and input._sideProbe~=true
+        and input.precisePath==true and catchPath and input.arriveBy>now
+        and finite(input.walkSpeed) and heading:Dot(goalHeading)>=1-.000001
+        and state.side~=1 and state.side~=-1 and not touching and chosen and chosen.score>0 then
+        local alternate=candidate(-preferred)
+        if alternate and alternate.score>0 then
+            local function projectedSide(side)
+                local probeState={}
+                for k,value in pairs(state) do probeState[k]=value end
+                probeState.side=side
+                local probePosition=position
+                local probeSpeed=speed
+                local probeBodies={}
+                for _,other in ipairs(input.opponents or {}) do
+                    if type(other)=="table" and vec(other.position) then
+                        if not vec(other.velocity) then return nil end
+                        local velocity=other.velocity*FLAT
+                        if velocity.Magnitude>40 then velocity=velocity.Unit*40 end
+                        probeBodies[#probeBodies+1]={position=other.position,velocity=velocity}
+                    end
+                end
+                local minimum=math.huge
+                local duration=math.min(.25,horizon,remaining)
+                local count=math.min(15,math.max(1,math.ceil(duration/(1/60))))
+                local step=duration/count
+                for index=1,count do
+                    local probeInput={}
+                    for key,value in pairs(input) do probeInput[key]=value end
+                    local delta=(input.targetPosition-probePosition)*FLAT
+                    if delta.Magnitude<.001 or delta:Dot(goalHeading)<=0 then return nil end
+                    probeInput._sideProbe=true
+                    probeInput.now=now+(index-1)*step
+                    probeInput.dt=index==1 and dt or step
+                    probeInput.position=probePosition
+                    probeInput.currentDirection=index==1 and current or probeState.heading or current
+                    probeInput.desiredDirection=index==1 and desired or delta.Unit*strength
+                    probeInput.walkSpeed=probeSpeed
+                    probeInput.opponents=probeBodies
+                    local result
+                    probeState,result=Avoidance.update(probeState,probeInput)
+                    if not result.active then return nil end
+                    -- The returned vector already includes any walking scale.
+                    -- Interpret it at this dispatch speed; cap the next sample below.
+                    local movement=result.direction*probeSpeed
+                    for _,other in ipairs(probeBodies) do
+                        if math.abs(other.position.Y-probePosition.Y)<=height then
+                            local gap=clearance((other.position-probePosition)*FLAT,
+                                other.velocity-movement,step)
+                            if gap<radius then return nil end
+                            minimum=math.min(minimum,gap)
+                        end
+                    end
+                    probePosition=probePosition+movement*step
+                    if not inside(probePosition,input.bounds) then return nil end
+                    for _,other in ipairs(probeBodies) do
+                        other.position=other.position+other.velocity*step
+                    end
+                    -- Do not credit a future sprint acknowledgement. Once a
+                    -- checked step releases sprint, use at most walking speed.
+                    if not result.sprint then probeSpeed=math.min(probeSpeed,run) end
+                end
+                if ((input.targetPosition-probePosition)*FLAT):Dot(goalHeading)<=0 then return nil end
+                return {progress=goalDelta.Magnitude-((input.targetPosition-probePosition)*FLAT).Magnitude,
+                    clearance=minimum,steps=count,position=probePosition}
+            end
+            local retained=projectedSide(preferred)
+            local other=projectedSide(-preferred)
+            sideComparison={retainedSide=preferred,chosenSide=preferred,
+                retainedScore=chosen.score,alternateScore=alternate.score,
+                retainedProgress=retained and retained.progress,
+                alternateProgress=other and other.progress,
+                retainedClearance=retained and retained.clearance,
+                alternateClearance=other and other.clearance,
+                duration=math.min(.25,horizon,remaining),maximumStepsPerSide=15}
+            if retained and other and other.progress>=retained.progress+.1 then
+                chosen=alternate;sideComparison.chosenSide=-preferred
+            end
+        end
+    end
     -- Retain the selected passing side while it remains usable; small opponent
     -- movements or roster order changes must not flip the character repeatedly.
     if not chosen then chosen=candidate(-preferred) end
@@ -4829,6 +4912,7 @@ return function(ctx, Planner, createTackle, WRApproach, Motion, createCarrierMov
             opponents=opponents,bounds=bounds,requestedSprint=requestedSprint,walkSpeed=h.WalkSpeed,
             targetPosition=arrival and arrival.targetPosition,arriveBy=arrival and arrival.arriveBy,
             precisePath=s.phase=="Live" and s.arc~=nil and (s.role=="WR" or s.role=="DB"),
+            comparePassingSides=s.phase=="Live" and s.arc~=nil and s.role=="WR",
             runSpeed=Config.RunSpeed,currentDirection=steering,
             sprintSpeed=Config.SprintSpeed,
             openingContactWindow=openingContactWindow==true,
@@ -4856,6 +4940,7 @@ return function(ctx, Planner, createTackle, WRApproach, Motion, createCarrierMov
                 inputSteering=xyz(inputSteering),previousHeading=xyz(previousAvoidanceHeading),
                 previousSide=previousAvoidanceSide,side=decision.side,progressSpeed=decision.progressSpeed,
                 dt=dt,bounds=bounds,observedBodies=observedBodies,
+                passingComparison=decision.passingComparison,
                 openingContactWindow=openingContactWindow==true,clearance=openingClearance,
                 allowSprintDetour=allowSprintDetour,walkSpeed=h.WalkSpeed,
                 approachTarget=arrival and xyz(arrival.targetPosition),arriveBy=arrival and arrival.arriveBy,
@@ -10200,7 +10285,7 @@ end
 end)()
 
 api.initializePreferences(createPreferences)
-assist = createAssist({snapshot=api.context,version=RELEASE_VERSION,buildId="565c77ca91aacce826d58be004c031d504a7013ea0c135ddec8f33ddfbc5dc93",fullplay=function(s,root,h,now,dt)
+assist = createAssist({snapshot=api.context,version=RELEASE_VERSION,buildId="217d14b313328b9a4b300382847917ee3fd27e9d6e1e7a4502bf9637105b1930",fullplay=function(s,root,h,now,dt)
     if fullplay then return fullplay.navigate(s,root,h,now,dt) end
 end},Planner,createTackle,WRApproach,Motion,createCarrierMoves,PlayerAvoidance)
 assist.setEnabled(false)
@@ -10216,7 +10301,7 @@ repeatWR = createWRRepeat({snapshot=api.context,
     autoplay=function() return autoplay.status() end,
     disableAutoplay=function() return api.setAutoplay(false) end})
 repeatWR.setEnabled(false)
-fullplay = createFullplay({Planner=Planner,snapshot=api.context,version=RELEASE_VERSION,buildId="565c77ca91aacce826d58be004c031d504a7013ea0c135ddec8f33ddfbc5dc93",
+fullplay = createFullplay({Planner=Planner,snapshot=api.context,version=RELEASE_VERSION,buildId="217d14b313328b9a4b300382847917ee3fd27e9d6e1e7a4502bf9637105b1930",
     assistEnabled=function() return assist.status().enabled end,
     release=function() if assist.releaseFullplay then assist.releaseFullplay() end end},FullplayPolicy)
 matchSkip = createMatchSkip({snapshot=api.context,startDisabled=true,preferencesManaged=true,
@@ -10239,7 +10324,7 @@ local GAME_ID,PLACE_ID=10770281752,116097127629859
 local MAIN_URL="https://raw.githubusercontent.com/BananaMan2006/chalk-assist-deterministic/main/chalk-it-up-1v1.lua"
 local CACHE_FILE="chalk-deterministic-cache.lua"
 local MAIN_FILE="chalk-it-up-1v1.lua"
-local MIN_RELEASE="5.1.27"
+local MIN_RELEASE="5.1.28"
 local MARKER="__ChalkDeterministicAutoBoot"
 local env=type(getgenv)=="function" and getgenv() or _G
 local boot

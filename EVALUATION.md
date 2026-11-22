@@ -1,6 +1,16 @@
-# Evaluation scope · 5.1.27
+# Evaluation scope · 5.1.28
 
 This release continues the authored, deterministic controller. Its checks establish local rule behavior and packaging properties. **They do not demonstrate a live win rate, a winning streak, perfect catching, or improvement through training.** The release has no training system or shared model.
+
+## 5.1.28 scope
+
+A receiving interception followed an opening obstruction and a poor first live-ball detour. The helper ranked angles on one preferred side by eventual forward speed, without comparing the time needed to turn through the two sides. The recorded input reproduces that choice. A bounded comparison now forecasts both existing sides for at most 250 ms and 15 steps per side, using current opponent velocity and the existing turn, body-clearance and field checks. It credits no future sprint acknowledgement and applies the walking scale once.
+
+The comparison requires an observed live WR ball flight, a finite future catch target, a new encounter without a locked side, and two valid forecasts. The alternate must gain at least 0.1 stud. Missing motion data, an uncertain projection, contact overlap or an existing side lock retains the original behavior. It grants no extra speed, stamina or catch reach and does not alter DB or prethrow choices. A local progress improvement is not proof that the server would award a catch; the opponent can change direction after the snapshot.
+
+The [avoidance review](evaluation/5.1.28-avoidance-review.json) separates fixed-input regression, historical controls, performance measurements and full-play uncertainty. The [coupled catch replay](evaluation/5.1.28-catch-approach-review.json) retains modeled sprint delay and timing variations; it does not reproduce a reactive opponent or server possession. The [live follow-up](evaluation/2026-11-22-followup-review.md) retains every failed receiving pass and opposing catch across the monitored builds, including points recovered by a later tackle.
+
+Validation passed 564 rule checks, 96 deterministic checks, 75 airborne checks and 36 build, installer and preference checks. Seventeen successful native catch controls retain their existing passing choices in the fixed-input comparison. Live execution and results are reported separately.
 
 ## 5.1.27 scope
 

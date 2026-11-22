@@ -1,6 +1,8 @@
 # Chalk Assist · deterministic edition
 
-Chalk Assist 5.1.27 is a rule-based Roblox client for Chalk It Up. It combines route and ball visualization, catch planning, nearby tackle attempts, collision-aware movement, and optional 1v1 Full Auto.
+Chalk Assist 5.1.28 is a rule-based Roblox client for Chalk It Up. It combines route and ball visualization, catch planning, nearby tackle attempts, collision-aware movement, and optional 1v1 Full Auto.
+
+Version 5.1.28 compares both passing sides at the start of a receiving catch approach when a nearby player blocks the direct path. A short, bounded forecast includes the time spent turning and uses current movement speed without crediting a future sprint acknowledgement. It changes sides only when both forecasts are valid and the alternative makes more checked progress toward the catch. The chosen side remains stable on subsequent frames. Prethrow routes, defensive positioning, stamina limits and catch permissions retain their existing rules. This reduces a reproduced detour cost; it cannot guarantee possession against a reacting opponent.
 
 This edition contains **no neural policy, training loop, model downloads, shared-learning service, or learned-action selection**. It does not improve itself by playing more games. Short-lived match observations can adjust authored rules, but no knowledge is pooled across computers.
 
